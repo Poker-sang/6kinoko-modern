@@ -199,7 +199,8 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Store cloned texture references by retained handle in a native pointer-keyed owner table; use the shared typed unload entry.
 - [x] Derive glyph storage and clone copy ranges from record fields; keep the original x86 layout and virtual identity.
 - [x] Compile the shared string owner and Squirrel object storage at native Windows x64 pointer width; return payload references directly as pointers.
-- [ ] Replace the 100-byte ACT resource allocation, clone/retain ownership and vtable dispatch with native resource objects.
+- [x] Replace texture/render-target fixed allocation, clone/retain ownership, property offsets and render access with native texture objects.
+- [ ] Migrate chip resources and remaining ACT method dispatch/array-cookie ABI; native textures alone do not enable a full x64 game.
 - [ ] Replace the 260-byte outer string layout and 256-byte glyph record after their serialization and quad/virtual callers migrate.
 - [ ] Replace remaining integer-address Squirrel bindings and x86 fastcall/thiscall adapters; then attempt a full x64 game link.
 - Audit scope and remaining blockers: `../modern-x64/README.md`.

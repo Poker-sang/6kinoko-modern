@@ -33,3 +33,9 @@ render bridge and legacy_string.cpp. Cases cover long-name deep copy, independen
 string lifetime, constructor defaults, crop copying, snapshot fields, mutable
 visible handle versus retained reference, borrowed cleanup and repeated unload.
 Runtime assertions are compiled only, not executed.
+
+The missing-length `kinoko_string_assign_cstr` entry now resides beside its
+Windows scanner in legacy_string_scan.cpp. The explicit-length native string
+implementation links independently for portable contracts; full-game string
+behavior is unchanged. Mesh texture replacement and diagnostic texture access
+also use the native object, eliminating their old +68/+40 reads.

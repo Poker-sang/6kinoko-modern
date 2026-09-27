@@ -99,9 +99,6 @@ extern "C" void* kinoko_string_assign_n(void* object, const char* source, uint32
     StringView(object).assign(source, size);
     return object;
 }
-extern "C" void* kinoko_string_assign_cstr(void* object, const char* source) {
-    return kinoko_string_assign_n(object, source, kinoko_safe_c_string_length(source));
-}
 extern "C" void* kinoko_string_assign_substring(void* object, const void* source,
     uint32_t position, uint32_t size) {
     if (!object || !source) return 0;

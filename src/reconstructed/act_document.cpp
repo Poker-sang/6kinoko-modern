@@ -741,9 +741,11 @@ int32_t kinoko_act_load(KinokoActDocument* this_ptr, KinokoArchiveReader* reader
             kinoko::native::RecordView<kinoko::act::ResourceIdentityRecord> identity(resource);
             kinoko_trace_i32("act:resource-id",
                 identity.get(&kinoko::act::ResourceIdentityRecord::id));
-            // The +40 word is diagnostic only; resource subclasses differ here.
+            const auto* methods = kinoko::legacy::load<const void*>(resource);
+            const auto* symbols = kinoko_act_host_symbols();
+            const bool image = methods == symbols->texture_resource_vtable || methods == symbols->render_target_vtable;
             kinoko_trace_i32("act:resource-texture",
-                field<int32_t>(address(resource) + 40));
+                image ? kinoko::act::texture_resource(resource).texture : 0);
         }
     }
     kinoko_trace_i32("act:loaded-layers", (int32_t)layer_count);

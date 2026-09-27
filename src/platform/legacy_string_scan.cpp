@@ -56,3 +56,8 @@ extern "C" uint32_t kinoko_safe_c_string_length(const char *source)
     }
     return 0;
 }
+
+// This missing-length entry belongs to the platform scanning boundary.
+extern "C" void* kinoko_string_assign_cstr(void* object, const char* source) {
+    return kinoko_string_assign_n(object, source, kinoko_safe_c_string_length(source));
+}

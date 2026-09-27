@@ -1,3 +1,4 @@
+#include "kinoko/act_texture_resource.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/act_mesh.hpp"
 #include "kinoko/act_layout3d_io.h"
@@ -238,7 +239,7 @@ int32_t replace_texture(Resource *resource,const char *name,KinokoActResource *t
     const auto query=legacy::load<Query>(legacy::load<unsigned char*>(texture)+8);
     void *converted=nullptr;
     if(!query(texture,&target,&converted) && !query(texture,&image,&converted)) return E_FAIL;
-    const auto handle=legacy::load<int32_t>(static_cast<unsigned char*>(converted)+68);
+    const auto handle=kinoko::act::texture_resource(converted).texture;
     for(auto *node=resource->renders->next;node!=resource->renders;node=node->next)
         if(*name && handle) node->render.replacements.emplace(name,handle); // map insert does not overwrite
     return S_OK;
