@@ -1,0 +1,13 @@
+{
+  "source_commit": "686d54ba2b6bcfd5aeaf616ecd6685b42a920cbd",
+  "configuration": "Windows x64 Release",
+  "target": "kinoko_graphics_runtime_contract",
+  "compile_succeeded": true,
+  "full_game_built": false,
+  "tests_executed": false,
+  "machine": "AMD64 (0x8664)",
+  "executable": "runtime-builds\\modern-width-x64-01\\kinoko_graphics_runtime_contract.exe",
+  "size": 17920,
+  "sha256": "7a8a2a62e90dcd32841e253164f413325d5e544525889378324a29e21111abd2",
+  "scope": "Portable runtime records and device listener implementation, plus actual public renderer/texture headers on Windows"
+}

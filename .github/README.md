@@ -27,7 +27,7 @@ The old comparison target, SDK alias branches, cloned libraries and D3DX import
 library have been removed. Active gameplay/VM contracts compile against the sole
 modern backend. Old COM fixture sources are retained as non-build migration
 evidence; their unported assertions are not counted as current test coverage.
-The user reports `modern-no-d3d9-01` currently normal; this is user feedback,
+The user reports `modern-cleanup-02` currently normal; this is user feedback,
 not agent-run validation. Full-game x64 and non-Windows support remain pending.
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
@@ -39,3 +39,5 @@ Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, 
 [SDL audio migration / 音频迁移](../docs/modern-audio/README.md) · [Latest audio build / 音频构建交接](../docs/modern-audio/BUILD.md).
 
 [SDL GPU game integration / 游戏渲染迁移](../docs/modern-gpu/GAME.md).
+
+[Runtime graphics width audit / 图形运行时宽度审计](../docs/modern-x64/README.md).

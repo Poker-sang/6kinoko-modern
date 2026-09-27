@@ -1,0 +1,26 @@
+# Runtime graphics width checkpoint
+
+Both builds use source `686d54ba2b6bcfd5aeaf616ecd6685b42a920cbd`.
+
+- `modern-width-01`: complete Win32 Release game and 66 active contract executables
+  compiled successfully. No executable was run.
+- Game: `runtime-builds/modern-width-01/kinoko_modern_gpu.exe`.
+- Three original DAT copied beside the game, checked by size/SHA256. Keep adjacent
+  `shaders/`. Exact hashes and shader hashes: `width-01-artifacts.json`.
+- The complete dependency audit passed: 99 compiler and 76 linker input logs,
+  with no D3D9/D3DX SDK inputs or game DLL/load-entry markers.
+- `modern-width-x64-01`: only `kinoko_graphics_runtime_contract` compiled under
+  `KINOKO_PLATFORM_ONLY=ON`, `-A x64`, Release. It includes runtime records,
+  production listener registry and Windows public renderer/texture headers.
+- Static PE header inspection confirms machine AMD64 (0x8664). Exact artifact
+  and scope: `width-x64-01-artifacts.json`. This is not an x64 game build.
+- Runtime order/context/removal assertions were compiled but not executed;
+  compile-time layout/type assertions passed in both builds. No game, preview,
+  CTest or contract executable was run.
+- All configure/build/staging/static-audit logs and artifacts retained under the
+  two build-runs/runtime-builds directories. The x64 executable is a contract,
+  not the game handoff, and does not need DAT files.
+- Width scan is review evidence, not a runtime test or complete x64 safety proof.
+- User reports modern-cleanup-02 currently normal; not agent-run validation.
+- Prior CI 36327876216 succeeded. The new runtime contract is included in the
+  portable Windows x64/Linux/macOS CI matrix; current push CI is separate.

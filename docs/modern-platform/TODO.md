@@ -186,3 +186,12 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] Port retired stage/gameplay assertions to modern resource ownership; do not count them as active coverage.
 - [x] User reports modern-no-d3d9-01 normal; not agent-run validation.
 - Still-live legacy ABI, fixed-layout records and Win32 services need migration, not blind deletion.
+
+## x64 preparation checkpoint 1
+- [x] Inventory maintained-source width/layout candidates; manually triage runtime pointers versus fixed-format values.
+- [x] Remove renderer's original size/padding/vtable-prefix dependency; use explicit device listener context callbacks.
+- [x] Put renderer/texture-slot/listener records in a native-width runtime header; keep texture handles 32-bit indices.
+- [x] Compile runtime/listener contract for Windows x64 without original fixed-layout headers (not executed).
+- [ ] Separate font and ACT resource runtime ownership from original byte views.
+- [ ] Migrate Squirrel wrapper addresses and original method ABI before lifting full-game Win32 restriction.
+- Audit scope and remaining blockers: `../modern-x64/README.md`.
