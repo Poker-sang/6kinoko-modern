@@ -6,7 +6,7 @@
 #include "kinoko/string_layout.h"
 #include "kinoko/string_font.h"
 #include "kinoko/act_layout_records.hpp"
-#include "kinoko/string_atlas_records.hpp"
+#include "kinoko/font_runtime.hpp"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/texture_store.h"
@@ -20,19 +20,19 @@ using kinoko::legacy::pointer;
 using kinoko::legacy::StringView;
 using LayoutRecord=kinoko::act::StringLayoutRecord;
 using GlyphRecord=kinoko::act::StringGlyphRecord;
-using AtlasRecord=kinoko::text::AtlasLifecycle;
+using AtlasRecord=kinoko::text::FontAtlas;
 using kinoko::native::RecordView;
 void* new_page(KinokoStringLayout* layout) {
     auto* page=kinoko_string_append_atlas(layout);
-    const RecordView<AtlasRecord> atlas(page);
-    atlas.set(&AtlasRecord::cursor_x,0);
-    atlas.set(&AtlasRecord::cursor_y,0);
-    atlas.set(&AtlasRecord::row_height,0);
-    atlas.set(&AtlasRecord::references,0);
-    atlas.set(&AtlasRecord::width,512);
-    atlas.set(&AtlasRecord::height,512);
-    kinoko_string_font_configure(atlas.bytes(&AtlasRecord::renderer), layout);
-    atlas.set(&AtlasRecord::texture,kinoko_string_font_texture(atlas.bytes(&AtlasRecord::renderer)));
+    auto* atlas=static_cast<AtlasRecord*>(page);
+    atlas->cursor_x = 0;
+    atlas->cursor_y = 0;
+    atlas->row_height = 0;
+    atlas->references = 0;
+    atlas->width = 512;
+    atlas->height = 512;
+    kinoko_string_font_configure(&atlas->renderer, layout);
+    atlas->texture = kinoko_string_font_texture(&atlas->renderer);
     return page;
 }
 // 404EE0's CSpriteEx geometry and texture coordinates. The generic RetDec
@@ -85,31 +85,31 @@ extern "C" int32_t kinoko_string_add_character(KinokoStringLayout* layout,const 
     for(;;) {
         if(kinoko_string_atlas_size(layout)==0) new_page(layout);
         auto* page=kinoko_string_atlas_at(layout, kinoko_string_atlas_size(layout)-1);
-        const RecordView<AtlasRecord> atlas(page);
-        kinoko_string_font_configure(atlas.bytes(&AtlasRecord::renderer), layout);
+        auto* atlas=static_cast<AtlasRecord*>(page);
+        kinoko_string_font_configure(&atlas->renderer, layout);
         int32_t width=0,height=0;
-        kinoko_string_font_upload(atlas.bytes(&AtlasRecord::renderer), atlas.get(&AtlasRecord::texture), character, atlas.get(&AtlasRecord::cursor_x), atlas.get(&AtlasRecord::cursor_y), &width, &height);
-        if(width>=atlas.get(&AtlasRecord::width) || height>=atlas.get(&AtlasRecord::height)) return 0;
-        if(atlas.get(&AtlasRecord::cursor_x)+width>=atlas.get(&AtlasRecord::width) ||
-            (!width && atlas.get(&AtlasRecord::height)-atlas.get(&AtlasRecord::row_height)-
-                atlas.get(&AtlasRecord::cursor_y)>font_height)) {
-            atlas.set(&AtlasRecord::cursor_y,
-                atlas.get(&AtlasRecord::cursor_y)+atlas.get(&AtlasRecord::row_height));
-            atlas.set(&AtlasRecord::cursor_x,0);
-            atlas.set(&AtlasRecord::row_height,0);
+        kinoko_string_font_upload(&atlas->renderer, atlas->texture, character, atlas->cursor_x, atlas->cursor_y, &width, &height);
+        if(width>=atlas->width || height>=atlas->height) return 0;
+        if(atlas->cursor_x+width>=atlas->width ||
+            (!width && atlas->height-atlas->row_height-
+                atlas->cursor_y>font_height)) {
+            atlas->cursor_y =
+                atlas->cursor_y+atlas->row_height;
+            atlas->cursor_x = 0;
+            atlas->row_height = 0;
             continue;
         }
-        if(atlas.get(&AtlasRecord::cursor_y)+height>=atlas.get(&AtlasRecord::height) || !height) {
+        if(atlas->cursor_y+height>=atlas->height || !height) {
             new_page(layout);continue;
         }
         // 440A9B-440BF4 is absent from IDA's decompilation: width/height are
         // output parameters of 405F80, not constants. Follow the assembly.
-        atlas.set(&AtlasRecord::references,atlas.get(&AtlasRecord::references)+1);
+        atlas->references = atlas->references+1;
         auto* glyph=kinoko_string_append_glyph(layout);
         const RecordView<GlyphRecord> sprite(glyph);
         auto quad=sprite.view(&GlyphRecord::quad);
-        rectangle(quad,atlas.get(&AtlasRecord::texture),atlas.get(&AtlasRecord::cursor_x),
-            atlas.get(&AtlasRecord::cursor_y),width,height);
+        rectangle(quad,atlas->texture,atlas->cursor_x,
+            atlas->cursor_y,width,height);
         quad.set(&kinoko::render::QuadRecord::positions, quad.get(&kinoko::render::QuadRecord::base_positions));
         sprite.set(&GlyphRecord::x,cursor);
         sprite.set(&GlyphRecord::y,text.get(&LayoutRecord::cursor_y));
@@ -117,11 +117,11 @@ extern "C" int32_t kinoko_string_add_character(KinokoStringLayout* layout,const 
         sprite.set(&GlyphRecord::height,height);
         const auto id=text.get(&LayoutRecord::next_glyph_id);
         sprite.set(&GlyphRecord::id,id);
-        atlas.set(&AtlasRecord::last_glyph_id,id);
+        atlas->last_glyph_id = id;
         sprite.set(&GlyphRecord::atlas,page);
         text.set(&LayoutRecord::next_glyph_id,id+1);
-        atlas.set(&AtlasRecord::row_height,(std::max)(atlas.get(&AtlasRecord::row_height),height));
-        atlas.set(&AtlasRecord::cursor_x,atlas.get(&AtlasRecord::cursor_x)+width);
+        atlas->row_height = (std::max)(atlas->row_height,height);
+        atlas->cursor_x = atlas->cursor_x+width;
         cursor+=width;
         auto line_height=(std::max)(text.get(&LayoutRecord::line_height),height);
         if(text.get(&LayoutRecord::wrap_width)>=0 && cursor>=text.get(&LayoutRecord::wrap_width)) {

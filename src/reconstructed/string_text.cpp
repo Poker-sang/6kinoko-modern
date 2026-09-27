@@ -1,6 +1,6 @@
 #include "kinoko/string_layout.h"
 #include "kinoko/act_layout_records.hpp"
-#include "kinoko/string_atlas_records.hpp"
+#include "kinoko/font_runtime.hpp"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/legacy_string.hpp"
 #include <windows.h>
@@ -46,9 +46,7 @@ void adjust_atlas_reference(const void* glyph_address,int delta) {
     const kinoko::native::RecordView<GlyphRecord> glyph(const_cast<void*>(glyph_address));
     auto* atlas=glyph.get(&GlyphRecord::atlas);
     if(!atlas) return;
-    const kinoko::native::RecordView<kinoko::text::AtlasLifecycle> lifetime(atlas);
-    lifetime.set(&kinoko::text::AtlasLifecycle::references,
-        lifetime.get(&kinoko::text::AtlasLifecycle::references)+delta);
+    static_cast<kinoko::text::FontAtlas*>(atlas)->references += delta;
 }
 void references(const Deque& q,int delta) {
     for(uint32_t i=0;i<q.size();++i) {

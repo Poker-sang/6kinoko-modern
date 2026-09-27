@@ -281,6 +281,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     src/reconstructed/string_layout_render.cpp
     src/reconstructed/string_render.cpp
     src/reconstructed/string_font.cpp
+    src/reconstructed/string_font_configure.cpp
     src/reconstructed/string_text.cpp
     src/reconstructed/string_glyph_cache.cpp
     src/reconstructed/act_document.cpp

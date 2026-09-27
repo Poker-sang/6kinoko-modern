@@ -48,3 +48,14 @@ add_executable(kinoko_graphics_runtime_contract tests/graphics_runtime_contract.
 target_include_directories(kinoko_graphics_runtime_contract PRIVATE include "${CMAKE_CURRENT_SOURCE_DIR}/cmake/no-d3d9")
 target_compile_features(kinoko_graphics_runtime_contract PRIVATE cxx_std_17)
 add_test(NAME graphics_runtime_contract COMMAND kinoko_graphics_runtime_contract)
+
+# Font ownership is native-width; the ACT configuration bridge remains x86.
+add_executable(kinoko_font_runtime_contract tests/font_runtime_contract.cpp)
+target_include_directories(kinoko_font_runtime_contract PRIVATE include)
+target_compile_features(kinoko_font_runtime_contract PRIVATE cxx_std_17)
+add_test(NAME font_runtime_contract COMMAND kinoko_font_runtime_contract)
+if(WIN32)
+    add_library(kinoko_font_raster_compile OBJECT src/reconstructed/string_font.cpp)
+    target_include_directories(kinoko_font_raster_compile PRIVATE include "${CMAKE_CURRENT_SOURCE_DIR}/cmake/no-d3d9")
+    target_compile_features(kinoko_font_raster_compile PRIVATE cxx_std_17)
+endif()
