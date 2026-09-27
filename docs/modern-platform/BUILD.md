@@ -17,3 +17,12 @@
 
 The game executable retains its inherited filename for compatibility with staging
 scripts; it is a modern-fork build, not a replacement for rebuild binaries.
+
+## Final local batch: modern-03
+
+- Source: `4d64b7f` (full SHA in modern-03-artifacts.json).
+- All Windows x86 targets compiled; UTF-8 SDL title fix included.
+- EXE: `C:/WorkSpace/6kinoko-modern/runtime-builds/modern-03/kinoko_retdec_rebuild.exe`.
+- Three DAT copied and size/SHA256 verified. Quiet build, no gameplay or tests executed.
+- All prior artifacts retained. 65 legacy contract executables plus new platform
+  contract compiled; these counts are NOT test pass counts.
