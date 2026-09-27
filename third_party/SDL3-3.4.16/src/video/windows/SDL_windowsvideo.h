@@ -661,8 +661,11 @@ extern bool g_WindowsEnableMessageLoop;
 extern bool g_WindowsEnableMenuMnemonics;
 extern bool g_WindowFrameUsableWhileCursorHidden;
 
+// 6kinoko-modern patch: the loader exists only with the D3D9 renderer.
+#ifdef SDL_VIDEO_RENDER_D3D
 typedef struct IDirect3D9 IDirect3D9;
 extern bool D3D_LoadDLL(void **pD3DDLL, IDirect3D9 **pDirect3D9Interface);
+#endif
 
 extern SDL_SystemTheme WIN_GetSystemTheme(void);
 extern bool WIN_IsPerMonitorV2DPIAware(SDL_VideoDevice *_this);

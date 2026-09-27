@@ -30,7 +30,6 @@ using kinoko_co_initialize_fn = HRESULT (WINAPI *)(LPVOID);
 using kinoko_co_uninitialize_fn = void (WINAPI *)(void);
 using kinoko_co_create_instance_fn = HRESULT (WINAPI *)(
     const GUID *, void *, DWORD, const GUID *, LPVOID *);
-using kinoko_direct3d_create9_fn = LPVOID (WINAPI *)(UINT);
 using kinoko_time_get_time_fn = DWORD (WINAPI *)(void);
 using kinoko_time_begin_period_fn = UINT (WINAPI *)(UINT);
 
@@ -82,16 +81,6 @@ Function resolve(const char* module, const char* entry) {
 extern "C" {
 
 int kinoko_valid_range(const void* address, size_t size, int writeable);
-
-int32_t *Direct3DCreate9(int32_t version)
-{
-    kinoko_direct3d_create9_fn create9 =
-        resolve<kinoko_direct3d_create9_fn>("d3d9.dll", "Direct3DCreate9");
-    if (create9 == nullptr) {
-        return nullptr;
-    }
-    return (int32_t *)create9((UINT)version);
-}
 
 int32_t CoInitialize(void *reserved)
 {

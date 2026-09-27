@@ -15,16 +15,21 @@ compile contract checks them against the SDK, plus matrix/vertex/map layouts.
 
 The API still retains legacy command methods and Windows status/window types.
 Renderer records and other original x86 object layouts still need migration;
-this is not a full-game x64 or Linux/macOS port. Vendored SDL still compiles its
-unused D3D9 SDL_Renderer driver and Windows adapter helper against the Windows SDK;
-removing that upstream build dependency is separate from the game-source guard.
-The complete dependency build therefore still requires Windows SDK D3D9 headers.
+this is not a full-game x64 or Linux/macOS port.
 
-Use `tools/build_staged.ps1 -ModernOnly` with the usual name/resource/generator
-arguments to build and stage only the modern game and its required dependencies.
-This sets `KINOKO_BUILD_LEGACY_COMPARISON=OFF`, excludes original root targets
-from ALL unless required by the modern dependency graph, and disables their CTest
-entries. Explicit comparison targets remain available; the default remains ON.
+The default build now disables legacy comparison targets and all SDL D3D9 support.
+SDL_RENDER_D3D is forced OFF. A documented SDL local patch also excludes the
+Windows D3D9 adapter DLL loader and SDK header probe; its public adapter query
+returns unsupported (-1). No game code calls that SDL helper. The unused RetDec
+Direct3DCreate9 DLL-loader wrapper has been removed from the shared CRT library.
+D3D9/D3DX header guards cover SDL itself as well as modern game targets.
+SDL GPU's D3D12 backend, DXGI, Vulkan and Metal are unaffected.
+
+`tools/build_staged.ps1` now builds/stages the modern game by default. The existing
+`-ModernOnly` switch remains accepted. Use `-LegacyComparison` to additionally
+build the old game/contracts (CMake: KINOKO_BUILD_LEGACY_COMPARISON=ON); this explicit
+historical comparison mode requires D3D9/D3DX. Its SDK interfaces, fixtures and
+original decompiled evidence are retained outside the default dependency graph.
 
 The new path covers texture creation, CV2 ARGB1555/ARGB8888 conversion, mutable
 font atlas snapshots, binding, render targets, source/allocation dimensions,

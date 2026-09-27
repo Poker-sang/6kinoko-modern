@@ -172,7 +172,9 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Remove modern-game SDK enum/record/header dependencies and class-rewriting macros.
 - [x] Make legacy comparison targets optional in the default build graph.
 - [x] Record user feedback: modern-gpu-game-02 currently normal (not agent-run validation).
-- [ ] Remove unused vendored SDL D3D9 renderer/adapter-helper build dependency.
+- [x] Remove unused vendored SDL D3D9 renderer/adapter-helper build dependency.
+- [x] Default to the modern-only build; retain explicit historical comparison mode.
+- [x] User reports modern-gpu-api-04 currently normal (not agent-run validation).
 - [ ] Separate remaining renderer/runtime records from original x86 layouts.
 - [ ] Migrate remaining Win32 services and full-game x64.
 - Details: `../modern-gpu/GAME.md`. Legacy D3D9 comparison EXE remains available.

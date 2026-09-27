@@ -1,4 +1,4 @@
-option(KINOKO_BUILD_LEGACY_COMPARISON "Build the old game and comparison contracts by default" ON)
+option(KINOKO_BUILD_LEGACY_COMPARISON "Build the old game and comparison contracts by default" OFF)
 # Capture the pre-modern root targets. OFF excludes these from ALL unless the
 # GPU game needs them. Explicit comparison targets remain available.
 get_property(kinoko_comparison_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)

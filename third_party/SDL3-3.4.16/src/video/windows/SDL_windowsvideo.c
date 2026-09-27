@@ -699,6 +699,8 @@ void WIN_VideoQuit(SDL_VideoDevice *_this)
 }
 
 #if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
+// 6kinoko-modern patch: do not load or include D3D9 when its renderer is disabled.
+#ifdef SDL_VIDEO_RENDER_D3D
 #define D3D_DEBUG_INFO
 #include <d3d9.h>
 
@@ -798,6 +800,14 @@ int SDL_GetDirect3D9AdapterIndex(SDL_DisplayID displayID)
         return adapterIndex;
     }
 }
+#else
+int SDL_GetDirect3D9AdapterIndex(SDL_DisplayID displayID)
+{
+    (void)displayID;
+    SDL_Unsupported();
+    return -1;
+}
+#endif // SDL_VIDEO_RENDER_D3D
 #endif // !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
 
 bool SDL_GetDXGIOutputInfo(SDL_DisplayID displayID, int *adapterIndex, int *outputIndex)

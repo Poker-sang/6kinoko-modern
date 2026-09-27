@@ -20,12 +20,12 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
 Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
-`kinoko_retdec_rebuild.exe` retains D3D9 for comparison. The GPU game has no
-D3D9/D3DX DLL imports; its own sources compile without D3D9 SDK headers.
-Vendored SDL still includes unused D3D9 support. 用户反馈
-`modern-gpu-game-02` 目前正常，尚未完成全面运行一致性验证。
-使用 `tools/build_staged.ps1 -ModernOnly`（加上常规参数）可跳过旧版对照目标。
-完整游戏的 x64 和非 Windows 平台迁移仍待完成。
+默认只构建现代版，移除其 D3D9/D3DX DLL 导入、SDK 头文件依赖、SDL D3D9 渲染器
+及 D3D9 DLL 加载入口。SDL 包含[已记录的本地补丁](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md)。
+使用 `tools/build_staged.ps1 -LegacyComparison`（加上常规参数）可显式构建历史 D3D9
+对照版及测试；`-ModernOnly` 仍可使用。
+用户反馈 `modern-gpu-api-04` 目前正常，不记为代理运行验证。
+完整游戏的 x64 和非 Windows 平台支持仍待完成。
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 

@@ -2203,12 +2203,17 @@ elseif(WINDOWS)
       string(APPEND CMAKE_REQUIRED_FLAGS " /I\"$ENV{DXSDK_DIR}\\Include\"")
     endif()
 
-    # d3d9.h may need windows.h, but does not include it itself.
-    check_c_source_compiles("
-      #include <windows.h>
-      #include <d3d9.h>
-      int main(int argc, char **argv) { (void)argc; (void)argv; return 0; }" HAVE_D3D9_H
-    )
+    # 6kinoko-modern patch: no D3D9 SDK probe for a disabled D3D9 renderer.
+    if(SDL_RENDER_D3D)
+      # d3d9.h may need windows.h, but does not include it itself.
+      check_c_source_compiles("
+        #include <windows.h>
+        #include <d3d9.h>
+        int main(int argc, char **argv) { (void)argc; (void)argv; return 0; }" HAVE_D3D9_H
+      )
+    else()
+      set(HAVE_D3D9_H FALSE)
+    endif()
     check_c_source_compiles("
       #include <d3d11_1.h>
       int main(int argc, char **argv) { (void)argc; (void)argv; return 0; }" HAVE_D3D11_H
