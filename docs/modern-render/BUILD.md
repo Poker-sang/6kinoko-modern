@@ -8,3 +8,13 @@ A follow-up makes the header transition table an inline C++17 variable so the
 shared inline algorithm refers to the same table in every translation unit.
 The final build is modern-render-02; its exact source and hashes will be copied
 from the build manifest after successful compilation/staging.
+
+Final Win32 Release all-target build succeeded at
+`27ca62f3ae5a40f8ac5e02676adfe5b66d52ed83`.
+EXE: `runtime-builds/modern-render-02/kinoko_retdec_rebuild.exe`.
+All three DAT files are beside the EXE with size/SHA256 verification complete.
+The manifest is `modern-render-02-artifacts.json`; its contract count covers the
+65 legacy tools-directory targets. The new portable render blend contract also
+compiled in the runtime directory, as did the existing portable modules/contracts.
+Neither tests nor the game were executed. Logs and both build trees are retained.
+D3D9 is still the active renderer; no full-game x64/Linux/macOS claim is made.

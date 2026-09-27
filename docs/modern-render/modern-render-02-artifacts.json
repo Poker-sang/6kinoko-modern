@@ -1,0 +1,36 @@
+﻿{
+    "source_commit":  "27ca62f3ae5a40f8ac5e02676adfe5b66d52ed83",
+    "configuration":  "Win32 Release",
+    "trace_disabled":  true,
+    "source_directory":  "C:\\WorkSpace\\6kinoko-modern",
+    "build_directory":  "C:\\WorkSpace\\6kinoko-modern\\build-runs\\modern-render-02",
+    "runtime_directory":  "C:\\WorkSpace\\6kinoko-modern\\runtime-builds\\modern-render-02",
+    "generator":  "Visual Studio 17 2022",
+    "full_build_succeeded":  true,
+    "dat_staging_verified":  true,
+    "contracts_compiled":  65,
+    "game_run":  false,
+    "tests_run":  false,
+    "files":  [
+                  {
+                      "name":  "kinoko_retdec_rebuild.exe",
+                      "size":  3142144,
+                      "sha256":  "A1DC9A42C8AC174E55C340AC351849DD4D81D38B2A979793CAC6613E9F45CBB0"
+                  },
+                  {
+                      "name":  "6kinoko_a.dat",
+                      "size":  163424746,
+                      "sha256":  "DD3AFF7E3E6BF0816C3073D113C3CCB12242A67E578D012C3B87190E7E24FC64"
+                  },
+                  {
+                      "name":  "6kinoko_b.dat",
+                      "size":  44681244,
+                      "sha256":  "4D47B8E241886BE4300025324DDD7D1E3C5729232FF67E011F14163DB60130D2"
+                  },
+                  {
+                      "name":  "6kinoko_c.dat",
+                      "size":  11796163,
+                      "sha256":  "80327F6F680D53AAA5539F45E11D33C1C6BA6B862648760725F44A380121852E"
+                  }
+              ]
+}
