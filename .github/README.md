@@ -32,7 +32,10 @@ not agent-run validation. Full-game x64 and non-Windows support remain pending.
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 
-Font and atlas runtime storage now uses native pointer widths; the isolated Windows x64 font contract and rasterizer compile. GDI and outer ACT/VM boundaries still require migration.
+Font/atlas, shared string ownership and Squirrel object payload storage now
+compile in isolated Windows x64 checks. ACT texture rendering uses a typed
+state snapshot. The complete game still requires x86 ACT/VM layouts and method
+adapters; these isolated checks do not establish x64 gameplay compatibility.
 
 ## Documentation / 文档
 

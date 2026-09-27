@@ -1,4 +1,28 @@
-# Font runtime checkpoint
+# x64 preparation build evidence
+
+## ACT texture and host width checkpoint
+
+Source: `4165595335a365feba9f7b98e2f1613c9d82a5b1`.
+
+- `modern-resource-pointer-01`: full Win32 Release game and 69 contract
+  executables compiled. Three original DAT were copied beside the EXE and
+  checked by size and SHA256. Keep the adjacent shaders directory.
+- Game: `runtime-builds/modern-resource-pointer-01/kinoko_modern_gpu.exe`.
+- Static D3D9 audit passed: 105 compiler and 79 linker dependency logs,
+  no violations. Report: `build-runs/modern-resource-pointer-01/d3d9-audit.json`.
+- `modern-resource-pointer-x64-01`: ACT texture state, shared string boundary,
+  actual `legacy_string.cpp`, and Squirrel object storage compiled separately
+  for Windows x64. This does not compile or link the full x64 game.
+- `modern-act-texture-01` and `modern-squirrel-width-01` failed during source
+  migration. Their logs and any staged files are retained. The corrected builds
+  used fresh names; no previous artifacts were overwritten.
+- No game, CTest or contract executable was run. User reports the preceding
+  `modern-font-01` build normal; this is user feedback, not agent validation.
+- Exact x86 hashes and DAT checks: `build-runs/modern-resource-pointer-01/artifacts.json`.
+  Final x64 compiler logs: `build-runs/modern-resource-pointer-x64-01/build.log`.
+
+
+## Font runtime checkpoint
 
 Source: `8181b134d3b5df545d80222740d95683f71893ae`.
 

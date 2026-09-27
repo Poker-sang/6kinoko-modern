@@ -195,4 +195,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Separate font/atlas runtime storage from original byte views; preserve the x86 ACT configuration bridge.
 - [ ] Separate remaining ACT resource ownership and outer string/glyph layouts.
 - [ ] Migrate Squirrel wrapper addresses and original method ABI before lifting full-game Win32 restriction.
+- [x] Use a typed ACT texture render snapshot at draw/layout/target callers; remove the duplicate fixed prefix.
+- [x] Derive glyph storage and clone copy ranges from record fields; keep the original x86 layout and virtual identity.
+- [x] Compile the shared string owner and Squirrel object storage at native Windows x64 pointer width; return payload references directly as pointers.
+- [ ] Replace the 100-byte ACT resource allocation, clone/retain ownership and vtable dispatch with native resource objects.
+- [ ] Replace the 260-byte outer string layout and 256-byte glyph record after their serialization and quad/virtual callers migrate.
+- [ ] Replace remaining integer-address Squirrel bindings and x86 fastcall/thiscall adapters; then attempt a full x64 game link.
 - Audit scope and remaining blockers: `../modern-x64/README.md`.

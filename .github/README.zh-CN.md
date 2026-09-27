@@ -30,7 +30,9 @@ Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 
-字体与图集运行时已采用原生指针宽度；独立 Windows x64 字体契约和栅格化代码已编译。GDI 及外层 ACT/VM 边界仍待迁移。
+字体/图集、共享字符串所有权和 Squirrel 对象负载存储已通过独立 Windows x64 编译；
+ACT 纹理渲染改用具名状态快照。完整游戏仍依赖 x86 ACT/VM 布局和方法适配，
+这些独立编译结果不代表 x64 游戏运行兼容。
 
 ## Documentation / 文档
 

@@ -72,3 +72,26 @@ The font/atlas contract is part of portable builds. On Windows the actual font
 raster/upload translation unit also compiles independently as an object target.
 GDI remains Windows-specific; this does not deliver cross-platform fonts or an
 x64 game. Runtime assertions and visual equivalence have not been executed.
+
+## ACT and host width checkpoint
+
+The render path now reads ACT texture values through `act_texture_bridge.hpp`
+into `TextureRuntimeState`, a native-width render snapshot. The duplicate
+`TextureResourcePrefix` was removed. This snapshot does not own a texture; the
+100-byte `TextureResourceRecord` factory, clone ownership and virtual table
+remain x86 records. The texture handle remains a 32-bit registry index.
+
+Glyph queue allocation and clone ranges derive from `StringGlyphRecord` fields
+instead of literal 256/20/24/232 byte ranges. The outer string and glyph records
+still have their original 260/256-byte x86 layout. Their property schema uses
+field offsets; changing the objects requires migrating serialization and all
+virtual/quad callers together.
+
+The shared 24-byte string boundary can now place its two owner pointers in the
+16-byte inline area at either Windows pointer width. SqPlus object storage can
+be compiled with native pointer width; SqPlus and Sqrat payload-reference
+returns no longer narrow through `int32_t`. The old integer-address APIs and
+class-binding/actor records still require x86. `legacy_memory.hpp`,
+`legacy_abi.cpp`, `legacy_method_entries.cpp` and the top-level full-game CMake
+gate remain explicit blockers. The x64 checks compile selected objects only;
+they are not a linked game or executed contracts. See BUILD.md for artifacts.
