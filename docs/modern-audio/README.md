@@ -53,3 +53,18 @@ The output backend is portable; audio_runtime.cpp still uses the inherited
 Win32 workers, critical sections, timer and CV3 WAVEFORMATEX parsing boundary.
 That high-level service migration remains separate. Full game remains Windows x86.
 Do not claim waveform, audible latency, or gameplay parity from compilation.
+
+## Evidence follow-up and first build
+
+The previous IDA session was unreachable. The supplied start/open scripts opened
+a fresh read-only analysis session, then standard survey and byte reads succeeded:
+ida-survey.json and ida-byte-anchors-current.json. These are binary anchors, not
+new full-function decompilations; behavioral evidence is the preserved IDA reports
+listed above. No database mutation bypass was attempted. The survey's SendMessageA
+network classification is a heuristic misclassification, not network evidence.
+
+First Windows build modern-audio-01 found worker COM initialization still depending
+on the removed dsound header. The workers no longer use COM objects; that obsolete
+initialization/gating was removed. SDL initializes its own native audio driver.
+The failed build is retained. The independent x64 backend/contracts compiled at
+315756bb (portable-audio-01); no binary was executed.

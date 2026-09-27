@@ -1,6 +1,6 @@
 # 6kinoko-modern
 
-6kinoko-rebuild 的现代化分支。本批接入 SDL3 窗口与物理输入，升级 Ogg/Vorbis。完整游戏目前仍限 Windows x86；可移植模块单独构建，尚未验证游戏运行。
+6kinoko-rebuild 的现代化分支。本批接入 SDL3 窗口、物理输入与音频输出，升级 Ogg/Vorbis。完整游戏目前仍限 Windows x86；可移植模块单独构建，尚未验证游戏运行。
 
 ## Build / 构建
 
@@ -17,7 +17,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_staged.ps1 -Name
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
-Windows x86 game: SDL window/input + legacy D3D9/DirectSound.
+Windows x86 game: SDL window/input/audio + legacy D3D9.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 
 ## Documentation / 文档

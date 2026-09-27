@@ -1,6 +1,6 @@
 # 6kinoko-modern
 
-SDL3 platform migration fork of 6kinoko-rebuild. This first step replaces the window and physical input and upgrades Ogg/Vorbis. The full game is still Windows x86; portable modules build separately. No gameplay validation is claimed.
+SDL3 platform migration fork of 6kinoko-rebuild. This first step replaces the window, physical input and audio output and upgrades Ogg/Vorbis. The full game is still Windows x86; portable modules build separately. No gameplay validation is claimed.
 
 ## Build / 构建
 
@@ -17,7 +17,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_staged.ps1 -Name
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
-Windows x86 game: SDL window/input + legacy D3D9/DirectSound.
+Windows x86 game: SDL window/input/audio + legacy D3D9.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 
 ## Documentation / 文档

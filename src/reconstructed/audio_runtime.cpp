@@ -1612,41 +1612,35 @@ int32_t kinoko_audio_set_bgm_volume(float gain) {
 }
 
 int32_t run_audio_update_worker(void) {
-    if (SUCCEEDED(CoInitialize(NULL))) {
-        while (InterlockedCompareExchange(&audio_workers.running, 0, 0)) {
-            if (audio_workers.stop_event.get() == NULL ||
-                WaitForSingleObject(audio_workers.stop_event.get(), 16) ==
-                    WAIT_OBJECT_0)
-                break;
-            service_audio_tick();
-        }
-        CoUninitialize();
+    while (InterlockedCompareExchange(&audio_workers.running, 0, 0)) {
+        if (audio_workers.stop_event.get() == NULL ||
+            WaitForSingleObject(audio_workers.stop_event.get(), 16) ==
+                WAIT_OBJECT_0)
+            break;
+        service_audio_tick();
     }
     return 0;
 }
 
 int32_t run_audio_loader_worker(void) {
-    if (SUCCEEDED(CoInitialize(NULL))) {
-        while (InterlockedCompareExchange(&audio_workers.running, 0, 0)) {
-            HANDLE handles[2];
-            DWORD wait_result;
+    while (InterlockedCompareExchange(&audio_workers.running, 0, 0)) {
+        HANDLE handles[2];
+        DWORD wait_result;
 
-            handles[0] = audio_workers.queue_event.get();
-            handles[1] = audio_workers.stop_event.get();
-            if (handles[0] == NULL || handles[1] == NULL)
-                break;
-            wait_result = WaitForMultipleObjects(2, handles, FALSE,
-                                                 INFINITE);
-            if (wait_result != WAIT_OBJECT_0)
-                break;
-            CriticalLock lock(&audio_workers.lock);
-            if (audio_workers.is_running()) {
-                kinoko_bgm_process_pending_locked();
-                release_retired_requests_locked();
-            }
-
+        handles[0] = audio_workers.queue_event.get();
+        handles[1] = audio_workers.stop_event.get();
+        if (handles[0] == NULL || handles[1] == NULL)
+            break;
+        wait_result = WaitForMultipleObjects(2, handles, FALSE,
+                                             INFINITE);
+        if (wait_result != WAIT_OBJECT_0)
+            break;
+        CriticalLock lock(&audio_workers.lock);
+        if (audio_workers.is_running()) {
+            kinoko_bgm_process_pending_locked();
+            release_retired_requests_locked();
         }
-        CoUninitialize();
+
     }
     return 0;
 }
