@@ -68,7 +68,7 @@ extern "C" int32_t __fastcall kinoko_method_create_render_target(KinokoActResour
     view.set(&Resource::width,width);view.set(&Resource::height,height);
     view.set(&Resource::source_width,static_cast<float>(width));
     view.set(&Resource::source_height,static_cast<float>(height));
-    view.set(&Resource::flag,uint8_t{0});
+    view.set(&Resource::auto_size,uint8_t{0});
     view.set(&Resource::texture,create(static_cast<uint32_t>(width),static_cast<uint32_t>(height)));
     return 1;
 }
