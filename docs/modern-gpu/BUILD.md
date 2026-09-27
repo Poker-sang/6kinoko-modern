@@ -33,3 +33,30 @@
   contracts compiled only. Matrix rounding, depth fallback and offscreen depth
   sharing limitations are recorded in GAME.md.
 - Foundation CI run 36320732448 succeeded; current full-game CI tracked separately.
+
+## Explicit graphics interfaces: modern-gpu-api-04
+
+- Source: `65eb6d72beebbfddb9e0df6dbe1c3e9ef08f9945`.
+- Complete Win32 Release all-target build succeeded, including both games,
+  original C contracts, GPU resources and the compile-only SDK vocabulary audit.
+- Handoff: `runtime-builds/modern-gpu-api-04/kinoko_modern_gpu.exe`.
+- All three DAT explicitly staged and size/SHA256 verified for the GPU EXE.
+- Keep `shaders/` and the three DAT beside the EXE.
+- `api-04-artifacts.json` records exact EXE/shader/DAT hashes and compiler input
+  audits: the five modern game targets consume no D3D9 SDK headers.
+- `api-04-imports.txt`: no d3d9/d3dx9 DLL imports. SDL GPU still uses D3D12.
+- `api-04-shader-toolchain.txt`: shader compiler provenance.
+- Vendored SDL itself retains its unused D3D9 driver/adapter SDK dependency;
+  see GAME.md. Windows APIs and original x86 object layouts also remain.
+- Modern-only mode separately succeeded at `a1cca83c28234bf4ad80a29508cb36ca3f7d704e`,
+  in `modern-gpu-api-only-02`; its DAT/hash manifest is `api-only-02-artifacts.json`.
+  This proves the comparison build can be omitted, not full-game portability.
+- Retained intermediate batches: api-01 (implicit COM include failure), api-02
+  (C fixture header boundary failure), api-only-01 (build/DAT succeeded but
+  manifest generation assumed a tools directory), api-03 (remaining indirect C
+  fixture header path). All logs and partial artifacts remain in build-runs and
+  runtime-builds; no failed directory was overwritten.
+- No game, preview, contract executable or local test suite was executed.
+- User feedback for modern-gpu-game-02: currently normal, not agent validation.
+- Previous CI 36322559102 succeeded. New workflow covers comparison ON and OFF;
+  current source CI status is reported separately after push.

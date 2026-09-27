@@ -1,0 +1,83 @@
+{
+  "source_commit": "65eb6d72beebbfddb9e0df6dbe1c3e9ef08f9945",
+  "full_build_succeeded": true,
+  "gpu_dat_staging_verified": true,
+  "d3d9_d3dx_imports_present": false,
+  "game_run": false,
+  "tests_run": false,
+  "modern_source_header_audit": [
+    {
+      "target": "kinoko_modern_gpu",
+      "dependency_logs": [
+        "build-runs\\modern-gpu-api-04\\kinoko_modern_gpu.dir\\Release\\kinoko_m.142A667D.tlog\\CL.read.1.tlog"
+      ],
+      "d3d9_header_inputs": []
+    },
+    {
+      "target": "kinoko_native_methods_gpu",
+      "dependency_logs": [
+        "build-runs\\modern-gpu-api-04\\kinoko_native_methods_gpu.dir\\Release\\kinoko_n.A0BBCFEB.tlog\\CL.read.1.tlog"
+      ],
+      "d3d9_header_inputs": []
+    },
+    {
+      "target": "kinoko_upstream_bindings_gpu",
+      "dependency_logs": [
+        "build-runs\\modern-gpu-api-04\\kinoko_upstream_bindings_gpu.dir\\Release\\kinoko_u.B31B3DA7.tlog\\CL.read.1.tlog"
+      ],
+      "d3d9_header_inputs": []
+    },
+    {
+      "target": "kinoko_squirrel_cpp_vm_gpu",
+      "dependency_logs": [
+        "build-runs\\modern-gpu-api-04\\kinoko_squirrel_cpp_vm_gpu.dir\\Release\\kinoko_s.7BF45DFB.tlog\\CL.read.1.tlog"
+      ],
+      "d3d9_header_inputs": []
+    },
+    {
+      "target": "kinoko_gpu_resource_contract",
+      "dependency_logs": [
+        "build-runs\\modern-gpu-api-04\\kinoko_gpu_resource_contract.dir\\Release\\kinoko_g.B6F2398D.tlog\\CL.read.1.tlog"
+      ],
+      "d3d9_header_inputs": []
+    }
+  ],
+  "third_party_sdl_still_uses_d3d9_sdk_headers": true,
+  "files": [
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\kinoko_modern_gpu.exe",
+      "size": 3202560,
+      "sha256": "6e987d36d01c253d1b7d6977d41e0b763b9efe2ee15a1ee1d08d69cf7f485d09"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\kinoko_retdec_rebuild.exe",
+      "size": 3145216,
+      "sha256": "16bbe536db9108661c464a076a67be4aeb46598e037f779e0e4ecabcf5e76dfa"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\shaders\\sprite.frag.dxbc",
+      "size": 1876,
+      "sha256": "d3a014d9e2498438e20cf28ed653cbf517a0602c5c088ea1777493b891c92d7c"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\shaders\\sprite.vert.dxbc",
+      "size": 1360,
+      "sha256": "6492adead9a1e49fa1f60dc6019e8bfcb15f096ece87382f745fb2309f3c4379"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\6kinoko_a.dat",
+      "size": 163424746,
+      "sha256": "dd3aff7e3e6bf0816c3073d113c3ccb12242a67e578d012c3b87190e7e24fc64"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\6kinoko_b.dat",
+      "size": 44681244,
+      "sha256": "4d47b8e241886be4300025324ddd7d1e3c5729232ff67e011f14163db60130d2"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-api-04\\6kinoko_c.dat",
+      "size": 11796163,
+      "sha256": "80327f6f680d53aaa5539f45e11d33c1c6ba6b862648760725f44a380121852e"
+    }
+  ]
+}

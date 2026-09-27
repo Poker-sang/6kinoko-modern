@@ -4,7 +4,7 @@ The full-game target is `kinoko_modern_gpu`. It uses the original DAT/VM/gamepla
 sources, compiled against explicit project-owned graphics interfaces that record
 SDL GPU commands. It does not link d3d9.lib or d3dx9_33.lib. The old
 `kinoko_retdec_rebuild` target and its native-device contracts remain for comparison.
-The game-owned modern sources no longer include SDK D3D9 enums/records or rewrites SDK class
+The game-owned modern sources no longer include SDK D3D9 enums/records or rewrite SDK class
 names with preprocessor macros. `graphics_api.hpp` selects explicit backend types;
 `graphics_types.hpp` owns modern command values and descriptions. Only the native
 comparison branch aliases SDK types. Modern target include guards reject accidental
