@@ -1,5 +1,4 @@
 #include "kinoko/act_resource_records_io.hpp"
-#include "kinoko/act_texture_leases.hpp"
 #include "kinoko/act_clone.h"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/act_key_records.hpp"
@@ -67,7 +66,6 @@ extern "C" KinokoActKey* __fastcall kinoko_method_clone_act_key(KinokoActKey* so
 }
 
 namespace {
-kinoko::act::TextureCloneLeases cloned_texture_leases;
 // 42F9D0/42FA50 and 446AF0/446B70/449B70 copy different resource fields.
 // The MCD control is the actual Boost counter already used by archive clones.
 KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable, bool chip) {
@@ -76,26 +74,26 @@ KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable,
         if (value) kinoko_destroy_cact_resource(reinterpret_cast<KinokoActResource*>(value));
     };
     std::unique_ptr<unsigned char,decltype(destroy)> owned(
-        static_cast<unsigned char*>(std::calloc(1,sizeof(TextureResourceRecord))),destroy);
+        chip ? static_cast<unsigned char*>(std::calloc(1,sizeof(ChipResourceRecord)))
+             : reinterpret_cast<unsigned char*>(create_texture_resource(vtable)),destroy);
     if (!owned) return 0;
     auto* result=reinterpret_cast<KinokoActResource*>(owned.get());
-    const ChipResourceFields chip_input(source), chip_output(result);
-    const TextureResourceFields texture_input(source), texture_output(result);
-    chip_output.set(&ChipResourceRecord::methods,vtable);
-    chip_output.set(&ChipResourceRecord::id,chip_input.get(&ChipResourceRecord::id));
-    chip_output.view(&ChipResourceRecord::name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
     if (chip) {
-        chip_output.view(&ChipResourceRecord::source_name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
-        chip_output.view(&ChipResourceRecord::loaded_path).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
-    } else texture_output.view(&TextureResourceRecord::texture_name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
+        const ChipResourceFields input(source), output(result);
+        output.set(&ChipResourceRecord::methods,vtable);
+        output.set(&ChipResourceRecord::id,input.get(&ChipResourceRecord::id));
+        output.view(&ChipResourceRecord::name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
+        output.view(&ChipResourceRecord::source_name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
+        output.view(&ChipResourceRecord::loaded_path).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
+    }
     const auto copy_string=[&](size_t offset) {
         const kinoko::legacy::StringView input(reinterpret_cast<unsigned char*>(source)+offset);
         const kinoko::legacy::StringView output(owned.get()+offset);
         output.assign(input.data(),input.length());
         if (input.length()!=output.length()) throw std::bad_alloc();
     };
-    copy_string(offsetof(ChipResourceRecord,name));
     if (chip) {
+        copy_string(offsetof(ChipResourceRecord,name));
         copy_string(offsetof(ChipResourceRecord,source_name)); copy_string(offsetof(ChipResourceRecord,loaded_path));
         const kinoko::act::ChipResourceFields input(source), output(owned.get());
         auto *control = input.get(&kinoko::act::ChipResourceRecord::shared_data);
@@ -108,38 +106,21 @@ KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable,
         output.set(&kinoko::act::ChipResourceRecord::data, input.get(&kinoko::act::ChipResourceRecord::data));
         output.set(&kinoko::act::ChipResourceRecord::shared_data, control);
     } else {
-        copy_string(offsetof(TextureResourceRecord,texture_name));
-        texture_output.set(&TextureResourceRecord::borrows_texture,uint8_t{1}); // Both original clone methods mark borrowing.
-        constexpr auto begin=offsetof(TextureResourceRecord,width);
-        constexpr auto end=offsetof(TextureResourceRecord,auto_size)+sizeof(uint8_t);
-        std::memcpy(owned.get()+begin,reinterpret_cast<unsigned char*>(source)+begin,end-begin);
-        const auto handle=texture_input.get(&TextureResourceRecord::texture);
-        // The reconstructed texture store refcounts native handles. Retain
-        // here so the source and clone can each execute their native cleanup.
+        auto& output = texture_resource(result);
+        const auto& input = texture_resource(source);
+        output.id = input.id;
+        if (!output.copy_names(input)) return 0;
+        output.borrows_texture = 1; // Both original clone methods mark borrowing.
+        output.copy_image_properties(input);
+        const auto handle = input.texture;
         if (handle) {
-            // Keep the original borrowed bit while recording the additional
-            // native-store reference, so explicit Unload also releases it.
             if (!kinoko_texture_retain(handle)) return 0;
-            try {
-                if (!cloned_texture_leases.insert(result,handle)) {
-                    kinoko_texture_release(handle);
-                    return 0;
-                }
-            } catch (...) {
-                kinoko_texture_release(handle);
-                throw;
-            }
+            output.retained_texture = handle;
         }
-        texture_output.set(&TextureResourceRecord::texture,handle);
+        output.texture = handle;
     }
     return reinterpret_cast<KinokoActResource*>(owned.release());
 }
-}
-extern "C" int32_t kinoko_act_release_cloned_texture(KinokoActResource* resource) {
-    const auto handle=cloned_texture_leases.take(resource);
-    if (!handle) return 0;
-    kinoko_texture_release(*handle);
-    return 1;
 }
 extern "C" KinokoActResource* __fastcall kinoko_method_clone_chip_resource(KinokoActResource* source, void*) {
     try { return clone_resource(source,kinoko_act_host_symbols()->chip_resource_vtable,true); }

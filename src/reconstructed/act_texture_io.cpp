@@ -46,7 +46,7 @@ struct Property {
 // Type 12 is an unknown member; read type 24 is absent from the latest schema.
 using Schema = std::map<std::string, Property>;
 Schema make_schema() {
-    using R = kinoko::act::TextureResourceRecord;
+    using R = kinoko::act::TextureResource;
     return {
         {"image_height", {0,0,offsetof(R,height)}}, {"image_width", {0,0,offsetof(R,width)}},
         {"resourceID", {0,0,offsetof(R,id)}}, {"src_height", {1,1,offsetof(R,source_height)}},
@@ -184,8 +184,7 @@ bool read(void* resource, KinokoArchiveReader* reader, Schema& schema, bool text
         }
     }
     // 446A84: serialized crop rectangles disable constructor auto-size.
-    if (texture) kinoko::act::TextureResourceFields(resource).set(
-        &kinoko::act::TextureResourceRecord::auto_size, uint8_t{0});
+    if (texture) kinoko::act::texture_resource(resource).auto_size = 0;
     return true;
 }
 bool write(const void* resource, KinokoArchiveReader* writer, const Schema& schema) {

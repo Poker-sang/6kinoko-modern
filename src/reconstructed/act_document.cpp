@@ -522,12 +522,8 @@ int32_t kinoko_act_load_mcd(KinokoActResource* resource, const char *file_name) 
 extern "C" int32_t __fastcall kinoko_method_unload_resource_texture(KinokoActResource* receiver, void *) {
     auto *resource = receiver;
     if (!resource) return 0;
-    kinoko::act::TextureResourceFields fields(resource);
-    const auto handle = fields.get(&kinoko::act::TextureResourceRecord::texture);
-    if (!kinoko_act_release_cloned_texture(receiver) &&
-        !fields.get(&kinoko::act::TextureResourceRecord::borrows_texture) && handle)
-        kinoko_texture_release(handle);
-    fields.set(&kinoko::act::TextureResourceRecord::texture, int32_t{0});
+    auto& fields = kinoko::act::texture_resource(resource);
+    if (const auto handle = fields.take_texture_reference()) kinoko_texture_release(handle);
     return 1;
 }
 
@@ -576,9 +572,9 @@ extern "C" int32_t __fastcall kinoko_method_load_chip_resource(KinokoActResource
 extern "C" int32_t __fastcall kinoko_method_load_resource_texture(KinokoActResource* receiver, void *, const char *prefix) {
     auto *resource = receiver;
     if (!resource) return 0;
-    kinoko::act::TextureResourceFields fields(resource);
+    auto& fields = kinoko::act::texture_resource(resource);
     const char *name = kinoko_string_data(
-        fields.bytes(&kinoko::act::TextureResourceRecord::texture_name));
+        &fields.texture_name);
     // 446C36 leaves the old handle in place for an empty texture name.
     if (!name || !*name) return 0;
     try {
@@ -586,26 +582,22 @@ extern "C" int32_t __fastcall kinoko_method_load_resource_texture(KinokoActResou
         if (path.back() != '/' && path.back() != '\\') path += '/';
         // Both texture and render-target method tables use this unload entry.
         kinoko_method_unload_resource_texture(resource,nullptr);
-        fields.set(&kinoko::act::TextureResourceRecord::borrows_texture, uint8_t{0});
+        fields.borrows_texture = uint8_t{0};
         path += name;
         // 431D80 joins prefix/name; 40E540 appends each suffix.
         for (const char *suffix : {".dds", ".bmp", ".png"}) {
             const auto candidate = path + suffix;
             const int32_t handle = kinoko_texture_acquire(candidate.c_str());
-            fields.set(&kinoko::act::TextureResourceRecord::texture, handle);
+            fields.texture = handle;
             if (!handle) continue;
             const auto &slot = kinoko_texture_slots[handle];
-            fields.set(&kinoko::act::TextureResourceRecord::width,
-                       static_cast<int32_t>(slot.width));
-            fields.set(&kinoko::act::TextureResourceRecord::height,
-                       static_cast<int32_t>(slot.height));
-            if (fields.get(&kinoko::act::TextureResourceRecord::auto_size)) {
-                fields.set(&kinoko::act::TextureResourceRecord::source_x, 0.0f);
-                fields.set(&kinoko::act::TextureResourceRecord::source_y, 0.0f);
-                fields.set(&kinoko::act::TextureResourceRecord::source_width,
-                           static_cast<float>(slot.width));
-                fields.set(&kinoko::act::TextureResourceRecord::source_height,
-                           static_cast<float>(slot.height));
+            fields.width = static_cast<int32_t>(slot.width);
+            fields.height = static_cast<int32_t>(slot.height);
+            if (fields.auto_size) {
+                fields.source_x = 0.0f;
+                fields.source_y = 0.0f;
+                fields.source_width = static_cast<float>(slot.width);
+                fields.source_height = static_cast<float>(slot.height);
             }
             return 1;
         }
@@ -636,33 +628,21 @@ KinokoActResource* kinoko_act_make_resource(KinokoArchiveReader* reader_ptr, uin
     auto destroy = [](KinokoActResource *value) {
         kinoko_destroy_cact_resource((KinokoActResource*)(value));
     };
+    const auto* methods = render_target ? kinoko_act_host_symbols()->render_target_vtable
+        : kinoko_act_host_symbols()->texture_resource_vtable;
     std::unique_ptr<KinokoActResource, decltype(destroy)> resource(
-        static_cast<KinokoActResource *>(std::calloc(1, sizeof(kinoko::act::TextureResourceRecord))),
+        texture ? reinterpret_cast<KinokoActResource*>(kinoko::act::create_texture_resource(methods))
+                : static_cast<KinokoActResource*>(std::calloc(1, sizeof(kinoko::act::ChipResourceRecord))),
         destroy);
     if (!resource) return 0;
-    auto name = kinoko::act::TextureResourceFields(resource.get()).view(
-        &kinoko::act::TextureResourceRecord::name);
-    name.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-    if (texture) {
-        kinoko::act::TextureResourceFields fields(resource.get());
-        fields.set(&kinoko::act::TextureResourceRecord::methods, render_target
-            ? kinoko_act_host_symbols()->render_target_vtable
-            : kinoko_act_host_symbols()->texture_resource_vtable);
-        fields.set(&kinoko::act::TextureResourceRecord::id, int32_t{-1});
-        auto image_name = fields.view(&kinoko::act::TextureResourceRecord::texture_name);
-        image_name.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        fields.set(&kinoko::act::TextureResourceRecord::width, int32_t{256});
-        fields.set(&kinoko::act::TextureResourceRecord::height, int32_t{256});
-        fields.set(&kinoko::act::TextureResourceRecord::auto_size, uint8_t{1});
-    } else {
+    if (!texture) {
         kinoko::act::ChipResourceFields fields(resource.get());
         fields.set(&kinoko::act::ChipResourceRecord::methods,
             kinoko_act_host_symbols()->chip_resource_vtable);
         fields.set(&kinoko::act::ChipResourceRecord::id, int32_t{-1});
-        auto source = fields.view(&kinoko::act::ChipResourceRecord::source_name);
-        auto loaded = fields.view(&kinoko::act::ChipResourceRecord::loaded_path);
-        source.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        loaded.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
+        fields.view(&kinoko::act::ChipResourceRecord::name).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
+        fields.view(&kinoko::act::ChipResourceRecord::source_name).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
+        fields.view(&kinoko::act::ChipResourceRecord::loaded_path).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
         fields.set(&kinoko::act::ChipResourceRecord::unknown60, uint32_t{15});
     }
     const auto loaded = render_target
@@ -676,8 +656,7 @@ KinokoActResource* kinoko_act_make_resource(KinokoArchiveReader* reader_ptr, uin
     }
     if (type == 0xc6fdb98au) {
         // 446A84 clears auto-size even without a property block.
-        kinoko::act::TextureResourceFields(resource.get()).set(
-            &kinoko::act::TextureResourceRecord::auto_size, uint8_t{0});
+        kinoko::act::texture_resource(resource.get()).auto_size = 0;
     }
     // 428150 publishes the object now; 4289C0 loads actual resources later.
     return resource.release();

@@ -1,3 +1,4 @@
+#include "kinoko/act_texture_resource.hpp"
 #include "sqpcheader.h"
 #include "sqtable.h"
 #include "sqclass.h"
@@ -420,11 +421,12 @@ int32_t kinoko_resource_load_texture(SQVM* vm) {
 
 int32_t kinoko_publish_texture_resource_class(SQVM* vm, void* root,
     const char *name, int32_t out[2]) {
+    using R = kinoko::act::TextureResource;
     static const kinoko_native_view_property properties[] = {
-        {"resourceID", 4, 0}, {"stName", 8, 4},
-        {"image_width", 72, 0}, {"image_height", 76, 0},
-        {"src_x", 80, 1}, {"src_y", 84, 1},
-        {"src_width", 88, 1}, {"src_height", 92, 1}
+        {"resourceID", offsetof(R, id), 0}, {"stName", offsetof(R, name), 4},
+        {"image_width", offsetof(R, width), 0}, {"image_height", offsetof(R, height), 0},
+        {"src_x", offsetof(R, source_x), 1}, {"src_y", offsetof(R, source_y), 1},
+        {"src_width", offsetof(R, source_width), 1}, {"src_height", offsetof(R, source_height), 1}
     };
     if (get_pair((void*)(uintptr_t)(root), name, out) && out[0] == 0x08004000) return 1;
     kinoko_sqrat_release_pair(vm, out);

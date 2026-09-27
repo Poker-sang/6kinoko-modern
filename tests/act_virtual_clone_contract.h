@@ -1,3 +1,4 @@
+#include "kinoko/act_texture_resource.hpp"
 #include "kinoko/act_types.h"
 /* Real CAct -> resource/layer -> key/layout virtuals, compiled only in R132. */
 static char act_clone_events[32];
@@ -52,9 +53,9 @@ static int test_act_virtual_clone(void) {
         memcpy((void *)(intptr_t)source[48], text, sizeof(text)); source[49] = sizeof(text);
         ((uint8_t *)source)[201] = (uint8_t)compiled;
 
-        int32_t *resource = (int32_t *)calloc(1, 100); CHECK(resource);
-        resource[0] = PTR(&kinoko_texture_resource_methods_storage); resource[1] = 42; resource[7] = resource[15] = 15;
-        kinoko_string_assign_cstr(resource + 2, "cloned resource");
+        auto* resource = kinoko::act::create_texture_resource(&kinoko_texture_resource_methods_storage); CHECK(resource);
+        resource->id = 42;
+        kinoko_string_assign_cstr(reinterpret_cast<int32_t*>(&resource->name), "cloned resource");
         int32_t layer = (int32_t)(intptr_t)kinoko_act_make_layer(); CHECK(layer);
         *(int32_t *)(intptr_t)(layer + 96) = 42;
         *(int32_t *)(intptr_t)(layer + 100) = PTR(resource);
@@ -108,7 +109,7 @@ static int test_act_virtual_clone(void) {
         const int32_t copied_resource = *(int32_t *)(intptr_t)cloned[56];
         CHECK(copied_layer != layer && copied_resource != PTR(resource));
         CHECK(*(int32_t *)(intptr_t)(copied_layer + 100) == copied_resource);
-        CHECK(*(uint8_t *)(intptr_t)(copied_resource + 36) == 1);
+        CHECK(kinoko::act::texture_resource(reinterpret_cast<void*>(copied_resource)).borrows_texture == 1);
         CHECK(*(uint8_t *)(intptr_t)(copied_layer + 305) == 1);
         CHECK(strcmp(*(const char **)(intptr_t)(copied_layer + 296), compiled_text) == 0);
         (int32_t)(intptr_t)kinoko_destroy_cact_with_flags((KinokoActDocument*)(uintptr_t)(PTR(copy)), 1);

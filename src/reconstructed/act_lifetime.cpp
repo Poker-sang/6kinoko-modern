@@ -135,19 +135,16 @@ static void clear_resource(KinokoActResource* resource)
         clear_string(chip.bytes(&ChipResourceRecord::source_name));
         clear_string(chip.bytes(&ChipResourceRecord::name));
     } else {
-        const TextureResourceFields texture(resource);
-        const auto handle = texture.get(&TextureResourceRecord::texture);
-        const bool borrowed = texture.get(&TextureResourceRecord::borrows_texture) != 0;
+        auto& texture = kinoko::act::texture_resource(resource);
+        const auto handle = texture.texture;
+        const bool borrowed = texture.borrows_texture != 0;
         // 449360 resets the device target before releasing an owned target.
         if (!borrowed && handle && kinoko::legacy::load<const void*>(resource) == kinoko_act_host_symbols()->render_target_vtable)
             kinoko_set_render_target(0);
         // Native clones retain a store reference separately from the original
         // borrowed bit. A borrowed handle without that reference is not ours.
-        if (!kinoko_act_release_cloned_texture(resource) && !borrowed && handle)
-            kinoko_texture_release(handle);
-        texture.set(&TextureResourceRecord::texture, int32_t{0});
-        clear_string(texture.bytes(&TextureResourceRecord::texture_name));
-        clear_string(texture.bytes(&TextureResourceRecord::name));
+        if (const auto owned = texture.take_texture_reference()) kinoko_texture_release(owned);
+        texture.clear_names();
     }
 }
 
@@ -221,7 +218,11 @@ extern "C" void* __fastcall kinoko_method_delete_act_layer(KinokoActLayer* objec
     return delete_with_flags<KinokoActLayer, kinoko_act_layer_clear>(object,sizeof(kinoko::act::LayerStorageRecord),flags);
 }
 extern "C" void* __fastcall kinoko_method_delete_act_resource(KinokoActResource* object,void*,unsigned char flags) {
-    return delete_with_flags<KinokoActResource, clear_resource>(object,100,flags);
+    if (!object) return nullptr;
+    const auto* methods = kinoko::legacy::load<const void*>(object);
+    const auto size = methods == kinoko_act_host_symbols()->chip_resource_vtable
+        ? sizeof(kinoko::act::ChipResourceRecord) : sizeof(kinoko::act::TextureResource);
+    return delete_with_flags<KinokoActResource, clear_resource>(object,size,flags);
 }
 
 

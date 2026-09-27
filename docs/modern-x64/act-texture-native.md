@@ -1,0 +1,35 @@
+# Native ACT texture resources
+
+Texture and render-target resources now use `TextureResource`, constructed with
+native member defaults. Their allocation is independent of the chip resource's
+100-byte original layout. Native texture objects contain no original unknown or
+padding fields, and accidental shallow copy/assignment is disabled.
+
+Migrated together: factory/defaults, clone/deep string copy, retained texture
+ownership, explicit unload/load, destruction, array element stride, property
+serialization, Squirrel property registration, draw snapshots and target creation.
+The texture clone lease map/mutex is removed: the retained handle lives in the
+object and is consumed once independently of the visible handle. Owned and borrowed
+textures share one explicit unload transition. Render-target destruction still
+restores the backbuffer before releasing an owned target.
+
+Compatibility boundaries:
+- Method-table, ID and name prefix remains compatible with x86 generic ACT users;
+  compile-time assertions protect this boundary. Method tables and VM adapters
+  are not yet a portable full-game ABI.
+- String fields retain the existing native-backed StringRecord boundary. Clone
+  names have separate owners; archive property names/types/order are unchanged.
+- Allocation uses malloc plus placement construction; the legacy deleting-
+  destructor adapter retains free and its x86 four-byte array cookie. This is not
+  a claim of portable array destruction. Native objects are trivially destructible
+  and strings/handles have explicit cleanup before freeing storage.
+- Empty-name loads still preserve the old handle; suffix order remains DDS/BMP/PNG.
+  Target creation still returns 1 on failure and preserves original replacement
+  semantics, including separate retained clone references.
+- Chip/mesh resources, outer ACT/VM ABI and full-game x64 migration remain pending.
+
+The portable texture contract now compiles the actual production resource,
+render bridge and legacy_string.cpp. Cases cover long-name deep copy, independent
+string lifetime, constructor defaults, crop copying, snapshot fields, mutable
+visible handle versus retained reference, borrowed cleanup and repeated unload.
+Runtime assertions are compiled only, not executed.
