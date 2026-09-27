@@ -36,3 +36,5 @@ add_test(NAME render_blend_contract COMMAND kinoko_render_blend_contract)
 add_executable(kinoko_render_resources_contract tests/render_resources_contract.cpp)
 target_link_libraries(kinoko_render_resources_contract PRIVATE kinoko_render_state)
 add_test(NAME render_resources_contract COMMAND kinoko_render_resources_contract)
+
+include(${CMAKE_CURRENT_LIST_DIR}/ModernGpu.cmake)
