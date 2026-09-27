@@ -12,7 +12,7 @@ static_assert(alignof(TextureResource) >= alignof(void*));
 
 int main() {
     const auto cleanup = [](TextureResource* value) {
-        if (value) { value->clear_names(); std::free(value); }
+        destroy_resources(value, 1, [](auto& resource) { resource.clear_names(); });
     };
     int methods = 0;
     std::unique_ptr<TextureResource, decltype(cleanup)> source(create_texture_resource(&methods), cleanup);

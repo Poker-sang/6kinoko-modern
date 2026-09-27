@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/act_mesh.hpp"
 #include "kinoko/act_runtime.h"
@@ -43,7 +44,7 @@ extern "C" int32_t __fastcall kinoko_method_query_serializable(
     // 4461D0 checks the exact dynamic type (no base-class conversion).
     // Original type_info::operator== at 4AB2E2 compares descriptor+9,
     // intentionally ignoring the leading byte of the raw decorated name.
-    const bool match=type && name && std::strcmp(name+1,static_cast<const char*>(type)+9)==0;
+    const bool match=type && name && std::strcmp(name+1,static_cast<const char*>(type)+2*sizeof(void*)+1)==0;
     kinoko::legacy::store(output, match ? object : nullptr);
     return match;
 }
@@ -52,7 +53,5 @@ extern "C" int32_t __fastcall kinoko_method_destroy_serializable(void* object,vo
     if (!object) return 0;
     // 446210: only classes with their deleting destructor at slot four use
     // this entry. C2DLayout and C2DMapLayout have a different slot arrangement.
-    using Delete = int32_t (__thiscall*)(void*, unsigned char);
-    const auto* methods = kinoko::legacy::load<const unsigned char*>(object);
-    return kinoko::legacy::load<Delete>(methods + 16)(object, 1);
+    return static_cast<int32_t>(reinterpret_cast<intptr_t>(kinoko::act::SerializableMethods(object).delete_object(1)));
 }

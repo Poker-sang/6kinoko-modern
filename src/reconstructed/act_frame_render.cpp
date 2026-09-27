@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "graphics_blend_sink.hpp"
 #include "graphics_draw_state.hpp"
 #include "kinoko/legacy_string.h"
@@ -125,8 +126,7 @@ extern "C" int32_t kinoko_act_prepare_draw(KinokoActRuntime* self) {
     for (int32_t i = layer_distance(layers) - 1; i >= 0; --i) {
         const auto layout = kinoko_act_layer_layout(self, i);
         if (layout) {
-            const auto update = method(layout, 7);
-            if (update && kinoko_call_thiscall0_result(layout, update) < 0) result = E_FAIL;
+            if (LayoutMethods(layout).update() < 0) result = E_FAIL;
         }
     }
     const auto commands = kinoko_act_command_span((KinokoActRuntime*)(intptr_t)(self));
@@ -165,9 +165,7 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
     for (int32_t i = layer_distance(layers) - 1; i >= 0; --i) {
         const auto layout = kinoko_act_layer_layout(self, i);
         if (!layout) continue;
-        const auto draw = method(layout, 8);
-        if (!draw) { result = E_FAIL; continue; }
-        const auto status = kinoko_call_thiscall2_result(layout, draw, float_bits(draw_x), float_bits(draw_y));
+        const auto status = LayoutMethods(layout).draw(draw_x, draw_y);
         if (trace_index <= 8) {
             kinoko_trace_i32("4525d0:live-x", float_bits(draw_x));
             kinoko_trace_i32("4525d0:live-y", float_bits(draw_y));

@@ -19,7 +19,7 @@ KinokoTextureSlot kinoko_texture_slots[KINOKO_TEXTURE_CAPACITY]{};
 kinoko_mcd_data *kinoko_map_cached_chip_data(KinokoActLayout *layout) {
     if(!layout) return nullptr;
     const auto *resource=LayoutView(layout).get(&LayoutRecord::cached_chip_resource);
-    return resource ? ChipResourceView(const_cast<KinokoActResource*>(resource)).get(&ChipResourceRecord::data) : nullptr;
+    return resource ? kinoko::act::chip_resource(const_cast<KinokoActResource*>(resource)).data.get() : nullptr;
 }
 kinoko_mcd_data *kinoko_map_query_chip_data(KinokoActLayout *layout) { return kinoko_map_cached_chip_data(layout); }
 kinoko_mcd_chip *kinoko_mcd_find_chip(kinoko_mcd_data *data,uint32_t id) {
@@ -58,7 +58,7 @@ int main() {
     }
     kinoko_mcd_texture textures[]={{10,1},{11,2}};
     kinoko_mcd_data data{4,chips,2,textures};
-    ChipResourceRecord resource{};resource.data=&data;
+    kinoko::act::ChipResource resource{};resource.data=std::shared_ptr<kinoko_mcd_data>(&data, [](auto*){});
     LayoutRecord map{};map.maximum_chip_id=-1;
     map.cached_chip_resource=reinterpret_cast<KinokoActResource*>(&resource);
     auto *layout=reinterpret_cast<KinokoActLayout*>(&map);
@@ -125,6 +125,6 @@ int main() {
     CHECK(map.chip_sprites.begin[1].quad.positions[3].y==-16);
     kinoko_clear_map_layout((KinokoActLayout*)(uintptr_t)(address(&map)));
     CHECK(!map.chip_sprites.begin && !map.chip_definitions.begin && !map.changed_chips.begin && !map.chip_indices.begin);
-    CHECK(resource.data==&data && textures[0].handle==1); // cache never owns MCD/textures
+    CHECK(resource.data.get()==&data && textures[0].handle==1); // cache never owns MCD/textures
     return 0;
 }

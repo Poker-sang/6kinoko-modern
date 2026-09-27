@@ -1,3 +1,4 @@
+#include "kinoko/act_chip_resource.hpp"
 #pragma once
 #include "kinoko/act_types.h"
 #include "kinoko/quad_records.hpp"
@@ -96,16 +97,10 @@ struct LayerRecord {
     std::array<uint8_t, 3> padding141;
     float position_x, position_y, position_z;
 };
-struct ChipResourceRecord {
-    const unsigned char *methods;
-    std::array<uint8_t, 60> prefix;
-    kinoko_mcd_data *data; // shared MCD; retained by the resource's control
-};
 using LayoutView = kinoko::native::RecordView<LayoutRecord>;
 using LayerView = kinoko::native::RecordView<LayerRecord>;
 using PlacementView = kinoko::native::RecordView<Placement>;
 using ChipView = kinoko::native::RecordView<ChipDefinition>;
-using ChipResourceView = kinoko::native::RecordView<ChipResourceRecord>;
 
 static_assert(sizeof(ChipSpriteCache)==288 && offsetof(ChipSpriteCache,definition)==232);
 static_assert(offsetof(ChipSpriteCache,valid)==280);
@@ -129,7 +124,6 @@ static_assert(offsetof(LayoutRecord, suppress_next_binding) == 460 && sizeof(Lay
 static_assert(offsetof(LayerRecord, resource) == 100 && offsetof(LayerRecord, name) == 112);
 static_assert(offsetof(LayerRecord, visible) == 140 && offsetof(LayerRecord, position_x) == 144);
 static_assert(offsetof(LayerRecord, position_y) == 148);
-static_assert(offsetof(ChipResourceRecord, data) == 64);
 
 inline int32_t placement_count(KinokoActLayout *layout) {
     if (!layout) return 0;

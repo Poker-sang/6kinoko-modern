@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_texture_resource.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/act_mesh.hpp"
@@ -233,12 +234,10 @@ void clear_resource(Resource *resource) {
 }
 int32_t replace_texture(Resource *resource,const char *name,KinokoActResource *texture) {
     if(!name || !texture) return E_FAIL;
-    struct Descriptor { void *methods,*cache;char name[40]; };
-    static const Descriptor target{nullptr,nullptr,".?AVCActRenderTarget@@"},image{nullptr,nullptr,".?AVCActResource2D@@"};
-    using Query=uint8_t(__thiscall *)(KinokoActResource*,const void*,void**);
-    const auto query=legacy::load<Query>(legacy::load<unsigned char*>(texture)+8);
-    void *converted=nullptr;
-    if(!query(texture,&target,&converted) && !query(texture,&image,&converted)) return E_FAIL;
+    const kinoko::act::ResourceMethods methods(texture);
+    auto* converted = methods.query(kinoko::act::ResourceKind::render_target);
+    if (!converted) converted = methods.query(kinoko::act::ResourceKind::texture);
+    if (!converted) return E_FAIL;
     const auto handle=kinoko::act::texture_resource(converted).texture;
     for(auto *node=resource->renders->next;node!=resource->renders;node=node->next)
         if(*name && handle) node->render.replacements.emplace(name,handle); // map insert does not overwrite

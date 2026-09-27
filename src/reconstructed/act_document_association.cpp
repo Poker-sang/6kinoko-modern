@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_document_association.hpp"
 #include "kinoko/act_layer_access.h"
 #include "kinoko/act_layer_records.hpp"
@@ -51,14 +52,12 @@ void DocumentLoadAssociations::bind_loaded_parents(KinokoActDocument *document, 
     }
 }
 void DocumentLoadAssociations::bind_resources(KinokoActDocument *document, uint32_t count) const {
-    using SetResource = int32_t (__thiscall *)(KinokoActLayer *, KinokoActResource *);
     for (uint32_t i = 0; i != count; ++i) {
         auto *layer = layer_at(DocumentView(document).get(&DocumentRecord::layers), i);
         const LayerView view(layer);
         const auto found = resources_->find(view.get(&LayerAssociationRecord::resource_id));
         if (found == resources_->end()) continue; // original leaves fields untouched
-        const auto *table = static_cast<const unsigned char *>(view.get(&LayerAssociationRecord::vtable));
-        load<SetResource>(table + 6 * sizeof(void *))(layer, found->second);
+        LayerMethods(layer).set_resource(found->second);
     }
 }
 
@@ -69,7 +68,6 @@ void DocumentCloneAssociations::add_resource(KinokoActResource *resource) {
     resources_.emplace(load<ResourceIdentityRecord>(resource).id, resource);
 }
 void DocumentCloneAssociations::bind(KinokoActDocument *document) {
-    using SetResource = int32_t (__thiscall *)(KinokoActLayer *, KinokoActResource *);
     const DocumentView doc(document);
     for (int32_t i = 0; i < layer_distance(doc.get(&DocumentRecord::layers)); ++i) {
         auto *layer = layer_at(doc.get(&DocumentRecord::layers), i);
@@ -77,8 +75,7 @@ void DocumentCloneAssociations::bind(KinokoActDocument *document) {
         // 427D49..427DAF: resource callback precedes this layer's hierarchy.
         const auto found = resources_.find(view.get(&LayerAssociationRecord::resource_id));
         if (found != resources_.end()) {
-            const auto *table = static_cast<const unsigned char *>(view.get(&LayerAssociationRecord::vtable));
-            load<SetResource>(table + 6 * sizeof(void *))(layer, found->second);
+            LayerMethods(layer).set_resource(found->second);
         }
         if (auto *parent = view.get(&LayerAssociationRecord::parent)) {
             const auto id = LayerView(parent).get(&LayerAssociationRecord::layer_id);

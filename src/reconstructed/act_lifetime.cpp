@@ -118,22 +118,8 @@ static void clear_resource(KinokoActResource* resource)
         kinoko::mesh::clear_resource(reinterpret_cast<kinoko::mesh::Resource*>(resource));return;
     }
     using namespace kinoko::act;
-    auto clear_string = [](void *storage) {
-        kinoko::legacy::StringView(storage).destroy();
-        const kinoko::native::RecordView<kinoko::legacy::StringRecord> text(storage);
-        *text.bytes(&kinoko::legacy::StringRecord::characters) = 0;
-        text.set(&kinoko::legacy::StringRecord::length, uint32_t{0});
-        text.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-    };
     if (kinoko::legacy::load<const void*>(resource) == kinoko_act_host_symbols()->chip_resource_vtable) {
-        const ChipResourceFields chip(resource);
-        // 42F1B0: loaded path, shared MCD, source name, then base name.
-        clear_string(chip.bytes(&ChipResourceRecord::loaded_path));
-        if (kinoko_act_release_chip_data(resource))
-            kinoko_mcd_free(chip.get(&ChipResourceRecord::data));
-        chip.set(&ChipResourceRecord::data, static_cast<kinoko_mcd_data *>(nullptr));
-        clear_string(chip.bytes(&ChipResourceRecord::source_name));
-        clear_string(chip.bytes(&ChipResourceRecord::name));
+        kinoko::act::chip_resource(resource).clear();
     } else {
         auto& texture = kinoko::act::texture_resource(resource);
         const auto handle = texture.texture;
@@ -148,9 +134,24 @@ static void clear_resource(KinokoActResource* resource)
     }
 }
 
+namespace {
+void* delete_resource(KinokoActResource* resource, unsigned char flags) {
+    if (!resource) return nullptr;
+    using namespace kinoko::act;
+    const auto* methods = kinoko::legacy::load<const void*>(resource);
+    if (methods == kinoko::mesh::resource_methods()) {
+        clear_resource(resource);
+        if (flags & 1) std::free(resource);
+        return resource;
+    }
+    const auto clear = [](auto& value) { clear_resource(reinterpret_cast<KinokoActResource*>(&value)); };
+    if (methods == kinoko_act_host_symbols()->chip_resource_vtable)
+        return destroy_resources(&chip_resource(resource), flags, clear);
+    return destroy_resources(&texture_resource(resource), flags, clear);
+}
+}
 void kinoko_destroy_cact_resource(KinokoActResource* resource) {
-    clear_resource(resource);
-    std::free(resource);
+    delete_resource(resource, 1);
 }
 
 void kinoko_destroy_cact_object(KinokoActDocument* object_ptr)
@@ -218,11 +219,7 @@ extern "C" void* __fastcall kinoko_method_delete_act_layer(KinokoActLayer* objec
     return delete_with_flags<KinokoActLayer, kinoko_act_layer_clear>(object,sizeof(kinoko::act::LayerStorageRecord),flags);
 }
 extern "C" void* __fastcall kinoko_method_delete_act_resource(KinokoActResource* object,void*,unsigned char flags) {
-    if (!object) return nullptr;
-    const auto* methods = kinoko::legacy::load<const void*>(object);
-    const auto size = methods == kinoko_act_host_symbols()->chip_resource_vtable
-        ? sizeof(kinoko::act::ChipResourceRecord) : sizeof(kinoko::act::TextureResource);
-    return delete_with_flags<KinokoActResource, clear_resource>(object,size,flags);
+    return delete_resource(object, flags);
 }
 
 

@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/map_manager_records.hpp"
 #include "kinoko/map_render.h"
 #include "kinoko/act_runtime.h"
@@ -50,14 +51,7 @@ extern "C" KinokoRenderLayer *kinoko_map_make_render_layer(KinokoMapManager *man
 
 namespace {
 using kinoko::legacy::load;
-using QueryResource = uint8_t (__thiscall *)(KinokoActResource *, const void *, KinokoActResource **);
-using SetMapLayer = int32_t (__thiscall *)(KinokoActLayout *, KinokoActLayer *);
-struct ChipTypeDescriptor { void *table, *cache; char name[sizeof(".?AVCActResourceChip@@")]; };
-const ChipTypeDescriptor chip_type{{}, {}, ".?AVCActResourceChip@@"};
-struct ResourceMethods { void *prefix[2]; QueryResource query; };
-struct LayoutMethods { void *prefix[6]; SetMapLayer set_layer; };
-static_assert(offsetof(ResourceMethods, query) == 8);
-static_assert(offsetof(LayoutMethods, set_layer) == 24);
+
 }
 
 extern "C" kinoko_mcd_data *kinoko_map_layer_chip_data(KinokoActLayout *layout) {
@@ -67,25 +61,21 @@ extern "C" kinoko_mcd_data *kinoko_map_layer_chip_data(KinokoActLayout *layout) 
     auto *resource = LayerView(layer).get(&LayerRecord::resource);
     if (!resource) return nullptr;
     // Original virtual QueryType; this does not read or populate the cache.
-    const auto *methods = ChipResourceView(resource).get(&ChipResourceRecord::methods);
-    auto query = load<QueryResource>(methods + offsetof(ResourceMethods, query));
-    KinokoActResource *chip = nullptr;
-    if (!query(resource, &chip_type, &chip) || !chip) return nullptr;
-    return ChipResourceView(chip).get(&ChipResourceRecord::data);
+    auto* chip = kinoko::act::ResourceMethods(resource).query(kinoko::act::ResourceKind::chip);
+    return chip ? kinoko::act::chip_resource(chip).data.get() : nullptr;
 }
 
 extern "C" kinoko_mcd_data *kinoko_map_cached_chip_data(KinokoActLayout *layout) {
     if (!layout) return nullptr;
     auto *resource = LayoutView(layout).get(&LayoutRecord::cached_chip_resource);
-    return resource ? ChipResourceView(resource).get(&ChipResourceRecord::data) : nullptr;
+    return resource ? kinoko::act::chip_resource(resource).data.get() : nullptr;
 }
 
 extern "C" kinoko_mcd_data *kinoko_map_query_chip_data(KinokoActLayout *layout) {
     if (!layout) return nullptr;
     const LayoutView map(layout);
     if (!map.get(&LayoutRecord::cached_chip_resource)) {
-        auto bind = load<SetMapLayer>(map.get(&LayoutRecord::methods) + offsetof(LayoutMethods, set_layer));
-        bind(layout, map.get(&LayoutRecord::owning_layer));
+        kinoko::act::LayoutMethods(layout).set_layer(map.get(&LayoutRecord::owning_layer));
     }
     // Read again after virtual SetLayer. A non-null cache is not rebound.
     return kinoko_map_cached_chip_data(layout);

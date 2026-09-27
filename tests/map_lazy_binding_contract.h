@@ -1,3 +1,4 @@
+#include "kinoko/act_chip_resource.hpp"
 struct SQVM;
 /* R134/R135/R136/R137 regression source. Builds with stage_contract; execution is user-owned.
    Exercise actual document/layer/key/map virtual clones, without manually
@@ -6,7 +7,7 @@ static int test_map_lazy_binding(int32_t vm, int32_t *root) {
     struct SQVM* const previous_default_vm = kinoko_act_vm;
     kinoko_act_vm = (struct SQVM*)(intptr_t)vm;
     int32_t source[60] = {0};
-    int32_t *resource = (int32_t*)calloc(1,100);
+    auto* resource = kinoko::act::create_chip_resource(&kinoko_chip_resource_methods_storage);
     struct kinoko_mcd_data *data = (struct kinoko_mcd_data*)calloc(1,sizeof(*data));
     int32_t layer = (int32_t)(intptr_t)kinoko_act_make_layer();
     int32_t *key = (int32_t*)calloc(1,36);
@@ -25,9 +26,8 @@ static int test_map_lazy_binding(int32_t vm, int32_t *root) {
     *(uint32_t*)data->chips[0].bytes = 4;
     *(int16_t*)(data->chips[0].bytes+12) = 16;
     *(int16_t*)(data->chips[0].bytes+14) = 16;
-    resource[0] = PTR(&kinoko_chip_resource_methods_storage); resource[1] = 42;
-    resource[7] = resource[14] = resource[23] = 15;
-    resource[16] = PTR(data);
+    resource->id = 42;
+    resource->data = std::shared_ptr<kinoko_mcd_data>(data, kinoko_mcd_free);
     *(int32_t*)(intptr_t)(layer+96) = 42;
     *(int32_t*)(intptr_t)(layer+100) = PTR(resource);
     *(int32_t*)(intptr_t)(layer+104) = 9;
@@ -59,13 +59,13 @@ static int test_map_lazy_binding(int32_t vm, int32_t *root) {
            Query preserves a non-null cache; only Update rejects stale binding. */
         {
             struct kinoko_mcd_data other_data = {0};
-            int32_t other_resource[17] = {0};
-            other_resource[16] = PTR(&other_data);
-            layout[79] = PTR(other_resource);
+            kinoko::act::ChipResource other_resource;
+            other_resource.data = std::shared_ptr<kinoko_mcd_data>(&other_data, [](auto*){});
+            layout[79] = PTR(&other_resource);
             CHECK(kinoko_map_layer_chip_data((KinokoActLayout*)layout) == data);
             CHECK(kinoko_map_cached_chip_data((KinokoActLayout*)layout) == &other_data);
             CHECK(kinoko_map_query_chip_data((KinokoActLayout*)layout) == &other_data);
-            CHECK(layout[79] == PTR(other_resource));
+            CHECK(layout[79] == PTR(&other_resource));
             layout[79] = 0;
         }
         CHECK(layout[79] == 0); /* Layer lookup must not prime render caches. */

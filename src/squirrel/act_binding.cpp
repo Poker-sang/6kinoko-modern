@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_texture_resource.hpp"
 #include "sqpcheader.h"
 #include "sqtable.h"
@@ -412,9 +413,7 @@ int32_t kinoko_resource_load_texture(SQVM* vm) {
     if (sq_gettype(vm, 2) != OT_NULL &&
         SQ_FAILED(sq_getstring(vm, 2, &prefix))) return 0;
     // 44FD20 forwards through virtual slot +40, retaining derived behavior.
-    using Load = int32_t (__thiscall*)(KinokoActResource*, const char*);
-    const auto* methods = kinoko::legacy::load<const unsigned char*>(resource);
-    const int32_t result = kinoko::legacy::load<Load>(methods + 10*sizeof(void*))(resource, prefix);
+    const int32_t result = kinoko::act::ResourceMethods(resource).load(prefix);
     sq_pushbool(vm, (result & 0xff) != 0);
     return 1;
 }
@@ -1170,12 +1169,9 @@ extern "C" int32_t __fastcall kinoko_method_register_act_layer(KinokoActLayer* l
         ok = kinoko_create_bound_instance(vm, script, "layer", klass, layer, inner) != 0;
         auto* resource = record.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource);
         if (resource) {
-            using Bind = int32_t (__thiscall*)(KinokoActResource*, void*, const char*);
-            auto* methods = kinoko::legacy::load<const unsigned char*>(resource);
-            kinoko::legacy::load<Bind>(methods + 28)(resource, record.bytes(&LayerStorageRecord::layout_object), "resource");
-            // Re-read virtual table after the first call, as in the original.
-            methods = kinoko::legacy::load<const unsigned char*>(resource);
-            kinoko::legacy::load<Bind>(methods + 32)(resource, record.bytes(&LayerStorageRecord::script_object), "resource");
+            const kinoko::act::ResourceMethods methods(resource);
+            methods.bind_table(record.bytes(&LayerStorageRecord::layout_object), "resource");
+            methods.bind_object(record.bytes(&LayerStorageRecord::script_object), "resource");
         }
     }
     kinoko_sqrat_release_pair(vm, inner);
@@ -1528,7 +1524,7 @@ int32_t kinoko_resource_get_chip_info(SQVM* vm) {
     if (sq_getinstanceup(vm, 1, (SQUserPointer*)(&resource), kinoko_pointer(0)) < 0 || resource == 0 ||
         sq_getinteger(vm, 2, (SQInteger*)(&id)) < 0)
         return 0;
-    chip = kinoko_mcd_find_chip(kinoko::act::ChipResourceFields(resource).get(&kinoko::act::ChipResourceRecord::data), (uint32_t)id);
+    chip = kinoko_mcd_find_chip(kinoko::act::chip_resource(resource).data.get(), (uint32_t)id);
     if (chip == nullptr || !(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) {
         sq_pushnull(vm);
         return 1;
@@ -1548,7 +1544,7 @@ int32_t kinoko_resource_set_chip_flag(SQVM* vm) {
     auto* resource = native_instance_argument<KinokoActResource>(vm);
     SQInteger id = 0, flag = -1;
     // Original 42FEF8/42FEFD accepts only bit zero, despite the 64-bit storage.
-    auto *data = resource ? kinoko::act::ChipResourceFields(resource).get(&kinoko::act::ChipResourceRecord::data) : nullptr;
+    auto *data = resource ? kinoko::act::chip_resource(resource).data.get() : nullptr;
     auto *chip = data && kinoko::script::upstream::sqrat_integer_argument(vm, 2, id) &&
         kinoko::script::upstream::sqrat_integer_argument(vm, 3, flag) && flag == 0
         ? kinoko_mcd_find_chip(data, static_cast<uint32_t>(id)) : nullptr;
@@ -1572,7 +1568,8 @@ int32_t kinoko_publish_chip_resource_class(SQVM* vm, void* root, int32_t out[2])
         { "boundWidth", 40, 3 }, { "boundHeight", 42, 3 }
     };
     static const struct kinoko_native_view_property resource_properties[] = {
-        { "resourceID", 4, 0 }, { "stName", 8, 4 }
+        { "resourceID", offsetof(kinoko::act::ChipResource, id), 0 },
+        { "stName", offsetof(kinoko::act::ChipResource, name), 4 }
     };
     if (get_pair((void*)(uintptr_t)(root), "CActResourceChip", out) && out[0] == 0x08004000) return 1;
     kinoko_sqrat_release_pair(vm, out);
@@ -1642,9 +1639,7 @@ int32_t kinoko_bind_original_resource(KinokoActResource* resource, void* object,
     bool registered = get_pair((void*)(uintptr_t)(address(&root)), class_name, klass) && klass[0] == 0x08004000;
     if (!registered) {
         kinoko_sqrat_release_pair(vm, klass);
-        using Register = int32_t (__thiscall*)(KinokoActResource*, SQVM*);
-        const auto* methods = kinoko::legacy::load<const unsigned char*>(resource);
-        registered = kinoko::legacy::load<Register>(methods + 24)(resource, vm) >= 0 &&
+        registered = kinoko::act::ResourceMethods(resource).register_class(vm) >= 0 &&
             get_pair((void*)(uintptr_t)(address(&root)), class_name, klass) && klass[0] == 0x08004000;
     }
     bool ok = false;
@@ -1736,17 +1731,13 @@ int publish_stage_objects(KinokoActDocument* act, KinokoActRuntime* runtime, Sta
         const auto range = document.get(&DocumentRecord::resources);
         if (index >= (address(range.end) - address(range.begin)) / 4) break;
         auto *resource = kinoko::legacy::load<KinokoActResource *>(range.begin + index);
-        const auto *methods = kinoko::legacy::load<const unsigned char *>(resource);
-        using Register = int32_t (__thiscall *)(KinokoActResource *, void *, const char *);
-        kinoko::legacy::load<Register>(methods + 32)(resource, &tables.resources, nullptr);
+        ResourceMethods(resource).bind_object(&tables.resources, nullptr);
     }
     for (int32_t index = 0;; ++index) {
         const auto range = document.get(&DocumentRecord::layers);
         if (index >= (address(range.end) - address(range.begin)) / 4) break;
         auto *layer = kinoko::legacy::load<KinokoActLayer *>(range.begin + index);
-        const auto *methods = kinoko::legacy::load<const unsigned char *>(layer);
-        using Register = int32_t (__thiscall *)(KinokoActLayer *, void *, void *);
-        const auto status = kinoko::legacy::load<Register>(methods + 32)(layer, &tables.act, &tables.global);
+        const auto status = LayerMethods(layer).bind(&tables.act, &tables.global);
         kinoko_trace_i32("act:layer-script-result", status >= 0);
         const kinoko::native::RecordView<LayerKeys> keys(layer);
         auto *head = keys.get(&LayerKeys::key_head);
@@ -1754,9 +1745,7 @@ int publish_stage_objects(KinokoActDocument* act, KinokoActRuntime* runtime, Sta
             !keys.get(&LayerKeys::extra_count) ? head->next->key : nullptr;
         auto *layout = key ? kinoko::legacy::load<LayoutKey>(key).layout : nullptr;
         if (layout) {
-            const auto *layout_methods = kinoko::legacy::load<const unsigned char *>(layout);
-            using RegisterLayout = int32_t (__thiscall *)(KinokoActLayout *);
-            const auto result = kinoko::legacy::load<RegisterLayout>(layout_methods + 36)(layout);
+            const auto result = LayoutMethods(layout).register_class();
             kinoko_trace_i32("act:layout-register-result", result);
         }
         kinoko_trace_i32("act:layer-published", index);
@@ -1782,9 +1771,7 @@ int32_t kinoko_bind_act_resource_object(KinokoActRuntime* resource_ptr)
     auto *holder = runtime.get(&RuntimeRecord::source_holder);
     auto *source = holder ? holder->document : nullptr;
     if (!source) return 0;
-    using Clone = KinokoActDocument *(__thiscall *)(KinokoActDocument *);
-    auto *methods = kinoko::legacy::load<const unsigned char *>(source);
-    auto *copy = kinoko::legacy::load<Clone>(methods + 20)(source);
+    auto* copy = kinoko::act::DocumentMethods(source).clone();
     if (!copy) return 0; // retained null-allocation boundary
     auto *previous = runtime.get(&RuntimeRecord::active_document);
     if (previous != copy) delete_document(previous);
@@ -1854,9 +1841,7 @@ int32_t kinoko_begin_stage_this(KinokoActRuntime* resource_ptr, int32_t stage) {
         auto* holder = runtime.get(&RuntimeRecord::source_holder);
         if (holder && holder->document) {
             auto* source = holder->document;
-            const auto* methods = kinoko::legacy::load<const unsigned char*>(source);
-            using Resume = int32_t (__thiscall*)(KinokoActDocument*);
-            kinoko::legacy::load<Resume>(methods + 32)(source);
+            kinoko::act::DocumentMethods(source).resume_resources();
         }
         vm = runtime.get(&RuntimeRecord::vm);
         StageTables tables(vm);

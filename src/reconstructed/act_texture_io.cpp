@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource_records_io.hpp"
 #include "kinoko/file_io_layout.h"
 #include "kinoko/map_layout_records.hpp"
@@ -60,8 +61,8 @@ Schema texture_schema = make_schema();
 // TUserData<CActRenderTarget> schema. Never let one class's header alter another.
 Schema render_target_schema = make_schema();
 // 42F2A0: chip resources serialize the base ID/name and the MCD filename.
-Schema chip_schema{{"resourceID", {0,0,offsetof(kinoko::act::ChipResourceRecord, id)}}, {"stName", {3,3,offsetof(kinoko::act::ChipResourceRecord, name)}},
-                   {"stChipFile", {3,3,offsetof(kinoko::act::ChipResourceRecord, source_name)}}};
+Schema chip_schema{{"resourceID", {0,0,offsetof(kinoko::act::ChipResource, id)}}, {"stName", {3,3,offsetof(kinoko::act::ChipResource, name)}},
+                   {"stChipFile", {3,3,offsetof(kinoko::act::ChipResource, source_name)}}};
 // 44C2A0: independent Mesh property header; the path prefix is runtime state.
 Schema mesh_schema{{"resourceID",{0,0,offsetof(kinoko::mesh::Resource, id)}},{"stName",{3,3,offsetof(kinoko::mesh::Resource, name)}},{"stMeshName",{3,3,offsetof(kinoko::mesh::Resource, mesh_name)}}};
 // 425350: CActTimeLine has two integers followed by a vector of integer pairs.
@@ -127,10 +128,6 @@ uint32_t record_count(KinokoActLayout* layout) {
 }
 bool transfer(KinokoArchiveReader* stream, void* bytes, uint32_t size) {
     return stream && (stream->methods->transfer(stream,bytes,size)&0xff)!=0;
-}
-int32_t write_virtual(void* object,void* method,KinokoArchiveReader* writer) {
-    using Write=int32_t (__thiscall*)(void*,KinokoArchiveReader*);
-    return reinterpret_cast<Write>(method)(object,writer);
 }
 template<class T> bool transfer(KinokoArchiveReader* stream, T& value) {
     return transfer(stream, &value, sizeof(value));
@@ -368,7 +365,7 @@ extern "C" int32_t __fastcall kinoko_method_map_set_layer(
             // Original one-shot suppression is distinct from an invalid type.
             map.set(&LayoutRecord::suppress_next_binding, uint8_t{0});
         } else {
-            if (ChipResourceView(resource).get(&ChipResourceRecord::methods) != kinoko_act_host_symbols()->chip_resource_vtable)
+            if (kinoko::legacy::load<const unsigned char*>(resource) != kinoko_act_host_symbols()->chip_resource_vtable)
                 return fail;
             map.set(&LayoutRecord::cached_chip_resource, resource);
             // Source MCD loading already loads each texture once. The original
@@ -381,7 +378,7 @@ extern "C" int32_t __fastcall kinoko_method_map_set_layer(
         map.set(&LayoutRecord::chip_references, chip_range);
         if (!map.get(&LayoutRecord::cached_chip_resource)) return 0;
         const auto count = record_count(layout);
-        const auto data = ChipResourceView(resource).get(&ChipResourceRecord::data);
+        const auto data = kinoko::act::chip_resource(resource).data.get();
         if (!data && count) return fail;
         auto records = kinoko::map::LayoutView(layout).get(&kinoko::map::LayoutRecord::placements).begin;
         std::vector<const ChipDefinition*> chip_refs;
@@ -524,27 +521,17 @@ struct TypeName {
         text.destroy();
     }
 };
-bool object_hash(void* layout,uint32_t& hash,int32_t type_slot) {
-    const auto* table=kinoko::legacy::load<const unsigned char*>(layout);
+bool object_hash(void* layout,uint32_t& hash,kinoko::act::TypeMethod family) {
     const auto* name=kinoko_act_serialized_type_name((const void*)(uintptr_t)(layout));
     if (name) { hash=type_hash(name); return true; }
     // Original 426740 obtains the remaining registered types through virtual
     // GetType/GetName. Keep this boundary until their registries are migrated;
     // do not confuse modern compiler RTTI spelling with the original raw name.
-    if (!table) return false;
-    using GetType = void* (__thiscall*)(void*);
-    auto* binder=kinoko::legacy::load<GetType>(table+type_slot)(layout);
-    const auto* methods=binder ? kinoko::legacy::load<const unsigned char*>(binder) : nullptr;
-    if (!methods) return false;
     TypeName result;
-    using GetName = int32_t (__thiscall*)(void*, void*);
-    kinoko::legacy::load<GetName>(methods+sizeof(void*))(binder, result.bytes);
+    if (!kinoko::act::SerializableMethods(layout).type_name(family, result.bytes)) return false;
     const kinoko::legacy::StringView text(result.bytes);
     hash=type_hash(text.data(),text.length());
     return true;
-}
-void* write_method(void* object) {
-    return kinoko::legacy::load<void*>(kinoko::legacy::load<const void*>(object));
 }
 bool write_layer_list(kinoko::act::LayerListView list, KinokoArchiveReader* writer, const char* type) {
     using namespace kinoko::act;
@@ -556,7 +543,7 @@ bool write_layer_list(kinoko::act::LayerListView list, KinokoArchiveReader* writ
     for (uint32_t i = 0; i < count; ++i) {
         if (!node || node == head || !transfer(writer, hash)) return false;
         auto* object = node->key;
-        if (object) write_virtual(object, write_method(object), writer);
+        if (object) kinoko::act::SerializableMethods(object).write(writer);
         node = node->next;
     }
     return node == head;
@@ -569,7 +556,7 @@ extern "C" int32_t __fastcall kinoko_method_write_act_layer(KinokoActLayer* laye
             !write_layer_list(kinoko::act::LayerStorageView(layer).view(&kinoko::act::LayerStorageRecord::keys),writer,".?AVCActKey@@") ||
             !write_layer_list(kinoko::act::LayerStorageView(layer).view(&kinoko::act::LayerStorageRecord::timelines),writer,".?AVCActTimeLine@@")) return 0;
         auto* script=kinoko::act::LayerStorageView(layer).bytes(&kinoko::act::LayerStorageRecord::script);
-        return (write_virtual(script, write_method(script), writer)&0xff)!=0;
+        return (kinoko::act::SerializableMethods(script).write(writer)&0xff)!=0;
     } catch (...) { return 0; }
 }
 extern "C" int32_t kinoko_act_read_layer_properties_typed(KinokoActLayer *layer,
@@ -605,8 +592,8 @@ extern "C" int32_t __fastcall kinoko_method_write_act_key(KinokoActKey* key,void
         if (!transfer(writer,present)) return 0;
         if (!layout) return 1;
         uint32_t hash=0;
-        if (!object_hash(layout,hash,16) || !transfer(writer,hash)) return 0;
-        return (write_virtual(layout, write_method(layout), writer)&0xff)!=0;
+        if (!object_hash(layout,hash,kinoko::act::TypeMethod::layout) || !transfer(writer,hash)) return 0;
+        return (kinoko::act::SerializableMethods(layout).write(writer)&0xff)!=0;
     } catch (...) { return 0; }
 }
 extern "C" int32_t __fastcall kinoko_method_write_string_layout(KinokoStringLayout* layout,void*,KinokoArchiveReader* writer) {
@@ -663,7 +650,7 @@ extern "C" int32_t __fastcall kinoko_method_write_act(KinokoActDocument* act,voi
     try {
         if (!write(act,writer,act_schema)) return 0;
         auto* script=kinoko::act::DocumentView(act).bytes(&kinoko::act::DocumentRecord::script);
-        if (!(write_virtual(script, write_method(script), writer)&0xff)) return 0;
+        if (!(kinoko::act::SerializableMethods(script).write(writer)&0xff)) return 0;
         auto layers=object_vector(kinoko::act::DocumentView(act).bytes(&kinoko::act::DocumentRecord::layers));
         // 4287D9/428822 omit only debugOnly==1 when kinoko_act_script_output_compiled()!=0. Values other
         // than one are deliberately not treated as true by this filter.
@@ -675,14 +662,14 @@ extern "C" int32_t __fastcall kinoko_method_write_act(KinokoActDocument* act,voi
         auto hash=type_hash(".?AVCActLayer@@");
         for (auto layer:layers) {
             if (!transfer(writer,hash)) return 0;
-            if (layer) write_virtual(layer, write_method(layer), writer);
+            if (layer) kinoko::act::SerializableMethods(layer).write(writer);
         }
         const auto resources=object_vector(kinoko::act::DocumentView(act).bytes(&kinoko::act::DocumentRecord::resources));
         count=static_cast<uint32_t>(resources.size());
         if (!transfer(writer,count)) return 0;
         for (auto resource:resources) {
-            if (!resource || !object_hash(resource,hash,20) || !transfer(writer,hash)) return 0;
-            write_virtual(resource, write_method(resource), writer);
+            if (!resource || !object_hash(resource,hash,kinoko::act::TypeMethod::resource) || !transfer(writer,hash)) return 0;
+            kinoko::act::SerializableMethods(resource).write(writer);
         }
         return 1;
     } catch (...) { return 0; }

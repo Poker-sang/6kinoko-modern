@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "graphics_draw_state.hpp"
 #include "kinoko/quad_transform.hpp"
 #include "kinoko/act_layout_render.hpp"
@@ -26,13 +27,7 @@ using Layer=kinoko::map::LayerRecord;
 KinokoActResource *texture_resource(KinokoActLayer *layer) {
     auto *resource=LayerView(layer).get(&Layer::resource);
     if(!resource) return nullptr;
-    using Query=uint8_t (__thiscall *)(KinokoActResource *,const void *,KinokoActResource **);
-    struct Descriptor { void *methods,*cache;char name[sizeof(".?AVCActResource2D@@")]; };
-    static const Descriptor type{nullptr,nullptr,".?AVCActResource2D@@"};
-    struct Methods { void *prefix[2];Query query; };
-    const auto *methods=legacy::load<const Methods *>(resource);
-    KinokoActResource *converted=nullptr;
-    return methods->query(resource,&type,&converted) ? converted : nullptr;
+    return ResourceMethods(resource).query(ResourceKind::texture);
 }
 int32_t bind_texture(KinokoActLayout *layout) {
     const View view(layout);
@@ -99,9 +94,7 @@ int32_t update_layout_2d(KinokoActLayout *layout) {
     const auto rotation=view.get(&Layout2DRecord::rotation),center=view.get(&Layout2DRecord::rotation_pivot);
     render::rotate_quad(quad,rotation,center);
     Position3 world{};
-    using Position=void (__thiscall *)(KinokoActLayer *,float *,float *,float *);
-    const auto *methods=LayerView(layer).get(&Layer::methods);
-    legacy::load<Position>(methods+7*sizeof(void*))(layer,&world.x,&world.y,&world.z);
+    LayerMethods(layer).position(&world.x,&world.y,&world.z);
     render::translate_quad(quad,world);
     const auto alpha=std::clamp(static_cast<int32_t>(static_cast<double>(view.get(&Layout2DRecord::alpha))*255.0),0,255);
     // Original uses the LOW BYTE of each integer color, not saturation.

@@ -505,10 +505,10 @@ int32_t load_chip_archive(KinokoActResource *resource, const char *file_name) {
         if (handle) ++loaded_texture_count;
     }
     reader.reset(); // Original closes the stream before publishing data.
-    kinoko::act::ChipResourceFields fields(resource);
-    fields.set(&kinoko::act::ChipResourceRecord::data, data.release());
+    auto& fields = kinoko::act::chip_resource(resource);
+    fields.data = std::shared_ptr<kinoko_mcd_data>(std::move(data));
     kinoko_string_assign_cstr(reinterpret_cast<int32_t *>(
-        fields.bytes(&kinoko::act::ChipResourceRecord::loaded_path)), file_name);
+        &fields.loaded_path), file_name);
     kinoko_trace_i32("mcd:chip-count", static_cast<int32_t>(chip_count));
     kinoko_trace_i32("mcd:texture-count", static_cast<int32_t>(texture_count));
     kinoko_trace_i32("mcd:texture-loaded", static_cast<int32_t>(loaded_texture_count));
@@ -530,9 +530,9 @@ extern "C" int32_t __fastcall kinoko_method_unload_resource_texture(KinokoActRes
 extern "C" int32_t __fastcall kinoko_method_load_chip_resource(KinokoActResource* receiver, void *, const char *prefix) {
     auto *resource = receiver;
     if (!resource) return 0;
-    kinoko::act::ChipResourceFields fields(resource);
+    auto& fields = kinoko::act::chip_resource(resource);
     const char *name = kinoko_string_data(
-        fields.bytes(&kinoko::act::ChipResourceRecord::source_name));
+        &fields.source_name);
     if (!name || !*name) return 0;
     try {
         // 42FB4E starts with an empty prefix; add a separator only when needed.
@@ -543,28 +543,14 @@ extern "C" int32_t __fastcall kinoko_method_load_chip_resource(KinokoActResource
             kinoko_destroy_cact_resource((KinokoActResource*)(value));
         };
         std::unique_ptr<KinokoActResource, decltype(destroy)> temporary(
-            static_cast<KinokoActResource *>(std::calloc(1, sizeof(kinoko::act::ChipResourceRecord))),
-            destroy);
+            reinterpret_cast<KinokoActResource*>(kinoko::act::create_chip_resource(kinoko_act_host_symbols()->chip_resource_vtable)), destroy);
         if (!temporary) return 0;
-        kinoko::act::ChipResourceFields scratch(temporary.get());
-        scratch.set(&kinoko::act::ChipResourceRecord::methods,
-            kinoko_act_host_symbols()->chip_resource_vtable);
-        auto base_name = scratch.view(&kinoko::act::ChipResourceRecord::name);
-        auto source_name = scratch.view(&kinoko::act::ChipResourceRecord::source_name);
-        auto loaded_path = scratch.view(&kinoko::act::ChipResourceRecord::loaded_path);
-        base_name.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        source_name.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        loaded_path.set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
+        auto& scratch = kinoko::act::chip_resource(temporary.get());
         // Original loads into a temporary resource and replaces only on success.
         if (!load_chip_archive(temporary.get(), path.c_str())) return 0;
         kinoko_string_assign_cstr(reinterpret_cast<int32_t *>(
-            fields.bytes(&kinoko::act::ChipResourceRecord::loaded_path)), base.c_str());
-        if (kinoko_act_release_chip_data(receiver))
-            kinoko_mcd_free(fields.get(&kinoko::act::ChipResourceRecord::data));
-        fields.set(&kinoko::act::ChipResourceRecord::data,
-            scratch.get(&kinoko::act::ChipResourceRecord::data));
-        scratch.set(&kinoko::act::ChipResourceRecord::data,
-            static_cast<kinoko_mcd_data *>(nullptr));
+            &fields.loaded_path), base.c_str());
+        fields.data = std::move(scratch.data);
         return 1;
     } catch (...) { return 0; }
 }
@@ -632,19 +618,9 @@ KinokoActResource* kinoko_act_make_resource(KinokoArchiveReader* reader_ptr, uin
         : kinoko_act_host_symbols()->texture_resource_vtable;
     std::unique_ptr<KinokoActResource, decltype(destroy)> resource(
         texture ? reinterpret_cast<KinokoActResource*>(kinoko::act::create_texture_resource(methods))
-                : static_cast<KinokoActResource*>(std::calloc(1, sizeof(kinoko::act::ChipResourceRecord))),
+                : reinterpret_cast<KinokoActResource*>(kinoko::act::create_chip_resource(kinoko_act_host_symbols()->chip_resource_vtable)),
         destroy);
     if (!resource) return 0;
-    if (!texture) {
-        kinoko::act::ChipResourceFields fields(resource.get());
-        fields.set(&kinoko::act::ChipResourceRecord::methods,
-            kinoko_act_host_symbols()->chip_resource_vtable);
-        fields.set(&kinoko::act::ChipResourceRecord::id, int32_t{-1});
-        fields.view(&kinoko::act::ChipResourceRecord::name).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        fields.view(&kinoko::act::ChipResourceRecord::source_name).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        fields.view(&kinoko::act::ChipResourceRecord::loaded_path).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15});
-        fields.set(&kinoko::act::ChipResourceRecord::unknown60, uint32_t{15});
-    }
     const auto loaded = render_target
         ? kinoko_act_read_render_target_properties(resource.get(), (KinokoArchiveReader**)(uintptr_t)(&reader_ptr), 1)
         : !texture

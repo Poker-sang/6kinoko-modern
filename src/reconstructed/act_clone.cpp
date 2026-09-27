@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource_records_io.hpp"
 #include "kinoko/act_clone.h"
 #include "kinoko/legacy_memory.hpp"
@@ -5,7 +6,6 @@
 #include "kinoko/act_layout_records.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/act_runtime.h"
-#include "kinoko/boost_control.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/legacy_abi.h"
 #include "kinoko/legacy_string.hpp"
@@ -17,10 +17,8 @@
 #include <new>
 
 namespace {
-namespace up = kinoko::native::upstream;
 using namespace kinoko::act;
 int32_t legacy_address(const void* p) { return static_cast<int32_t>(reinterpret_cast<uintptr_t>(p)); }
-void dispose_chip_data(void* data) { kinoko_mcd_free(static_cast<kinoko_mcd_data*>(data)); }
 
 }
 
@@ -58,53 +56,30 @@ extern "C" KinokoActKey* __fastcall kinoko_method_clone_act_key(KinokoActKey* so
     output_name.assign(input_name.data(),input_name.length());
     if (output_name.length()!=input_name.length()) return nullptr;
     if (auto* layout=input.get(&KeyRecord::layout)) {
-        const auto* methods=kinoko::legacy::load<const unsigned char*>(layout);
-        using Clone=KinokoActLayout* (__thiscall*)(KinokoActLayout*);
-        output.set(&KeyRecord::layout,kinoko::legacy::load<Clone>(methods+5*sizeof(void*))(layout));
+        output.set(&KeyRecord::layout, LayoutMethods(layout).clone());
     }
     return reinterpret_cast<KinokoActKey*>(result.release());
 }
 
 namespace {
 // 42F9D0/42FA50 and 446AF0/446B70/449B70 copy different resource fields.
-// The MCD control is the actual Boost counter already used by archive clones.
+// Cloned chip resources share decoded MCD ownership; names remain independent.
 KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable, bool chip) {
     if (!source) return 0;
     auto destroy=[](unsigned char* value) {
         if (value) kinoko_destroy_cact_resource(reinterpret_cast<KinokoActResource*>(value));
     };
     std::unique_ptr<unsigned char,decltype(destroy)> owned(
-        chip ? static_cast<unsigned char*>(std::calloc(1,sizeof(ChipResourceRecord)))
+        chip ? reinterpret_cast<unsigned char*>(create_chip_resource(vtable))
              : reinterpret_cast<unsigned char*>(create_texture_resource(vtable)),destroy);
     if (!owned) return 0;
     auto* result=reinterpret_cast<KinokoActResource*>(owned.get());
     if (chip) {
-        const ChipResourceFields input(source), output(result);
-        output.set(&ChipResourceRecord::methods,vtable);
-        output.set(&ChipResourceRecord::id,input.get(&ChipResourceRecord::id));
-        output.view(&ChipResourceRecord::name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
-        output.view(&ChipResourceRecord::source_name).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
-        output.view(&ChipResourceRecord::loaded_path).set(&kinoko::legacy::StringRecord::capacity,uint32_t{15});
-    }
-    const auto copy_string=[&](size_t offset) {
-        const kinoko::legacy::StringView input(reinterpret_cast<unsigned char*>(source)+offset);
-        const kinoko::legacy::StringView output(owned.get()+offset);
-        output.assign(input.data(),input.length());
-        if (input.length()!=output.length()) throw std::bad_alloc();
-    };
-    if (chip) {
-        copy_string(offsetof(ChipResourceRecord,name));
-        copy_string(offsetof(ChipResourceRecord,source_name)); copy_string(offsetof(ChipResourceRecord,loaded_path));
-        const kinoko::act::ChipResourceFields input(source), output(owned.get());
-        auto *control = input.get(&kinoko::act::ChipResourceRecord::shared_data);
-        if (!control) {
-            control = up::create_callback_control(input.get(&kinoko::act::ChipResourceRecord::data),dispose_chip_data);
-            if (!control) return 0;
-            input.set(&kinoko::act::ChipResourceRecord::shared_data, control);
-        }
-        up::add_strong(control);
-        output.set(&kinoko::act::ChipResourceRecord::data, input.get(&kinoko::act::ChipResourceRecord::data));
-        output.set(&kinoko::act::ChipResourceRecord::shared_data, control);
+        auto& output = chip_resource(result);
+        const auto& input = chip_resource(source);
+        output.id = input.id;
+        if (!output.copy_names(input)) return 0;
+        output.data = input.data;
     } else {
         auto& output = texture_resource(result);
         const auto& input = texture_resource(source);
@@ -133,14 +108,4 @@ extern "C" KinokoActResource* __fastcall kinoko_method_clone_texture_resource(Ki
 extern "C" KinokoActResource* __fastcall kinoko_method_clone_render_target(KinokoActResource* source, void*) {
     try { return clone_resource(source,kinoko_act_host_symbols()->render_target_vtable,false); }
     catch (...) { return 0; }
-}
-
-extern "C" int32_t kinoko_act_release_chip_data(KinokoActResource* resource) {
-    const kinoko::act::ChipResourceFields fields(resource);
-    auto *control = fields.get(&kinoko::act::ChipResourceRecord::shared_data);
-    if (!control) return 1;
-    fields.set(&kinoko::act::ChipResourceRecord::shared_data, static_cast<up::CountedControl *>(nullptr));
-    up::release_strong(control);
-    // The upstream control invokes the MCD destructor on final release.
-    return 0;
 }

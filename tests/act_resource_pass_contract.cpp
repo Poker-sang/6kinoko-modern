@@ -1,3 +1,4 @@
+#include "kinoko/act_texture_resource.hpp"
 // Actual 4289C0 implementation with virtual resource endpoints as fixtures.
 #include "kinoko/act_document.h"
 #include "kinoko/act_document_records.hpp"
@@ -10,14 +11,13 @@
 
 using namespace kinoko::act;
 struct Resource {
-    void **vtable;
-    unsigned char padding[68];
-    int32_t width, height;
-    const char *type;
+    TextureResource image;
+    const char* type;
     int id;
     uint8_t result;
+    Resource(void** table, int width, int height, const char* kind, int number, uint8_t status)
+        : type(kind), id(number), result(status) { image.methods = table; image.width = width; image.height = height; }
 };
-static_assert(offsetof(Resource, width) == 72);
 static std::string calls;
 static DocumentRecord document{};
 static bool shorten;
@@ -49,11 +49,11 @@ int main() {
     document.vtable = document_table.data();
     document.resource_path.capacity = 15;
     Resource resources[] = {
-        {resource_table.data(), {}, 0, 0, ".?AVCActResource2D@@", 1, 0},
-        {resource_table.data(), {}, 320, 200, ".?AVCActRenderTarget@@", 2, 1},
-        {resource_table.data(), {}, 0, 0, ".?AVCActResourceMesh@@", 3, 1},
-        {resource_table.data(), {}, 0, 0, ".?AVCActResourceChip@@", 4, 1},
-        {resource_table.data(), {}, 0, 0, "unknown", 5, 1},
+        {resource_table.data(), 0, 0, ".?AVCActResource2D@@", 1, 0},
+        {resource_table.data(), 320, 200, ".?AVCActRenderTarget@@", 2, 1},
+        {resource_table.data(), 0, 0, ".?AVCActResourceMesh@@", 3, 1},
+        {resource_table.data(), 0, 0, ".?AVCActResourceChip@@", 4, 1},
+        {resource_table.data(), 0, 0, "unknown", 5, 1},
     };
     ResourceRecord *slots[5];
     for (int i = 0; i != 5; ++i) slots[i] = reinterpret_cast<ResourceRecord *>(&resources[i]);

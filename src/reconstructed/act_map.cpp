@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "graphics_draw_state.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
@@ -25,11 +26,7 @@ struct VisibleChip { kinoko_mcd_chip *chip; Placement *placement; int32_t index;
 Position3 world_position(KinokoActLayer *layer) {
     Position3 result{};
     // Original virtual GetWorldPosition (+28), not a guessed parent traversal.
-    using GetPosition = void (__thiscall *)(KinokoActLayer *, float *, float *, float *);
-    struct Methods { const void *prefix[7]; GetPosition get_position; };
-    const auto *methods=LayerView(layer).get(&LayerRecord::methods);
-    auto get=kinoko::legacy::load<GetPosition>(methods+offsetof(Methods,get_position));
-    get(layer,&result.x,&result.y,&result.z);
+    kinoko::act::LayerMethods(layer).position(&result.x,&result.y,&result.z);
     return result;
 }
 }

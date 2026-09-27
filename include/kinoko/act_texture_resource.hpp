@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kinoko/legacy_string.hpp"
+#include "kinoko/resource_allocation.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -13,7 +14,7 @@ namespace kinoko::act {
 // Native runtime object. Only the method/ID/name prefix is still shared with
 // the x86 ACT publication ABI. File properties are serialized individually.
 // Explicit cleanup remains in the ACT deleting-destructor adapter; allocation
-// uses malloc + placement construction to preserve its scalar/array free ABI.
+// uses native aligned allocation metadata for scalar and array lifetimes.
 struct TextureResource final {
     const void* methods = nullptr;
     std::int32_t id = -1;
@@ -65,12 +66,8 @@ static_assert(std::is_trivially_destructible_v<TextureResource>);
 static_assert(offsetof(TextureResource, id) == 4);
 static_assert(offsetof(TextureResource, name) == 8);
 #endif
-inline TextureResource* create_texture_resource(const void* methods) noexcept {
-    auto* storage = std::malloc(sizeof(TextureResource));
-    if (!storage) return nullptr;
-    auto* resource = new (storage) TextureResource;
-    resource->methods = methods;
-    return resource;
+inline TextureResource* create_texture_resource(const void* methods, std::size_t count = 1) noexcept {
+    return allocate_resources<TextureResource>(methods, count);
 }
 inline TextureResource& texture_resource(void* resource) noexcept {
     return *static_cast<TextureResource*>(resource);

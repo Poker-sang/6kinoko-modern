@@ -6,9 +6,6 @@ extern "C" {
 #endif
 /* 427950: owns the returned document; source remains borrowed. */
 KinokoActDocument *__fastcall kinoko_act_clone(KinokoActDocument *source, void *unused);
-/* Returns true only for uncounted data the caller must free directly.
-   Counted data is destroyed by the upstream control's final strong release. */
-int32_t kinoko_act_release_chip_data(KinokoActResource* resource);
 #ifdef __cplusplus
 }
 #endif

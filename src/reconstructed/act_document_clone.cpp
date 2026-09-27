@@ -16,13 +16,6 @@ using DeleteDocument = DocumentDeleter;
 using DeleteResource = OwnedDeleter<KinokoActResource>;
 using DeleteLayer = OwnedDeleter<KinokoActLayer>;
 
-template<class Object, size_t Slot>
-Object *clone_virtual(Object *source) {
-    using Clone = Object *(__thiscall *)(Object *);
-    const auto *table = load<const unsigned char *>(source);
-    return load<Clone>(table + Slot * sizeof(void *))(source);
-}
-
 KinokoActDocument *clone_document(KinokoActDocument *source) {
     std::unique_ptr<KinokoActDocument, DeleteDocument> result(kinoko_act_document_create());
     if (!result) return nullptr;
@@ -47,7 +40,7 @@ KinokoActDocument *clone_document(KinokoActDocument *source) {
          cursor += sizeof(KinokoActResource *)) {
         auto *resource = load<KinokoActResource *>(cursor);
         if (!resource) continue;
-        std::unique_ptr<KinokoActResource, DeleteResource> copy(clone_virtual<KinokoActResource, 9>(resource));
+        std::unique_ptr<KinokoActResource, DeleteResource> copy(ResourceMethods(resource).clone());
         if (!copy) throw std::bad_alloc();
         kinoko_act_array_append((void*)(output.bytes(&DocumentRecord::resources)), (void*)(copy.get()));
         associations.add_resource(copy.release());
@@ -58,7 +51,7 @@ KinokoActDocument *clone_document(KinokoActDocument *source) {
          cursor += sizeof(KinokoActLayer *)) {
         auto *layer = load<KinokoActLayer *>(cursor);
         if (!layer) continue;
-        std::unique_ptr<KinokoActLayer, DeleteLayer> copy(clone_virtual<KinokoActLayer, 5>(layer));
+        std::unique_ptr<KinokoActLayer, DeleteLayer> copy(LayerMethods(layer).clone());
         if (!copy) throw std::bad_alloc();
         kinoko_act_array_append((void*)(output.bytes(&DocumentRecord::layers)), (void*)(copy.get()));
         associations.add_layer(copy.release());
