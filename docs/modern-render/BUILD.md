@@ -18,3 +18,18 @@ The manifest is `modern-render-02-artifacts.json`; its contract count covers the
 compiled in the runtime directory, as did the existing portable modules/contracts.
 Neither tests nor the game were executed. Logs and both build trees are retained.
 D3D9 is still the active renderer; no full-game x64/Linux/macOS claim is made.
+
+## Checkpoint 2: modern-render-03
+
+- Source: `09718d7a91fac064acf15b7116075fcee0fac1f0`.
+- Full Win32 Release all-target build succeeded; trace disabled.
+- EXE: `runtime-builds/modern-render-03/kinoko_retdec_rebuild.exe`.
+- Three DAT copied beside the EXE and verified by size/SHA256.
+- Manifest: `modern-render-03-artifacts.json`. Its 65-contract count covers the
+  legacy tools directory; portable contracts (including render_resources_contract)
+  also compiled in the runtime directory.
+- Logs retained: `build-runs/modern-render-03/{configure,build,dat}.log`.
+- No game execution or local test execution. D3D9 remains the active renderer.
+- User feedback: modern-render-02 currently looks normal; not agent verification.
+- Previous checkpoint CI run 36317029201 completed successfully on all jobs;
+  this does not establish checkpoint 2 CI results.
