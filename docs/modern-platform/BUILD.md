@@ -18,7 +18,7 @@
 The game executable retains its inherited filename for compatibility with staging
 scripts; it is a modern-fork build, not a replacement for rebuild binaries.
 
-## Final local batch: modern-03
+## Follow-up local batch: modern-03
 
 - Source: `4d64b7f` (full SHA in modern-03-artifacts.json).
 - All Windows x86 targets compiled; UTF-8 SDL title fix included.
@@ -26,3 +26,22 @@ scripts; it is a modern-fork build, not a replacement for rebuild binaries.
 - Three DAT copied and size/SHA256 verified. Quiet build, no gameplay or tests executed.
 - All prior artifacts retained. 65 legacy contract executables plus new platform
   contract compiled; these counts are NOT test pass counts.
+
+## Final local batch: modern-04
+
+- Source: `e31d765f32522fba1736efc7ebe67bf967daec96`.
+- Corrects startup controller publication before game manager/script initialization.
+- All Windows x86 targets compiled, three DAT copied and size/SHA256 verified.
+- Deliverable: `C:/WorkSpace/6kinoko-modern/runtime-builds/modern-04/kinoko_retdec_rebuild.exe`.
+- Manifest: modern-04-artifacts.json. Full build logs retained locally.
+- Quiet build; no game or test binary executed.
+
+## Portable CI compilation
+
+[Run 36314871824](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36314871824)
+on source `1bd787f9`: Windows x64, Ubuntu 24.04 and macOS 14 portable platform and
+codec targets all compiled successfully. See ci-platform-build.json for the
+snapshot and exact head SHA. Contracts were compiled, not executed. The later
+controller publication change affects the Windows bridge only; platform and
+codec sources are unchanged. Windows complete-game CI was still in progress
+at this snapshot; the final complete-game build succeeded locally as above.

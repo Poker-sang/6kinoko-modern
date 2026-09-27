@@ -5,7 +5,7 @@
 - [x] SDL3 窗口、事件与物理输入接口；原编号兼容适配。
 - [x] 更新并固定 SDL/libogg/libvorbis 源码版本与来源。
 - [x] 完成 Win32 完整构建、DAT 校验及 Windows x64 平台模块编译（未执行）。
-- [ ] Linux/macOS 平台模块 CI 编译检查。
+- [x] Windows x64、Linux、macOS 平台模块 CI 编译成功（run 36314871824；未执行测试）。
 - [ ] 用户验证窗口、键盘/手柄、焦点切换、Alt+Enter 和游戏行为。
 
 ## 输入动作拆分（用户 2026-09-27 已授权）
