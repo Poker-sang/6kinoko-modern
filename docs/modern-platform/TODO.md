@@ -196,6 +196,7 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] Separate remaining ACT resource ownership and outer string/glyph layouts.
 - [ ] Migrate Squirrel wrapper addresses and original method ABI before lifting full-game Win32 restriction.
 - [x] Use a typed ACT texture render snapshot at draw/layout/target callers; remove the duplicate fixed prefix.
+- [x] Store cloned texture references by retained handle in a native pointer-keyed owner table; use the shared typed unload entry.
 - [x] Derive glyph storage and clone copy ranges from record fields; keep the original x86 layout and virtual identity.
 - [x] Compile the shared string owner and Squirrel object storage at native Windows x64 pointer width; return payload references directly as pointers.
 - [ ] Replace the 100-byte ACT resource allocation, clone/retain ownership and vtable dispatch with native resource objects.

@@ -36,8 +36,9 @@ Font/atlas, shared string ownership and Squirrel object payload storage now
 compile in isolated Windows x64 checks. ACT texture rendering uses a typed
 state snapshot. The complete game still requires x86 ACT/VM layouts and method
 adapters; these isolated checks do not establish x64 gameplay compatibility.
-The Windows window-move presentation fix compiled in `modern-window-move-01`;
-drag/resize behavior still awaits user runtime verification.
+The user reports `modern-window-move-01` normal; this is user runtime feedback.
+ACT clone texture references now have native pointer-keyed ownership, compiled
+for Windows x64 in isolation. Full ACT resources and the game remain x86.
 
 ## Documentation / 文档
 

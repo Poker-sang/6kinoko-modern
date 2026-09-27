@@ -78,8 +78,8 @@ x64 game. Runtime assertions and visual equivalence have not been executed.
 The render path now reads ACT texture values through `act_texture_bridge.hpp`
 into `TextureRuntimeState`, a native-width render snapshot. The duplicate
 `TextureResourcePrefix` was removed. This snapshot does not own a texture; the
-100-byte `TextureResourceRecord` factory, clone ownership and virtual table
-remain x86 records. The texture handle remains a 32-bit registry index.
+100-byte `TextureResourceRecord` factory and virtual table remain x86 records.
+The texture handle remains a 32-bit registry index.
 
 Glyph queue allocation and clone ranges derive from `StringGlyphRecord` fields
 instead of literal 256/20/24/232 byte ranges. The outer string and glyph records
@@ -95,3 +95,12 @@ class-binding/actor records still require x86. `legacy_memory.hpp`,
 `legacy_abi.cpp`, `legacy_method_entries.cpp` and the top-level full-game CMake
 gate remain explicit blockers. The x64 checks compile selected objects only;
 they are not a linked game or executed contracts. See BUILD.md for artifacts.
+
+ACT texture clones now retain a texture-store handle before recording that
+extra reference in `TextureCloneLeases`. Registration failure rolls the retain
+back; unload/destruction removes and releases the recorded handle, even if the
+legacy record's handle field has since changed. The original borrowed flag and
+visible resource fields remain in the 100-byte record. Both texture and render
+target method tables use the same unload entry, which the loader now calls
+directly. The owner table compiles in an isolated Windows x64 contract; the
+complete ACT object factory and virtual ABI are still x86.

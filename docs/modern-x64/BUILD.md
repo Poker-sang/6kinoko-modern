@@ -1,5 +1,22 @@
 # x64 preparation build evidence
 
+## ACT texture clone ownership
+
+Source: `6a2aa8831d8c1e9d03855c136865fbc4d41c14f7`.
+
+- `modern-act-lease-01`: full Win32 Release game and 69 contract executables
+  compiled. Three original DAT were staged beside the EXE and checked by size
+  and SHA256; keep the adjacent shaders directory.
+- Game: `runtime-builds/modern-act-lease-01/kinoko_modern_gpu.exe`.
+- EXE SHA256: `144DA41BCBDAB854A39CA4510859D180538E901AE6F0B69B0C3FFB4598A8CFAE`.
+- Static D3D9 audit passed: 105 compiler and 79 linker dependency logs, no
+  violations. `modern-act-lease-x64-01` compiled the native texture ownership
+  contract for Windows x64. Neither result is an x64 game build.
+- Build/DAT/audit logs and hashes remain under the two unique build directories.
+  No game or contract executable was run. User reports `modern-window-move-01`
+  normal; this is user validation of the preceding build only.
+
+
 ## ACT texture and host width checkpoint
 
 Source: `4165595335a365feba9f7b98e2f1613c9d82a5b1`.

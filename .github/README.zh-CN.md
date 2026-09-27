@@ -33,8 +33,9 @@ Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, 
 字体/图集、共享字符串所有权和 Squirrel 对象负载存储已通过独立 Windows x64 编译；
 ACT 纹理渲染改用具名状态快照。完整游戏仍依赖 x86 ACT/VM 布局和方法适配，
 这些独立编译结果不代表 x64 游戏运行兼容。
-Windows 拖动窗口期间的持续渲染修复已在 `modern-window-move-01` 编译；
-拖动与缩放效果仍待用户运行验证。
+用户反馈 `modern-window-move-01` 正常，这是用户运行验证。
+ACT 克隆纹理的额外引用现由原生指针键所有权表管理，并通过独立 Windows x64 编译；
+完整 ACT 资源对象及游戏仍限 x86。
 
 ## Documentation / 文档
 
