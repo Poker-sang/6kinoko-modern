@@ -299,8 +299,9 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     if (length && length < MAX_PATH) {
         if (auto* slash = std::strrchr(executable, '\\')) { slash[1] = 0; SetCurrentDirectoryA(executable); }
     }
+    // SDL expects UTF-8; the inherited title accessor contains CP932 bytes.
     auto& platform = kinoko::platform::host();
-    if (!platform.open(kinoko_application_title(),640,480)) {
+    if (!platform.open(u8"魔理沙と６つのキノコ",640,480)) {
         MessageBoxA(nullptr,SDL_GetError(),"SDL initialization failed",MB_OK); return 1;
     }
     HWND window=static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(platform.window()),
