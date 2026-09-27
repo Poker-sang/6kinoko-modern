@@ -4,7 +4,7 @@
 #include "kinoko/sprite.h"
 
 #include <cstddef>
-#include "d3d9_quad_sink.hpp"
+#include "graphics_quad_sink.hpp"
 using kinoko::render::SpriteLayout;
 
 extern "C" {
@@ -46,7 +46,7 @@ int32_t submit(KinokoSprite *sprite, SpriteLayout format) {
         return 0;
     // Original ignores bind/FVF failure and returns DrawPrimitiveUP HRESULT.
     kinoko_texture_bind_stage(0, sprite->texture);
-    kinoko::render::D3D9QuadSink sink(*device);
+    kinoko::render::GraphicsQuadSink sink(*device);
     return kinoko::render::submit_quad(sink,format,sprite->vertices);
 }
 int32_t draw(KinokoSprite *sprite, float x, float y, SpriteLayout format) {

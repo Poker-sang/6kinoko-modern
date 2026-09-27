@@ -1,4 +1,4 @@
-#include "d3d9_texture.hpp"
+#include "graphics_texture.hpp"
 #include "kinoko/critical_section.h"
 #include "kinoko/renderer.h"
 #include "kinoko/quad_render.h"
@@ -10,7 +10,7 @@
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/com_owner.hpp"
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <set>
 #include <list>
@@ -27,7 +27,7 @@ std::list<KinokoDeviceListener *> device_listeners;
 using GraphicsLock=kinoko::graphics::Lock;
 int32_t create(uint32_t width,uint32_t height) {
     if(kinoko_graphics.capabilities.TextureCaps&0x20) width=height=(std::max)(width,height);
-    kinoko::render::D3D9Texture texture(kinoko_graphics.device);
+    kinoko::render::GraphicsTexture texture(kinoko_graphics.device);
     {
         GraphicsLock lock;
         if(FAILED(texture.create({width,height,kinoko::render::PixelFormat::argb8888,
@@ -50,9 +50,9 @@ extern "C" int32_t kinoko_set_render_target(int32_t handle) {
     if(!device) return E_FAIL;
     if(!handle) return device->SetRenderTarget(0,kinoko_renderer.backbuffer);
     if(handle<0 || handle>=KINOKO_TEXTURE_CAPACITY) return E_INVALIDARG;
-    auto* texture=static_cast<IDirect3DTexture9*>(kinoko_texture_slots[handle].texture);
+    auto* texture=static_cast<kinoko::graphics::Texture*>(kinoko_texture_slots[handle].texture);
     if(!texture) return E_INVALIDARG;
-    kinoko::ComOwner<IDirect3DSurface9> surface;
+    kinoko::ComOwner<kinoko::graphics::Surface> surface;
     const auto status=texture->GetSurfaceLevel(0,surface.put());
     if(FAILED(status)) return status;
     device->SetRenderTarget(0,surface.get());
@@ -111,22 +111,22 @@ extern "C" int32_t __fastcall kinoko_renderer_after_reset(KinokoRenderer *render
     renderer->state={};renderer->present_pending=0;
     device->GetRenderTarget(0,&renderer->backbuffer);
     device->GetDepthStencilSurface(&renderer->depth_stencil);
-    const auto state=[&](D3DRENDERSTATETYPE type,DWORD value) { device->SetRenderState(type,value); };
+    const auto state=[&](kinoko::graphics::RenderState type,DWORD value) { device->SetRenderState(type,value); };
     const DWORD alpha=saved.alpha_flags&255u;
     const DWORD test=(saved.alpha_flags>>8)&255u;
-    if(alpha) state(D3DRS_ALPHABLENDENABLE,alpha);
-    if(test) state(D3DRS_ALPHATESTENABLE,test);
+    if(alpha) state(kinoko::graphics::state_alphablendenable,alpha);
+    if(test) state(kinoko::graphics::state_alphatestenable,test);
     renderer->state.alpha_flags=alpha|(test<<8);
-    device->SetTextureStageState(0,D3DTSS_ALPHAOP,D3DTOP_MODULATE);
-    if(saved.alpha_function) { state(D3DRS_ALPHAFUNC,saved.alpha_function);renderer->state.alpha_function=saved.alpha_function; }
-    if(saved.alpha_reference) { state(D3DRS_ALPHAREF,saved.alpha_reference);renderer->state.alpha_reference=saved.alpha_reference; }
-    state(D3DRS_ZENABLE,saved.depth_flags&255u);
-    state(D3DRS_ZWRITEENABLE,(saved.depth_flags>>8)&255u);
+    device->SetTextureStageState(0,kinoko::graphics::texture_stage_alphaop,kinoko::graphics::texture_operation_modulate);
+    if(saved.alpha_function) { state(kinoko::graphics::state_alphafunc,saved.alpha_function);renderer->state.alpha_function=saved.alpha_function; }
+    if(saved.alpha_reference) { state(kinoko::graphics::state_alpharef,saved.alpha_reference);renderer->state.alpha_reference=saved.alpha_reference; }
+    state(kinoko::graphics::state_zenable,saved.depth_flags&255u);
+    state(kinoko::graphics::state_zwriteenable,(saved.depth_flags>>8)&255u);
     renderer->state.depth_flags=saved.depth_flags&0xffff;
-    state(D3DRS_ZFUNC,saved.depth_function);renderer->state.depth_function=saved.depth_function;
+    state(kinoko::graphics::state_zfunc,saved.depth_function);renderer->state.depth_function=saved.depth_function;
     // The original process owns a single renderer; named state helpers use it.
     kinoko_render_set_filter(saved.filter);kinoko_render_set_blend(saved.blend);
     kinoko_render_set_cull(saved.cull);
-    state(D3DRS_STENCILMASK,255);
-    return device->Clear(0,nullptr,D3DCLEAR_STENCIL,0,1.0f,0);
+    state(kinoko::graphics::state_stencilmask,255);
+    return device->Clear(0,nullptr,kinoko::graphics::clear_stencil,0,1.0f,0);
 }

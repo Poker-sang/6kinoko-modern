@@ -1,19 +1,19 @@
 #pragma once
 #include <stdint.h>
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Factory, device and swap_chain each own one COM reference. Renderer and
-   draw consumers borrow device. Actual SDK structs replace split RetDec words. */
+/* Factory, device and swap_chain each own one backend reference. Renderer and
+   draw consumers borrow device. This runtime object is not a serialized layout. */
 typedef struct KinokoGraphics {
-    IDirect3D9 *factory;
-    IDirect3DDevice9 *device;
-    IDirect3DSwapChain9 *swap_chain;
-    D3DCAPS9 capabilities;
-    D3DPRESENT_PARAMETERS present;
-    D3DDISPLAYMODE display;
+    kinoko::graphics::Factory *factory;
+    kinoko::graphics::Device *device;
+    kinoko::graphics::SwapChain *swap_chain;
+    kinoko::graphics::Capabilities capabilities;
+    kinoko::graphics::Presentation present;
+    kinoko::graphics::DisplayMode display;
     LONG original_window_style;
     HRESULT cooperative_status;
     int32_t unknown_state;

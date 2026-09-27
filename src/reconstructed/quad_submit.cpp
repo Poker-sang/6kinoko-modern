@@ -4,7 +4,7 @@
 #include "kinoko/quad_records.hpp"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/diagnostics.h"
-#include "d3d9_quad_sink.hpp"
+#include "graphics_quad_sink.hpp"
 extern "C" {
 void kinoko_trace_i32(const char *,int32_t);
 }
@@ -33,7 +33,7 @@ extern "C" int32_t kinoko_quad_submit(KinokoQuad *storage,float x,float y) {
     if (trace) kinoko_trace_hresult("draw:set-texture-hr",texture_result);
     auto *device=kinoko_graphics.device;
     if (!device || !kinoko::legacy::load<const void *>(device)) return E_FAIL;
-    kinoko::render::D3D9QuadSink sink(*device);
+    kinoko::render::GraphicsQuadSink sink(*device);
     const auto format_result=sink.set_layout(kinoko::render::SpriteLayout::screen_rhw);
     if (trace) kinoko_trace_hresult("draw:set-fvf-hr",format_result);
     // Both setup HRESULTs are ignored in the original; the draw supplies return.

@@ -1,4 +1,4 @@
-#include "d3d9_texture_retirement.hpp"
+#include "graphics_texture_retirement.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/texture_image.h"
@@ -7,7 +7,7 @@
 #include <array>
 #include <string>
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 
 extern "C" {
 KinokoTextureSlot kinoko_texture_slots[KINOKO_TEXTURE_CAPACITY] = {};
@@ -36,7 +36,7 @@ std::string resource_key(const char *path) {
 }
 
 extern "C" int32_t kinoko_texture_register(
-    IDirect3DBaseTexture9 *texture, uint32_t width, uint32_t height) {
+    kinoko::graphics::BaseTexture *texture, uint32_t width, uint32_t height) {
     if (!texture) return 0;
     for (int32_t handle = 1; handle < KINOKO_TEXTURE_CAPACITY; ++handle) {
         if (owners[handle].references) continue;
@@ -58,15 +58,15 @@ extern "C" int32_t kinoko_texture_acquire(const char *path) {
                 return handle;
             }
         }
-        IDirect3DTexture9 *texture_value = nullptr;
+        kinoko::graphics::Texture *texture_value = nullptr;
         uint32_t width = 0, height = 0;
         if (kinoko_texture_load_image(path, &texture_value,
                            &width, &height) < 0 || !texture_value)
             return 0;
         // Loading transfers one COM reference. Registration adopts it only on
         // success; a full store leaves the temporary responsible for release.
-        kinoko::ComOwner<IDirect3DBaseTexture9> texture(
-            static_cast<IDirect3DBaseTexture9 *>(texture_value));
+        kinoko::ComOwner<kinoko::graphics::BaseTexture> texture(
+            static_cast<kinoko::graphics::BaseTexture *>(texture_value));
         const auto handle = kinoko_texture_register(texture.get(), width, height);
         if (!handle) return 0;
         texture.detach();
@@ -86,7 +86,7 @@ extern "C" int32_t kinoko_texture_release(int32_t handle) {
     auto &slot = kinoko_texture_slots[handle];
     // Adopt the store's final reference for this scope. The public slot is a
     // borrowed renderer view and remains intact throughout device unbinding.
-    kinoko::render::D3D9TextureRetirement texture(slot.texture);
+    kinoko::render::GraphicsTextureRetirement texture(slot.texture);
     // Query actual bindings; the handle cache may differ after a failed bind.
     texture.unbind(kinoko_graphics.device);
     kinoko_texture_forget_bindings(handle); // original final-release cache invalidation

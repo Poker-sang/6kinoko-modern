@@ -8,11 +8,11 @@
 #include "kinoko/matrix_math.hpp"
 namespace {
 using kinoko::math::Matrix;
-D3DMATRIX* matrix_result(D3DMATRIX* out,const Matrix& value){std::memcpy(out,&value,sizeof(value));return out;}
-D3DMATRIX* matrix_rotation(D3DMATRIX* out,float yaw,float pitch,float roll){return matrix_result(out,kinoko::math::rotation(yaw,pitch,roll));}
-D3DMATRIX* matrix_translation(D3DMATRIX* out,float x,float y,float z){return matrix_result(out,kinoko::math::translation(x,y,z));}
-D3DMATRIX* matrix_scaling(D3DMATRIX* out,float x,float y,float z){return matrix_result(out,kinoko::math::scaling(x,y,z));}
-D3DMATRIX* matrix_multiply(D3DMATRIX* out,const D3DMATRIX* a,const D3DMATRIX* b){Matrix x,y;std::memcpy(&x,a,sizeof(x));std::memcpy(&y,b,sizeof(y));return matrix_result(out,kinoko::math::multiply(x,y));}
+kinoko::graphics::Matrix* matrix_result(kinoko::graphics::Matrix* out,const Matrix& value){std::memcpy(out,&value,sizeof(value));return out;}
+kinoko::graphics::Matrix* matrix_rotation(kinoko::graphics::Matrix* out,float yaw,float pitch,float roll){return matrix_result(out,kinoko::math::rotation(yaw,pitch,roll));}
+kinoko::graphics::Matrix* matrix_translation(kinoko::graphics::Matrix* out,float x,float y,float z){return matrix_result(out,kinoko::math::translation(x,y,z));}
+kinoko::graphics::Matrix* matrix_scaling(kinoko::graphics::Matrix* out,float x,float y,float z){return matrix_result(out,kinoko::math::scaling(x,y,z));}
+kinoko::graphics::Matrix* matrix_multiply(kinoko::graphics::Matrix* out,const kinoko::graphics::Matrix* a,const kinoko::graphics::Matrix* b){Matrix x,y;std::memcpy(&x,a,sizeof(x));std::memcpy(&y,b,sizeof(y));return matrix_result(out,kinoko::math::multiply(x,y));}
 }
 
 namespace kinoko::act {
@@ -43,8 +43,8 @@ int32_t update_layout_3d(Layout3DRecord *layout) {
     const map::LayerView owner(layout->layer);
     if (!owner.get(&map::LayerRecord::visible)) return S_OK;
     if (!owner.get(&map::LayerRecord::resource)) return E_FAIL;
-    D3DMATRIX world{}, operation{};
-    world._11=world._22=world._33=world._44=1.0f;
+    kinoko::graphics::Matrix world{}, operation{};
+    world.m[0][0]=world.m[1][1]=world.m[2][2]=world.m[3][3]=1.0f;
     // 43C920: yaw/pitch/roll in radians, then translation, then scaling.
     // Do not substitute the usual S*R*T or the owning layer's world position.
     matrix_rotation(&operation,layout->rotation.x,layout->rotation.y,layout->rotation.z);
@@ -65,16 +65,16 @@ int32_t draw_layout_3d(Layout3DRecord *layout) {
     if (!resource) return E_FAIL;
     auto *device=kinoko_graphics.device;
     DWORD depth{},write_depth{},alpha{};
-    D3DMATRIX previous{},world{};
-    device->GetRenderState(D3DRS_ZENABLE,&depth);
-    device->GetRenderState(D3DRS_ZWRITEENABLE,&write_depth);
-    device->GetRenderState(D3DRS_ALPHABLENDENABLE,&alpha);
-    device->SetRenderState(D3DRS_ZENABLE,1);
-    device->SetRenderState(D3DRS_ZWRITEENABLE,1);
-    device->SetRenderState(D3DRS_ALPHABLENDENABLE,1);
-    device->GetTransform(D3DTS_WORLD,&previous);
+    kinoko::graphics::Matrix previous{},world{};
+    device->GetRenderState(kinoko::graphics::state_zenable,&depth);
+    device->GetRenderState(kinoko::graphics::state_zwriteenable,&write_depth);
+    device->GetRenderState(kinoko::graphics::state_alphablendenable,&alpha);
+    device->SetRenderState(kinoko::graphics::state_zenable,1);
+    device->SetRenderState(kinoko::graphics::state_zwriteenable,1);
+    device->SetRenderState(kinoko::graphics::state_alphablendenable,1);
+    device->GetTransform(kinoko::graphics::transform_world,&previous);
     std::memcpy(&world,layout->world,sizeof(world));
-    device->SetTransform(D3DTS_WORLD,&world);
+    device->SetTransform(kinoko::graphics::transform_world,&world);
     struct Descriptor { void *methods,*cache; char name[sizeof(".?AVCActResourceMesh@@")]; };
     static const Descriptor type{nullptr,nullptr,".?AVCActResourceMesh@@"};
     void *converted=nullptr;
@@ -84,10 +84,10 @@ int32_t draw_layout_3d(Layout3DRecord *layout) {
     auto *head=load<MeshListPrefix>(converted).head;
     for (auto *node=head->next;node!=head;node=node->next)
         node->render.methods->draw(&node->render);
-    device->SetTransform(D3DTS_WORLD,&previous);
-    device->SetRenderState(D3DRS_ZENABLE,depth);
-    device->SetRenderState(D3DRS_ZWRITEENABLE,write_depth);
-    device->SetRenderState(D3DRS_ALPHABLENDENABLE,alpha);
+    device->SetTransform(kinoko::graphics::transform_world,&previous);
+    device->SetRenderState(kinoko::graphics::state_zenable,depth);
+    device->SetRenderState(kinoko::graphics::state_zwriteenable,write_depth);
+    device->SetRenderState(kinoko::graphics::state_alphablendenable,alpha);
     return S_OK;
 }
 

@@ -8,7 +8,7 @@
 #include "kinoko/texture_store.h"
 #include "kinoko/com_owner.hpp"
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
@@ -19,8 +19,6 @@
 extern "C" {
 extern char *kinoko_game_window_slot;
 
-HRESULT WINAPI D3DXCreateTexture(IDirect3DDevice9*,UINT,UINT,UINT,DWORD,
-                                D3DFORMAT,D3DPOOL,IDirect3DTexture9**);
 }
 namespace {
 inline char*& game_window_slot = kinoko_game_window_slot;
@@ -208,16 +206,16 @@ extern "C" void kinoko_string_font_rasterize(void* r,const char* character,int32
     if(height) *height=h+edge;
 }
 extern "C" int32_t kinoko_string_font_texture(void* r) {
-    kinoko::ComOwner<IDirect3DTexture9> texture;
-    IDirect3DTexture9* value=nullptr;
+    kinoko::ComOwner<kinoko::graphics::Texture> texture;
+    kinoko::graphics::Texture* value=nullptr;
     {
         GraphicsLock lock;
-        if(FAILED(D3DXCreateTexture(kinoko_graphics.device,512,512,1,0,
-            D3DFMT_A8R8G8B8,D3DPOOL_MANAGED,&value))) return 0;
+        if(FAILED(kinoko::graphics::create_texture(kinoko_graphics.device,512,512,1,0,
+            kinoko::graphics::format_a8r8g8b8,kinoko::graphics::pool_managed,&value))) return 0;
     }
     texture.reset(value);
     {
-        GraphicsLock lock;D3DLOCKED_RECT rect{};
+        GraphicsLock lock;kinoko::graphics::MappedPixels rect{};
         if(FAILED(value->LockRect(0,&rect,nullptr,0))) return 0;
         std::memset(rect.pBits,0,4*512*512);
         const kinoko::native::RecordView<Renderer> record(r);
@@ -236,15 +234,15 @@ extern "C" int32_t kinoko_string_font_texture(void* r) {
 extern "C" void kinoko_string_font_upload(void* r,int32_t handle,const char* character,
                                           int32_t x,int32_t y,int32_t* width,int32_t* height) {
     if(handle<=0 || handle>=KINOKO_TEXTURE_CAPACITY) return;
-    auto* texture=static_cast<IDirect3DTexture9*>(kinoko_texture_slots[handle].texture);
+    auto* texture=static_cast<kinoko::graphics::Texture*>(kinoko_texture_slots[handle].texture);
     if(!texture) return;
     GraphicsLock lock;
-    kinoko::ComOwner<IDirect3DSurface9> surface;
-    IDirect3DSurface9* value=nullptr;
+    kinoko::ComOwner<kinoko::graphics::Surface> surface;
+    kinoko::graphics::Surface* value=nullptr;
     if(FAILED(texture->GetSurfaceLevel(0,&value))) return;
-    surface.reset(value);D3DSURFACE_DESC description{};value->GetDesc(&description);surface.reset();
+    surface.reset(value);kinoko::graphics::SurfaceDescription description{};value->GetDesc(&description);surface.reset();
     RECT region{x,y,static_cast<LONG>(description.Width),static_cast<LONG>(description.Height)};
-    D3DLOCKED_RECT rect{};
+    kinoko::graphics::MappedPixels rect{};
     if(FAILED(texture->LockRect(0,&rect,&region,0))) return;
     try {
         std::vector<unsigned char> pixels(size_t(description.Height-y)*rect.Pitch);

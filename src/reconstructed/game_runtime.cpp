@@ -127,7 +127,7 @@ void* __fastcall destroy_scene(Scene* scene,void*,unsigned flags) {
 void __fastcall scene_noop(Scene*,void*) {}
 int32_t __fastcall scene_transition(Scene*,void*,int32_t) { return 0; }
 int32_t __fastcall scene_update(Scene*,void*) {
-    if (kinoko_graphics.cooperative_status==D3D_OK) kinoko_game_update();
+    if (kinoko_graphics.cooperative_status==kinoko::graphics::ok) kinoko_game_update();
     return 0; // original logo scene stays at ID zero
 }
 int32_t __fastcall scene_draw(Scene*,void*) {

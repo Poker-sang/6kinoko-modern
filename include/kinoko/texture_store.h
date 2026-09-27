@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,7 +10,7 @@ extern "C" {
 
 enum { KINOKO_TEXTURE_CAPACITY = 4096, KINOKO_TEXTURE_STAGE_COUNT = 8 };
 typedef struct KinokoTextureSlot {
-    IDirect3DBaseTexture9 *texture;
+    kinoko::graphics::BaseTexture *texture;
     uint32_t width;
     uint32_t height;
 } KinokoTextureSlot;
@@ -20,7 +20,7 @@ extern KinokoTextureSlot kinoko_texture_slots[KINOKO_TEXTURE_CAPACITY];
 int32_t kinoko_texture_acquire(const char *path);
 /* Adopts one COM reference on success; on failure the caller still owns it.
    Slot pointers are borrowed. Only release(handle) consumes store ownership. */
-int32_t kinoko_texture_register(IDirect3DBaseTexture9 *texture, uint32_t width, uint32_t height);
+int32_t kinoko_texture_register(kinoko::graphics::BaseTexture *texture, uint32_t width, uint32_t height);
 int32_t kinoko_texture_release(int32_t handle);
 int32_t kinoko_texture_retain(int32_t handle);
 /* 405E30: stage was carried in EDI. Cached nonzero returns the handle; zero

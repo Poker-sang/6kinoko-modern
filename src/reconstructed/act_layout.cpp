@@ -1,4 +1,4 @@
-#include "d3d9_draw_state.hpp"
+#include "graphics_draw_state.hpp"
 #include "kinoko/quad_transform.hpp"
 #include "kinoko/act_layout_render.hpp"
 #include "kinoko/act_draw_records.hpp"
@@ -122,7 +122,7 @@ int32_t draw_layout_2d(KinokoActLayout *layout,float x,float y) {
     if(!texture_resource(layer)) return E_FAIL;
     auto *device=kinoko_graphics.device;
     if(!device) return E_FAIL; // inherited absent-device boundary
-    kinoko::render::D3D9DrawState saved(device,kinoko::render::ScopeKind::blend);
+    kinoko::render::GraphicsDrawState saved(device,kinoko::render::ScopeKind::blend);
     set_layout_blend(view.get(&Layout2DRecord::blend));
     kinoko_texture_bind_stage(0,view.get(&Layout2DRecord::texture));
     kinoko_quad_submit(reinterpret_cast<KinokoQuad *>(view.bytes(&Layout2DRecord::quad)),x,y);

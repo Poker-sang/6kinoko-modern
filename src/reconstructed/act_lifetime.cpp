@@ -47,7 +47,7 @@
 #include "kinoko/sprite.h"
 #include "kinoko/game_math.h"
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstring>

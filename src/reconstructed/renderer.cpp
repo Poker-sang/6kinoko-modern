@@ -4,8 +4,8 @@ extern "C" void kinoko_trace(const char *);
 extern "C" KinokoRenderer *kinoko_renderer_construct(const void *methods) {
     kinoko_renderer.methods=methods;
     kinoko_renderer.state={};
-    kinoko_renderer.state.depth_function=D3DCMP_LESSEQUAL;
-    kinoko_renderer.state.alpha_function=D3DCMP_ALWAYS;
+    kinoko_renderer.state.depth_function=kinoko::graphics::compare_lessequal;
+    kinoko_renderer.state.alpha_function=kinoko::graphics::compare_always;
     kinoko_initialize_renderer_sets();
     kinoko_renderer.device=nullptr;
     kinoko_renderer.backbuffer=nullptr;
@@ -13,9 +13,9 @@ extern "C" KinokoRenderer *kinoko_renderer_construct(const void *methods) {
     return &kinoko_renderer;
 }
 extern "C" int32_t kinoko_renderer_initialize(void) {
-    IDirect3DDevice9 *device;
-    IDirect3DSurface9 *render_target = NULL;
-    IDirect3DSurface9 *depth_stencil = NULL;
+    kinoko::graphics::Device *device;
+    kinoko::graphics::Surface *render_target = NULL;
+    kinoko::graphics::Surface *depth_stencil = NULL;
     HRESULT hr;
 
     if (kinoko_renderer.device != 0) {
@@ -32,13 +32,13 @@ extern "C" int32_t kinoko_renderer_initialize(void) {
     kinoko_renderer.clear_color = 0;
     kinoko_renderer.present_pending = 0;
     kinoko_trace("401ae0:pre-clear-1");
-    hr = device->Clear(0, NULL, D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER, 0, 1.0f, 0);
+    hr = device->Clear(0, NULL, kinoko::graphics::clear_target|kinoko::graphics::clear_zbuffer, 0, 1.0f, 0);
     kinoko_trace(FAILED(hr) ? "401ae0:clear-1-failed" :
                  "401ae0:clear-1-ok");
-    hr = device->SetRenderState(D3DRS_STENCILMASK, 255);
+    hr = device->SetRenderState(kinoko::graphics::state_stencilmask, 255);
     kinoko_trace(FAILED(hr) ? "401ae0:set-render-state-failed" :
                  "401ae0:set-render-state-ok");
-    hr = device->Clear(0, NULL, D3DCLEAR_STENCIL, 0, 1.0f, 0);
+    hr = device->Clear(0, NULL, kinoko::graphics::clear_stencil, 0, 1.0f, 0);
     kinoko_trace(FAILED(hr) ? "401ae0:clear-2-failed" :
                  "401ae0:clear-2-ok");
     hr = device->GetRenderTarget(0, &render_target);

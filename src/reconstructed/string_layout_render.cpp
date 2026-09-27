@@ -1,4 +1,4 @@
-#include "d3d9_draw_state.hpp"
+#include "graphics_draw_state.hpp"
 #include "kinoko/act_layout_render.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/string_layout.h"
@@ -72,7 +72,7 @@ extern "C" int32_t __fastcall kinoko_method_draw_string_layout(KinokoStringLayou
     if(!layer) return E_FAIL;
     if(!kinoko::map::LayerView(layer).get(&kinoko::map::LayerRecord::visible)) return 0;
     auto *device=kinoko_graphics.device;
-    kinoko::render::D3D9DrawState saved(device,kinoko::render::ScopeKind::blend);
+    kinoko::render::GraphicsDrawState saved(device,kinoko::render::ScopeKind::blend);
     kinoko::act::set_layout_blend(text.get(&TextRecord::blend));
     kinoko_render_set_filter(2);
     const uint32_t count=kinoko_string_queue_size(layout);

@@ -13,16 +13,16 @@ typedef struct KinokoRenderState {
 } KinokoRenderState;
 typedef struct KinokoRenderer {
     const void *methods;
-    IDirect3DDevice9 *device; /* borrowed from KinokoGraphics */
+    kinoko::graphics::Device *device; /* borrowed from KinokoGraphics */
     uint32_t unknown8;
     KinokoRenderState state;
     uint16_t unknown52;
     uint8_t present_pending, unknown55;
     uint32_t clear_color;
     uint8_t unknown60[16];
-    IDirect3DSurface9 *backbuffer;
+    kinoko::graphics::Surface *backbuffer;
     uint8_t unknown80[16];
-    IDirect3DSurface9 *depth_stencil;
+    kinoko::graphics::Surface *depth_stencil;
 } KinokoRenderer;
 /* GetRenderTarget/GetDepthStencilSurface acquire references released before
    Reset/shutdown. Original leaves released slots intact until reacquisition. */

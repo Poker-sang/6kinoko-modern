@@ -10,8 +10,8 @@
 // failure state; the message-loop cooperative-level poll decides the next try.
 extern "C" int32_t kinoko_graphics_reset(void) {
     auto &state=kinoko_graphics;
-    if (!state.factory || !state.device || state.cooperative_status==D3DERR_DEVICELOST) return 0;
-    state.present.BackBufferFormat=state.present.Windowed ? state.display.Format : D3DFMT_X8R8G8B8;
+    if (!state.factory || !state.device || state.cooperative_status==kinoko::graphics::error_devicelost) return 0;
+    state.present.BackBufferFormat=state.present.Windowed ? state.display.Format : kinoko::graphics::format_x8r8g8b8;
     kinoko::graphics::Lock lock;
     kinoko_notify_device_listeners(KINOKO_DEVICE_BEFORE_RESET);
     if (state.swap_chain) { state.swap_chain->Release();state.swap_chain=nullptr; }
@@ -24,8 +24,8 @@ extern "C" int32_t kinoko_graphics_reset(void) {
 extern "C" HRESULT kinoko_graphics_poll(void) {
     auto &state=kinoko_graphics;
     if (state.device) state.cooperative_status=state.device->TestCooperativeLevel();
-    if (state.cooperative_status==D3DERR_DEVICENOTRESET) kinoko_graphics_reset();
-    return state.cooperative_status; // do not force D3D_OK after Reset
+    if (state.cooperative_status==kinoko::graphics::error_devicenotreset) kinoko_graphics_reset();
+    return state.cooperative_status; // do not force kinoko::graphics::ok after Reset
 }
 
 extern "C" int32_t kinoko_graphics_toggle_window(void) {
@@ -60,7 +60,7 @@ extern "C" int32_t kinoko_graphics_begin_scene(void) {
     static volatile LONG traces;
     if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("401760:beginscene-hr",status);
     // 40177D compares exactly against zero, not merely SUCCEEDED(status).
-    if (status!=D3D_OK) { LeaveCriticalSection(&kinoko_graphics_lock.native);return 0; }
+    if (status!=kinoko::graphics::ok) { LeaveCriticalSection(&kinoko_graphics_lock.native);return 0; }
     return 1;
 }
 extern "C" int32_t kinoko_graphics_end_scene(void) {
@@ -73,19 +73,19 @@ extern "C" int32_t kinoko_graphics_present(void) {
     if (!kinoko_renderer.present_pending || !TryEnterCriticalSection(&kinoko_graphics_lock.native)) return 0;
     auto *swap_chain=kinoko_graphics.swap_chain;
     // Retain the existing null-swap-chain startup boundary. The normal path
-    // clears pending only on D3D_OK, retaining it on WASSTILLDRAWING/failure.
-    HRESULT status=D3D_OK;
-    if (swap_chain) status=swap_chain->Present(nullptr,nullptr,nullptr,nullptr,D3DPRESENT_DONOTWAIT);
+    // clears pending only on kinoko::graphics::ok, retaining it on WASSTILLDRAWING/failure.
+    HRESULT status=kinoko::graphics::ok;
+    if (swap_chain) status=swap_chain->Present(nullptr,nullptr,nullptr,nullptr,kinoko::graphics::presentation_donotwait);
     static volatile LONG traces;
     if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("4017b0:present-hr",status);
-    if (status==D3D_OK) kinoko_renderer.present_pending=0;
+    if (status==kinoko::graphics::ok) kinoko_renderer.present_pending=0;
     LeaveCriticalSection(&kinoko_graphics_lock.native);
-    return status==D3D_OK;
+    return status==kinoko::graphics::ok;
 }
 extern "C" int32_t kinoko_graphics_clear(void) {
     auto *device=kinoko_graphics.device;
-    if (!device) return D3DERR_INVALIDCALL;
-    const auto status=device->Clear(0,nullptr,D3DCLEAR_TARGET|D3DCLEAR_ZBUFFER,kinoko_renderer.clear_color,1.0f,0);
+    if (!device) return kinoko::graphics::error_invalidcall;
+    const auto status=device->Clear(0,nullptr,kinoko::graphics::clear_target|kinoko::graphics::clear_zbuffer,kinoko_renderer.clear_color,1.0f,0);
     static volatile LONG traces;
     if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("401820:clear-hr",status);
     return status;

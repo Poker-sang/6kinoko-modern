@@ -1,5 +1,5 @@
-#include "d3d9_blend_sink.hpp"
-#include "d3d9_draw_state.hpp"
+#include "graphics_blend_sink.hpp"
+#include "graphics_draw_state.hpp"
 #include "kinoko/legacy_string.h"
 #include "kinoko/graphics_device.h"
 #include "kinoko/string_layout.h"
@@ -14,7 +14,7 @@
 #include "kinoko/texture_store.h"
 #include "kinoko/render_target.h"
 #include "kinoko/windows_owner.hpp"
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 
 extern "C" {
 void kinoko_trace_i32(const char*, int32_t);
@@ -42,13 +42,13 @@ void* method(const void* object, unsigned index) {
 class DrawTarget final {
     bool selected_;
 public:
-    DrawTarget(KinokoActResource* target, IDirect3DDevice9* device) : selected_(target != 0) {
+    DrawTarget(KinokoActResource* target, kinoko::graphics::Device* device) : selected_(target != 0) {
         if (!selected_) return;
         const RecordView<TextureResourcePrefix> resource(target);
         kinoko_set_render_target(resource.get(&TextureResourcePrefix::texture));
         // 452636/452659 clear the selected target to opaque black before
         // checking stage/ACT visibility. The original ignores these HRESULTs.
-        if (device) device->Clear(0, nullptr, D3DCLEAR_TARGET, 0xff000000u, 1.0f, 0);
+        if (device) device->Clear(0, nullptr, kinoko::graphics::clear_target, 0xff000000u, 1.0f, 0);
     }
     ~DrawTarget() { if (selected_) kinoko_set_render_target(0); }
     DrawTarget(const DrawTarget&) = delete;
@@ -56,7 +56,7 @@ public:
 };
 // Original 452670..452720 / 4529FB..452A84 save these states around the
 // whole ACT pass, including layout virtual calls, not only BitBlt sprites.
-void set_blend(IDirect3DDevice9* device, int32_t blend) {
+void set_blend(kinoko::graphics::Device* device, int32_t blend) {
     using namespace kinoko::render;
     auto src=BlendFactor::one,dest=BlendFactor::zero;
     auto op=BlendOperation::add;
@@ -67,7 +67,7 @@ void set_blend(IDirect3DDevice9* device, int32_t blend) {
     case 4: src=BlendFactor::zero;dest=BlendFactor::source_color;break;
     case 5: src=BlendFactor::destination_color;dest=BlendFactor::one;break;
     }
-    D3D9BlendSink sink(*device);
+    GraphicsBlendSink sink(*device);
     sink.set_source(src);sink.set_destination(dest);sink.set_operation(op);
 }
 int32_t prepare_sprite(void* item, const BlitCommand& command) {
@@ -160,7 +160,7 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
     if (!ordered_layers(layers)) return 0;
     const float draw_x = x + document.get(&DocumentRecord::offset_x);
     const float draw_y = y + document.get(&DocumentRecord::offset_y);
-    kinoko::render::D3D9DrawState states(device,kinoko::render::ScopeKind::act_pass);
+    kinoko::render::GraphicsDrawState states(device,kinoko::render::ScopeKind::act_pass);
     int32_t result = 0;
     for (int32_t i = layer_distance(layers) - 1; i >= 0; --i) {
         const auto layout = kinoko_act_layer_layout(self, i);

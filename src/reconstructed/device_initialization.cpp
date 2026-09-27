@@ -4,8 +4,10 @@
 #include "kinoko/diagnostics.h"
 #include <cstring>
 #include <cstddef>
-static_assert(sizeof(D3DCAPS9)==304 && offsetof(D3DCAPS9,TextureCaps)==60);
-static_assert(sizeof(D3DPRESENT_PARAMETERS)==56);
+#ifndef KINOKO_GPU_GAME
+static_assert(sizeof(kinoko::graphics::Capabilities)==304 && offsetof(kinoko::graphics::Capabilities,TextureCaps)==60);
+static_assert(sizeof(kinoko::graphics::Presentation)==56);
+#endif
 extern "C" void kinoko_trace_i32(const char *,int32_t);
 
 // 4011B0: preserve the original HAL/HW -> HAL/SW -> REF/SW fallback order.
@@ -14,12 +16,12 @@ extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t heig
     auto &state=kinoko_graphics;
     state.original_window_style=GetWindowLongA(window,GWL_STYLE);
     kinoko_trace("4011b0:pre-d3d-create");
-    state.factory=Direct3DCreate9(D3D_SDK_VERSION);
+    state.factory=kinoko::graphics::create_factory(kinoko::graphics::sdk_version);
     if (!state.factory) {
-        MessageBoxA(window,"Direct3DCreate9 failed","DirectX-Error",MB_OK);return 0;
+        MessageBoxA(window,"kinoko::graphics::create_factory failed","DirectX-Error",MB_OK);return 0;
     }
     state.display={};
-    if (FAILED(state.factory->GetAdapterDisplayMode(D3DADAPTER_DEFAULT,&state.display))) {
+    if (FAILED(state.factory->GetAdapterDisplayMode(kinoko::graphics::adapter_default,&state.display))) {
         // Retain the inherited startup-failure cleanup boundary.
         state.factory->Release();state.factory=nullptr;
         MessageBoxA(window,"GetAdapterDisplayMode failed","DirectX-Error",MB_OK);return 0;
@@ -36,25 +38,25 @@ extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t heig
     parameters.BackBufferHeight=height;
     parameters.BackBufferFormat=state.display.Format;
     parameters.BackBufferCount=1;
-    parameters.MultiSampleType=D3DMULTISAMPLE_NONE;
-    parameters.SwapEffect=D3DSWAPEFFECT_DISCARD;
+    parameters.MultiSampleType=kinoko::graphics::multisample_none;
+    parameters.SwapEffect=kinoko::graphics::swap_discard;
     parameters.hDeviceWindow=window;
     parameters.Windowed=TRUE;
     parameters.EnableAutoDepthStencil=TRUE;
-    parameters.AutoDepthStencilFormat=D3DFMT_D24S8;
-    parameters.Flags=D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
-    parameters.PresentationInterval=D3DPRESENT_INTERVAL_ONE;
+    parameters.AutoDepthStencilFormat=kinoko::graphics::format_d24s8;
+    parameters.Flags=kinoko::graphics::presentation_flag_discard_depthstencil;
+    parameters.PresentationInterval=kinoko::graphics::presentation_interval_one;
     kinoko_trace_i32("4011b0:client-width",width);
     kinoko_trace_i32("4011b0:client-height",height);
-    struct Attempt { D3DDEVTYPE type; DWORD behavior; };
+    struct Attempt { kinoko::graphics::DeviceKind type; DWORD behavior; };
     constexpr Attempt attempts[]={
-        {D3DDEVTYPE_HAL,D3DCREATE_HARDWARE_VERTEXPROCESSING|D3DCREATE_MULTITHREADED},
-        {D3DDEVTYPE_HAL,D3DCREATE_SOFTWARE_VERTEXPROCESSING|D3DCREATE_MULTITHREADED},
-        {D3DDEVTYPE_REF,D3DCREATE_SOFTWARE_VERTEXPROCESSING|D3DCREATE_MULTITHREADED}
+        {kinoko::graphics::device_hal,kinoko::graphics::creation_hardware_vertexprocessing|kinoko::graphics::creation_multithreaded},
+        {kinoko::graphics::device_hal,kinoko::graphics::creation_software_vertexprocessing|kinoko::graphics::creation_multithreaded},
+        {kinoko::graphics::device_ref,kinoko::graphics::creation_software_vertexprocessing|kinoko::graphics::creation_multithreaded}
     };
     HRESULT status=E_FAIL;
     for (const auto attempt:attempts) {
-        status=state.factory->CreateDevice(D3DADAPTER_DEFAULT,attempt.type,window,
+        status=state.factory->CreateDevice(kinoko::graphics::adapter_default,attempt.type,window,
             attempt.behavior,&parameters,&state.device);
         kinoko_trace_hresult("4011b0:create-device-hr",status);
         if (SUCCEEDED(status)) break;
@@ -66,7 +68,7 @@ extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t heig
     state.capabilities={};
     state.device->GetDeviceCaps(&state.capabilities);
     state.device->GetSwapChain(0,&state.swap_chain);
-    state.cooperative_status=D3D_OK;
+    state.cooperative_status=kinoko::graphics::ok;
     kinoko_trace("4011b0:done");
     return 1;
 }

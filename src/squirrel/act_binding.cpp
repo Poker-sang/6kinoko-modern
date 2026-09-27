@@ -52,7 +52,7 @@
 #include "kinoko/upstream_bindings.hpp"
 #include "kinoko/squirrel_host_object.hpp"
 #include <windows.h>
-#include <d3d9.h>
+
 #include <mmsystem.h>
 #include <algorithm>
 #include <cmath>

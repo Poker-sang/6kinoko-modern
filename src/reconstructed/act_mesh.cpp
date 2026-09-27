@@ -55,17 +55,17 @@ struct Controller {
 struct Renderer {
     const void *methods{};
     const Node *model{}; // borrowed from ResourceState
-    ComOwner<IDirect3DIndexBuffer9> indices;
-    ComOwner<IDirect3DVertexBuffer9> positions,normals,coordinates;
-    ComOwner<IDirect3DVertexDeclaration9> declaration;
+    ComOwner<kinoko::graphics::IndexBuffer> indices;
+    ComOwner<kinoko::graphics::VertexBuffer> positions,normals,coordinates;
+    ComOwner<kinoko::graphics::Declaration> declaration;
     // Original replacement handles are borrowed; insertion does not AddRef.
     std::multimap<std::string,int32_t> replacements;
 };
-static const D3DVERTEXELEMENT9 elements[]={
-    {0,0,D3DDECLTYPE_FLOAT3,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_POSITION,0},
-    {1,0,D3DDECLTYPE_FLOAT3,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_NORMAL,0},
-    {2,0,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD,0},
-    D3DDECL_END()
+static const kinoko::graphics::VertexElement elements[]={
+    {0,0,kinoko::graphics::element_float3,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_position,0},
+    {1,0,kinoko::graphics::element_float3,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_normal,0},
+    {2,0,kinoko::graphics::element_float2,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_texcoord,0},
+    kinoko::graphics::declaration_end()
 };
 template<class Buffer> void fill(Buffer *buffer,const void *data,size_t size) {
     if(!buffer) return;
@@ -82,12 +82,12 @@ bool bind_mesh(Renderer &render,const Node *model) {
     const auto &mesh=*model->geometry;
     // 456690 intentionally creates 16-bit indices even though the file reader
     // accepts 32-bit arrays. Preserve the existing renderer's byte count.
-    bool failed=FAILED(device->CreateIndexBuffer(mesh.index_count*2,0,D3DFMT_INDEX16,
-        D3DPOOL_MANAGED,render.indices.put(),nullptr));
+    bool failed=FAILED(device->CreateIndexBuffer(mesh.index_count*2,0,kinoko::graphics::format_index16,
+        kinoko::graphics::pool_managed,render.indices.put(),nullptr));
     const auto vertex_count=static_cast<UINT>(mesh.positions.size());
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,D3DFVF_XYZ,D3DPOOL_MANAGED,render.positions.put(),nullptr))||failed;
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,D3DFVF_NORMAL,D3DPOOL_MANAGED,render.normals.put(),nullptr))||failed;
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*8,0,D3DFVF_TEX1,D3DPOOL_MANAGED,render.coordinates.put(),nullptr))||failed;
+    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_xyz,kinoko::graphics::pool_managed,render.positions.put(),nullptr))||failed;
+    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_normal,kinoko::graphics::pool_managed,render.normals.put(),nullptr))||failed;
+    failed=FAILED(device->CreateVertexBuffer(vertex_count*8,0,kinoko::graphics::vertex_tex1,kinoko::graphics::pool_managed,render.coordinates.put(),nullptr))||failed;
     failed=FAILED(device->CreateVertexDeclaration(elements,render.declaration.put()))||failed;
     if(failed) {
         render.indices.reset();render.positions.reset();render.normals.reset();
@@ -110,8 +110,8 @@ uint8_t __fastcall draw_mesh(Renderer *render,void *) {
         !render->positions || !render->normals || !render->coordinates || !render->declaration) return 0;
     const auto &mesh=*render->model->geometry;
     if(!mesh.visible) return 1;
-    device->SetRenderState(D3DRS_FILLMODE,D3DFILL_SOLID);
-    D3DMATRIX world{};device->GetTransform(D3DTS_WORLD,&world);
+    device->SetRenderState(kinoko::graphics::state_fillmode,kinoko::graphics::fill_solid);
+    kinoko::graphics::Matrix world{};device->GetTransform(kinoko::graphics::transform_world,&world);
     // ACT's 44CA60 calls SetMesh, not SetController. Consequently no controller
     // matrix is multiplied here; adding node/world transforms would change it.
     device->SetVertexDeclaration(render->declaration.get());
@@ -125,16 +125,16 @@ uint8_t __fastcall draw_mesh(Renderer *render,void *) {
         if(material<0 || static_cast<size_t>(material)>=mesh.material_names.size()) continue;
         const auto found=render->replacements.find(mesh.material_names[material]);
         kinoko_texture_bind_stage(0,found==render->replacements.end()?0:found->second);
-        device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST,0,attribute.minimum_vertex,
+        device->DrawIndexedPrimitive(kinoko::graphics::primitive_trianglelist,0,attribute.minimum_vertex,
             attribute.vertex_count,attribute.start_index,attribute.primitive_count);
     }
     kinoko_texture_bind_stage(0,0);kinoko_texture_bind_stage(0,0);
     // 45662A..45665A retains the original final XYZ/RHW/diffuse triangle.
     struct DebugVertex { float x,y,z,rhw;DWORD color; };
     static const DebugVertex triangle[]={{200,10,1,1,0xffff0000},{400,200,1,1,0xffff0000},{10,200,1,1,0xffff0000}};
-    device->SetFVF(D3DFVF_XYZRHW|D3DFVF_DIFFUSE);
-    device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP,1,triangle,sizeof(DebugVertex));
-    device->SetTransform(D3DTS_WORLD,&world);
+    device->SetFVF(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse);
+    device->DrawPrimitiveUP(kinoko::graphics::primitive_trianglestrip,1,triangle,sizeof(DebugVertex));
+    device->SetTransform(kinoko::graphics::transform_world,&world);
     return 1;
 }
 const void *render_methods[]={nullptr,nullptr,nullptr,reinterpret_cast<const void*>(draw_mesh)};

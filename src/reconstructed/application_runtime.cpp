@@ -257,7 +257,7 @@ extern "C" void kinoko_application_shutdown() {
     using namespace kinoko::application;
     InterlockedExchange(&state.running, 0);
 #ifdef KINOKO_GPU_GAME
-    kinoko::gpu_legacy::stop();
+    kinoko::graphics::stop();
 #endif
     join(state.game_thread);
     join(state.load_thread);

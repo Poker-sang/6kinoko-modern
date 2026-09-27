@@ -1,4 +1,4 @@
-#include "d3d9_draw_state.hpp"
+#include "graphics_draw_state.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
 #include "kinoko/map_render.h"
@@ -10,7 +10,7 @@
 #include "kinoko/texture_store.h"
 #include "kinoko/diagnostics.h"
 #include <windows.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <vector>
 #include <cstring>
@@ -110,7 +110,7 @@ extern "C" int32_t kinoko_map_draw_visible(KinokoActLayout *layout,float x,float
         map.get(&LayoutRecord::cached_chip_resource)) return E_FAIL;
     auto *device=kinoko_graphics.device;
     if (!device) return E_FAIL; // inherited unavailable-device boundary
-    kinoko::render::D3D9DrawState saved(device,kinoko::render::ScopeKind::map_wrap);
+    kinoko::render::GraphicsDrawState saved(device,kinoko::render::ScopeKind::map_wrap);
     kinoko_render_set_depth(0,0);
     kinoko_render_set_blend(1);
     kinoko_render_set_alpha(1,0);

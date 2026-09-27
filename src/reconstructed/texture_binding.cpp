@@ -8,9 +8,9 @@ namespace {
 // They are cache keys only; ownership stays with the store and D3D device.
 kinoko::render::TextureBindings stage_handles;
 class BindingSink final : public kinoko::render::TextureBindingSink {
-    IDirect3DDevice9& device_;
+    kinoko::graphics::Device& device_;
 public:
-    explicit BindingSink(IDirect3DDevice9& device):device_(device) {}
+    explicit BindingSink(kinoko::graphics::Device& device):device_(device) {}
     int32_t bind(uint32_t stage,int32_t handle) override {
         return device_.SetTexture(stage,handle?kinoko_texture_slots[handle].texture:nullptr);
     }

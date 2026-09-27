@@ -2,7 +2,7 @@
 #include "kinoko/bitmap.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/graphics_lock.hpp"
-#include "d3d9_texture.hpp"
+#include "graphics_texture.hpp"
 #include "kinoko/texture_pixels.hpp"
 #include "kinoko/diagnostics.h"
 #include <algorithm>
@@ -17,32 +17,32 @@ namespace {
 int32_t diagnostic_address(const void* value) { return static_cast<int32_t>(reinterpret_cast<intptr_t>(value)); }
 }
 
-extern "C" HRESULT kinoko_texture_load_image(const char* path, IDirect3DTexture9** output,
+extern "C" HRESULT kinoko_texture_load_image(const char* path, kinoko::graphics::Texture** output,
     uint32_t* width, uint32_t* height) {
-    if (!path || !output || !kinoko_graphics.device) return D3DERR_INVALIDCALL;
+    if (!path || !output || !kinoko_graphics.device) return kinoko::graphics::error_invalidcall;
     const auto length = std::strlen(path);
     char lookup[MAX_PATH];
-    if (length<3 || length+1>sizeof(lookup)) return D3DERR_INVALIDCALL;
+    if (length<3 || length+1>sizeof(lookup)) return kinoko::graphics::error_invalidcall;
     std::memcpy(lookup,path,length+1);
     std::memcpy(lookup+length-3,"cv2",3);
     kinoko::Bitmap owner;
-    if (!kinoko_bitmap_load_cv2(owner.get(),lookup)) return D3DERR_INVALIDCALL;
+    if (!kinoko_bitmap_load_cv2(owner.get(),lookup)) return kinoko::graphics::error_invalidcall;
     const auto& bitmap = *owner.get();
     const auto source_pitch = bitmap.bit_depth==16 ? (bitmap.row_width/2u)*4u :
         bitmap.bit_depth>=24 ? bitmap.row_width*4u : bitmap.row_width;
     if (!bitmap.width || !bitmap.height || bitmap.row_width<bitmap.width || !source_pitch ||
         uint64_t(source_pitch)*bitmap.height>256u*1024u*1024u)
-        return D3DERR_INVALIDCALL;
+        return kinoko::graphics::error_invalidcall;
     if (width) *width=bitmap.width;
     if (height) *height=bitmap.height;
 
     auto allocation_width=bitmap.width, allocation_height=bitmap.height;
     // 40E73D and 40E793: report source dimensions, then square allocation if
     // required by caps. The original graphics lock encloses texture creation.
-    if (kinoko_graphics.capabilities.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY)
+    if (kinoko_graphics.capabilities.TextureCaps & kinoko::graphics::texture_caps_squareonly)
         allocation_width=allocation_height=(std::max)(allocation_width,allocation_height);
     const auto format = bitmap.bit_depth<=16 ? kinoko::render::PixelFormat::argb1555 : kinoko::render::PixelFormat::argb8888;
-    kinoko::render::D3D9Texture texture(kinoko_graphics.device);
+    kinoko::render::GraphicsTexture texture(kinoko_graphics.device);
     HRESULT result;
     {
         kinoko::graphics::Lock lock;
@@ -65,7 +65,7 @@ extern "C" HRESULT kinoko_texture_load_image(const char* path, IDirect3DTexture9
     kinoko_trace_i32("texture:lock-pitch",locked.pitch);
     // 40E7E0 tests exactly zero. A failed or nonzero-success lock skips upload,
     // but 40E705 still returns the creation status and hands off the texture.
-    if (lock_result != D3D_OK) {
+    if (lock_result != kinoko::graphics::ok) {
         *output = texture.detach();
         return creation_result;
     }

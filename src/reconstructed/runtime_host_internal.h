@@ -81,7 +81,7 @@
 #include <string.h>
 #include <windows.h>
 #include <intrin.h>
-#include "kinoko/gpu_legacy_api.hpp"
+#include "kinoko/graphics_api.hpp"
 #include <dinput.h>
 #include <zlib.h>
 #include "kinoko/squirrel_compile_bridge.h"
