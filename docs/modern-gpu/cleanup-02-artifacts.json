@@ -1,0 +1,66 @@
+{
+  "source_commit": "f2513bacad8e83a98a8db0fb4f2ae445fa9d9bff",
+  "configuration": "Win32 Release",
+  "trace_disabled": true,
+  "source_directory": "C:\\WorkSpace\\6kinoko-modern",
+  "build_directory": "C:\\WorkSpace\\6kinoko-modern\\build-runs\\modern-cleanup-02",
+  "runtime_directory": "C:\\WorkSpace\\6kinoko-modern\\runtime-builds\\modern-cleanup-02",
+  "generator": "Visual Studio 17 2022",
+  "full_build_succeeded": true,
+  "dat_staging_verified": true,
+  "contracts_compiled": 65,
+  "game_run": false,
+  "tests_run": false,
+  "files": [
+    {
+      "name": "kinoko_modern_gpu.exe",
+      "size": 3184128,
+      "sha256": "49D1A755B0D0CD40C1184FE7CAF84F5ED5E100EB0CC5F68594B288A6319DAE52"
+    },
+    {
+      "name": "6kinoko_a.dat",
+      "size": 163424746,
+      "sha256": "DD3AFF7E3E6BF0816C3073D113C3CCB12242A67E578D012C3B87190E7E24FC64"
+    },
+    {
+      "name": "6kinoko_b.dat",
+      "size": 44681244,
+      "sha256": "4D47B8E241886BE4300025324DDD7D1E3C5729232FF67E011F14163DB60130D2"
+    },
+    {
+      "name": "6kinoko_c.dat",
+      "size": 11796163,
+      "sha256": "80327F6F680D53AAA5539F45E11D33C1C6BA6B862648760725F44A380121852E"
+    }
+  ],
+  "static_audit": {
+    "source_commit": "f2513bacad8e83a98a8db0fb4f2ae445fa9d9bff",
+    "executable": "runtime-builds\\modern-cleanup-02\\kinoko_modern_gpu.exe",
+    "sha256": "49d1a755b0d0cd40c1184fe7caf84f5ed5e100eb0cc5f68594b288a6319dae52",
+    "compile_dependency_logs": 98,
+    "link_dependency_logs": 75,
+    "checked_executable_markers": [
+      "d3d9.dll",
+      "d3dx9_33.dll",
+      "Direct3DCreate9",
+      "Direct3DCreate9Ex"
+    ],
+    "violations": [],
+    "passed": true,
+    "executed_built_code": false,
+    "scope": "Fresh modern-only MSVC dependency records and static executable markers; not runtime validation"
+  },
+  "shaders": [
+    {
+      "name": "sprite.frag.dxbc",
+      "size": 1876,
+      "sha256": "d3a014d9e2498438e20cf28ed653cbf517a0602c5c088ea1777493b891c92d7c"
+    },
+    {
+      "name": "sprite.vert.dxbc",
+      "size": 1360,
+      "sha256": "6492adead9a1e49fa1f60dc6019e8bfcb15f096ece87382f745fb2309f3c4379"
+    }
+  ],
+  "d3d9_d3dx_imports_present": false
+}

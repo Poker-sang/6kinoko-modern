@@ -1,14 +1,16 @@
 # Game and development tools
 
 Current status and build instructions: [repository README](../.github/README.md).
-PR #13 is merged; the user confirmed `internal-types-59` runs normally.
-The 65 contract programs were compiled, not executed by the agent.
+The user confirmed `modern-no-d3d9-01` currently normal (user feedback only).
+See each build manifest for the active contract count; contracts are compiled,
+not executed by the agent. Retired COM fixtures are non-build evidence in
+`docs/legacy-render-contracts`.
 
 `build_staged.ps1` creates a fresh Win32 Release build, stages and hashes the
 three DAT files, and records the source commit in `artifacts.json`. It does
 not run the game or tests. Keep every build and its logs.
 
-`runtime-builds/<run-dir>/kinoko_retdec_rebuild.exe` is the only game executable.
+`runtime-builds/<run-dir>/kinoko_modern_gpu.exe` is the only game executable.
 The C++ host is `src/reconstructed/runtime_host.cpp`; typed original virtual tables are in `src/reconstructed/runtime_method_tables.cpp`. The original decompilation remains evidence only in `src/decompiled/6kinoko.exe.c`.
 Stage the three original DAT files beside it with `stage_dat.ps1`, then launch
 it with `run_staged.ps1`.
@@ -69,7 +71,7 @@ runtime-builds/<run-dir>/tools/kinoko_archive_inspect.exe --all ../6kinoko/6kino
 runtime-builds/<run-dir>/tools/kinoko_asset_probe.exe ../6kinoko data/script/demo/op.cv4 op.cv4
 ctest --test-dir build-runs/<build-tree> -C Release --output-on-failure
 runtime-builds/<run-dir>/tools/kinoko_process_dump.exe <pid> capture.dmp
-runtime-builds/<run-dir>/tools/kinoko_dump_inspect.exe capture.dmp runtime-builds/<run-dir>/kinoko_retdec_rebuild.exe
+runtime-builds/<run-dir>/tools/kinoko_dump_inspect.exe capture.dmp runtime-builds/<run-dir>/kinoko_modern_gpu.exe
 ```
 
 `inspect_cv4.py` decodes the extracted Squirrel 2.2.2 closure stream for

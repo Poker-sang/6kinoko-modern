@@ -86,3 +86,28 @@
 - Previous CI 36326020393 completed successfully. Current push CI is separate.
 - Remaining migration: Windows services and original x86 runtime layouts; SDL GPU
   continues to use D3D12 on Windows. Removing D3D9 does not remove modern DirectX.
+
+## Old backend retirement: modern-cleanup-02
+
+- Source: `f2513bacad8e83a98a8db0fb4f2ae445fa9d9bff`.
+- Handoff: `runtime-builds/modern-cleanup-02/kinoko_modern_gpu.exe`.
+- Complete Win32 Release build succeeded, including 65 active contract executables.
+  They are compiled only; neither they nor the game/preview were executed.
+- Three DAT copied next to the EXE and verified by size/SHA256. Keep `shaders/`.
+- `cleanup-02-artifacts.json`: source, EXE/DAT/shader hashes and static audit.
+- All 98 compiler and 75 linker dependency logs are free of D3D9/D3DX SDK inputs.
+  No D3D9 DLL/load-entry markers or DLL imports in the game EXE.
+- Removed: old game target, clone-based GPU targets, SDK alias branches,
+  KINOKO_GPU_GAME selection, D3DX import library and comparison build switches.
+- Retained compatible tests now use the sole modern game libraries. Application
+  and map-cache contracts explicitly link the project graphics implementation.
+- COM-vtable fixtures and the mixed stage harness are non-build evidence under
+  `docs/legacy-render-contracts`. This preserves assertions, but their unported
+  coverage is not replaced or claimed by the 65 active contracts.
+- `modern-cleanup-01` retained: game compiled, two standalone contracts lacked
+  explicit links to modern graphics. The fresh final build fixes those links.
+- Original decompiled evidence, historical logs/artifacts and currently used ABI,
+  fixed-layout and Win32 code remain. This is old-render-backend retirement,
+  not a claim that the entire game is portable or free of reverse-engineered code.
+- Previous user feedback: modern-no-d3d9-01 currently normal. Previous CI
+  36327063995 succeeded. Current push CI is tracked separately.
