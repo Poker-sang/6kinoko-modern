@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference='Stop'
 $SourceDir=(Resolve-Path -LiteralPath $SourceDir).Path
 Set-Location -LiteralPath (Join-Path $PSScriptRoot '..')
-& (Join-Path $PSScriptRoot 'build_staged.ps1') -Name $Name -SourceDir $SourceDir -Generator $Generator
+& (Join-Path $PSScriptRoot 'build_staged.ps1') -LegacyComparison -Name $Name -SourceDir $SourceDir -Generator $Generator
 $BuildTree="build-runs/$Name"
 $SourceCommit=(Get-Content -LiteralPath "$BuildTree/source-commit.txt" -Raw).Trim()
 $Digest=(Get-FileHash "runtime-builds/$Name/kinoko_retdec_rebuild.exe" -Algorithm SHA256).Hash
