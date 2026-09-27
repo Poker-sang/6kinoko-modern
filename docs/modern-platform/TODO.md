@@ -52,7 +52,9 @@
 - [ ] 明确逐帧更新与渲染的边界；按原版证据恢复时间步长，不假定 60Hz。
 - [ ] 主线程窗口/事件生命周期与工作线程移交；避免跨线程调用 SDL 限定 API。
 - [ ] 迁移 D3D9/D3DX：纹理格式、混合、坐标、裁剪、网格、状态缓存、设备重建。
-- [ ] 选择并记录 SDL Renderer / SDL GPU 的适用范围；先检查原有绘制能力需求。
+- [x] Rendering capability audit selects SDL GPU; see `../modern-render/README.md`.
+- [x] Portable central/ACT blend commands now feed the production D3D9 adapter.
+- [ ] Isolate textures, quad submission, scoped state, meshes and device lifecycle; implement SDL GPU.
 - [x] 实现 SDL 音频设备输出与混音，保留解码、循环、淡入淡出和关停接口。
 - [x] SDL 音频 Win32 编译/DAT 校验完成（modern-audio-03，未执行测试）。
 - [x] SDL 音频当前版本 Windows x64 / Linux / macOS CI 编译成功（run 36316087743，未执行测试）。
@@ -143,3 +145,6 @@ A 平台基础 -> A 渲染/音频/服务 -> B x64 与 C 第二平台分别验证
 D 动作层 -> E TAS 第一版 -> G Mod 平台 -> H 编辑器；F 高级 TAS 按需求单列。
 D 的接口调查可在 A 期间进行；已授权动作拆分在 SDL 稳定后适时实施。
 B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批次再补救。
+
+## Latest user feedback
+- User reports `modern-audio-03` currently normal; not agent-run validation or exhaustive audio checks.
