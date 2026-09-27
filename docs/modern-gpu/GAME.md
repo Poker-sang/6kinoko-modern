@@ -4,6 +4,11 @@ The full-game target is `kinoko_modern_gpu`. It uses the original DAT/VM/gamepla
 sources, compiled against explicit project-owned graphics interfaces that record
 SDL GPU commands. It does not link d3d9.lib or d3dx9_33.lib. The old
 comparison target and D3DX import library have been removed.
+
+During Win32's modal window move/resize loop, the main thread now continues
+servicing queued SDL GPU frames through a window timer and move/size messages.
+The compile-only handoff is in `window-move-01.md`; visual behavior remains for
+user verification.
 The game-owned modern sources no longer include SDK D3D9 enums/records or rewrite SDK class
 names with preprocessor macros. `graphics_api.hpp` defines the sole SDL GPU game interface;
 `graphics_types.hpp` owns modern command values and descriptions. The SDK alias branch is gone. All active target include guards reject accidental
