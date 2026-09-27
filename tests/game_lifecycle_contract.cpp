@@ -76,9 +76,9 @@ int main() {
     CHECK(kinoko_game_update()==0); expect({20,21});
     kinoko_game_masks.update=static_cast<int32_t>(KINOKO_GAME_MAP);
     CHECK(kinoko_game_update()==24); expect({20,21,24});
-    kinoko_graphics.cooperative_status=D3DERR_DEVICELOST;
+    kinoko_graphics.cooperative_status=kinoko::graphics::error_devicelost;
     CHECK(scene->methods->update(scene)==0); expect({});
-    kinoko_graphics.cooperative_status=D3D_OK;
+    kinoko_graphics.cooperative_status=kinoko::graphics::ok;
     CHECK(scene->methods->update(scene)==0); expect({20,21,24});
     alpha_changes_mask=true;
     CHECK(kinoko_game_draw()==1); expect({30,31,32,33,34,35,36,37});

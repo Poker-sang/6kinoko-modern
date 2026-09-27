@@ -1,7 +1,6 @@
 #pragma once
 #include <windows.h>
 #include "kinoko/graphics_types.hpp"
-#ifdef KINOKO_GPU_GAME
 #include <atomic>
 #include <memory>
 #include <vector>
@@ -81,19 +80,3 @@ using VertexBuffer=Buffer;
 using IndexBuffer=Buffer;
 HRESULT create_texture(Device*,UINT,UINT,UINT,DWORD,Format,Pool,Texture**);
 }
-#else
-extern "C" HRESULT WINAPI D3DXCreateTexture(IDirect3DDevice9*,UINT,UINT,UINT,DWORD,D3DFORMAT,D3DPOOL,IDirect3DTexture9**);
-namespace kinoko::graphics {
-using Factory=::IDirect3D9;
-using Device=::IDirect3DDevice9;
-using SwapChain=::IDirect3DSwapChain9;
-using Texture=::IDirect3DTexture9;
-using BaseTexture=::IDirect3DBaseTexture9;
-using Surface=::IDirect3DSurface9;
-using VertexBuffer=::IDirect3DVertexBuffer9;
-using IndexBuffer=::IDirect3DIndexBuffer9;
-using Declaration=::IDirect3DVertexDeclaration9;
-inline Factory* create_factory(UINT version){return ::Direct3DCreate9(version);}
-inline HRESULT create_texture(Device* device,UINT width,UINT height,UINT levels,DWORD usage,Format format,Pool pool,Texture** out){return ::D3DXCreateTexture(device,width,height,levels,usage,format,pool,out);}
-}
-#endif

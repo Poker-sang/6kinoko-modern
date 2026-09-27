@@ -4,10 +4,6 @@
 #include "kinoko/diagnostics.h"
 #include <cstring>
 #include <cstddef>
-#ifndef KINOKO_GPU_GAME
-static_assert(sizeof(kinoko::graphics::Capabilities)==304 && offsetof(kinoko::graphics::Capabilities,TextureCaps)==60);
-static_assert(sizeof(kinoko::graphics::Presentation)==56);
-#endif
 extern "C" void kinoko_trace_i32(const char *,int32_t);
 
 // 4011B0: preserve the original HAL/HW -> HAL/SW -> REF/SW fallback order.

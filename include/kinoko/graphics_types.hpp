@@ -1,14 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <windows.h>
-#ifndef KINOKO_GPU_GAME
-#include <d3d9.h>
-#endif
 namespace kinoko::graphics {
 // State values preserve the original game command vocabulary. These are not
-// SDK objects or serialized records. Only the native comparison backend aliases
-// SDK types; the SDL GPU backend owns its runtime descriptions.
-#ifdef KINOKO_GPU_GAME
+// SDK objects or serialized records. SDL GPU owns these runtime descriptions.
 using Color=std::uint32_t;
 using Format=std::uint32_t;
 using Pool=std::uint32_t;
@@ -122,109 +117,4 @@ inline constexpr std::uint32_t usage_rendertarget=static_cast<std::uint32_t>(0x1
 inline constexpr HRESULT ok=static_cast<HRESULT>(0x0u);
 inline constexpr std::uint32_t sdk_version=static_cast<std::uint32_t>(0x20u);
 constexpr VertexElement declaration_end(){return {0xff,0,17,0,0,0};}
-#else
-using Capabilities=::D3DCAPS9;
-using Presentation=::D3DPRESENT_PARAMETERS;
-using DisplayMode=::D3DDISPLAYMODE;
-using SurfaceDescription=::D3DSURFACE_DESC;
-using MappedPixels=::D3DLOCKED_RECT;
-using Matrix=::D3DMATRIX;
-using ClearRect=::D3DRECT;
-using VertexElement=::D3DVERTEXELEMENT9;
-using Color=::D3DCOLOR;
-using Format=::D3DFORMAT;
-using Pool=::D3DPOOL;
-using DeviceKind=::D3DDEVTYPE;
-using Primitive=::D3DPRIMITIVETYPE;
-using RenderState=::D3DRENDERSTATETYPE;
-using SamplerState=::D3DSAMPLERSTATETYPE;
-using TextureStageState=::D3DTEXTURESTAGESTATETYPE;
-using Transform=::D3DTRANSFORMSTATETYPE;
-inline constexpr auto adapter_default=D3DADAPTER_DEFAULT;
-inline constexpr auto blend_operation_add=D3DBLENDOP_ADD;
-inline constexpr auto blend_operation_revsubtract=D3DBLENDOP_REVSUBTRACT;
-inline constexpr auto blend_destcolor=D3DBLEND_DESTCOLOR;
-inline constexpr auto blend_invsrcalpha=D3DBLEND_INVSRCALPHA;
-inline constexpr auto blend_one=D3DBLEND_ONE;
-inline constexpr auto blend_srcalpha=D3DBLEND_SRCALPHA;
-inline constexpr auto blend_srccolor=D3DBLEND_SRCCOLOR;
-inline constexpr auto blend_zero=D3DBLEND_ZERO;
-inline constexpr auto clear_stencil=D3DCLEAR_STENCIL;
-inline constexpr auto clear_target=D3DCLEAR_TARGET;
-inline constexpr auto clear_zbuffer=D3DCLEAR_ZBUFFER;
-inline constexpr auto compare_always=D3DCMP_ALWAYS;
-inline constexpr auto compare_lessequal=D3DCMP_LESSEQUAL;
-inline constexpr auto creation_hardware_vertexprocessing=D3DCREATE_HARDWARE_VERTEXPROCESSING;
-inline constexpr auto creation_multithreaded=D3DCREATE_MULTITHREADED;
-inline constexpr auto creation_software_vertexprocessing=D3DCREATE_SOFTWARE_VERTEXPROCESSING;
-inline constexpr auto cull_ccw=D3DCULL_CCW;
-inline constexpr auto cull_cw=D3DCULL_CW;
-inline constexpr auto cull_none=D3DCULL_NONE;
-inline constexpr auto declaration_method_default=D3DDECLMETHOD_DEFAULT;
-inline constexpr auto element_float2=D3DDECLTYPE_FLOAT2;
-inline constexpr auto element_float3=D3DDECLTYPE_FLOAT3;
-inline constexpr auto semantic_normal=D3DDECLUSAGE_NORMAL;
-inline constexpr auto semantic_position=D3DDECLUSAGE_POSITION;
-inline constexpr auto semantic_texcoord=D3DDECLUSAGE_TEXCOORD;
-inline constexpr auto device_hal=D3DDEVTYPE_HAL;
-inline constexpr auto device_ref=D3DDEVTYPE_REF;
-inline constexpr auto error_devicelost=D3DERR_DEVICELOST;
-inline constexpr auto error_devicenotreset=D3DERR_DEVICENOTRESET;
-inline constexpr auto error_invalidcall=D3DERR_INVALIDCALL;
-inline constexpr auto error_wasstilldrawing=D3DERR_WASSTILLDRAWING;
-inline constexpr auto fill_solid=D3DFILL_SOLID;
-inline constexpr auto format_a1r5g5b5=D3DFMT_A1R5G5B5;
-inline constexpr auto format_a8r8g8b8=D3DFMT_A8R8G8B8;
-inline constexpr auto format_d24s8=D3DFMT_D24S8;
-inline constexpr auto format_index16=D3DFMT_INDEX16;
-inline constexpr auto format_x8r8g8b8=D3DFMT_X8R8G8B8;
-inline constexpr auto vertex_diffuse=D3DFVF_DIFFUSE;
-inline constexpr auto vertex_normal=D3DFVF_NORMAL;
-inline constexpr auto vertex_tex1=D3DFVF_TEX1;
-inline constexpr auto vertex_xyz=D3DFVF_XYZ;
-inline constexpr auto vertex_xyzrhw=D3DFVF_XYZRHW;
-inline constexpr auto multisample_none=D3DMULTISAMPLE_NONE;
-inline constexpr auto pool_default=D3DPOOL_DEFAULT;
-inline constexpr auto pool_managed=D3DPOOL_MANAGED;
-inline constexpr auto presentation_flag_discard_depthstencil=D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
-inline constexpr auto presentation_donotwait=D3DPRESENT_DONOTWAIT;
-inline constexpr auto presentation_interval_one=D3DPRESENT_INTERVAL_ONE;
-inline constexpr auto texture_caps_squareonly=D3DPTEXTURECAPS_SQUAREONLY;
-inline constexpr auto primitive_trianglelist=D3DPT_TRIANGLELIST;
-inline constexpr auto primitive_trianglestrip=D3DPT_TRIANGLESTRIP;
-inline constexpr auto state_alphablendenable=D3DRS_ALPHABLENDENABLE;
-inline constexpr auto state_alphafunc=D3DRS_ALPHAFUNC;
-inline constexpr auto state_alpharef=D3DRS_ALPHAREF;
-inline constexpr auto state_alphatestenable=D3DRS_ALPHATESTENABLE;
-inline constexpr auto state_blendop=D3DRS_BLENDOP;
-inline constexpr auto state_cullmode=D3DRS_CULLMODE;
-inline constexpr auto state_destblend=D3DRS_DESTBLEND;
-inline constexpr auto state_fillmode=D3DRS_FILLMODE;
-inline constexpr auto state_lighting=D3DRS_LIGHTING;
-inline constexpr auto state_srcblend=D3DRS_SRCBLEND;
-inline constexpr auto state_stencilmask=D3DRS_STENCILMASK;
-inline constexpr auto state_zenable=D3DRS_ZENABLE;
-inline constexpr auto state_zfunc=D3DRS_ZFUNC;
-inline constexpr auto state_zwriteenable=D3DRS_ZWRITEENABLE;
-inline constexpr auto resource_surface=D3DRTYPE_SURFACE;
-inline constexpr auto sampler_addressu=D3DSAMP_ADDRESSU;
-inline constexpr auto sampler_addressv=D3DSAMP_ADDRESSV;
-inline constexpr auto sampler_magfilter=D3DSAMP_MAGFILTER;
-inline constexpr auto sampler_minfilter=D3DSAMP_MINFILTER;
-inline constexpr auto sampler_mipfilter=D3DSAMP_MIPFILTER;
-inline constexpr auto swap_discard=D3DSWAPEFFECT_DISCARD;
-inline constexpr auto address_clamp=D3DTADDRESS_CLAMP;
-inline constexpr auto address_wrap=D3DTADDRESS_WRAP;
-inline constexpr auto filter_linear=D3DTEXF_LINEAR;
-inline constexpr auto filter_point=D3DTEXF_POINT;
-inline constexpr auto texture_operation_modulate=D3DTOP_MODULATE;
-inline constexpr auto texture_stage_alphaop=D3DTSS_ALPHAOP;
-inline constexpr auto transform_projection=D3DTS_PROJECTION;
-inline constexpr auto transform_view=D3DTS_VIEW;
-inline constexpr auto transform_world=D3DTS_WORLD;
-inline constexpr auto usage_rendertarget=D3DUSAGE_RENDERTARGET;
-inline constexpr auto ok=D3D_OK;
-inline constexpr auto sdk_version=D3D_SDK_VERSION;
-constexpr VertexElement declaration_end(){return D3DDECL_END();}
-#endif
 }

@@ -7,17 +7,17 @@ param(
 $ErrorActionPreference='Stop'
 $SourceDir=(Resolve-Path -LiteralPath $SourceDir).Path
 Set-Location -LiteralPath (Join-Path $PSScriptRoot '..')
-& (Join-Path $PSScriptRoot 'build_staged.ps1') -LegacyComparison -Name $Name -SourceDir $SourceDir -Generator $Generator
+& (Join-Path $PSScriptRoot 'build_staged.ps1') -Name $Name -SourceDir $SourceDir -Generator $Generator
 $BuildTree="build-runs/$Name"
 $SourceCommit=(Get-Content -LiteralPath "$BuildTree/source-commit.txt" -Raw).Trim()
-$Digest=(Get-FileHash "runtime-builds/$Name/kinoko_retdec_rebuild.exe" -Algorithm SHA256).Hash
+$Digest=(Get-FileHash "runtime-builds/$Name/kinoko_modern_gpu.exe" -Algorithm SHA256).Hash
 $Record="docs/act-load-continuation-20260923/BATCH$Batch.md"
 @"
 # Batch $Batch - $Name
 
 Source committed before build: $SourceCommit.
 Build: $BuildTree.
-EXE: runtime-builds/$Name/kinoko_retdec_rebuild.exe.
+EXE: runtime-builds/$Name/kinoko_modern_gpu.exe.
 SHA256: $Digest.
 
 Quiet Win32 Release configure and full build succeeded, including contract compilation.

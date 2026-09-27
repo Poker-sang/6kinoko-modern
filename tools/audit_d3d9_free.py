@@ -11,7 +11,7 @@ parser.add_argument("--executable", type=Path, required=True)
 parser.add_argument("--output", type=Path, required=True)
 args = parser.parse_args()
 cache = (args.build / "CMakeCache.txt").read_text(encoding="utf-8-sig")
-for required in ("KINOKO_BUILD_LEGACY_COMPARISON:BOOL=OFF", "SDL_RENDER_D3D:BOOL=OFF"):
+for required in ("SDL_RENDER_D3D:BOOL=OFF",):
     if required not in cache.splitlines():
         raise SystemExit("Expected modern-only configuration: " + required)
 compile_logs = sorted(args.build.rglob("CL.read.1.tlog"))

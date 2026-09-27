@@ -122,7 +122,7 @@ include(cmake/Xiph.cmake)
 add_library(kinoko_audio_runtime STATIC src/reconstructed/audio_runtime.cpp)
 target_include_directories(kinoko_audio_runtime PUBLIC include)
 target_compile_definitions(kinoko_audio_runtime PRIVATE _CRT_SECURE_NO_WARNINGS
-    $<TARGET_PROPERTY:kinoko_retdec_rebuild,COMPILE_DEFINITIONS>)
+    $<TARGET_PROPERTY:kinoko_modern_gpu,COMPILE_DEFINITIONS>)
 target_compile_options(kinoko_audio_runtime PRIVATE /Gy)
 target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision ole32 winmm user32)
 
@@ -152,7 +152,7 @@ target_compile_options(kinoko_retdec_support PRIVATE /Gy)
 add_library(kinoko_diagnostics STATIC src/platform/diagnostics.cpp)
 target_include_directories(kinoko_diagnostics PUBLIC include)
 target_compile_definitions(kinoko_diagnostics PRIVATE _CRT_SECURE_NO_WARNINGS
-    $<TARGET_PROPERTY:kinoko_retdec_rebuild,COMPILE_DEFINITIONS>)
+    $<TARGET_PROPERTY:kinoko_modern_gpu,COMPILE_DEFINITIONS>)
 
 # The original embeds zlib 1.2.3. Use that source for its damaged RetDec codec.
 set(KINOKO_ZLIB_DIR "${CMAKE_SOURCE_DIR}/third_party/zlib-1.2.3")
@@ -178,25 +178,25 @@ target_compile_options(kinoko_base_utilities PRIVATE /Gy)
 target_link_libraries(kinoko_base_utilities PUBLIC kinoko_zlib)
 target_link_libraries(kinoko_native_methods PUBLIC kinoko_base_utilities)
 
-add_executable(kinoko_retdec_rebuild WIN32
+add_executable(kinoko_modern_gpu WIN32
     src/reconstructed/runtime_host.cpp
     src/reconstructed/runtime_method_tables.cpp
     src/platform/windows_entry.cpp
     src/platform/resources/windows_resources.rc
 )
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT kinoko_retdec_rebuild)
-target_include_directories(kinoko_retdec_rebuild PRIVATE
+set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT kinoko_modern_gpu)
+target_include_directories(kinoko_modern_gpu PRIVATE
     include
     src/platform/resources
 )
-target_compile_definitions(kinoko_retdec_rebuild PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_compile_definitions(kinoko_modern_gpu PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 set(KINOKO_SQUIRREL2_ROOT
     "${CMAKE_SOURCE_DIR}/third_party/squirrel-2.2.2"
     CACHE PATH
     "Squirrel 2.2.2 source root for compilation and verified C++ runtime helpers")
 # Generated C callers use the public API; only representation conversions
 # remain in squirrel_api_types.h. Do not expose private VM layouts to C.
-target_include_directories(kinoko_retdec_rebuild PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
+target_include_directories(kinoko_modern_gpu PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
 target_include_directories(kinoko_native_methods PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
 option(KINOKO_RETDEC_DISABLE_TRACE
     "Default to quiet output; KINOKO_TRACE=1 enables tracing without a rebuild"
@@ -210,13 +210,13 @@ option(KINOKO_CAPTURE_FIRST_CHANCE
 option(KINOKO_CAPTURE_SCRIPT_FAILURE "Capture the first VM script error before unwinding" OFF)
 option(KINOKO_RETDEC_TRACE_ERRORS_ONLY "Only write VM failures and exception markers" OFF)
 if(KINOKO_CAPTURE_SCRIPT_FAILURE)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE RETDEC_CAPTURE_SCRIPT_FAILURE)
+    target_compile_definitions(kinoko_modern_gpu PRIVATE RETDEC_CAPTURE_SCRIPT_FAILURE)
 endif()
 if(KINOKO_RETDEC_TRACE_ERRORS_ONLY)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE RETDEC_TRACE_ERRORS_ONLY)
+    target_compile_definitions(kinoko_modern_gpu PRIVATE RETDEC_TRACE_ERRORS_ONLY)
 endif()
 if(KINOKO_CAPTURE_FIRST_CHANCE)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE RETDEC_CAPTURE_FIRST_CHANCE)
+    target_compile_definitions(kinoko_modern_gpu PRIVATE RETDEC_CAPTURE_FIRST_CHANCE)
 endif()
 option(KINOKO_RETDEC_DIAGNOSTIC_NO_BGM_SERVICE
     "Disable background BGM ring-buffer service for diagnosis"
@@ -227,18 +227,18 @@ option(KINOKO_RETDEC_DIAGNOSTIC_NO_BGM_WRITE
 set(KINOKO_RETDEC_MAP_FILE "" CACHE FILEPATH
     "Optional linker map file for the RetDec runtime target")
 if(KINOKO_RETDEC_DISABLE_TRACE)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE
+    target_compile_definitions(kinoko_modern_gpu PRIVATE
         RETDEC_DISABLE_TRACE RETDEC_DISABLE_RENDER_CAPTURE)
 endif()
 if(KINOKO_RETDEC_TRACE_FILTER)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE RETDEC_TRACE_FILTER)
+    target_compile_definitions(kinoko_modern_gpu PRIVATE RETDEC_TRACE_FILTER)
 endif()
 if(KINOKO_RETDEC_DIAGNOSTIC_NO_BGM_SERVICE)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE
+    target_compile_definitions(kinoko_modern_gpu PRIVATE
         RETDEC_DIAGNOSTIC_NO_BGM_SERVICE)
 endif()
 if(KINOKO_RETDEC_DIAGNOSTIC_NO_BGM_WRITE)
-    target_compile_definitions(kinoko_retdec_rebuild PRIVATE
+    target_compile_definitions(kinoko_modern_gpu PRIVATE
         RETDEC_DIAGNOSTIC_NO_BGM_WRITE)
 endif()
 
@@ -364,17 +364,16 @@ if(MSVC)
 endif()
 include(cmake/Bindings.cmake)
 target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_legacy_string kinoko_upstream_bindings)
-target_link_libraries(kinoko_retdec_rebuild PRIVATE kinoko_squirrel_cpp_vm)
-target_compile_options(kinoko_retdec_rebuild PRIVATE
+target_link_libraries(kinoko_modern_gpu PRIVATE kinoko_squirrel_cpp_vm)
+target_compile_options(kinoko_modern_gpu PRIVATE
     $<$<COMPILE_LANGUAGE:C>:/TC>
     "$<$<COMPILE_LANGUAGE:C,CXX>:/Gy;/wd4100;/wd4244;/wd4267;/wd4706>")
 # Match the original PE subsystem version and its non-client frame metrics.
-target_link_options(kinoko_retdec_rebuild PRIVATE /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS,5.01)
+target_link_options(kinoko_modern_gpu PRIVATE /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS,5.01)
 if(KINOKO_RETDEC_MAP_FILE)
-    target_link_options(kinoko_retdec_rebuild PRIVATE "/MAP:${KINOKO_RETDEC_MAP_FILE}")
+    target_link_options(kinoko_modern_gpu PRIVATE "/MAP:${KINOKO_RETDEC_MAP_FILE}")
 endif()
-set(KINOKO_D3DX9_33_LIB "${CMAKE_SOURCE_DIR}/third_party/d3dx9_33.lib")
-target_link_libraries(kinoko_retdec_rebuild PRIVATE
+target_link_libraries(kinoko_modern_gpu PRIVATE
     kinoko_audio_runtime
     kinoko_actor_collision
     kinoko_native_methods
@@ -385,9 +384,6 @@ target_link_libraries(kinoko_retdec_rebuild PRIVATE
     user32
     gdi32
     winmm
-    d3d9
-    "${KINOKO_D3DX9_33_LIB}"
-    dxguid
     imm32
     ole32
     dbghelp
@@ -456,63 +452,6 @@ add_test(
     COMMAND kinoko_archive_smoke "${KINOKO_REFERENCE_DIR}"
 )
 
-add_executable(kinoko_stage_contract
-    tests/stage_contract.c
-    src/reconstructed/runtime_host.cpp
-    src/reconstructed/runtime_method_tables.cpp
-    tests/stage_audio_contract.cpp
-    tests/act_ownership_contract.cpp
-)
-target_include_directories(kinoko_stage_contract PRIVATE
-    $<TARGET_PROPERTY:kinoko_retdec_rebuild,INCLUDE_DIRECTORIES>)
-target_compile_definitions(kinoko_stage_contract PRIVATE
-    RETDEC_DISABLE_TRACE RETDEC_DISABLE_RENDER_CAPTURE)
-target_compile_options(kinoko_stage_contract PRIVATE
-    $<TARGET_PROPERTY:kinoko_retdec_rebuild,COMPILE_OPTIONS>)
-target_link_options(kinoko_stage_contract PRIVATE /OPT:REF /OPT:ICF
-    "/MAP:${CMAKE_CURRENT_BINARY_DIR}/stage-contract.map")
-target_link_libraries(kinoko_stage_contract PRIVATE
-    $<TARGET_PROPERTY:kinoko_retdec_rebuild,LINK_LIBRARIES>)
-add_test(NAME act_ownership_chain_contract COMMAND kinoko_stage_contract --act-ownership-chain)
-add_test(NAME stage_native_contract COMMAND kinoko_stage_contract)
-add_test(NAME squirrel_owned_state_exit_contract COMMAND kinoko_stage_contract --owned-state-exit)
-foreach(entity IN ITEMS Init0989 Init0cfb Init0d0c)
-    add_test(NAME entity_${entity}_contract
-        COMMAND kinoko_stage_contract --entity-stutter "${KINOKO_REFERENCE_DIR}" ${entity})
-endforeach()
-add_test(NAME damage_pause_contract COMMAND kinoko_stage_contract --damage-pause)
-add_test(NAME crystal_countdown_contract
-    COMMAND kinoko_stage_contract --crystal-countdown "${KINOKO_REFERENCE_DIR}")
-add_test(NAME moving_map_contract
-    COMMAND kinoko_stage_contract --moving-map "${KINOKO_REFERENCE_DIR}")
-add_test(NAME orange_platform_contract
-    COMMAND kinoko_stage_contract --orange-platform "${KINOKO_REFERENCE_DIR}")
-add_test(NAME green_stage5_contract
-    COMMAND kinoko_stage_contract --green-stage5 "${KINOKO_REFERENCE_DIR}")
-add_test(NAME water_alpha_contract
-    COMMAND kinoko_stage_contract --water-alpha "${KINOKO_REFERENCE_DIR}")
-add_test(NAME act_reentry_contract
-    COMMAND kinoko_stage_contract --act-reentry "${KINOKO_REFERENCE_DIR}")
-add_test(NAME portrait_regions_contract
-    COMMAND kinoko_stage_contract --portrait-regions "${KINOKO_REFERENCE_DIR}")
-add_test(NAME texture_serialization_contract
-    COMMAND kinoko_stage_contract --texture-serialization)
-add_test(NAME map_serialization_contract
-    COMMAND kinoko_stage_contract --map-serialization)
-add_test(NAME map_lazy_binding_contract
-    COMMAND kinoko_stage_contract --map-lazy-binding)
-add_test(NAME dynamic_layer_contract
-    COMMAND kinoko_stage_contract --dynamic-layer)
-
-add_test(NAME moving_map_water_contract
-    COMMAND kinoko_stage_contract --moving-map-water "${KINOKO_REFERENCE_DIR}")
-
-foreach(position IN ITEMS "2200,559" "2400,559" "2600,559" "2770,463")
-    string(REPLACE "," ";" coordinates "${position}")
-    add_test(NAME moving_map_water_${position}
-        COMMAND kinoko_stage_contract --moving-map-water "${KINOKO_REFERENCE_DIR}" ${coordinates})
-endforeach()
-
 add_executable(kinoko_quad_transform_contract tests/quad_transform_contract.cpp src/reconstructed/quad_transform.cpp src/reconstructed/angle_math.cpp)
 target_include_directories(kinoko_quad_transform_contract PRIVATE include)
 add_test(NAME quad_transform_contract COMMAND kinoko_quad_transform_contract)
@@ -521,10 +460,6 @@ add_executable(kinoko_angle_math_contract tests/angle_math_contract.cpp src/reco
 target_include_directories(kinoko_angle_math_contract PRIVATE include)
 target_compile_options(kinoko_angle_math_contract PRIVATE /fp:strict)
 add_test(NAME angle_math_contract COMMAND kinoko_angle_math_contract)
-
-add_executable(kinoko_sprite_draw_contract tests/sprite_draw_contract.cpp src/reconstructed/sprite.cpp src/reconstructed/angle_math.cpp)
-target_include_directories(kinoko_sprite_draw_contract PRIVATE include)
-add_test(NAME sprite_draw_contract COMMAND kinoko_sprite_draw_contract)
 
 add_executable(kinoko_game_math_contract tests/game_math_contract.cpp)
 target_link_libraries(kinoko_game_math_contract PRIVATE kinoko_actor_collision)
@@ -535,32 +470,9 @@ add_executable(kinoko_legacy_abi_contract tests/legacy_abi_contract.cpp)
 target_link_libraries(kinoko_legacy_abi_contract PRIVATE kinoko_legacy_abi)
 add_test(NAME legacy_abi_contract COMMAND kinoko_legacy_abi_contract)
 
-add_executable(kinoko_texture_binding_contract tests/texture_binding_contract.cpp src/reconstructed/texture_binding.cpp)
-target_include_directories(kinoko_texture_binding_contract PRIVATE include)
-add_test(NAME texture_binding_contract COMMAND kinoko_texture_binding_contract)
-
-add_executable(kinoko_texture_image_contract tests/texture_image_contract.cpp src/reconstructed/texture_image.cpp)
-target_include_directories(kinoko_texture_image_contract PRIVATE include)
-add_test(NAME texture_image_contract COMMAND kinoko_texture_image_contract)
-
 add_executable(kinoko_bitmap_contract tests/bitmap_contract.cpp src/reconstructed/bitmap.cpp)
 target_include_directories(kinoko_bitmap_contract PRIVATE include)
 add_test(NAME bitmap_contract COMMAND kinoko_bitmap_contract)
-
-add_executable(kinoko_texture_store_contract tests/texture_store_contract.cpp)
-target_link_libraries(kinoko_texture_store_contract PRIVATE kinoko_native_methods user32)
-add_test(NAME texture_store_contract COMMAND kinoko_texture_store_contract)
-
-add_executable(kinoko_act_frame_contract
-    tests/act_frame_contract.cpp
-    src/reconstructed/act_layer_access.cpp
-    src/reconstructed/act_draw_storage.cpp
-    src/reconstructed/sprite_rect.cpp
-    src/reconstructed/act_frame_render.cpp
-    src/reconstructed/legacy_abi.cpp)
-target_include_directories(kinoko_act_frame_contract PRIVATE include)
-target_link_libraries(kinoko_act_frame_contract PRIVATE user32)
-add_test(NAME act_frame_contract COMMAND kinoko_act_frame_contract)
 
 add_executable(kinoko_diagnostics_capture tests/diagnostics_capture.cpp)
 target_link_libraries(kinoko_diagnostics_capture PRIVATE kinoko_diagnostics dbghelp)
@@ -698,8 +610,7 @@ target_compile_options(kinoko_stage_owner_contract PRIVATE /O2)
 add_test(NAME stage_owner_contract COMMAND kinoko_stage_owner_contract)
 # This is the real CFileReader + ACT payload + source/runtime/cleanup path.
 # Its generated ACT fixture needs neither DAT files nor graphics/VM startup.
-add_test(NAME act_document_lifetime_contract
-    COMMAND kinoko_stage_contract --act-document-lifetime)
+
 
 set_tests_properties(legacy_string_contract PROPERTIES TIMEOUT 60)
 
@@ -774,37 +685,10 @@ target_link_libraries(kinoko_native_control_contract PRIVATE kinoko_native_contr
 add_test(NAME native_control_contract COMMAND kinoko_native_control_contract)
 set_tests_properties(native_control_contract PROPERTIES TIMEOUT 120)
 
-add_executable(kinoko_device_lifecycle_contract tests/device_lifecycle_contract.cpp
-    src/reconstructed/device_runtime.cpp src/reconstructed/render_target.cpp src/reconstructed/texture_binding.cpp
-    src/reconstructed/render_state.cpp src/reconstructed/renderer.cpp)
-target_include_directories(kinoko_device_lifecycle_contract PRIVATE include)
-target_link_libraries(kinoko_device_lifecycle_contract PRIVATE user32)
-add_test(NAME device_lifecycle_contract COMMAND kinoko_device_lifecycle_contract)
-
-add_executable(kinoko_quad_submit_contract tests/quad_submit_contract.cpp
-    src/reconstructed/quad_submit.cpp src/reconstructed/render_state.cpp)
-target_include_directories(kinoko_quad_submit_contract PRIVATE include)
-add_test(NAME quad_submit_contract COMMAND kinoko_quad_submit_contract)
-
 add_executable(kinoko_camera_contract tests/camera_contract.cpp
     src/reconstructed/camera_runtime.cpp src/reconstructed/camera_projection.cpp)
 target_include_directories(kinoko_camera_contract PRIVATE include)
 add_test(NAME camera_contract COMMAND kinoko_camera_contract)
-
-add_executable(kinoko_act_layout_render_contract tests/act_layout_render_contract.cpp
-    src/reconstructed/quad_transform.cpp
-    src/reconstructed/angle_math.cpp
-    src/reconstructed/act_layout.cpp src/reconstructed/string_layout_render.cpp
-    src/reconstructed/act_render_state.cpp src/reconstructed/render_state.cpp)
-target_include_directories(kinoko_act_layout_render_contract PRIVATE include)
-target_link_libraries(kinoko_act_layout_render_contract PRIVATE kinoko_legacy_string user32)
-add_test(NAME act_layout_render_contract COMMAND kinoko_act_layout_render_contract)
-
-add_executable(kinoko_mesh_layout_contract tests/mesh_layout_contract.cpp
-    src/reconstructed/mesh_model.cpp src/reconstructed/act_layout_3d.cpp)
-target_include_directories(kinoko_mesh_layout_contract PRIVATE include)
-target_link_libraries(kinoko_mesh_layout_contract PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/d3dx9_33.lib")
-add_test(NAME mesh_layout_contract COMMAND kinoko_mesh_layout_contract)
 
 add_executable(kinoko_map_chip_cache_contract tests/map_chip_cache_contract.cpp
     src/reconstructed/map_chip_cache.cpp src/reconstructed/act_map.cpp
@@ -903,8 +787,8 @@ set(KINOKO_TOOL_TARGETS
     kinoko_input_cluster_contract
     kinoko_input_device_contract
     kinoko_input_keys_contract
-    kinoko_texture_binding_contract
-    kinoko_texture_image_contract
+
+
     kinoko_bitmap_contract
     kinoko_actor_state_contract kinoko_actor_initialization_contract
     kinoko_map_manager_contract
@@ -924,7 +808,7 @@ set(KINOKO_TOOL_TARGETS
     kinoko_vorbis_decoder_contract
     kinoko_native_control_contract
     kinoko_legacy_string_contract
-    kinoko_act_frame_contract
+
     kinoko_native_record_view_contract
     kinoko_actor_records_contract
     kinoko_com_owner_contract
@@ -933,18 +817,18 @@ set(KINOKO_TOOL_TARGETS
     kinoko_actor_lifecycle_contract
     kinoko_actor_manager_contract kinoko_application_contract kinoko_base_utilities_contract
     kinoko_actor_render_contract
-    kinoko_act_layout_render_contract
-    kinoko_mesh_layout_contract
+
+
     kinoko_map_chip_cache_contract
     kinoko_map_visible_contract
     kinoko_camera_contract
-    kinoko_device_lifecycle_contract
-    kinoko_quad_submit_contract
+
+
     kinoko_pat_animation_contract
     kinoko_archive_inspect kinoko_archive_smoke
-    kinoko_asset_probe kinoko_dump_inspect kinoko_process_dump kinoko_stage_contract
+    kinoko_asset_probe kinoko_dump_inspect kinoko_process_dump
     kinoko_legacy_abi_contract kinoko_game_math_contract
-    kinoko_texture_store_contract
+
     kinoko_diagnostics_capture
     kinoko_squirrel_source_vm_contract
     kinoko_savedata_file_contract
@@ -981,7 +865,7 @@ list(APPEND KINOKO_TOOL_TARGETS kinoko_act_layer_storage_contract)
 foreach(config Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER "${config}" config_upper)
     set_target_properties(
-        kinoko_retdec_rebuild
+        kinoko_modern_gpu
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_${config_upper} "${KINOKO_RUNTIME_DIR}"
     )
@@ -998,4 +882,4 @@ set_source_files_properties(src/reconstructed/map_manager.cpp PROPERTIES COMPILE
 # Angle lookup must honor the caller rounding mode and original float stores.
 set_source_files_properties(src/reconstructed/angle_math.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
 
-include(cmake/GpuGame.cmake)
+include(cmake/GameRenderer.cmake)

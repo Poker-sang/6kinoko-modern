@@ -257,9 +257,7 @@ extern "C" int32_t kinoko_application_frame_count() {
 extern "C" void kinoko_application_shutdown() {
     using namespace kinoko::application;
     InterlockedExchange(&state.running, 0);
-#ifdef KINOKO_GPU_GAME
     kinoko::graphics::stop();
-#endif
     join(state.game_thread);
     join(state.load_thread);
     if (state.retire_event) SetEvent(state.retire_event.get());
