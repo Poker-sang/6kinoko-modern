@@ -19,7 +19,10 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
-Windows x86 game: SDL window/input/audio + legacy D3D9.
+Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
+`kinoko_retdec_rebuild.exe` retains D3D9 for comparison. The GPU game has no
+D3D9/D3DX DLL imports; runtime parity has not been verified.
+Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 
 ## Documentation / 文档
@@ -27,3 +30,5 @@ Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).
 
 [SDL audio migration / 音频迁移](../docs/modern-audio/README.md) · [Latest audio build / 音频构建交接](../docs/modern-audio/BUILD.md).
+
+[SDL GPU game integration / 游戏渲染迁移](../docs/modern-gpu/GAME.md).

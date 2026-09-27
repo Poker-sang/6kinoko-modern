@@ -1,5 +1,8 @@
 # SDL GPU 2D backend foundation
 
+Historical checkpoint: the full-game integration is now documented in [GAME.md](GAME.md).
+The integration-work checklist below describes the earlier foundation, not current completion.
+
 Decision: continue SDL GPU; no bgfx dependency is added. This checkpoint builds a
 real GPU renderer and a separate Windows preview executable. The game still uses
 D3D9: it is NOT yet selectable with an SDL GPU game option.

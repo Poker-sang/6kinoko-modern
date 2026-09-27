@@ -1,4 +1,4 @@
-# SDL GPU game integration (build in progress)
+# SDL GPU game integration 
 
 The full-game target is `kinoko_modern_gpu`. It uses the original DAT/VM/gameplay
 sources, compiled against an audited source compatibility interface that records
@@ -27,10 +27,16 @@ When minimized, offscreen passes still execute so target history is not dropped.
 
 Texture creation and CPU mapping no longer invoke D3DX. Matrix helpers use portable
 C++ row-vector math with the original rotation -> translation -> scaling order.
-Floating-point bitwise equivalence to D3DX is not asserted. Depth storage is
-D32_FLOAT_S8_UINT rather than D24S8; depth precision and render-target transitions
+Floating-point bitwise equivalence to D3DX is not asserted. Depth storage prefers D24S8 and explicitly falls back to
+D32_FLOAT_S8_UINT where necessary; depth precision and render-target transitions
 need user visual validation. Per-extent depth targets replace the legacy shared
 backbuffer depth surface; cross-extent offscreen mesh depth sharing is not proven.
 
 No game or local tests are run. A successful build and a DLL-import audit are not
 proof of visual parity. Build results and exact EXE/hash follow in BUILD.md.
+
+The first full all-target build (modern-gpu-game-01, source 29ad5b46) succeeded.
+Its new game import table contains neither d3d9.dll nor d3dx9_33.dll. Follow-up
+hardening adds explicit recursive device-state locks, image snapshot locks,
+first-use depth initialization and obsolete resize-depth resource reclamation.
+The final batch is recorded separately; no runtime validation has occurred.

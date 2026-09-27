@@ -28,6 +28,7 @@ std::atomic<uint64_t> sequence{1};
 using Pixels=std::vector<uint8_t>;
 }
 struct Image {
+    std::mutex mutex;
     uint64_t id=sequence++,generation=0;
     UINT width,height;D3DFORMAT format;bool target;
     std::shared_ptr<const Pixels> pixels;
@@ -35,6 +36,7 @@ struct Image {
 };
 HRESULT Surface::GetDesc(D3DSURFACE_DESC* out){if(!out)return bad("Null surface description");*out={};out->Width=image->width;out->Height=image->height;out->Format=image->format;out->Type=D3DRTYPE_SURFACE;return S_OK;}
 HRESULT Texture::LockRect(UINT level,D3DLOCKED_RECT* out,const RECT* rect,DWORD flags){
+    std::lock_guard<std::mutex> lock(image->mutex);
     if(level||!out||locked||image->target||flags)return bad("Unsupported texture map request");
     const UINT bpp=image->format==D3DFMT_A1R5G5B5?2:4;
     RECT r=rect?*rect:RECT{0,0,LONG(image->width),LONG(image->height)};
@@ -42,13 +44,14 @@ HRESULT Texture::LockRect(UINT level,D3DLOCKED_RECT* out,const RECT* rect,DWORD 
     staging=image->pixels?*image->pixels:Pixels(size_t(image->width)*image->height*bpp);
     out->Pitch=INT(image->width*bpp);out->pBits=staging.data()+(size_t(r.top)*image->width+r.left)*bpp;locked=true;return S_OK;
 }
-HRESULT Texture::UnlockRect(UINT level){if(level||!locked)return bad("Unbalanced texture unmap");image->pixels=std::make_shared<const Pixels>(std::move(staging));++image->generation;locked=false;return S_OK;}
+HRESULT Texture::UnlockRect(UINT level){std::lock_guard<std::mutex> lock(image->mutex);if(level||!locked)return bad("Unbalanced texture unmap");image->pixels=std::make_shared<const Pixels>(std::move(staging));++image->generation;locked=false;return S_OK;}
 HRESULT Texture::GetSurfaceLevel(UINT level,Surface** out){if(level||!out)return bad("Unsupported texture surface level");*out=new Surface(image);return S_OK;}
 HRESULT Buffer::Lock(UINT offset,UINT size,void** out,DWORD flags){if(!out||flags||offset>bytes.size()||(size&&size>bytes.size()-offset))return bad("Invalid mesh buffer map");*out=bytes.data()+offset;return S_OK;}
 struct Snapshot {std::shared_ptr<Image> image;std::shared_ptr<const Pixels> pixels;uint64_t generation=0;};
 struct RecordedPass {std::shared_ptr<Image> target;gpu::Pass pass;std::vector<Snapshot> textures;};
 struct Device::State {
-    HWND window;UINT width,height;bool scene=false,closed=false,reported=false;
+    std::recursive_mutex cpu_mutex;
+    HWND window;UINT width,height;bool scene=false,closed=false,reported=false,mesh_decl=false;
     std::unique_ptr<gpu::Renderer> renderer;
     Surface *back=nullptr,*depth=nullptr,*target=nullptr;
     std::array<DWORD,256> states{};std::array<std::array<DWORD,16>,8> samplers{};
@@ -97,7 +100,7 @@ struct Device::State {
         draw.raster.cull=states[D3DRS_CULLMODE]==D3DCULL_NONE?0:states[D3DRS_CULLMODE]==D3DCULL_CW?1:2;
         draw.linear=samplers[0][D3DSAMP_MAGFILTER]==D3DTEXF_LINEAR;
         draw.wrap_u=samplers[0][D3DSAMP_ADDRESSU]==D3DTADDRESS_WRAP;draw.wrap_v=samplers[0][D3DSAMP_ADDRESSV]==D3DTADDRESS_WRAP;
-        auto* t=textures[0];Snapshot snap;if(t){snap={t->image,t->image->pixels,t->image->generation};}
+        auto* t=textures[0];Snapshot snap;if(t){std::lock_guard<std::mutex> lock(t->image->mutex);snap={t->image,t->image->pixels,t->image->generation};}
         auto& p=pass();p.pass.draws.push_back(std::move(draw));p.textures.push_back(std::move(snap));
     }
     gpu::Vertex vertex(float x,float y,float z,float w,DWORD color,float u,float v,bool transform){
@@ -143,8 +146,10 @@ struct Device::State {
 Device::Device(HWND w,UINT x,UINT y):state(std::make_unique<State>(w,x,y)){active=this;}
 Device::~Device(){if(active==this)active=nullptr;}
 void stop(){if(active){std::lock_guard<std::mutex> lock(active->state->queue_mutex);active->state->closed=true;}}
-HRESULT Device::GetDeviceCaps(D3DCAPS9* out){if(!out)return E_POINTER;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return S_OK;}
-HRESULT Device::GetSwapChain(UINT index,SwapChain** out){if(index||!out)return bad("Unsupported swapchain index");*out=new SwapChain(this);return S_OK;}
+HRESULT Device::GetDeviceCaps(D3DCAPS9* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return E_POINTER;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return S_OK;}
+HRESULT Device::GetSwapChain(UINT index,SwapChain** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!out)return bad("Unsupported swapchain index");*out=new SwapChain(this);return S_OK;}
 HRESULT Device::TestCooperativeLevel(){
     try{state->poll();}catch(const std::exception& e){bad(e.what());}
     std::string message;{std::lock_guard<std::mutex> lock(errors_mutex);message=error;}
@@ -152,12 +157,17 @@ HRESULT Device::TestCooperativeLevel(){
         if(!state->reported){state->reported=true;MessageBoxA(state->window,message.c_str(),"SDL GPU renderer error",MB_OK|MB_ICONERROR);SDL_Event quit{};quit.type=SDL_EVENT_QUIT;SDL_PushEvent(&quit);}return D3DERR_DEVICELOST;
     }return D3D_OK;
 }
-HRESULT Device::Reset(D3DPRESENT_PARAMETERS* p){if(!p)return E_POINTER;return SDL_SetWindowFullscreen(platform::host().window(),p->Windowed==FALSE)?S_OK:bad(SDL_GetError());}
-HRESULT Device::BeginScene(){auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return D3DERR_WASSTILLDRAWING;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return S_OK;}
-HRESULT Device::EndScene(){auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty())s.queue.push_back(std::move(s.recording));return S_OK;}
-HRESULT Device::present(){return S_OK;} // Submission acknowledgement; main-thread poll owns actual presentation.
+HRESULT Device::Reset(D3DPRESENT_PARAMETERS* p){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!p)return E_POINTER;return SDL_SetWindowFullscreen(platform::host().window(),p->Windowed==FALSE)?S_OK:bad(SDL_GetError());}
+HRESULT Device::BeginScene(){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return D3DERR_WASSTILLDRAWING;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return S_OK;}
+HRESULT Device::EndScene(){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty())s.queue.push_back(std::move(s.recording));return S_OK;}
+HRESULT Device::present(){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return S_OK;} // Submission acknowledgement; main-thread poll owns actual presentation.
 HRESULT SwapChain::Present(const RECT*,const RECT*,HWND,const RGNDATA*,DWORD){return device->present();}
 HRESULT Device::Clear(DWORD count,const D3DRECT*,DWORD flags,D3DCOLOR color,float z,DWORD stencil){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     if(count||z!=1||stencil!=0)return bad("Unsupported partial or nondefault GPU clear");
     auto& s=*state;if(!s.scene)return S_OK;auto* p=&s.pass();
     if(!p->pass.draws.empty()){RecordedPass next;next.target=p->target;next.pass.logical_width=p->pass.logical_width;next.pass.logical_height=p->pass.logical_height;next.pass.clear=false;next.pass.clear_depth=false;next.pass.clear_stencil=false;s.recording.push_back(std::move(next));p=&s.recording.back();}
@@ -165,10 +175,13 @@ HRESULT Device::Clear(DWORD count,const D3DRECT*,DWORD flags,D3DCOLOR color,floa
     if(flags&D3DCLEAR_ZBUFFER)p->pass.clear_depth=true;
     if(flags&D3DCLEAR_STENCIL)p->pass.clear_stencil=true;return S_OK;
 }
-HRESULT Device::GetRenderState(D3DRENDERSTATETYPE type,DWORD* out){if(!out||UINT(type)>=state->states.size())return bad("Invalid render state query");*out=state->states[type];return S_OK;}
+HRESULT Device::GetRenderState(D3DRENDERSTATETYPE type,DWORD* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||UINT(type)>=state->states.size())return bad("Invalid render state query");*out=state->states[type];return S_OK;}
 HRESULT Device::SetRenderState(D3DRENDERSTATETYPE type,DWORD value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     switch(type){
-    case D3DRS_ZENABLE:case D3DRS_ZWRITEENABLE:case D3DRS_ALPHABLENDENABLE:case D3DRS_ALPHATESTENABLE:case D3DRS_LIGHTING:if(value>1)return bad("Unsupported boolean render state");break;
+    case D3DRS_ZENABLE:if(value>1)return bad("W-buffering is unsupported");break;
+    case D3DRS_ZWRITEENABLE:case D3DRS_ALPHABLENDENABLE:case D3DRS_ALPHATESTENABLE:case D3DRS_LIGHTING:break;
     case D3DRS_ZFUNC:case D3DRS_ALPHAFUNC:if(value<1||value>8)return bad("Unsupported comparison");break;
     case D3DRS_CULLMODE:if(value<1||value>3)return bad("Unsupported winding");break;
     case D3DRS_BLENDOP:if(value!=D3DBLENDOP_ADD&&value!=D3DBLENDOP_REVSUBTRACT)return bad("Unsupported blend operation");break;
@@ -178,21 +191,33 @@ HRESULT Device::SetRenderState(D3DRENDERSTATETYPE type,DWORD value){
     default:return bad("Unimplemented render state requested");
     }state->states[type]=value;return S_OK;
 }
-HRESULT Device::GetSamplerState(DWORD stage,D3DSAMPLERSTATETYPE type,DWORD* out){if(stage>=8||UINT(type)>=16||!out)return bad("Invalid sampler query");*out=state->samplers[stage][type];return S_OK;}
-HRESULT Device::SetSamplerState(DWORD stage,D3DSAMPLERSTATETYPE type,DWORD value){if(stage||UINT(type)>=16)return bad("Unsupported sampler stage");
+HRESULT Device::GetSamplerState(DWORD stage,D3DSAMPLERSTATETYPE type,DWORD* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||UINT(type)>=16||!out)return bad("Invalid sampler query");*out=state->samplers[stage][type];return S_OK;}
+HRESULT Device::SetSamplerState(DWORD stage,D3DSAMPLERSTATETYPE type,DWORD value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage||UINT(type)>=16)return bad("Unsupported sampler stage");
     if(type==D3DSAMP_ADDRESSU||type==D3DSAMP_ADDRESSV){if(value!=D3DTADDRESS_WRAP&&value!=D3DTADDRESS_CLAMP)return bad("Unsupported addressing");}
     else if(type==D3DSAMP_MINFILTER||type==D3DSAMP_MAGFILTER||type==D3DSAMP_MIPFILTER){if(value!=D3DTEXF_POINT&&value!=D3DTEXF_LINEAR)return bad("Unsupported filtering");}
     else return bad("Unsupported sampler property");state->samplers[stage][type]=value;return S_OK;}
-HRESULT Device::SetTextureStageState(DWORD stage,D3DTEXTURESTAGESTATETYPE type,DWORD value){return !stage&&type==D3DTSS_ALPHAOP&&value==D3DTOP_MODULATE?S_OK:bad("Unsupported texture-stage operation");}
-HRESULT Device::GetTexture(DWORD stage,Texture** out){if(stage>=8||!out)return E_INVALIDARG;*out=state->textures[stage];if(*out)(*out)->AddRef();return S_OK;}
-HRESULT Device::SetTexture(DWORD stage,Texture* value){if(stage>=8||(stage&&value))return bad("Unsupported texture stage");if(value)value->AddRef();auto*& current=state->textures[stage];if(current)current->Release();current=value;return S_OK;}
-HRESULT Device::GetRenderTarget(DWORD index,Surface** out){if(index||!out)return E_INVALIDARG;*out=state->target;(*out)->AddRef();return S_OK;}
-HRESULT Device::SetRenderTarget(DWORD index,Surface* value){if(index||!value||!value->image->target)return bad("Invalid render target");value->AddRef();state->target->Release();state->target=value;return S_OK;}
-HRESULT Device::GetDepthStencilSurface(Surface** out){if(!out)return E_POINTER;*out=state->depth;(*out)->AddRef();return S_OK;}
-HRESULT Device::GetTransform(D3DTRANSFORMSTATETYPE type,D3DMATRIX* out){if(!out)return E_POINTER;auto& s=*state;const auto* m=type==D3DTS_WORLD?&s.world:type==D3DTS_VIEW?&s.view:type==D3DTS_PROJECTION?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(out,m,sizeof(*m));return S_OK;}
-HRESULT Device::SetTransform(D3DTRANSFORMSTATETYPE type,const D3DMATRIX* in){if(!in)return E_POINTER;auto& s=*state;auto* m=type==D3DTS_WORLD?&s.world:type==D3DTS_VIEW?&s.view:type==D3DTS_PROJECTION?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(m,in,sizeof(*m));return S_OK;}
-HRESULT Device::SetFVF(DWORD value){if(value!=324&&value!=0x4142&&value!=(D3DFVF_XYZRHW|D3DFVF_DIFFUSE))return bad("Unsupported vertex layout");state->fvf=value;return S_OK;}
+HRESULT Device::SetTextureStageState(DWORD stage,D3DTEXTURESTAGESTATETYPE type,DWORD value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return !stage&&type==D3DTSS_ALPHAOP&&value==D3DTOP_MODULATE?S_OK:bad("Unsupported texture-stage operation");}
+HRESULT Device::GetTexture(DWORD stage,Texture** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||!out)return E_INVALIDARG;*out=state->textures[stage];if(*out)(*out)->AddRef();return S_OK;}
+HRESULT Device::SetTexture(DWORD stage,Texture* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||(stage&&value))return bad("Unsupported texture stage");if(value)value->AddRef();auto*& current=state->textures[stage];if(current)current->Release();current=value;return S_OK;}
+HRESULT Device::GetRenderTarget(DWORD index,Surface** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!out)return E_INVALIDARG;*out=state->target;(*out)->AddRef();return S_OK;}
+HRESULT Device::SetRenderTarget(DWORD index,Surface* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!value||!value->image->target)return bad("Invalid render target");value->AddRef();state->target->Release();state->target=value;return S_OK;}
+HRESULT Device::GetDepthStencilSurface(Surface** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return E_POINTER;*out=state->depth;(*out)->AddRef();return S_OK;}
+HRESULT Device::GetTransform(D3DTRANSFORMSTATETYPE type,D3DMATRIX* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return E_POINTER;auto& s=*state;const auto* m=type==D3DTS_WORLD?&s.world:type==D3DTS_VIEW?&s.view:type==D3DTS_PROJECTION?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(out,m,sizeof(*m));return S_OK;}
+HRESULT Device::SetTransform(D3DTRANSFORMSTATETYPE type,const D3DMATRIX* in){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!in)return E_POINTER;auto& s=*state;auto* m=type==D3DTS_WORLD?&s.world:type==D3DTS_VIEW?&s.view:type==D3DTS_PROJECTION?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(m,in,sizeof(*m));return S_OK;}
+HRESULT Device::SetFVF(DWORD value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(value!=324&&value!=0x4142&&value!=(D3DFVF_XYZRHW|D3DFVF_DIFFUSE))return bad("Unsupported vertex layout");state->fvf=value;state->mesh_decl=false;return S_OK;}
 HRESULT Device::DrawPrimitiveUP(D3DPRIMITIVETYPE type,UINT primitives,const void* data,UINT stride){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     if(type!=D3DPT_TRIANGLESTRIP||!data||primitives<1||primitives>2||stride<(state->fvf==(D3DFVF_XYZRHW|D3DFVF_DIFFUSE)?20u:28u))return bad("Unsupported immediate primitive");
     try{gpu::Draw draw;draw.clip_space=state->fvf==0x4142;const auto* bytes=static_cast<const uint8_t*>(data);
         const unsigned order[]={0,1,2,2,1,3};
@@ -201,14 +226,27 @@ HRESULT Device::DrawPrimitiveUP(D3DPRIMITIVETYPE type,UINT primitives,const void
         state->draw(std::move(draw));return S_OK;
     }catch(const std::exception& e){return bad(e.what());}
 }
-HRESULT Device::CreateIndexBuffer(UINT bytes,DWORD usage,D3DFORMAT format,D3DPOOL,Buffer** out,HANDLE*){if(!out||usage||format!=D3DFMT_INDEX16)return bad("Unsupported index buffer");*out=new Buffer(bytes);return S_OK;}
-HRESULT Device::CreateVertexBuffer(UINT bytes,DWORD usage,DWORD,D3DPOOL,Buffer** out,HANDLE*){if(!out||usage)return bad("Unsupported vertex buffer");*out=new Buffer(bytes);return S_OK;}
-HRESULT Device::CreateVertexDeclaration(const D3DVERTEXELEMENT9* elements,Declaration** out){if(!elements||!out)return E_POINTER;*out=new Declaration;return S_OK;}
-HRESULT Device::SetVertexDeclaration(Declaration* value){return value?S_OK:bad("Missing mesh declaration");}
-HRESULT Device::SetStreamSource(UINT slot,Buffer* value,UINT offset,UINT stride){if(slot>=3||!value||offset>value->bytes.size())return bad("Invalid mesh stream");value->AddRef();auto*& old=state->streams[slot];if(old)old->Release();old=value;state->offsets[slot]=offset;state->strides[slot]=stride;return S_OK;}
-HRESULT Device::SetIndices(Buffer* value){if(!value)return bad("Missing mesh indices");value->AddRef();if(state->indices)state->indices->Release();state->indices=value;return S_OK;}
+HRESULT Device::CreateIndexBuffer(UINT bytes,DWORD usage,D3DFORMAT format,D3DPOOL,Buffer** out,HANDLE*){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||usage||format!=D3DFMT_INDEX16)return bad("Unsupported index buffer");*out=new Buffer(bytes);return S_OK;}
+HRESULT Device::CreateVertexBuffer(UINT bytes,DWORD usage,DWORD,D3DPOOL,Buffer** out,HANDLE*){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||usage)return bad("Unsupported vertex buffer");*out=new Buffer(bytes);return S_OK;}
+HRESULT Device::CreateVertexDeclaration(const D3DVERTEXELEMENT9* elements,Declaration** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!elements||!out)return E_POINTER;
+    const D3DVERTEXELEMENT9 expected[]={
+        {0,0,D3DDECLTYPE_FLOAT3,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_POSITION,0},
+        {1,0,D3DDECLTYPE_FLOAT3,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_NORMAL,0},
+        {2,0,D3DDECLTYPE_FLOAT2,D3DDECLMETHOD_DEFAULT,D3DDECLUSAGE_TEXCOORD,0},D3DDECL_END()};
+    if(std::memcmp(elements,expected,sizeof(expected)))return bad("Unknown mesh vertex declaration");
+    *out=new Declaration;return S_OK;}
+HRESULT Device::SetVertexDeclaration(Declaration* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!value)return bad("Missing mesh declaration");state->mesh_decl=true;return S_OK;}
+HRESULT Device::SetStreamSource(UINT slot,Buffer* value,UINT offset,UINT stride){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(slot>=3||!value||offset>value->bytes.size())return bad("Invalid mesh stream");value->AddRef();auto*& old=state->streams[slot];if(old)old->Release();old=value;state->offsets[slot]=offset;state->strides[slot]=stride;return S_OK;}
+HRESULT Device::SetIndices(Buffer* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!value)return bad("Missing mesh indices");value->AddRef();if(state->indices)state->indices->Release();state->indices=value;return S_OK;}
 HRESULT Device::DrawIndexedPrimitive(D3DPRIMITIVETYPE type,INT base,UINT minimum,UINT count,UINT start,UINT primitives){
-    auto& s=*state;if(type!=D3DPT_TRIANGLELIST||!s.indices||!s.streams[0]||!s.streams[2]||uint64_t(start+uint64_t(primitives)*3)*2>s.indices->bytes.size())return bad("Invalid indexed mesh draw");
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
+    auto& s=*state;if(type!=D3DPT_TRIANGLELIST||!s.mesh_decl||!s.indices||!s.streams[0]||!s.streams[2]||uint64_t(start+uint64_t(primitives)*3)*2>s.indices->bytes.size())return bad("Invalid indexed mesh draw");
     try{gpu::Draw draw;draw.clip_space=true;
         for(uint64_t i=0;i<uint64_t(primitives)*3;++i){uint16_t index;std::memcpy(&index,s.indices->bytes.data()+(start+i)*2,2);
             if(index<minimum||uint64_t(index)>=uint64_t(minimum)+count||int64_t(index)+base<0)throw std::runtime_error("Mesh index outside declared range");

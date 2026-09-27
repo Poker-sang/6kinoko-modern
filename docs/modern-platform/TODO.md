@@ -162,3 +162,12 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] Integrate game texture registry, effective state and main-thread GPU presentation.
 - [ ] Complete depth/alpha-test/mesh/0x4142 support before switching the game default.
 - See `../modern-gpu/README.md`; preview is not a migrated game.
+
+## SDL GPU game integration
+- [x] Add kinoko_modern_gpu full-game target; no D3D9/D3DX runtime imports.
+- [x] Connect texture/font generations, ordered frame handoff and main-thread presentation.
+- [x] Add depth/alpha/cull, mesh streams/indices/transforms and XYZW 0x4142 handling.
+- [x] Replace D3DX matrix helpers with portable row-vector math.
+- [ ] User validation of the GPU game, including offscreen depth and matrix/color rounding differences.
+- [ ] Remove remaining SDK enum/source compatibility names, migrate Win32 services and full-game x64.
+- Details: `../modern-gpu/GAME.md`. Legacy D3D9 comparison EXE remains available.

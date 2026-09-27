@@ -47,8 +47,10 @@ struct Renderer::State {
     bool claimed=false;
     SDL_ThreadID thread=SDL_GetCurrentThreadID();
     SDL_GPUShader *vertex=nullptr,*fragment=nullptr;
+    SDL_GPUTextureFormat depth_format=SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
     SDL_GPUBuffer* vertices=nullptr;SDL_GPUTransferBuffer* upload=nullptr;
     Uint32 capacity=0;
+    std::pair<uint32_t,uint32_t> screen_extent{};
     struct Texture { SDL_GPUTexture* value;uint32_t width,height;bool target,initialized; };
     std::map<std::pair<uint32_t,uint32_t>,SDL_GPUTexture*> depths;
     std::map<TextureId,Texture> textures;
@@ -108,7 +110,7 @@ struct Renderer::State {
         info.rasterizer_state.front_face=SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
         info.multisample_state.sample_count=SDL_GPU_SAMPLECOUNT_1;
         info.target_info.color_target_descriptions=&target;info.target_info.num_color_targets=1;
-        info.target_info.has_depth_stencil_target=true;info.target_info.depth_stencil_format=SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
+        info.target_info.has_depth_stencil_target=true;info.target_info.depth_stencil_format=depth_format;
         info.depth_stencil_state.enable_depth_test=raster.depth_test;
         info.depth_stencil_state.enable_depth_write=raster.depth_write;
         info.depth_stencil_state.compare_op=static_cast<SDL_GPUCompareOp>(int(SDL_GPU_COMPAREOP_NEVER)+int(raster.depth_compare));
@@ -129,7 +131,7 @@ struct Renderer::State {
     }
     SDL_GPUTexture* depth(uint32_t w,uint32_t h) {
         const auto key=std::make_pair(w,h);auto found=depths.find(key);if(found!=depths.end())return found->second;
-        SDL_GPUTextureCreateInfo info{};info.type=SDL_GPU_TEXTURETYPE_2D;info.format=SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
+        SDL_GPUTextureCreateInfo info{};info.type=SDL_GPU_TEXTURETYPE_2D;info.format=depth_format;
         info.usage=SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;info.width=w;info.height=h;
         info.layer_count_or_depth=1;info.num_levels=1;info.sample_count=SDL_GPU_SAMPLECOUNT_1;
         auto* t=SDL_CreateGPUTexture(device,&info);require(t,"Create depth target");
@@ -155,6 +157,9 @@ Renderer::Renderer(SDL_Window* window,ShaderEncoding encoding,ShaderCode vertex,
     const auto format=encoding==ShaderEncoding::dxbc?SDL_GPU_SHADERFORMAT_DXBC:
         encoding==ShaderEncoding::spirv?SDL_GPU_SHADERFORMAT_SPIRV:SDL_GPU_SHADERFORMAT_MSL;
     s.device=SDL_CreateGPUDevice(format,debug,nullptr);require(s.device,"Create SDL GPU device");
+    if(!SDL_GPUTextureSupportsFormat(s.device,s.depth_format,SDL_GPU_TEXTURETYPE_2D,SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET))
+        s.depth_format=SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
+    require(SDL_GPUTextureSupportsFormat(s.device,s.depth_format,SDL_GPU_TEXTURETYPE_2D,SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET),"No supported depth/stencil attachment");
     require(SDL_ClaimWindowForGPUDevice(s.device,window),"Claim GPU window");s.claimed=true;
     SDL_GPUShaderCreateInfo info{};info.format=format;info.stage=SDL_GPU_SHADERSTAGE_VERTEX;
     info.code=static_cast<const Uint8*>(vertex.bytes);info.code_size=vertex.size;info.entrypoint=vertex.entrypoint;info.num_uniform_buffers=1;
@@ -196,7 +201,10 @@ TextureId Renderer::create_texture(uint32_t width,uint32_t height,const void* pi
 void Renderer::destroy_texture(TextureId id) {
     auto& s=*state_;s.owner();if(!id||id==s.white)throw std::runtime_error("Cannot release the built-in white texture");
     auto found=s.textures.find(id);if(found==s.textures.end())throw std::runtime_error("Unknown GPU texture ID");
+    const auto extent=std::make_pair(found->second.width,found->second.height);
     SDL_ReleaseGPUTexture(s.device,found->second.value);s.textures.erase(found);
+    const bool retained=s.screen_extent==extent||std::any_of(s.textures.begin(),s.textures.end(),[&](const auto& t){return t.second.target&&std::make_pair(t.second.width,t.second.height)==extent;});
+    if(!retained){auto depth=s.depths.find(extent);if(depth!=s.depths.end()){SDL_ReleaseGPUTexture(s.device,depth->second);s.depths.erase(depth);}}
 }
 bool Renderer::present(const std::vector<Pass>& passes) {
     auto& s=*state_;s.owner();
@@ -232,14 +240,20 @@ bool Renderer::present(const std::vector<Pass>& passes) {
         }
         if(pass.target)initialized.insert(pass.target);
     }
-    if(!screen_initialized)throw std::runtime_error("Frame must include a swapchain pass");
+    // Offscreen-only scenes are valid; they need no swapchain acquisition.
     const auto size=Uint32(vertices.size()*sizeof(Vertex));s.reserve(size);
     if(size) {
         auto* mapped=SDL_MapGPUTransferBuffer(s.device,s.upload,true);require(mapped,"Map frame upload");
         std::memcpy(mapped,vertices.data(),size);SDL_UnmapGPUTransferBuffer(s.device,s.upload);
     }
     Command command(s.device);SDL_GPUTexture* swapchain=nullptr;Uint32 width=0,height=0;
-    require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
+    if(screen_initialized)require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
+    if(swapchain && s.screen_extent!=std::make_pair(width,height)) {
+        const auto old=s.screen_extent;
+        const bool used_by_target=std::any_of(s.textures.begin(),s.textures.end(),[&](const auto& t){return t.second.target&&std::make_pair(t.second.width,t.second.height)==old;});
+        if(!used_by_target){auto found=s.depths.find(old);if(found!=s.depths.end()){SDL_ReleaseGPUTexture(s.device,found->second);s.depths.erase(found);}}
+        s.screen_extent={width,height};
+    }
     command.acquired=swapchain!=nullptr;
     if(size) {
         auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin upload pass");
@@ -254,9 +268,10 @@ bool Renderer::present(const std::vector<Pass>& passes) {
         SDL_GPUColorTargetInfo target{};target.texture=texture;
         target.clear_color={pass.clear_color[0],pass.clear_color[1],pass.clear_color[2],pass.clear_color[3]};
         target.load_op=pass.clear?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;target.store_op=SDL_GPU_STOREOP_STORE;
+        const bool first_depth=s.depths.find({w,h})==s.depths.end();
         SDL_GPUDepthStencilTargetInfo depth{};depth.texture=s.depth(w,h);depth.clear_depth=1;
-        depth.load_op=pass.clear_depth?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;depth.store_op=SDL_GPU_STOREOP_STORE;
-        depth.stencil_load_op=pass.clear_stencil?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;depth.stencil_store_op=SDL_GPU_STOREOP_STORE;
+        depth.load_op=(pass.clear_depth||first_depth)?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;depth.store_op=SDL_GPU_STOREOP_STORE;
+        depth.stencil_load_op=(pass.clear_stencil||first_depth)?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;depth.stencil_store_op=SDL_GPU_STOREOP_STORE;
         auto* render=SDL_BeginGPURenderPass(command.value,&target,1,&depth);require(render,"Begin render pass");
         float extent[]={float(pass.logical_width?pass.logical_width:w),float(pass.logical_height?pass.logical_height:h),0,0};
         SDL_PushGPUVertexUniformData(command.value,0,extent,sizeof(extent));
