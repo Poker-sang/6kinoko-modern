@@ -50,9 +50,10 @@ struct Renderer::State {
     SDL_GPUBuffer* vertices=nullptr;SDL_GPUTransferBuffer* upload=nullptr;
     Uint32 capacity=0;
     struct Texture { SDL_GPUTexture* value;uint32_t width,height;bool target,initialized; };
+    std::map<std::pair<uint32_t,uint32_t>,SDL_GPUTexture*> depths;
     std::map<TextureId,Texture> textures;
     TextureId next=1,white=0;
-    using Key=std::tuple<int,bool,render::BlendOperation,render::BlendFactor,render::BlendFactor>;
+    using Key=std::tuple<int,bool,render::BlendOperation,render::BlendFactor,render::BlendFactor,bool,bool,Compare,int>;
     std::map<Key,SDL_GPUGraphicsPipeline*> pipelines;
     std::array<SDL_GPUSampler*,8> samplers{};
     ~State() {
@@ -61,6 +62,7 @@ struct Renderer::State {
         for(auto& p:pipelines) SDL_ReleaseGPUGraphicsPipeline(device,p.second);
         for(auto* s:samplers) if(s) SDL_ReleaseGPUSampler(device,s);
         for(auto& t:textures) SDL_ReleaseGPUTexture(device,t.second.value);
+        for(auto& d:depths) SDL_ReleaseGPUTexture(device,d.second);
         if(vertices) SDL_ReleaseGPUBuffer(device,vertices);
         if(upload) SDL_ReleaseGPUTransferBuffer(device,upload);
         if(vertex) SDL_ReleaseGPUShader(device,vertex);
@@ -74,8 +76,8 @@ struct Renderer::State {
         if(found==textures.end()) throw std::runtime_error("Unknown GPU texture ID");
         return found->second;
     }
-    SDL_GPUGraphicsPipeline* pipeline(SDL_GPUTextureFormat format,const Blend& blend) {
-        Key key{int(format),blend.enabled,blend.operation,blend.source,blend.destination};
+    SDL_GPUGraphicsPipeline* pipeline(SDL_GPUTextureFormat format,const Blend& blend,const Raster& raster) {
+        Key key{int(format),blend.enabled,blend.operation,blend.source,blend.destination,raster.depth_test,raster.depth_write,raster.depth_compare,raster.cull};
         auto found=pipelines.find(key);if(found!=pipelines.end())return found->second;
         SDL_GPUColorTargetDescription target{};target.format=format;
         auto& b=target.blend_state;b.enable_blend=blend.enabled;
@@ -101,10 +103,15 @@ struct Renderer::State {
         info.vertex_input_state={&buffer,1,attributes,3};
         info.primitive_type=SDL_GPU_PRIMITIVETYPE_TRIANGLELIST;
         info.rasterizer_state.fill_mode=SDL_GPU_FILLMODE_FILL;
-        info.rasterizer_state.cull_mode=SDL_GPU_CULLMODE_NONE;
+        info.rasterizer_state.enable_depth_clip=true;
+        info.rasterizer_state.cull_mode=raster.cull==0?SDL_GPU_CULLMODE_NONE:raster.cull==1?SDL_GPU_CULLMODE_BACK:SDL_GPU_CULLMODE_FRONT;
         info.rasterizer_state.front_face=SDL_GPU_FRONTFACE_COUNTER_CLOCKWISE;
         info.multisample_state.sample_count=SDL_GPU_SAMPLECOUNT_1;
         info.target_info.color_target_descriptions=&target;info.target_info.num_color_targets=1;
+        info.target_info.has_depth_stencil_target=true;info.target_info.depth_stencil_format=SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
+        info.depth_stencil_state.enable_depth_test=raster.depth_test;
+        info.depth_stencil_state.enable_depth_write=raster.depth_write;
+        info.depth_stencil_state.compare_op=static_cast<SDL_GPUCompareOp>(int(SDL_GPU_COMPAREOP_NEVER)+int(raster.depth_compare));
         auto* result=SDL_CreateGPUGraphicsPipeline(device,&info);require(result,"Create sprite pipeline");
         try { pipelines.emplace(key,result); } catch(...) {SDL_ReleaseGPUGraphicsPipeline(device,result);throw;}
         return result;
@@ -119,6 +126,14 @@ struct Renderer::State {
         info.address_mode_v=draw.wrap_v?SDL_GPU_SAMPLERADDRESSMODE_REPEAT:SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
         info.address_mode_w=SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
         result=SDL_CreateGPUSampler(device,&info);require(result,"Create sprite sampler");return result;
+    }
+    SDL_GPUTexture* depth(uint32_t w,uint32_t h) {
+        const auto key=std::make_pair(w,h);auto found=depths.find(key);if(found!=depths.end())return found->second;
+        SDL_GPUTextureCreateInfo info{};info.type=SDL_GPU_TEXTURETYPE_2D;info.format=SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT;
+        info.usage=SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET;info.width=w;info.height=h;
+        info.layer_count_or_depth=1;info.num_levels=1;info.sample_count=SDL_GPU_SAMPLECOUNT_1;
+        auto* t=SDL_CreateGPUTexture(device,&info);require(t,"Create depth target");
+        try {depths.emplace(key,t);}catch(...){SDL_ReleaseGPUTexture(device,t);throw;}return t;
     }
     void reserve(Uint32 bytes) {
         if(bytes<=capacity)return;
@@ -145,7 +160,7 @@ Renderer::Renderer(SDL_Window* window,ShaderEncoding encoding,ShaderCode vertex,
     info.code=static_cast<const Uint8*>(vertex.bytes);info.code_size=vertex.size;info.entrypoint=vertex.entrypoint;info.num_uniform_buffers=1;
     s.vertex=SDL_CreateGPUShader(s.device,&info);require(s.vertex,"Create sprite vertex shader");
     info.stage=SDL_GPU_SHADERSTAGE_FRAGMENT;info.code=static_cast<const Uint8*>(fragment.bytes);info.code_size=fragment.size;
-    info.entrypoint=fragment.entrypoint;info.num_uniform_buffers=0;info.num_samplers=1;
+    info.entrypoint=fragment.entrypoint;info.num_uniform_buffers=1;info.num_samplers=1;
     s.fragment=SDL_CreateGPUShader(s.device,&info);require(s.fragment,"Create sprite fragment shader");
     const uint8_t white[]={255,255,255,255};s.white=create_texture(1,1,white,sizeof(white),4);
 }
@@ -186,7 +201,7 @@ void Renderer::destroy_texture(TextureId id) {
 bool Renderer::present(const std::vector<Pass>& passes) {
     auto& s=*state_;s.owner();
     if(passes.empty())throw std::runtime_error("A frame needs at least one pass");
-    struct Prepared { SDL_GPUGraphicsPipeline* pipeline;SDL_GPUTextureSamplerBinding texture; };
+    struct Prepared { SDL_GPUGraphicsPipeline* pipeline;SDL_GPUTextureSamplerBinding texture;Uint32 first,count; };
     std::vector<Prepared> prepared;std::vector<Vertex> vertices;
     std::set<TextureId> initialized;
     for(auto& entry:s.textures)if(entry.second.initialized)initialized.insert(entry.first);
@@ -207,8 +222,13 @@ bool Renderer::present(const std::vector<Pass>& passes) {
             if(pass.target==texture_id)throw std::runtime_error("Cannot sample the active render target");
             if(!initialized.count(texture_id))throw std::runtime_error("Sampled texture has no defined contents");
             if(vertices.size()>std::numeric_limits<Uint32>::max()/sizeof(Vertex)-6)throw std::runtime_error("Frame vertex data exceeds SDL buffer limits");
-            const auto quad=expand_quad(draw.vertices);vertices.insert(vertices.end(),quad.begin(),quad.end());
-            prepared.push_back({s.pipeline(format,draw.blend),{s.texture(texture_id).value,s.sampler(draw)}});
+            const auto first=Uint32(vertices.size());
+            if(draw.triangles.empty()) {const auto quad=expand_quad(draw.vertices);vertices.insert(vertices.end(),quad.begin(),quad.end());}
+            else {
+                if(draw.triangles.size()%3 || draw.triangles.size()>std::numeric_limits<Uint32>::max()/sizeof(Vertex)-vertices.size())throw std::runtime_error("Invalid triangle data");
+                vertices.insert(vertices.end(),draw.triangles.begin(),draw.triangles.end());
+            }
+            prepared.push_back({s.pipeline(format,draw.blend,draw.raster),{s.texture(texture_id).value,s.sampler(draw)},first,Uint32(vertices.size()-first)});
         }
         if(pass.target)initialized.insert(pass.target);
     }
@@ -220,8 +240,7 @@ bool Renderer::present(const std::vector<Pass>& passes) {
     }
     Command command(s.device);SDL_GPUTexture* swapchain=nullptr;Uint32 width=0,height=0;
     require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
-    if(!swapchain)return false;
-    command.acquired=true;
+    command.acquired=swapchain!=nullptr;
     if(size) {
         auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin upload pass");
         SDL_GPUTransferBufferLocation source{s.upload,0};SDL_GPUBufferRegion destination{s.vertices,0,size};
@@ -229,24 +248,33 @@ bool Renderer::present(const std::vector<Pass>& passes) {
     }
     size_t index=0;
     for(const auto& pass:passes) {
+        if(!swapchain&&!pass.target){index+=pass.draws.size();continue;}
         auto* texture=pass.target?s.texture(pass.target).value:swapchain;
         const auto w=pass.target?s.texture(pass.target).width:width,h=pass.target?s.texture(pass.target).height:height;
         SDL_GPUColorTargetInfo target{};target.texture=texture;
         target.clear_color={pass.clear_color[0],pass.clear_color[1],pass.clear_color[2],pass.clear_color[3]};
         target.load_op=pass.clear?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;target.store_op=SDL_GPU_STOREOP_STORE;
-        auto* render=SDL_BeginGPURenderPass(command.value,&target,1,nullptr);require(render,"Begin render pass");
-        const float extent[]={float(pass.logical_width?pass.logical_width:w),float(pass.logical_height?pass.logical_height:h),0,0};
+        SDL_GPUDepthStencilTargetInfo depth{};depth.texture=s.depth(w,h);depth.clear_depth=1;
+        depth.load_op=pass.clear_depth?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;depth.store_op=SDL_GPU_STOREOP_STORE;
+        depth.stencil_load_op=pass.clear_stencil?SDL_GPU_LOADOP_CLEAR:SDL_GPU_LOADOP_LOAD;depth.stencil_store_op=SDL_GPU_STOREOP_STORE;
+        auto* render=SDL_BeginGPURenderPass(command.value,&target,1,&depth);require(render,"Begin render pass");
+        float extent[]={float(pass.logical_width?pass.logical_width:w),float(pass.logical_height?pass.logical_height:h),0,0};
         SDL_PushGPUVertexUniformData(command.value,0,extent,sizeof(extent));
         if(!pass.draws.empty()) {SDL_GPUBufferBinding binding{s.vertices,0};SDL_BindGPUVertexBuffers(render,0,&binding,1);}
         for(size_t i=0;i<pass.draws.size();++i,++index) {
             SDL_BindGPUGraphicsPipeline(render,prepared[index].pipeline);
             SDL_BindGPUFragmentSamplers(render,0,&prepared[index].texture,1);
-            SDL_DrawGPUPrimitives(render,6,1,Uint32(index*6),0);
+            extent[2]=pass.draws[i].clip_space?1.f:0.f;
+            SDL_PushGPUVertexUniformData(command.value,0,extent,sizeof(extent));
+            const auto& raster=pass.draws[i].raster;
+            struct Alpha {Uint32 enabled,comparison;float reference,padding;} alpha{raster.alpha_test?1u:0u,Uint32(raster.alpha_compare),float(raster.alpha_reference)/255,0};
+            SDL_PushGPUFragmentUniformData(command.value,0,&alpha,sizeof(alpha));
+            SDL_DrawGPUPrimitives(render,prepared[index].count,1,prepared[index].first,0);
         }
         SDL_EndGPURenderPass(render);
     }
     command.submit();
     for(auto id:initialized)s.textures.at(id).initialized=true;
-    return true;
+    return swapchain!=nullptr;
 }
 }

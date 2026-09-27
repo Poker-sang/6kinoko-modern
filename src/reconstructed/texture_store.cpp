@@ -7,7 +7,7 @@
 #include <array>
 #include <string>
 #include <windows.h>
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 
 extern "C" {
 KinokoTextureSlot kinoko_texture_slots[KINOKO_TEXTURE_CAPACITY] = {};

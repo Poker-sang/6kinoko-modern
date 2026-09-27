@@ -10,7 +10,7 @@
 #include "kinoko/texture_store.h"
 #include "kinoko/diagnostics.h"
 #include <windows.h>
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 #include <algorithm>
 #include <vector>
 #include <cstring>

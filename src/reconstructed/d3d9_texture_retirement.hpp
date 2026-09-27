@@ -1,6 +1,6 @@
 #pragma once
 #include "kinoko/com_owner.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 namespace kinoko::render {
 class D3D9TextureRetirement final {
     kinoko::ComOwner<IDirect3DBaseTexture9> owned_;

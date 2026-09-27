@@ -8,7 +8,7 @@
 #include "kinoko/texture_store.h"
 #include "kinoko/com_owner.hpp"
 #include <windows.h>
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>

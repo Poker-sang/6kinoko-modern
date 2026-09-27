@@ -14,7 +14,7 @@
 #include "kinoko/texture_store.h"
 #include "kinoko/render_target.h"
 #include "kinoko/windows_owner.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 
 extern "C" {
 void kinoko_trace_i32(const char*, int32_t);

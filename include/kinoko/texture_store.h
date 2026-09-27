@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <windows.h>
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 
 #ifdef __cplusplus
 extern "C" {

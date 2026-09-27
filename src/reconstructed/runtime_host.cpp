@@ -30,7 +30,11 @@ static_assert(sizeof(camera_state) == 0x200 && sizeof(input_state) == 0x600);
 static_assert(sizeof(collision_state) == 120 && sizeof(global_callback) == 28);
 }
 
+#ifndef KINOKO_GPU_GAME
+#ifndef KINOKO_GPU_GAME
 #pragma comment(linker, "/alternatename:_D3DXCreateTexture@32=_D3DXCreateTexture")
+#endif
+#endif
 
 struct SQSharedState* kinoko_primary_shared_state;
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "kinoko/render_resources.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 namespace kinoko::render {
 // Snapshot owns values, borrows device. Raw native states remain in this adapter
 // so even unfamiliar values and failed-Get defaults round-trip without coercion.

@@ -33,3 +33,7 @@ if(WIN32)
     target_link_libraries(kinoko_gpu_preview PRIVATE kinoko_gpu)
     add_dependencies(kinoko_gpu_preview kinoko_gpu_shaders)
 endif()
+
+add_executable(kinoko_matrix_math_contract tests/matrix_math_contract.cpp)
+target_include_directories(kinoko_matrix_math_contract PRIVATE include)
+add_test(NAME matrix_math_contract COMMAND kinoko_matrix_math_contract)

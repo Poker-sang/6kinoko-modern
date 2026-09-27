@@ -1,6 +1,6 @@
 #pragma once
 #include "kinoko/render_blend.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 namespace kinoko::render {
 // Non-owning adapter; scoped to a call so Reset cannot leave a cached device.
 class D3D9BlendSink final : public BlendSink {

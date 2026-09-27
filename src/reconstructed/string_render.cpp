@@ -11,7 +11,7 @@
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/texture_store.h"
 #include <windows.h>
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 #include <algorithm>
 #include <cstring>
 namespace {

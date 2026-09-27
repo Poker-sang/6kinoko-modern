@@ -10,7 +10,7 @@
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/com_owner.hpp"
 #include <windows.h>
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 #include <algorithm>
 #include <set>
 #include <list>

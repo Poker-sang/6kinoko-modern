@@ -997,3 +997,5 @@ set_source_files_properties(src/reconstructed/map_manager.cpp PROPERTIES COMPILE
 
 # Angle lookup must honor the caller rounding mode and original float stores.
 set_source_files_properties(src/reconstructed/angle_math.cpp PROPERTIES COMPILE_OPTIONS "/fp:strict")
+
+include(cmake/GpuGame.cmake)

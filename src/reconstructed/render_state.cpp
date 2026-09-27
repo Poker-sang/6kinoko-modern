@@ -1,7 +1,7 @@
 #include "kinoko/renderer.h"
 #include "kinoko/quad_render.h"
 #include "d3d9_blend_sink.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 extern "C" int32_t kinoko_render_set_blend(int32_t mode) {
     auto &cached=kinoko_renderer.state.blend;
     if(!kinoko_renderer.device) return kinoko::render::set_blend(cached,mode,nullptr);

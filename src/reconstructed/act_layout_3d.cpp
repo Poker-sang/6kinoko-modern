@@ -5,20 +5,14 @@
 #include <cstdlib>
 #include <cstring>
 
-// The repository's import library exposes undecorated x86 symbols. The DLL
-// functions still use stdcall; keep that calling convention at every call site.
-#if defined(_MSC_VER) && defined(_M_IX86)
-#pragma comment(linker,"/alternatename:__imp__D3DXMatrixRotationYawPitchRoll@16=__imp__D3DXMatrixRotationYawPitchRoll")
-#pragma comment(linker,"/alternatename:__imp__D3DXMatrixTranslation@16=__imp__D3DXMatrixTranslation")
-#pragma comment(linker,"/alternatename:__imp__D3DXMatrixScaling@16=__imp__D3DXMatrixScaling")
-#pragma comment(linker,"/alternatename:__imp__D3DXMatrixMultiply@12=__imp__D3DXMatrixMultiply")
-#endif
-
-extern "C" {
-__declspec(dllimport) D3DMATRIX *__stdcall D3DXMatrixRotationYawPitchRoll(D3DMATRIX *,float,float,float);
-__declspec(dllimport) D3DMATRIX *__stdcall D3DXMatrixTranslation(D3DMATRIX *,float,float,float);
-__declspec(dllimport) D3DMATRIX *__stdcall D3DXMatrixScaling(D3DMATRIX *,float,float,float);
-__declspec(dllimport) D3DMATRIX *__stdcall D3DXMatrixMultiply(D3DMATRIX *,const D3DMATRIX *,const D3DMATRIX *);
+#include "kinoko/matrix_math.hpp"
+namespace {
+using kinoko::math::Matrix;
+D3DMATRIX* matrix_result(D3DMATRIX* out,const Matrix& value){std::memcpy(out,&value,sizeof(value));return out;}
+D3DMATRIX* matrix_rotation(D3DMATRIX* out,float yaw,float pitch,float roll){return matrix_result(out,kinoko::math::rotation(yaw,pitch,roll));}
+D3DMATRIX* matrix_translation(D3DMATRIX* out,float x,float y,float z){return matrix_result(out,kinoko::math::translation(x,y,z));}
+D3DMATRIX* matrix_scaling(D3DMATRIX* out,float x,float y,float z){return matrix_result(out,kinoko::math::scaling(x,y,z));}
+D3DMATRIX* matrix_multiply(D3DMATRIX* out,const D3DMATRIX* a,const D3DMATRIX* b){Matrix x,y;std::memcpy(&x,a,sizeof(x));std::memcpy(&y,b,sizeof(y));return matrix_result(out,kinoko::math::multiply(x,y));}
 }
 
 namespace kinoko::act {
@@ -53,12 +47,12 @@ int32_t update_layout_3d(Layout3DRecord *layout) {
     world._11=world._22=world._33=world._44=1.0f;
     // 43C920: yaw/pitch/roll in radians, then translation, then scaling.
     // Do not substitute the usual S*R*T or the owning layer's world position.
-    D3DXMatrixRotationYawPitchRoll(&operation,layout->rotation.x,layout->rotation.y,layout->rotation.z);
-    D3DXMatrixMultiply(&world,&world,&operation);
-    D3DXMatrixTranslation(&operation,layout->translation.x,layout->translation.y,layout->translation.z);
-    D3DXMatrixMultiply(&world,&world,&operation);
-    D3DXMatrixScaling(&operation,layout->scale.x,layout->scale.y,layout->scale.z);
-    D3DXMatrixMultiply(&world,&world,&operation);
+    matrix_rotation(&operation,layout->rotation.x,layout->rotation.y,layout->rotation.z);
+    matrix_multiply(&world,&world,&operation);
+    matrix_translation(&operation,layout->translation.x,layout->translation.y,layout->translation.z);
+    matrix_multiply(&world,&world,&operation);
+    matrix_scaling(&operation,layout->scale.x,layout->scale.y,layout->scale.z);
+    matrix_multiply(&world,&world,&operation);
     std::memcpy(layout->world,&world,sizeof(world));
     return S_OK;
 }

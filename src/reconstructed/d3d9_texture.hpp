@@ -1,7 +1,7 @@
 #pragma once
 #include "kinoko/render_resources.hpp"
 #include "kinoko/com_owner.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 extern "C" HRESULT WINAPI D3DXCreateTexture(IDirect3DDevice9*,UINT,UINT,UINT,DWORD,
     D3DFORMAT,D3DPOOL,IDirect3DTexture9**);
 namespace kinoko::render {

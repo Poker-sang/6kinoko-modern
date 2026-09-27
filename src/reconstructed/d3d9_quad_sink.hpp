@@ -1,6 +1,6 @@
 #pragma once
 #include "kinoko/render_resources.hpp"
-#include <d3d9.h>
+#include "kinoko/gpu_legacy_api.hpp"
 namespace kinoko::render {
 class D3D9QuadSink final : public QuadSink {
     IDirect3DDevice9& device_;
