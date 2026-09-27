@@ -163,13 +163,45 @@ void message_loop() {
     }
 }
 WNDPROC sdl_window_proc{};
+constexpr UINT_PTR move_frame_timer_id=0x6b696e6f;
+UINT_PTR move_frame_timer{};
+ULONGLONG last_move_frame{};
+bool moving_window{};
+bool polling_move_frame{};
+
+void stop_move_frames(HWND window) {
+    moving_window=false;
+    if (move_frame_timer) KillTimer(window,move_frame_timer);
+    move_frame_timer=0;
+}
+void poll_move_frame() {
+    if (!moving_window || polling_move_frame || !state.graphics_initialized || !state.is_running()) return;
+    const auto now=GetTickCount64();
+    if (now-last_move_frame<16) return;
+    last_move_frame=now;
+    polling_move_frame=true;
+    kinoko_graphics_poll();
+    polling_move_frame=false;
+}
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM parameter) {
-    // Keep the legacy fullscreen and IME boundary; SDL must receive all other
-    // messages (focus, physical keys, mouse, close) through its own WndProc.
+    // Keep the legacy fullscreen and IME boundary. Forward window/input events
+    // to SDL, but service GPU frames while Win32 owns the move/size modal loop.
     if ((message == WM_SYSKEYDOWN && key == VK_RETURN) ||
         (state.config.ime && message >= WM_IME_STARTCOMPOSITION && message <= WM_IME_COMPOSITION))
         return dispatch_message(window,message,key,parameter);
-    return CallWindowProcW(sdl_window_proc,window,message,key,parameter);
+    if (message == WM_ENTERSIZEMOVE) {
+        moving_window=true;
+        last_move_frame=0;
+        if (!move_frame_timer) move_frame_timer=SetTimer(window,move_frame_timer_id,16,nullptr);
+    } else if (message == WM_EXITSIZEMOVE) {
+        stop_move_frames(window);
+    } else if (message == WM_TIMER && moving_window && move_frame_timer && key == move_frame_timer) {
+        poll_move_frame();
+        return 0;
+    }
+    const auto result=CallWindowProcW(sdl_window_proc,window,message,key,parameter);
+    if (moving_window && (message == WM_MOVING || message == WM_SIZING)) poll_move_frame();
+    return result;
 }
 }
 
@@ -319,6 +351,7 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     kinoko_application_open_archives();
     if (!config.manager || !initialize(config)) MessageBoxA(window, kinoko_application_error(), "Error", MB_OK);
     else message_loop();
+    stop_move_frames(window);
     kinoko_application_shutdown();
     SetWindowLongPtrW(window,GWLP_WNDPROC,reinterpret_cast<LONG_PTR>(sdl_window_proc));
     platform.close();
