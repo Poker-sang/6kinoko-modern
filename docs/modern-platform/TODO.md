@@ -194,7 +194,9 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Compile runtime/listener contract for Windows x64 without original fixed-layout headers (not executed).
 - [x] Separate font/atlas runtime storage from original byte views; preserve the x86 ACT configuration bridge.
 - [x] Separate texture/chip resource storage and ownership from original byte layouts.
-- [ ] Migrate mesh storage and outer string/glyph layouts.
+- [x] Migrate mesh resource/controller/render ownership and the 3D draw consumer; remove the 248-byte overlay and +236 list lookup.
+- [x] Separate MSH/MAT decoding from the Windows archive adapter; compile the actual decoder and mesh-resource lifetime at native pointer width.
+- [ ] Migrate the separate mesh-manager child/update ABI and outer string/glyph layouts.
 - [ ] Migrate Squirrel wrapper addresses and original method ABI before lifting full-game Win32 restriction.
 - [x] Use a typed ACT texture render snapshot at draw/layout/target callers; remove the duplicate fixed prefix.
 - [x] Store cloned texture references by retained handle; the initial pointer-keyed table has been replaced by per-object ownership.

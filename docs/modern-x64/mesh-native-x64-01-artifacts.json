@@ -1,0 +1,21 @@
+{
+  "source_commit": "3d4ecbec275239df9816a2df1c86a5382fcbc016",
+  "configuration": "Windows x64 Release",
+  "compiled": true,
+  "executed": false,
+  "full_game": false,
+  "files": [
+    {
+      "path": "runtime-builds\\modern-mesh-native-x64-01\\kinoko_mesh_resource_contract.exe",
+      "size": 30720,
+      "machine": "0x8664",
+      "sha256": "fe99feff71dcd2693cc44445825a9b653accbe323cf60ef1c9df499bd806aa06"
+    },
+    {
+      "path": "runtime-builds\\modern-mesh-native-x64-01\\kinoko_mesh_decoder_contract.exe",
+      "size": 45568,
+      "machine": "0x8664",
+      "sha256": "04e28b206939f6c710a1098cc04516279389d133f633e879b10fde010a3a0ada"
+    }
+  ]
+}

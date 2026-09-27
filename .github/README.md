@@ -44,10 +44,12 @@ Chip resources now use native storage and shared MCD ownership across cloning,
 loading, map caches and script access. Texture/chip allocations also use native
 array metadata. ACT calls use named typed interfaces with an explicit legacy
 method-table adapter. The actual resource/string and method adapter contracts
-compile independently for Windows x64; full-game x64, outer ACT layouts, mesh
-storage and VM ABI migration remain pending. See [texture scope](../docs/modern-x64/act-texture-native.md)
+compile independently for Windows x64. Mesh resources now also own native
+controller/render objects, with typed 3D drawing and a portable MSH/MAT decoder.
+Full-game x64, outer ACT layouts, the mesh-manager ABI and VM bindings remain pending. See [texture scope](../docs/modern-x64/act-texture-native.md)
 and [chip/method scope](../docs/modern-x64/act-chip-methods.md).
-The user reports `modern-act-native-02` normal; this is user runtime feedback.
+The user reports `modern-act-chip-02` normal; this is user runtime feedback.
+See [mesh migration scope](../docs/modern-x64/mesh-native.md).
 
 ## Documentation / 文档
 

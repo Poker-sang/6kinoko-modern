@@ -1,5 +1,26 @@
 # x64 preparation build evidence
 
+## Native mesh resource/render chain and portable decoder
+
+Source: `3d4ecbec275239df9816a2df1c86a5382fcbc016`.
+
+- `modern-mesh-native-01`: full Win32 Release no-trace game and 73 contract
+  executables compiled successfully. Three original DAT were staged beside the
+  game and checked by size/SHA256. Keep the adjacent shaders directory.
+- Game: `runtime-builds/modern-mesh-native-01/kinoko_modern_gpu.exe`.
+- EXE SHA256: `E6C1A2659C0F7474E26FE15E81A3C4D8D790858B1C3DEEAF29A1CBAA566FC3CF`.
+- D3D9 static audit passed: 109 compiler and 83 linker dependency logs, no violations.
+- `modern-mesh-native-x64-01`: actual native mesh resource ownership/string code
+  and MSH/MAT decoder compiled/linked in independent contracts. Static PE headers
+  identify both as AMD64. The GPU renderer/full game are not x64 build results.
+- No game, preview, CTest or contract executable was run. Runtime assertions are
+  compiled only. User reports `modern-act-chip-02` normal; that is user feedback
+  on the preceding batch, not validation of this game version.
+- All build/staging/audit logs and products are retained. Evidence:
+  `mesh-native-01-artifacts.json`, `mesh-native-x64-01-artifacts.json`,
+  `mesh-native-01-d3d9-audit.json`; [migration scope](mesh-native.md).
+
+
 ## Native chip resources and ACT method interfaces
 
 Source: `caebb44f38c314564ff20c23f1fb804a554180ab`.

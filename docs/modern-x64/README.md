@@ -113,3 +113,14 @@ resource loading/querying, document I/O, layer/key cloning, script binding,
 layout rendering and suspend/resume. An explicit method-table adapter remains;
 its existence must not be confused with a portable full-game ABI. The native
 contracts compile resource lifetime, allocation and callback arguments at x64.
+
+## Native mesh resources and model decoder
+
+Mesh resources now use native controller state and render ownership, replacing
+the 248-byte overlay and fixed +236 linked-list consumer. The 3D layout calls an
+actual C++ render interface. Texture replacement, clones, script properties and
+release paths follow the native resource type. MSH/MAT decoding uses a portable
+byte-source callback; the existing archive service is a separate adapter. Actual
+resource lifetime and decoder code compile in independent Windows x64 contracts.
+See [scope and retained behavior](mesh-native.md). GPU execution, the mesh-manager
+ABI and complete game portability are not established by these compile checks.
