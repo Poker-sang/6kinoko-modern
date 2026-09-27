@@ -66,3 +66,8 @@ first-use depth initialization and obsolete resize-depth resource reclamation.
 The final batch is recorded separately. The user reports modern-gpu-game-02
 currently normal; this is user feedback, not agent execution or exhaustive parity
 validation. Prior full-game CI run 36322559102 completed successfully.
+
+The default dependency graph is statically audited by `tools/audit_d3d9_free.py`:
+MSVC compiler/linker input records plus DLL/load-entry markers in the EXE. This
+includes SDL, does not execute built code, and is also enforced in Windows CI.
+Use a fresh build directory; comparison builds intentionally cannot pass this audit.

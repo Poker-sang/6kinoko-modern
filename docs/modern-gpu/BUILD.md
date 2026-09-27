@@ -60,3 +60,29 @@
 - User feedback for modern-gpu-game-02: currently normal, not agent validation.
 - Previous CI 36322559102 succeeded. New workflow covers comparison ON and OFF;
   current source CI status is reported separately after push.
+
+## D3D9-free default dependency graph: modern-no-d3d9-01
+
+- Compiled source: `16360e4ca8998b9d6eaf67d780dcc0268f02cc1a`.
+- Default Win32 Release build succeeded; it now builds/stages the modern game.
+- Handoff: `runtime-builds/modern-no-d3d9-01/kinoko_modern_gpu.exe`.
+- Three DAT copied beside this EXE and size/SHA256 verified. Keep the adjacent
+  `shaders/` folder. EXE/DAT/shader hashes: `no-d3d9-01-artifacts.json`.
+- The static audit scanned all 25 compiler and 4 linker dependency logs, including
+  vendored SDL. No D3D9/D3DX SDK headers or import libraries were consumed.
+- No D3D9 DLL/load-entry markers in the EXE; dumpbin also reports no D3D9/D3DX
+  DLL imports (`no-d3d9-01-imports.txt`). This is static evidence, not execution.
+- SDL D3D9 renderer is OFF; its header probe and Windows adapter loader are
+  disabled by the documented local patch. The unused CRT loader was removed.
+- Audit tool revision: `3fba044`; CI runs it for comparison=OFF. Its later commit
+  also makes historical ACT/text build helpers explicitly request comparison mode;
+  neither change alters the compiled game source above.
+- `modern-no-d3d9-compare-01`, at the same compiled source, passed a separate
+  complete historical comparison build and DAT staging. It is explicitly selected
+  with `-LegacyComparison` and retains D3D9 by design; it is not the handoff EXE.
+- All build/configuration/staging/audit logs and artifacts retained. No game,
+  preview, contract executable or local test suite was run.
+- User reports previous `modern-gpu-api-04` currently normal; not agent validation.
+- Previous CI 36326020393 completed successfully. Current push CI is separate.
+- Remaining migration: Windows services and original x86 runtime layouts; SDL GPU
+  continues to use D3D12 on Windows. Removing D3D9 does not remove modern DirectX.
