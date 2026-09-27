@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <climits>
+#include <cstddef>
 #include <cstdlib>
 #include <new>
 #include <string>
@@ -195,12 +196,15 @@ extern "C" KinokoStringLayout* __fastcall kinoko_method_clone_string_layout(Kino
     const kinoko::native::RecordView<Layout> target(out), origin(source);
     for(auto member : {&Layout::text,&Layout::pending,&Layout::face})
         StringView(target.bytes(member)).assign(StringView(origin.bytes(member)),0,UINT32_MAX);
-    std::copy_n(origin.bytes(&Layout::font_height),40,target.bytes(&Layout::font_height));
+    std::copy_n(origin.bytes(&Layout::font_height),
+        offsetof(Layout,edge)-offsetof(Layout,font_height),target.bytes(&Layout::font_height));
     target.set(&Layout::edge,origin.get(&Layout::edge));
-    std::copy_n(origin.bytes(&Layout::alignment),28,target.bytes(&Layout::alignment));
+    std::copy_n(origin.bytes(&Layout::alignment),
+        offsetof(Layout,atlas_owner)-offsetof(Layout,alignment),target.bytes(&Layout::alignment));
     *atlases(out)=*atlases(source);
     kinoko_string_copy_queue_storage((KinokoStringLayout*)(uintptr_t)(out), source);
-    std::copy_n(origin.bytes(&Layout::next_glyph_id),60,target.bytes(&Layout::next_glyph_id));
+    std::copy_n(origin.bytes(&Layout::next_glyph_id),
+        sizeof(Layout)-offsetof(Layout,next_glyph_id),target.bytes(&Layout::next_glyph_id));
     // 43EB80 clears cloned atlas values (retains vector capacity, no texture
     // Release), then frees deque blocks/map while retaining its own proxy.
     atlases(out)->clear();

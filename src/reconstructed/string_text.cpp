@@ -5,6 +5,7 @@
 #include "kinoko/legacy_string.hpp"
 #include <windows.h>
 #include <algorithm>
+#include <cstddef>
 #include <deque>
 #include <cstdlib>
 #include <new>
@@ -19,12 +20,16 @@ using kinoko::legacy::pointer;
 using kinoko::legacy::address;
 using kinoko::legacy::StringView;
 struct Glyph {
-    alignas(4) unsigned char bytes[256];
+    using Record=kinoko::act::StringGlyphRecord;
+    alignas(Record) unsigned char bytes[sizeof(Record)];
     Glyph() { auto quad=kinoko::native::RecordView<kinoko::act::StringGlyphRecord>(bytes).view(&kinoko::act::StringGlyphRecord::quad); quad.set(&kinoko::render::QuadRecord::vtable, kinoko_act_host_symbols()->chip_quad_vtable); quad.set(&kinoko::render::QuadRecord::texture, int32_t{0}); }
     Glyph(const Glyph& other) : Glyph() { *this=other; }
     Glyph& operator=(const Glyph& other) {
-        std::copy_n(other.bytes,20,bytes);
-        std::copy_n(other.bytes+24,232,bytes+24);return *this;
+        constexpr auto quad=offsetof(Record,quad);
+        constexpr auto after_vtable=quad+sizeof(void*);
+        std::copy_n(other.bytes,quad,bytes);
+        std::copy_n(other.bytes+after_vtable,sizeof(Record)-after_vtable,bytes+after_vtable);
+        return *this;
     }
     ~Glyph() { kinoko::native::RecordView<kinoko::act::StringGlyphRecord>(bytes).view(&kinoko::act::StringGlyphRecord::quad).set(&kinoko::render::QuadRecord::vtable, kinoko_act_host_symbols()->color_vtable); }
 };
