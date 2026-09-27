@@ -1,5 +1,9 @@
 # SDL platform foundation — modern-01
 
+Current follow-up: [SDL audio migration](../modern-audio/README.md) and
+[latest audio build](../modern-audio/BUILD.md). The sections below describe the
+original platform batch; DirectSound output has since been replaced.
+
 Fork baseline: rebuild `af5dd9a`. Remote: `Poker-sang/6kinoko-modern` (private).
 The source checkout and existing uncommitted rebuild evidence remain untouched.
 
