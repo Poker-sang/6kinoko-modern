@@ -40,9 +40,14 @@ The user reports `modern-window-move-01` normal; this is user runtime feedback.
 ACT textures/render targets now use native resource storage throughout creation,
 clone, property I/O, script bindings, render access and cleanup. Retained clone
 references live in each object; the pointer-keyed ownership table is removed.
-The actual resource/string implementation compiles in an isolated Windows x64
-contract. Full-game x64, chip resources and ACT method/VM ABI migration remain
-pending. See [native texture scope](../docs/modern-x64/act-texture-native.md).
+Chip resources now use native storage and shared MCD ownership across cloning,
+loading, map caches and script access. Texture/chip allocations also use native
+array metadata. ACT calls use named typed interfaces with an explicit legacy
+method-table adapter. The actual resource/string and method adapter contracts
+compile independently for Windows x64; full-game x64, outer ACT layouts, mesh
+storage and VM ABI migration remain pending. See [texture scope](../docs/modern-x64/act-texture-native.md)
+and [chip/method scope](../docs/modern-x64/act-chip-methods.md).
+The user reports `modern-act-native-02` normal; this is user runtime feedback.
 
 ## Documentation / 文档
 

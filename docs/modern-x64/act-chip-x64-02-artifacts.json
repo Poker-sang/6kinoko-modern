@@ -1,0 +1,27 @@
+{
+  "source_commit": "caebb44f38c314564ff20c23f1fb804a554180ab",
+  "configuration": "Windows x64 Release",
+  "compiled": true,
+  "executed": false,
+  "full_game": false,
+  "files": [
+    {
+      "path": "runtime-builds\\modern-act-chip-x64-02\\kinoko_act_texture_runtime_contract.exe",
+      "size": 17408,
+      "machine": "0x8664",
+      "sha256": "464d8bfcf74fe6c2791c86aa0cbcfc9c83202021755c6ff7e5b823de4c7ee0e3"
+    },
+    {
+      "path": "runtime-builds\\modern-act-chip-x64-02\\kinoko_act_chip_runtime_contract.exe",
+      "size": 21504,
+      "machine": "0x8664",
+      "sha256": "a228c42d7daa193189cbe5bfe16e5fe969af475fcb601127c50219ea94aa7b62"
+    },
+    {
+      "path": "runtime-builds\\modern-act-chip-x64-02\\kinoko_act_method_dispatch_contract.exe",
+      "size": 11264,
+      "machine": "0x8664",
+      "sha256": "c0aa90b57d5a9b485d0e03c98f3dca4befac56a887da0418e1bb036a74e3b488"
+    }
+  ]
+}

@@ -26,7 +26,8 @@ Compatibility boundaries:
 - Empty-name loads still preserve the old handle; suffix order remains DDS/BMP/PNG.
   Target creation still returns 1 on failure and preserves original replacement
   semantics, including separate retained clone references.
-- Chip/mesh resources, outer ACT/VM ABI and full-game x64 migration remain pending.
+- Chip resources are now native too; see [chip/method scope](act-chip-methods.md).
+  Mesh storage, outer ACT/VM ABI and full-game x64 migration remain pending.
 
 The portable texture contract now compiles the actual production resource,
 render bridge and legacy_string.cpp. Cases cover long-name deep copy, independent

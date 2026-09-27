@@ -1,5 +1,29 @@
 # x64 preparation build evidence
 
+## Native chip resources and ACT method interfaces
+
+Source: `caebb44f38c314564ff20c23f1fb804a554180ab`.
+
+- `modern-act-chip-02`: full Win32 Release no-trace game and 71 contract
+  executables compiled successfully. Three DAT copied beside the EXE and checked
+  by size/SHA256. Keep the adjacent shaders directory.
+- Game: `runtime-builds/modern-act-chip-02/kinoko_modern_gpu.exe`.
+- EXE SHA256: `5A6623FA6F52AF9C7097BAA36334C6906EA04307C0D5F90247AB7357A7431248`.
+- D3D9 static audit passed: 107 compiler and 81 linker dependency logs, no violations.
+- `modern-act-chip-x64-02`: texture, chip and ACT method adapter contracts compiled
+  and linked independently. Static PE headers identify all three as AMD64.
+  This is not a full x64 game, and the adapters retain the explicit legacy ABI boundary.
+- The first checkpoint `modern-act-chip-01` and `modern-act-chip-x64-01` also
+  compiled successfully from `ca6ab41d7d7032f1b2a4bbf8d5329db932780689`; the final
+  checkpoint includes the remaining key/timeline, 3D/map query and suspend/resume
+  interface migration. Both checkpoints and their logs are retained.
+- No game, preview, CTest or contract executable was run. All runtime assertions
+  are compiled only. User reports the preceding `modern-act-native-02` normal;
+  this is user validation, not an agent smoke test or validation of this build.
+- Evidence: `act-chip-02-artifacts.json`, `act-chip-x64-02-artifacts.json`,
+  `act-chip-02-d3d9-audit.json`; [scope](act-chip-methods.md).
+
+
 ## Native ACT texture resource chain
 
 Source: `57356a0c83b7031aef720373961dbd9c72c8f90a`.

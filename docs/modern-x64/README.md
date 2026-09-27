@@ -100,6 +100,16 @@ they are not a linked game or executed contracts. See BUILD.md for artifacts.
 ACT texture/target factories, clones, archive and script properties, mesh
 replacement, draw access and cleanup now use a native `TextureResource`.
 Clone references live in the object rather than a global registry. Native
-members replace the 100-byte layout and fixed texture offsets; chip resources
-remain separate. The portable contract compiles actual string ownership and
+members replace the 100-byte layout and fixed texture offsets. Chip resources
+now also use native storage/shared MCD ownership, with a single representation
+for map and script consumers. Both resource kinds use native allocation metadata. The portable contract compiles actual string ownership and
 resource methods, not just a snapshot. See [scope and compatibility boundaries](act-texture-native.md).
+
+## Chip resources and ACT interfaces
+
+[Chip/method migration scope](act-chip-methods.md) records the full ownership
+and call-chain migration. Method calls now have named, typed interfaces across
+resource loading/querying, document I/O, layer/key cloning, script binding,
+layout rendering and suspend/resume. An explicit method-table adapter remains;
+its existence must not be confused with a portable full-game ABI. The native
+contracts compile resource lifetime, allocation and callback arguments at x64.
