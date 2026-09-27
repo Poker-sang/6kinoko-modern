@@ -1,0 +1,36 @@
+﻿{
+    "source_commit":  "57356a0c83b7031aef720373961dbd9c72c8f90a",
+    "configuration":  "Win32 Release",
+    "trace_disabled":  true,
+    "source_directory":  "C:\\WorkSpace\\6kinoko-modern",
+    "build_directory":  "C:\\WorkSpace\\6kinoko-modern\\build-runs\\modern-act-native-02",
+    "runtime_directory":  "C:\\WorkSpace\\6kinoko-modern\\runtime-builds\\modern-act-native-02",
+    "generator":  "Visual Studio 17 2022",
+    "full_build_succeeded":  true,
+    "dat_staging_verified":  true,
+    "contracts_compiled":  69,
+    "game_run":  false,
+    "tests_run":  false,
+    "files":  [
+                  {
+                      "name":  "kinoko_modern_gpu.exe",
+                      "size":  3186176,
+                      "sha256":  "6E0C56544544E2275B09061CD869BBC5834F01742A22A7AE8F9E0C0EB5E80D29"
+                  },
+                  {
+                      "name":  "6kinoko_a.dat",
+                      "size":  163424746,
+                      "sha256":  "DD3AFF7E3E6BF0816C3073D113C3CCB12242A67E578D012C3B87190E7E24FC64"
+                  },
+                  {
+                      "name":  "6kinoko_b.dat",
+                      "size":  44681244,
+                      "sha256":  "4D47B8E241886BE4300025324DDD7D1E3C5729232FF67E011F14163DB60130D2"
+                  },
+                  {
+                      "name":  "6kinoko_c.dat",
+                      "size":  11796163,
+                      "sha256":  "80327F6F680D53AAA5539F45E11D33C1C6BA6B862648760725F44A380121852E"
+                  }
+              ]
+}

@@ -1,0 +1,15 @@
+{
+  "source_commit": "57356a0c83b7031aef720373961dbd9c72c8f90a",
+  "executable": "runtime-builds\\modern-act-native-x64-02\\kinoko_act_texture_runtime_contract.exe",
+  "machine": "0x8664",
+  "size": 16896,
+  "sha256": "8b0c5b90d9a73f80fb5ade1dee42c212fc5e81e16b5328c1c4b49d268ca8b5dd",
+  "compiled": true,
+  "executed": false,
+  "full_game": false,
+  "production_sources": [
+    "include/kinoko/act_texture_resource.hpp",
+    "include/kinoko/act_texture_bridge.hpp",
+    "src/reconstructed/legacy_string.cpp"
+  ]
+}

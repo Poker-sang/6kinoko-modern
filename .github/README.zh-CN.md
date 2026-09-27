@@ -34,8 +34,10 @@ Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, 
 ACT 纹理渲染改用具名状态快照。完整游戏仍依赖 x86 ACT/VM 布局和方法适配，
 这些独立编译结果不代表 x64 游戏运行兼容。
 用户反馈 `modern-window-move-01` 正常，这是用户运行验证。
-ACT 克隆纹理的额外引用现由原生指针键所有权表管理，并通过独立 Windows x64 编译；
-完整 ACT 资源对象及游戏仍限 x86。
+ACT 纹理/渲染目标已在创建、克隆、属性读写、脚本绑定、渲染访问和释放中使用原生资源存储。
+克隆持有的额外引用直接保存在对象内，原指针键所有权表已移除。实际资源/字符串实现已通过
+独立 Windows x64 契约编译；完整游戏 x64、芯片资源及 ACT 方法/VM ABI 迁移仍待完成。
+详见[原生纹理迁移范围](../docs/modern-x64/act-texture-native.md)。
 
 ## Documentation / 文档
 

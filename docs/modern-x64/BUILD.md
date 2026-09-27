@@ -1,5 +1,29 @@
 # x64 preparation build evidence
 
+## Native ACT texture resource chain
+
+Source: `57356a0c83b7031aef720373961dbd9c72c8f90a`.
+
+- `modern-act-native-02`: full Win32 Release no-trace game and 69 contract
+  executables compiled. Three DAT staged beside the game and checked by size/SHA256.
+- Game: `runtime-builds/modern-act-native-02/kinoko_modern_gpu.exe`.
+  Preserve the adjacent shaders and DAT files.
+- EXE SHA256: `6E0C56544544E2275B09061CD869BBC5834F01742A22A7AE8F9E0C0EB5E80D29`.
+- D3D9 static audit passed: 105 compiler and 79 linker dependency logs, no violations.
+- `modern-act-native-x64-02`: native texture object, bridge and actual string
+  implementation linked as an isolated contract; PE machine is AMD64 (0x8664).
+  This is not the full x64 game. Runtime assertions were not executed.
+- First attempts `modern-act-native-01` and `modern-act-native-x64-01` failed
+  linking the new contract because the explicit-length string module still
+  contained the Windows missing-length adapter entry. The adapter entry moved
+  beside its existing Windows scanner; corrected builds used fresh directories.
+  All failed/successful artifacts and logs are retained.
+- No game, preview, CTest or contract executable was run. The user confirmed
+  the earlier window-move version only; no gameplay validation is claimed here.
+- Evidence: `act-native-02-artifacts.json`, `act-native-x64-02-artifacts.json`,
+  `act-native-02-d3d9-audit.json`. Scope: [native texture migration](act-texture-native.md).
+
+
 ## ACT texture clone ownership
 
 Source: `6a2aa8831d8c1e9d03855c136865fbc4d41c14f7`.

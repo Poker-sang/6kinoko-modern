@@ -37,8 +37,12 @@ compile in isolated Windows x64 checks. ACT texture rendering uses a typed
 state snapshot. The complete game still requires x86 ACT/VM layouts and method
 adapters; these isolated checks do not establish x64 gameplay compatibility.
 The user reports `modern-window-move-01` normal; this is user runtime feedback.
-ACT clone texture references now have native pointer-keyed ownership, compiled
-for Windows x64 in isolation. Full ACT resources and the game remain x86.
+ACT textures/render targets now use native resource storage throughout creation,
+clone, property I/O, script bindings, render access and cleanup. Retained clone
+references live in each object; the pointer-keyed ownership table is removed.
+The actual resource/string implementation compiles in an isolated Windows x64
+contract. Full-game x64, chip resources and ACT method/VM ABI migration remain
+pending. See [native texture scope](../docs/modern-x64/act-texture-native.md).
 
 ## Documentation / 文档
 
