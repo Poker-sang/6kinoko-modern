@@ -159,8 +159,8 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 ## SDL GPU foundation
 - [x] Continue SDL GPU (no bgfx); user reports modern-render-03 currently normal.
 - [x] Implement independent GPU 2D renderer and Windows preview with offline shaders.
-- [ ] Integrate game texture registry, effective state and main-thread GPU presentation.
-- [ ] Complete depth/alpha-test/mesh/0x4142 support before switching the game default.
+- [x] Integrate game texture registry, effective state and main-thread GPU presentation.
+- [x] Complete depth/alpha-test/mesh/0x4142 support in the separate full GPU game.
 - See `../modern-gpu/README.md`; preview is not a migrated game.
 
 ## SDL GPU game integration
@@ -169,5 +169,9 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Add depth/alpha/cull, mesh streams/indices/transforms and XYZW 0x4142 handling.
 - [x] Replace D3DX matrix helpers with portable row-vector math.
 - [ ] User validation of the GPU game, including offscreen depth and matrix/color rounding differences.
-- [ ] Remove remaining SDK enum/source compatibility names, migrate Win32 services and full-game x64.
+- [x] Remove modern-game SDK enum/record/header dependencies and class-rewriting macros.
+- [x] Make legacy comparison targets optional in the default build graph.
+- [x] Record user feedback: modern-gpu-game-02 currently normal (not agent-run validation).
+- [ ] Separate remaining renderer/runtime records from original x86 layouts.
+- [ ] Migrate remaining Win32 services and full-game x64.
 - Details: `../modern-gpu/GAME.md`. Legacy D3D9 comparison EXE remains available.

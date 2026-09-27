@@ -1,19 +1,19 @@
 #pragma once
 #include <stdint.h>
 #include <windows.h>
-#include "kinoko/graphics_api.hpp"
+#include "kinoko/graphics_c_boundary.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 /* Factory, device and swap_chain each own one backend reference. Renderer and
    draw consumers borrow device. This runtime object is not a serialized layout. */
 typedef struct KinokoGraphics {
-    kinoko::graphics::Factory *factory;
-    kinoko::graphics::Device *device;
-    kinoko::graphics::SwapChain *swap_chain;
-    kinoko::graphics::Capabilities capabilities;
-    kinoko::graphics::Presentation present;
-    kinoko::graphics::DisplayMode display;
+    KinokoGraphicsFactory *factory;
+    KinokoGraphicsDevice *device;
+    KinokoGraphicsSwapChain *swap_chain;
+    KinokoGraphicsCapabilities capabilities;
+    KinokoGraphicsPresentation present;
+    KinokoGraphicsDisplayMode display;
     LONG original_window_style;
     HRESULT cooperative_status;
     int32_t unknown_state;

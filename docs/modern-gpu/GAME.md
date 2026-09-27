@@ -1,11 +1,27 @@
 # SDL GPU game integration
 
 The full-game target is `kinoko_modern_gpu`. It uses the original DAT/VM/gameplay
-sources, compiled against an audited source compatibility interface that records
+sources, compiled against explicit project-owned graphics interfaces that record
 SDL GPU commands. It does not link d3d9.lib or d3dx9_33.lib. The old
 `kinoko_retdec_rebuild` target and its native-device contracts remain for comparison.
-The SDK D3D9 enum/record definitions are still used at the compatibility boundary;
-this is runtime replacement, not completion of the platform-header/x64 cleanup.
+The modern game no longer includes SDK D3D9 enums/records or rewrites SDK class
+names with preprocessor macros. `graphics_api.hpp` selects explicit backend types;
+`graphics_types.hpp` owns modern command values and descriptions. Only the native
+comparison branch aliases SDK types. Modern target include guards reject accidental
+D3D9 header use. `KinokoGraphics` is a runtime object; its modern capabilities
+description contains only the fields used by the game, not the SDK 304-byte layout.
+Command values remain compatible with existing numeric game states. A comparison-only
+compile contract checks them against the SDK, plus matrix/vertex/map layouts.
+
+The API still retains legacy command methods and Windows status/window types.
+Renderer records and other original x86 object layouts still need migration;
+this is not a full-game x64 or Linux/macOS port.
+
+Use `tools/build_staged.ps1 -ModernOnly` with the usual name/resource/generator
+arguments to build and stage only the modern game and its required dependencies.
+This sets `KINOKO_BUILD_LEGACY_COMPARISON=OFF`, excludes original root targets
+from ALL unless required by the modern dependency graph, and disables their CTest
+entries. Explicit comparison targets remain available; the default remains ON.
 
 The new path covers texture creation, CV2 ARGB1555/ARGB8888 conversion, mutable
 font atlas snapshots, binding, render targets, source/allocation dimensions,
@@ -39,4 +55,6 @@ The first full all-target build (modern-gpu-game-01, source 29ad5b46) succeeded.
 Its new game import table contains neither d3d9.dll nor d3dx9_33.dll. Follow-up
 hardening adds explicit recursive device-state locks, image snapshot locks,
 first-use depth initialization and obsolete resize-depth resource reclamation.
-The final batch is recorded separately; no runtime validation has occurred.
+The final batch is recorded separately. The user reports modern-gpu-game-02
+currently normal; this is user feedback, not agent execution or exhaustive parity
+validation. Prior full-game CI run 36322559102 completed successfully.

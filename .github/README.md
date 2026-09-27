@@ -21,7 +21,10 @@ SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
 Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
 `kinoko_retdec_rebuild.exe` retains D3D9 for comparison. The GPU game has no
-D3D9/D3DX DLL imports; runtime parity has not been verified.
+D3D9/D3DX DLL imports or SDK header dependency. The user reports
+`modern-gpu-game-02` currently normal; exhaustive runtime parity is not established.
+Build with `tools/build_staged.ps1 -ModernOnly` (plus the usual arguments) to
+omit legacy comparison targets. Full-game x64 and non-Windows support remain pending.
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
 

@@ -32,17 +32,21 @@ jobs:
             build-runs/portable/CMakeFiles/CMakeConfigureLog.yaml
             runtime-builds/portable/
   legacy-bridge:
+    strategy:
+      fail-fast: false
+      matrix:
+        comparison: ["ON", "OFF"]
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Configure Windows game with SDL bridge
-        run: cmake -S . -B build-runs/bridge -A Win32 -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/bridge
+        run: cmake -S . -B build-runs/bridge -A Win32 -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_BUILD_LEGACY_COMPARISON=${{ matrix.comparison }} -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/bridge
       - name: Build game and contracts (no execution)
         run: cmake --build build-runs/bridge --config Release --parallel 4
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: windows-game
+          name: windows-game-comparison-${{ matrix.comparison }}
           path: |
             runtime-builds/bridge/
             build-runs/bridge/gpu-shader-toolchain.txt

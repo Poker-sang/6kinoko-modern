@@ -60,7 +60,7 @@ $record = [ordered]@{
     source_commit=$revision; configuration='Win32 Release'; trace_disabled=$true
     source_directory=$repo; build_directory=$buildTree; runtime_directory=$runDirectory
     generator=$Generator; legacy_comparison_enabled=(-not $ModernOnly); full_build_succeeded=$true; dat_staging_verified=$true
-    contracts_compiled=@(Get-ChildItem -LiteralPath (Join-Path $runDirectory 'tools') -Filter '*_contract.exe').Count
+    contracts_compiled=@(Get-ChildItem -LiteralPath $runDirectory -Recurse -Filter '*_contract.exe').Count
     game_run=$false; tests_run=$false; files=$files
 }
 $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $buildTree 'artifacts.json') -Encoding utf8
