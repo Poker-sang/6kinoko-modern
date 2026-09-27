@@ -1,7 +1,7 @@
-# Exact historical sources; no configure-time network access or system-codec fallback.
+# Pinned modern sources; no configure-time network access or system-codec fallback.
 get_filename_component(KINOKO_SOURCE_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
-set(KINOKO_OGG_DIR "${KINOKO_SOURCE_ROOT}/third_party/libogg-1.1.3")
-set(KINOKO_VORBIS_DIR "${KINOKO_SOURCE_ROOT}/third_party/libvorbis-1.2.0")
+set(KINOKO_OGG_DIR "${KINOKO_SOURCE_ROOT}/third_party/libogg-1.3.6")
+set(KINOKO_VORBIS_DIR "${KINOKO_SOURCE_ROOT}/third_party/libvorbis-1.3.7")
 add_library(kinoko_ogg STATIC
     "${KINOKO_OGG_DIR}/src/bitwise.c" "${KINOKO_OGG_DIR}/src/framing.c")
 target_include_directories(kinoko_ogg PUBLIC "${KINOKO_OGG_DIR}/include")
@@ -10,7 +10,7 @@ if(NOT WIN32)
     # Windows build uses the original MSVC branch in ogg/os_types.h instead.
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/ogg-config/ogg")
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/ogg-config/ogg/config_types.h"
-        "#pragma once\n#include <stdint.h>\ntypedef int16_t ogg_int16_t;\ntypedef uint16_t ogg_uint16_t;\ntypedef int32_t ogg_int32_t;\ntypedef uint32_t ogg_uint32_t;\ntypedef int64_t ogg_int64_t;\n")
+        "#pragma once\n#include <stdint.h>\ntypedef int16_t ogg_int16_t;\ntypedef uint16_t ogg_uint16_t;\ntypedef int32_t ogg_int32_t;\ntypedef uint32_t ogg_uint32_t;\ntypedef int64_t ogg_int64_t;\ntypedef uint64_t ogg_uint64_t;\n")
     target_include_directories(kinoko_ogg PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/ogg-config")
 endif()
 set(KINOKO_VORBIS_CORE mdct smallft block envelope window lsp lpc analysis

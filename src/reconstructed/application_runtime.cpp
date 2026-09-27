@@ -16,6 +16,8 @@
 #include "kinoko/legacy_memory.hpp"
 #include "../platform/resources/resource.h"
 #include <mmsystem.h>
+#include "kinoko/platform.hpp"
+#include <SDL3/SDL.h>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -154,22 +156,19 @@ bool initialize(const Configuration& configuration) {
     return state.retire_thread && state.game_thread && (!configuration.graphics || state.display_thread);
 }
 void message_loop() {
-    HandleOwner idle(CreateEventA(nullptr, FALSE, FALSE, nullptr));
-    if (!idle) return;
-    MSG message{};
-    while (state.is_running()) {
-        if (PeekMessageA(&message, nullptr, 0, 0, PM_NOREMOVE)) {
-            if (GetMessageA(&message, nullptr, 0, 0) <= 0) break;
-            TranslateMessage(&message);
-            DispatchMessageA(&message);
-        } else {
-            kinoko_graphics_poll();
-            WaitForSingleObject(idle.get(), 16);
-        }
+    while (state.is_running() && kinoko::platform::host().pump()) {
+        kinoko_graphics_poll();
+        SDL_Delay(1);
     }
 }
+WNDPROC sdl_window_proc{};
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM parameter) {
-    return dispatch_message(window, message, key, parameter);
+    // Keep the legacy fullscreen and IME boundary; SDL must receive all other
+    // messages (focus, physical keys, mouse, close) through its own WndProc.
+    if ((message == WM_SYSKEYDOWN && key == VK_RETURN) ||
+        (state.config.ime && message >= WM_IME_STARTCOMPOSITION && message <= WM_IME_COMPOSITION))
+        return dispatch_message(window,message,key,parameter);
+    return CallWindowProcW(sdl_window_proc,window,message,key,parameter);
 }
 }
 
@@ -300,20 +299,17 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     if (length && length < MAX_PATH) {
         if (auto* slash = std::strrchr(executable, '\\')) { slash[1] = 0; SetCurrentDirectoryA(executable); }
     }
-    WNDCLASSEXA cls{};
-    cls.cbSize = sizeof(cls); cls.hInstance = instance; cls.lpszClassName = "Marisaland2";
-    cls.lpfnWndProc = window_proc;
-    cls.hIcon = cls.hIconSm = LoadIconA(instance, MAKEINTRESOURCEA(IDI_KINOKO));
-    cls.hCursor = LoadCursorA(nullptr, IDC_ARROW);
-    cls.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
-    if (!RegisterClassExA(&cls)) return 0;
-    const int width = 640 + GetSystemMetrics(SM_CXEDGE) + GetSystemMetrics(SM_CXDLGFRAME) + GetSystemMetrics(SM_CXBORDER);
-    const int height = 480 + GetSystemMetrics(SM_CYEDGE) + GetSystemMetrics(SM_CYDLGFRAME) + GetSystemMetrics(SM_CYBORDER) + GetSystemMetrics(SM_CYCAPTION);
-    HWND window = CreateWindowExA(WS_EX_APPWINDOW, cls.lpszClassName, kinoko_application_title(),
-        WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT,
-        width, height, nullptr, nullptr, instance, nullptr);
-    if (!window) return 0;
-    ShowWindow(window, show_command); UpdateWindow(window);
+    auto& platform = kinoko::platform::host();
+    if (!platform.open(kinoko_application_title(),640,480)) {
+        MessageBoxA(nullptr,SDL_GetError(),"SDL initialization failed",MB_OK); return 1;
+    }
+    HWND window=static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(platform.window()),
+        SDL_PROP_WINDOW_WIN32_HWND_POINTER,nullptr));
+    if (!window) { platform.close(); return 1; }
+    sdl_window_proc=reinterpret_cast<WNDPROC>(SetWindowLongPtrW(window,GWLP_WNDPROC,
+        reinterpret_cast<LONG_PTR>(window_proc)));
+    if (!sdl_window_proc) { platform.close(); return 1; }
+    ShowWindow(window, show_command);
     Configuration config;
     config.window = window; config.instance = instance;
     config.manager = kinoko::game::create_manager();
@@ -321,5 +317,7 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     if (!config.manager || !initialize(config)) MessageBoxA(window, kinoko_application_error(), "Error", MB_OK);
     else message_loop();
     kinoko_application_shutdown();
+    SetWindowLongPtrW(window,GWLP_WNDPROC,reinterpret_cast<LONG_PTR>(sdl_window_proc));
+    platform.close();
     return 0;
 }

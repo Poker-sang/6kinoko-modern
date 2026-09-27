@@ -1,6 +1,26 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(kinoko_rebuild LANGUAGES C CXX RC)
+project(kinoko_modern LANGUAGES C CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(KINOKO_RUNTIME_DIR "${CMAKE_SOURCE_DIR}/runtime-builds/default" CACHE PATH "Runtime output directory")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${KINOKO_RUNTIME_DIR}")
+foreach(config DEBUG RELEASE RELWITHDEBINFO MINSIZEREL)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config} "${KINOKO_RUNTIME_DIR}")
+endforeach()
+option(KINOKO_PLATFORM_ONLY "Build portable SDL and codec modules without the legacy game" OFF)
+include(cmake/ModernPlatform.cmake)
+if(KINOKO_PLATFORM_ONLY)
+    include(cmake/Xiph.cmake)
+    add_executable(kinoko_vorbis_decoder_contract tests/vorbis_decoder_contract.cpp)
+    target_link_libraries(kinoko_vorbis_decoder_contract PRIVATE kinoko_vorbis_decoder kinoko_vorbisenc)
+    add_test(NAME vorbis_decoder_contract COMMAND kinoko_vorbis_decoder_contract --snapshot "${CMAKE_BINARY_DIR}/vorbis-snapshot.bin")
+    return()
+endif()
+if(WIN32)
+    enable_language(RC)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -45,7 +65,7 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/act_layer_clone.cpp
     src/reconstructed/actor_methods.cpp
     src/reconstructed/physical_input.cpp
-    src/reconstructed/direct_input.cpp
+    src/platform/sdl_input_bridge.cpp
     src/reconstructed/input_aggregation.cpp
     src/reconstructed/input_keys.cpp
     src/reconstructed/input_copy.cpp
@@ -96,6 +116,7 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/map_layout_lifetime.cpp
     src/reconstructed/map_render.cpp)
 target_include_directories(kinoko_native_methods PUBLIC include)
+target_link_libraries(kinoko_native_methods PUBLIC kinoko_platform)
 
 include(cmake/Xiph.cmake)
 add_library(kinoko_audio_runtime STATIC src/reconstructed/audio_runtime.cpp)
@@ -366,7 +387,6 @@ target_link_libraries(kinoko_retdec_rebuild PRIVATE
     winmm
     d3d9
     "${KINOKO_D3DX9_33_LIB}"
-    dinput8
     dxguid
     imm32
     ole32
@@ -410,7 +430,7 @@ add_executable(kinoko_application_contract tests/application_contract.cpp
 target_include_directories(kinoko_application_contract PRIVATE include)
 target_compile_options(kinoko_application_contract PRIVATE /Gy /O2)
 target_link_options(kinoko_application_contract PRIVATE /OPT:REF /OPT:ICF)
-target_link_libraries(kinoko_application_contract PRIVATE user32 gdi32 ole32 winmm imm32)
+target_link_libraries(kinoko_application_contract PRIVATE kinoko_platform user32 gdi32 ole32 winmm imm32)
 add_test(NAME application_contract COMMAND kinoko_application_contract)
 
 add_executable(kinoko_game_lifecycle_contract tests/game_lifecycle_contract.cpp

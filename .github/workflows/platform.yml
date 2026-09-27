@@ -1,0 +1,45 @@
+name: Modern platform builds
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev libasound2-dev libpulse-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev libgbm-dev libudev-dev
+      - name: Record source
+        shell: bash
+        run: mkdir -p build-runs/portable && git rev-parse HEAD > build-runs/portable/source-commit.txt
+      - name: Configure portable modules
+        run: cmake -S . -B build-runs/portable -DKINOKO_PLATFORM_ONLY=ON -DCMAKE_BUILD_TYPE=Release -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/portable
+      - name: Compile platform and codec contracts (no execution)
+        run: cmake --build build-runs/portable --config Release --parallel 4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: portable-${{ matrix.os }}
+          path: |
+            build-runs/portable/source-commit.txt
+            build-runs/portable/CMakeCache.txt
+            build-runs/portable/CMakeFiles/CMakeConfigureLog.yaml
+            runtime-builds/portable/
+  legacy-bridge:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Configure Windows game with SDL bridge
+        run: cmake -S . -B build-runs/bridge -A Win32 -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/bridge
+      - name: Build game and contracts (no execution)
+        run: cmake --build build-runs/bridge --config Release --parallel 4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: windows-game
+          path: runtime-builds/bridge/

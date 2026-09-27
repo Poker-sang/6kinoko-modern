@@ -1,0 +1,23 @@
+[
+  {
+    "name": "SDL",
+    "version": "3.4.16",
+    "url": "https://github.com/libsdl-org/SDL/releases/download/release-3.4.16/SDL3-3.4.16.tar.gz",
+    "sha256": "7322236cd12090c3eb40b9728be4d49c76f66ad17d04369584d4ecad5cf77c68",
+    "directory": "third_party/SDL3-3.4.16"
+  },
+  {
+    "name": "libogg",
+    "version": "1.3.6",
+    "url": "https://github.com/xiph/ogg/archive/refs/tags/v1.3.6.tar.gz",
+    "sha256": "95b643da661155d79db9de2fca55daed3a8d491039829def246aacb3d9201c81",
+    "directory": "third_party/libogg-1.3.6"
+  },
+  {
+    "name": "libvorbis",
+    "version": "1.3.7",
+    "url": "https://github.com/xiph/vorbis/archive/refs/tags/v1.3.7.tar.gz",
+    "sha256": "270c76933d0934e42c5ee0a54a36280e2d87af1de3cc3e584806357e237afd13",
+    "directory": "third_party/libvorbis-1.3.7"
+  }
+]

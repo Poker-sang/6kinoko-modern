@@ -125,3 +125,14 @@ EXE。不得把参考目录作为 `WorkingDirectory`，也不得依赖 `-SourceD
 - 本批允许代理在本地执行自动测试以修复工作流；游戏游玩仍由用户验证。提交后使用独立目录，保留所有测试日志与产物。
 - 主 README 位于 .github/README.md，以英文为主；.github/README.zh-CN.md 保持相同章节、事实和命令。
 
+
+## Modern fork (2026-09-27)
+
+This repository is 6kinoko-modern, branched from rebuild af5dd9a. Push only to
+Poker-sang/6kinoko-modern, never to rebuild. Modernization deliberately replaces
+platform implementations and compatible dependencies; preserve gameplay/data contracts.
+SDL portable modules build with KINOKO_PLATFORM_ONLY=ON. The complete game still
+requires Windows x86 until D3D9, DirectSound, Win32 services and ABI are migrated.
+Keep all artifacts, commit before builds, stage three DAT beside the EXE.
+Do not run the game or local tests; compile contracts and label unexecuted results.
+See docs/modern-platform/README.md and dependencies.json.
