@@ -5,6 +5,7 @@
 #include "kinoko/string_layout.h"
 #include "kinoko/act_frame.h"
 #include "kinoko/act_draw_records.hpp"
+#include "kinoko/act_texture_bridge.hpp"
 #include "kinoko/act_layer_access.h"
 #include "kinoko/act_layer_records.hpp"
 #include "kinoko/act_host.h"
@@ -44,8 +45,7 @@ class DrawTarget final {
 public:
     DrawTarget(KinokoActResource* target, kinoko::graphics::Device* device) : selected_(target != 0) {
         if (!selected_) return;
-        const RecordView<TextureResourcePrefix> resource(target);
-        kinoko_set_render_target(resource.get(&TextureResourcePrefix::texture));
+        kinoko_set_render_target(texture_runtime_state(target).handle);
         // 452636/452659 clear the selected target to opaque black before
         // checking stage/ACT visibility. The original ignores these HRESULTs.
         if (device) device->Clear(0, nullptr, kinoko::graphics::clear_target, 0xff000000u, 1.0f, 0);

@@ -1,5 +1,6 @@
 #include "kinoko/act_frame.h"
 #include "kinoko/act_draw_records.hpp"
+#include "kinoko/act_texture_bridge.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/legacy_memory.hpp"
 #include <vector>
@@ -46,14 +47,14 @@ extern "C" int32_t kinoko_act_append_blit(KinokoActRuntime* self, int32_t x, int
     int32_t width, int32_t height, KinokoActResource* texture_resource, int32_t sx, int32_t sy,
     int32_t blend, float alpha) {
     if (!self || !texture_resource) return E_FAIL;
-    const RecordView<TextureResourcePrefix> texture(texture_resource);
+    const auto texture=texture_runtime_state(texture_resource);
     const auto* symbols=kinoko_act_host_symbols();
-    const auto type=texture.get(&TextureResourcePrefix::vtable);
+    const auto type=texture.methods;
     if(type!=symbols->texture_resource_vtable &&
        type!=symbols->render_target_vtable) return E_FAIL;
     const BlitCommand command{blend,alpha<0?0:alpha>1?1:alpha,
         static_cast<float>(x),static_cast<float>(y),sx,sy,width,height,
-        texture.get(&TextureResourcePrefix::texture)};
+        texture.handle};
     try { ensure<KinokoActCommandStorage>(command_storage(self))->values.push_back(command); }
     catch(const std::bad_alloc&) { return E_OUTOFMEMORY; }
     static volatile LONG trace_count;

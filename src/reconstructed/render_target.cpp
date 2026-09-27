@@ -3,6 +3,7 @@
 #include "kinoko/renderer.h"
 #include "kinoko/quad_render.h"
 #include "kinoko/act_draw_records.hpp"
+#include "kinoko/act_resource_records_io.hpp"
 #include "kinoko/graphics_lock.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/render_target.h"
@@ -61,7 +62,7 @@ extern "C" int32_t kinoko_set_render_target(int32_t handle) {
 extern "C" int32_t __fastcall kinoko_method_create_render_target(KinokoActResource *resource,void*,int32_t width,int32_t height) {
     // 449C10 returns true even if D3DX creation fails; never reinterpret that
     // return as handle != 0. Requested image dimensions remain unsquared.
-    using Resource=kinoko::act::TextureResourcePrefix;
+    using Resource=kinoko::act::TextureResourceRecord;
     const kinoko::native::RecordView<Resource> view(resource);
     view.set(&Resource::source_x,0.0f);view.set(&Resource::source_y,0.0f);
     view.set(&Resource::width,width);view.set(&Resource::height,height);

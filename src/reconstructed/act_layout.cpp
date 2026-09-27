@@ -2,6 +2,7 @@
 #include "kinoko/quad_transform.hpp"
 #include "kinoko/act_layout_render.hpp"
 #include "kinoko/act_draw_records.hpp"
+#include "kinoko/act_texture_bridge.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
@@ -22,7 +23,6 @@ using native::RecordView;
 using View=RecordView<Layout2DRecord>;
 using LayerView=kinoko::map::LayerView;
 using Layer=kinoko::map::LayerRecord;
-using Texture=TextureResourcePrefix;
 KinokoActResource *texture_resource(KinokoActLayer *layer) {
     auto *resource=LayerView(layer).get(&Layer::resource);
     if(!resource) return nullptr;
@@ -40,14 +40,14 @@ int32_t bind_texture(KinokoActLayout *layout) {
     if(!layer) return E_FAIL;
     auto *resource=texture_resource(layer);
     if(!resource) return E_FAIL;
-    const RecordView<Texture> texture(resource);
-    const auto handle=texture.get(&Texture::texture);
+    const auto texture=texture_runtime_state(resource);
+    const auto handle=texture.handle;
     if(!handle) return E_FAIL;
     if(!view.get(&Layout2DRecord::pivots_initialized)) {
         auto rotation=view.get(&Layout2DRecord::rotation_pivot);
         auto scale=view.get(&Layout2DRecord::scale_pivot);
-        rotation.x=scale.x=texture.get(&Texture::source_width)*0.5f;
-        rotation.y=scale.y=texture.get(&Texture::source_height)*0.5f;
+        rotation.x=scale.x=texture.source_width*0.5f;
+        rotation.y=scale.y=texture.source_height*0.5f;
         view.set(&Layout2DRecord::rotation_pivot,rotation);view.set(&Layout2DRecord::scale_pivot,scale);
         view.set(&Layout2DRecord::pivots_initialized,uint8_t{1});
     }
@@ -76,8 +76,8 @@ int32_t update_layout_2d(KinokoActLayout *layout) {
     if(!LayerView(layer).get(&Layer::visible)) return 0;
     auto *resource=texture_resource(layer);
     if(!resource) return E_FAIL;
-    const auto texture=RecordView<Texture>(resource).load();
-    if(!view.get(&Layout2DRecord::texture) || view.get(&Layout2DRecord::texture)!=texture.texture) bind_texture(layout);
+    const auto texture=texture_runtime_state(resource);
+    if(!view.get(&Layout2DRecord::texture) || view.get(&Layout2DRecord::texture)!=texture.handle) bind_texture(layout);
     const int handle=view.get(&Layout2DRecord::texture);
     if(!handle || static_cast<uint32_t>(handle)>=KINOKO_TEXTURE_CAPACITY) return E_FAIL;
     const auto &slot=kinoko_texture_slots[handle];
