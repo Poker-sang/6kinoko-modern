@@ -13,6 +13,8 @@ struct Variable {
     uint16_t size;
     uint16_t flags;
 };
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(Variable) == 20 && offsetof(Variable, flags) == 18);
+#endif
 enum VariableFlags : uint16_t { ReadOnly = 1, Constant = 2, Static = 4 };
 } // namespace kinoko::script::binding

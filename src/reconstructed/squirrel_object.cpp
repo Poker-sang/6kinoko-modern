@@ -45,7 +45,7 @@ extern "C" void* kinoko_squirrel_object_destroy(void* object, SQVM* vm_address, 
         destination.reset();
         kinoko_trace("4a9d70:after-clear");
     }
-    return reinterpret_cast<void*>(static_cast<uintptr_t>(destination.payload_address()));
+    return destination.payload_data();
 }
 
 extern "C" void* __fastcall kinoko_squirrel_object_delete(void* object, void*, int32_t flags) {

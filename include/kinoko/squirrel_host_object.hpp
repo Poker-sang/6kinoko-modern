@@ -15,9 +15,12 @@ struct ObjectStorage {
     const void* vtable;
     HSQOBJECT value;
 };
-static_assert(sizeof(void*) == 4 && sizeof(HSQOBJECT) == 8);
-static_assert(sizeof(ObjectStorage) == 12 && offsetof(ObjectStorage, value) == 4);
+static_assert(offsetof(ObjectStorage, value) == sizeof(void*));
+#if INTPTR_MAX == INT32_MAX
+static_assert(sizeof(HSQOBJECT) == 8 && sizeof(ObjectStorage) == 12);
+#endif
 
+#if INTPTR_MAX == INT32_MAX
 inline int32_t address(const void* pointer) noexcept {
     return static_cast<int32_t>(reinterpret_cast<uintptr_t>(pointer));
 }
@@ -35,6 +38,7 @@ inline HSQOBJECT borrowed_value(int32_t type, int32_t data) noexcept {
     std::memcpy(&result._unVal, &data, sizeof(data));
     return result;
 }
+#endif
 
 // Views also accept the legacy int32_t[3] temporaries, without type-punning
 // them as live C++ objects or assuming stronger alignment than their storage.
@@ -42,7 +46,9 @@ class ObjectView final {
 public:
     explicit ObjectView(void* storage) noexcept : record_(storage) {}
     explicit ObjectView(const void* storage) noexcept : ObjectView(const_cast<void*>(storage)) {}
+#if INTPTR_MAX == INT32_MAX
     explicit ObjectView(int32_t storage) noexcept : ObjectView(pointer(storage)) {}
+#endif
     HSQOBJECT value() const noexcept {
         return record_.get(&ObjectStorage::value);
     }
@@ -78,8 +84,8 @@ public:
         write(incoming);
         return incoming._type;
     }
-    int32_t payload_address() const noexcept {
-        return address(record_.bytes(&ObjectStorage::value));
+    void* payload_data() const noexcept {
+        return record_.bytes(&ObjectStorage::value);
     }
 private:
     kinoko::native::RecordView<ObjectStorage> record_;

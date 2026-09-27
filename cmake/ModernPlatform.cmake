@@ -62,4 +62,8 @@ if(WIN32)
     add_library(kinoko_font_raster_compile OBJECT src/reconstructed/string_font.cpp)
     target_include_directories(kinoko_font_raster_compile PRIVATE include "${CMAKE_CURRENT_SOURCE_DIR}/cmake/no-d3d9")
     target_compile_features(kinoko_font_raster_compile PRIVATE cxx_std_17)
+    add_library(kinoko_squirrel_object_width_compile OBJECT tests/squirrel_object_width_compile.cpp)
+    target_include_directories(kinoko_squirrel_object_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
+    target_compile_features(kinoko_squirrel_object_width_compile PRIVATE cxx_std_17)
 endif()
