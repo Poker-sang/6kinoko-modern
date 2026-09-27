@@ -24,3 +24,11 @@ add_executable(kinoko_audio_output_contract tests/audio_output_contract.cpp)
 target_link_libraries(kinoko_audio_output_contract PRIVATE kinoko_audio_output)
 add_test(NAME audio_output_contract COMMAND kinoko_audio_output_contract)
 set_tests_properties(audio_output_contract PROPERTIES ENVIRONMENT "SDL_AUDIODRIVER=dummy" TIMEOUT 30)
+
+# The semantic blend interface has no SDL/Windows dependency.
+add_library(kinoko_render_state INTERFACE)
+target_include_directories(kinoko_render_state INTERFACE include)
+target_compile_features(kinoko_render_state INTERFACE cxx_std_17)
+add_executable(kinoko_render_blend_contract tests/render_blend_contract.cpp)
+target_link_libraries(kinoko_render_blend_contract PRIVATE kinoko_render_state)
+add_test(NAME render_blend_contract COMMAND kinoko_render_blend_contract)

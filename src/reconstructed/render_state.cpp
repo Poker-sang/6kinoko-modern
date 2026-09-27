@@ -1,39 +1,12 @@
 #include "kinoko/renderer.h"
 #include "kinoko/quad_render.h"
-#include "kinoko/legacy_memory.hpp"
+#include "d3d9_blend_sink.hpp"
 #include <d3d9.h>
-namespace {
-struct BlendTransition { int32_t key; DWORD operation,source,destination; };
-// 402770 updates only changed D3D states. Zero means no write, not D3DBLEND_ZERO.
-constexpr BlendTransition transitions[]={
-    {0,D3DBLENDOP_ADD,D3DBLEND_SRCALPHA,D3DBLEND_INVSRCALPHA},
-    {1,D3DBLENDOP_ADD,D3DBLEND_SRCALPHA,D3DBLEND_ONE},
-    {2,D3DBLENDOP_REVSUBTRACT,D3DBLEND_SRCALPHA,D3DBLEND_ONE},
-    {34,D3DBLENDOP_REVSUBTRACT,D3DBLEND_SRCALPHA,D3DBLEND_ONE},
-    {3,D3DBLENDOP_ADD,D3DBLEND_ZERO,D3DBLEND_SRCCOLOR},
-    {27,D3DBLENDOP_ADD,D3DBLEND_ZERO,D3DBLEND_SRCCOLOR},
-    {9,0,0,D3DBLEND_ONE},{10,D3DBLENDOP_REVSUBTRACT,0,D3DBLEND_ONE},
-    {11,0,D3DBLEND_ZERO,D3DBLEND_SRCCOLOR},{19,0,D3DBLEND_ZERO,D3DBLEND_SRCCOLOR},
-    {16,0,0,D3DBLEND_INVSRCALPHA},{18,D3DBLENDOP_REVSUBTRACT,0,0},
-    {24,D3DBLENDOP_ADD,0,D3DBLEND_INVSRCALPHA},{25,D3DBLENDOP_ADD,0,0},
-    {32,D3DBLENDOP_ADD,D3DBLEND_SRCALPHA,D3DBLEND_INVSRCALPHA},
-    {33,0,D3DBLEND_SRCALPHA,D3DBLEND_ONE}
-};
-}
 extern "C" int32_t kinoko_render_set_blend(int32_t mode) {
-    if (kinoko_renderer.state.blend==mode) return mode;
-    auto *device=kinoko_renderer.device;
-    HRESULT result=S_OK;
-    const auto key=mode-1+8*kinoko_renderer.state.blend;
-    if(device) for(const auto &entry:transitions) {
-        if(entry.key!=key) continue;
-        if(entry.operation) result=device->SetRenderState(D3DRS_BLENDOP,entry.operation);
-        if(entry.source) result=device->SetRenderState(D3DRS_SRCBLEND,entry.source);
-        if(entry.destination) result=device->SetRenderState(D3DRS_DESTBLEND,entry.destination);
-        break;
-    }
-    kinoko_renderer.state.blend=mode;
-    return result;
+    auto &cached=kinoko_renderer.state.blend;
+    if(!kinoko_renderer.device) return kinoko::render::set_blend(cached,mode,nullptr);
+    kinoko::render::D3D9BlendSink sink(*kinoko_renderer.device);
+    return kinoko::render::set_blend(cached,mode,&sink);
 }
 extern "C" int32_t kinoko_render_set_alpha(int32_t blend_enabled,int32_t test_enabled) {
     auto *device=kinoko_renderer.device;
