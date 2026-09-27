@@ -1,0 +1,27 @@
+{
+  "source_commit": "088a52e96fa5aeae43a970e1a0d68c0c6a3fc2ab",
+  "gpu_run": false,
+  "tests_run": false,
+  "files": [
+    {
+      "path": "runtime-builds\\modern-gpu-01\\kinoko_gpu_preview.exe",
+      "size": 2282496,
+      "sha256": "ee1645f49a813a5952ac35edaad2baf796bfa0a5e7ad6ce593f63430a33443a4"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-01\\kinoko_gpu_vertices_contract.exe",
+      "size": 12800,
+      "sha256": "116a9c740695370d8e0d8525e46e7f2afa76db0907781f13c46e24a59edd4792"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-01\\shaders\\sprite.vert.dxbc",
+      "size": 1212,
+      "sha256": "d988c8f90b552e4509f99b50e69851f928b20383108d62c4f8e84959faa2a0c8"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-01\\shaders\\sprite.frag.dxbc",
+      "size": 772,
+      "sha256": "ca428bd37e9405b552e9f548ff3b5c89267d56a0fac45ec6c9860fe7dea51dbf"
+    }
+  ]
+}

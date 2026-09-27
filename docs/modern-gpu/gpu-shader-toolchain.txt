@@ -1,0 +1,5 @@
+sdk=10.0.22621.0
+compiler=C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/fxc.exe
+sha256=799a0eb81b4368902515d9c83f40da7f41bb4e2064d2e87f12506b8667c45c0c
+profiles=vs_5_1,ps_5_1
+flags=/nologo /Ges /O3 /E main

@@ -27,6 +27,7 @@ jobs:
           name: portable-${{ matrix.os }}
           path: |
             build-runs/portable/source-commit.txt
+            build-runs/portable/gpu-shader-toolchain.txt
             build-runs/portable/CMakeCache.txt
             build-runs/portable/CMakeFiles/CMakeConfigureLog.yaml
             runtime-builds/portable/
@@ -42,4 +43,6 @@ jobs:
         if: always()
         with:
           name: windows-game
-          path: runtime-builds/bridge/
+          path: |
+            runtime-builds/bridge/
+            build-runs/bridge/gpu-shader-toolchain.txt
