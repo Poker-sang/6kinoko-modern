@@ -4,7 +4,8 @@ param(
     [string]$Name,
     [Parameter(Mandatory = $true)]
     [string]$SourceDir,
-    [string]$Generator
+    [string]$Generator,
+    [switch]$ModernOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,12 +36,14 @@ $revision | Set-Content -LiteralPath (Join-Path $buildTree 'source-commit.txt') 
 $configure = @('-S', $repo, '-B', $buildTree, '-A', 'Win32',
     "-DKINOKO_REFERENCE_DIR=$assets", "-DKINOKO_RUNTIME_DIR=$runDirectory",
     '-DKINOKO_RETDEC_DISABLE_TRACE=ON')
+if ($ModernOnly) { $configure += '-DKINOKO_BUILD_LEGACY_COMPARISON=OFF' }
 if ($Generator) { $configure += @('-G', $Generator) }
 & cmake @configure *> (Join-Path $buildTree 'configure.log')
 if ($LASTEXITCODE -ne 0) { throw "Configure failed; see $buildTree/configure.log" }
 & cmake --build $buildTree --config Release --parallel 4 *> (Join-Path $buildTree 'build.log')
 $buildExit = $LASTEXITCODE
-$executable = Join-Path $runDirectory 'kinoko_retdec_rebuild.exe'
+$executableName = if ($ModernOnly) { 'kinoko_modern_gpu.exe' } else { 'kinoko_retdec_rebuild.exe' }
+$executable = Join-Path $runDirectory $executableName
 # A partial all-target failure may still produce the game; stage it for traceability.
 if (Test-Path -LiteralPath $executable) {
     & (Join-Path $PSScriptRoot 'stage_dat.ps1') -Executable $executable -SourceDir $assets *> (Join-Path $buildTree 'dat.log')
@@ -56,7 +59,7 @@ $files = foreach ($file in @($executable) + @('a','b','c' | ForEach-Object {
 $record = [ordered]@{
     source_commit=$revision; configuration='Win32 Release'; trace_disabled=$true
     source_directory=$repo; build_directory=$buildTree; runtime_directory=$runDirectory
-    generator=$Generator; full_build_succeeded=$true; dat_staging_verified=$true
+    generator=$Generator; legacy_comparison_enabled=(-not $ModernOnly); full_build_succeeded=$true; dat_staging_verified=$true
     contracts_compiled=@(Get-ChildItem -LiteralPath (Join-Path $runDirectory 'tools') -Filter '*_contract.exe').Count
     game_run=$false; tests_run=$false; files=$files
 }

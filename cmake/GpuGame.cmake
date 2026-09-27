@@ -1,3 +1,8 @@
+option(KINOKO_BUILD_LEGACY_COMPARISON "Build the old game and comparison contracts by default" ON)
+# Capture the pre-modern root targets. OFF excludes these from ALL unless the
+# GPU game needs them. Explicit comparison targets remain available.
+get_property(kinoko_comparison_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+get_property(kinoko_comparison_tests DIRECTORY PROPERTY TESTS)
 # Separate full game target: preserve the D3D9 comparison build and its contracts.
 function(kinoko_clone_for_gpu original replacement)
     get_target_property(sources ${original} SOURCES)
@@ -44,3 +49,15 @@ add_test(NAME gpu_resource_contract COMMAND kinoko_gpu_resource_contract)
 foreach(target kinoko_modern_gpu kinoko_native_methods_gpu kinoko_upstream_bindings_gpu kinoko_squirrel_cpp_vm_gpu kinoko_gpu_resource_contract)
     target_include_directories(${target} BEFORE PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/cmake/no-d3d9")
 endforeach()
+
+if(KINOKO_BUILD_LEGACY_COMPARISON)
+    add_library(kinoko_graphics_vocabulary_contract OBJECT tests/graphics_vocabulary_contract.cpp)
+    target_include_directories(kinoko_graphics_vocabulary_contract PRIVATE include)
+else()
+    foreach(target IN LISTS kinoko_comparison_targets)
+        set_property(TARGET ${target} PROPERTY EXCLUDE_FROM_ALL TRUE)
+    endforeach()
+    if(kinoko_comparison_tests)
+        set_tests_properties(${kinoko_comparison_tests} PROPERTIES DISABLED TRUE)
+    endif()
+endif()

@@ -16,6 +16,7 @@
 #include "kinoko/legacy_memory.hpp"
 #include "../platform/resources/resource.h"
 #include <mmsystem.h>
+#include <objbase.h>
 #include "kinoko/platform.hpp"
 #include <SDL3/SDL.h>
 #include <cstdlib>
