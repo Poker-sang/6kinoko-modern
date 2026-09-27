@@ -22,3 +22,13 @@ Portable Windows x64/Linux/macOS CI is compile-only. Results are recorded separa
 once available. Complete-game portability, audible parity and latency are not
 established by these builds. Native rendering remains D3D9; audio scheduling
 workers still use Win32 services. Next planned major backend is rendering.
+
+## Current source CI compilation
+
+[Run 36316087743](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36316087743)
+at `70e5c98e355645c57fa46d65a41f99939e3ad5d2` compiled the portable platform,
+codec and audio output modules/contracts successfully on Windows x64, Ubuntu
+24.04 and macOS 14. This includes the final one-shot seek fix. No tests executed.
+Exact job snapshot: ci-build.json.
+
+Remote complete Windows game: success at this snapshot. The complete local game build and DAT verification already succeeded as recorded above.
