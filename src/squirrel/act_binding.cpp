@@ -2276,7 +2276,7 @@ extern "C" int32_t kinoko_publish_mesh_resource_class(SQVM* vm,void* root,int32_
     if(get_pair((void*)(uintptr_t)(root), "CActResourceMesh", out) && out[0]==0x08004000) return 1;
     kinoko_sqrat_release_pair(vm, out);
     static const kinoko_native_view_property properties[]={
-        {"resourceID",4,0},{"stName",8,4},{"stMeshName",36,4}
+        {"resourceID",offsetof(kinoko::mesh::Resource,id),0},{"stName",offsetof(kinoko::mesh::Resource,name),4},{"stMeshName",offsetof(kinoko::mesh::Resource,mesh_name),4}
     };
     return kinoko_publish_map_view_class(vm, (void*)(uintptr_t)(root), "CActResourceMesh", properties, 3, 0, out) &&
         kinoko_sqrat_set_native_closure(vm, out, "LoadMesh", (void *)(intptr_t)(address(kinoko_resource_load_texture)), nullptr, 0) &&

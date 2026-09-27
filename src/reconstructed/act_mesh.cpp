@@ -46,22 +46,15 @@ template<class T,class Read> std::shared_ptr<T> acquire(Cache<T> &cache,const st
     if(value) cache[name]=value;
     return value;
 }
-// 457310 owns controller children, borrows models retained by its controller,
-// and expands reference children before the node's own serialized children.
-struct Controller {
-    const Node *model{};
-    int32_t registry_index{},reference_group{};
-    std::vector<std::unique_ptr<Controller>> children;
-    std::vector<std::shared_ptr<Material>> material_owners;
-};
-struct Renderer {
-    const void *methods{};
+struct Renderer final : Render {
     const Node *model{}; // borrowed from ResourceState
     ComOwner<kinoko::graphics::IndexBuffer> indices;
     ComOwner<kinoko::graphics::VertexBuffer> positions,normals,coordinates;
     ComOwner<kinoko::graphics::Declaration> declaration;
     // Original replacement handles are borrowed; insertion does not AddRef.
     std::multimap<std::string,int32_t> replacements;
+    std::uint8_t draw() override;
+    void replace_texture(const char* name, std::int32_t handle) override { replacements.emplace(name,handle); }
 };
 static const kinoko::graphics::VertexElement elements[]={
     {0,0,kinoko::graphics::element_float3,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_position,0},
@@ -106,7 +99,8 @@ bool bind_mesh(Renderer &render,const Node *model) {
     fill(render.indices.get(),mesh.indices.data(),mesh.index_count*2);
     return true;
 }
-uint8_t __fastcall draw_mesh(Renderer *render,void *) {
+uint8_t Renderer::draw() {
+    auto* render = this;
     auto *device=kinoko_graphics.device;
     if(!device || !render->model || !render->model->geometry || !render->indices ||
         !render->positions || !render->normals || !render->coordinates || !render->declaration) return 0;
@@ -139,17 +133,6 @@ uint8_t __fastcall draw_mesh(Renderer *render,void *) {
     device->SetTransform(kinoko::graphics::transform_world,&world);
     return 1;
 }
-const void *render_methods[]={nullptr,nullptr,nullptr,reinterpret_cast<const void*>(draw_mesh)};
-}
-struct RenderLink { RenderLink *next,*previous;Renderer render; };
-static_assert(offsetof(RenderLink,render)==8);
-struct ResourceState {
-    std::unique_ptr<Controller> root;
-    std::vector<std::shared_ptr<Node>> model_owners;
-    std::vector<Controller*> registry;
-    std::map<std::string,Controller*> named;
-};
-namespace {
 std::unique_ptr<Controller> make_controller(ResourceState &state,const Node *model,
     int32_t group,const char *prefix,std::vector<const Node*> &ancestors) {
     if(std::find(ancestors.begin(),ancestors.end(),model)!=ancestors.end())
@@ -180,21 +163,11 @@ void load_materials(Controller &node,const char *prefix) {
     }
     for(auto &child:node.children) load_materials(*child,prefix);
 }
-void clear_renders(Resource &resource) {
-    auto *head=resource.renders;
-    if(!head) return;
-    while(head->next!=head) { auto *node=head->next;head->next=node->next;delete node; }
-    head->previous=head;resource.render_count=0;
-}
 void collect_renders(Resource &resource,const Node *model) {
     if(model->type==NodeType::mesh) {
-        auto node=std::make_unique<RenderLink>();
-        node->render.methods=render_methods;
-        bind_mesh(node->render,model); // original retains the node even on bind failure
-        auto *head=resource.renders;
-        node->next=head;node->previous=head->previous;
-        head->previous->next=node.get();head->previous=node.get();
-        node.release();++resource.render_count;
+        auto render = std::make_unique<Renderer>();
+        bind_mesh(*render,model); // original retains the renderer even on bind failure
+        resource.renders.push_back(std::move(render));
     }
     for(const auto &child:model->children) collect_renders(resource,child.get());
 }
@@ -205,9 +178,7 @@ uint8_t load_resource(Resource *resource,const char *prefix) {
     // Preserve null-prefix reuse and avoid alias invalidation when assigning it.
     const std::string path=prefix?prefix:stored_prefix.data();
     stored_prefix.assign(path.data(),static_cast<uint32_t>(path.size()));
-    clear_renders(*resource);
-    delete resource->state;resource->state=nullptr;
-    resource->state=new ResourceState;
+    resource->reset_for_load();
     auto &state=*resource->state;
     auto model=acquire(models,name.data(),read_model);
     if(model) {
@@ -226,11 +197,7 @@ uint8_t load_resource(Resource *resource,const char *prefix) {
     return 0;
 }
 void clear_resource(Resource *resource) {
-    if(!resource) return;
-    // 44C1C0 tears down the controller before the draw records.
-    delete resource->state;resource->state=nullptr;
-    clear_renders(*resource);delete resource->renders;resource->renders=nullptr;
-    StringView(&resource->prefix).destroy();StringView(&resource->mesh_name).destroy();StringView(&resource->name).destroy();
+    if (resource) resource->clear();
 }
 int32_t replace_texture(Resource *resource,const char *name,KinokoActResource *texture) {
     if(!name || !texture) return E_FAIL;
@@ -239,8 +206,7 @@ int32_t replace_texture(Resource *resource,const char *name,KinokoActResource *t
     if (!converted) converted = methods.query(kinoko::act::ResourceKind::texture);
     if (!converted) return E_FAIL;
     const auto handle=kinoko::act::texture_resource(converted).texture;
-    for(auto *node=resource->renders->next;node!=resource->renders;node=node->next)
-        if(*name && handle) node->render.replacements.emplace(name,handle); // map insert does not overwrite
+    resource->replace_texture(name,handle);
     return S_OK;
 }
 namespace {
@@ -250,14 +216,12 @@ Resource *__fastcall clone_resource(Resource *source,void *) {
     if(!copy) return nullptr;
     try {
         copy->id=source->id;
-        for(auto member:{&Resource::name,&Resource::mesh_name,&Resource::prefix}) {
-            StringView input(&(source->*member));StringView(&(copy->*member)).assign(input.data(),input.length());
-        }
+        if (!copy->copy_names(*source)) { release_resource(copy); return nullptr; }
         load_resource(copy,StringView(&copy->prefix).data());return copy;
-    } catch(...) {clear_resource(copy);std::free(copy);return nullptr;}
+    } catch(...) {release_resource(copy);return nullptr;}
 }
 void *__fastcall destroy_resource(Resource *resource,void *,uint32_t flags) {
-    clear_resource(resource);if(flags&1) std::free(resource);return resource;
+    return release_resource(resource,static_cast<unsigned char>(flags));
 }
 int32_t __fastcall dispose_resource(Resource *resource,void *) {destroy_resource(resource,nullptr,1);return 0;}
 uint8_t __fastcall load_method(Resource *resource,void *,const char *prefix) {
@@ -293,16 +257,14 @@ const void *layout_methods(){return layout_table;}
 uint32_t resource_type(){static const auto type=hash_name(mesh_info.name);return type;}
 uint32_t layout_type(){static const auto type=hash_name(layout_info.name);return type;}
 Resource *create_resource() {
-    auto *resource=static_cast<Resource*>(std::calloc(1,sizeof(Resource)));
-    if(!resource)return nullptr;
-    resource->methods=resource_methods();resource->id=-1;
-    resource->name.capacity=resource->mesh_name.capacity=resource->prefix.capacity=15;
+    auto* resource = allocate_resource(resource_methods());
+    if (!resource) return nullptr;
     try {
-        resource->state=new ResourceState;
-        resource->renders=new RenderLink{};
-        resource->renders->next=resource->renders->previous=resource->renders;
-        StringView(&resource->name).assign("Resource#",9);return resource;
-    }catch(...){clear_resource(resource);std::free(resource);return nullptr;}
+        resource->state = std::make_unique<ResourceState>();
+        StringView(&resource->name).assign("Resource#",9);
+        if (resource->name.length != 9) { release_resource(resource); return nullptr; }
+        return resource;
+    } catch (...) { release_resource(resource); return nullptr; }
 }
 act::Layout3DRecord *create_layout() {
     auto *layout=static_cast<act::Layout3DRecord*>(std::calloc(1,sizeof(act::Layout3DRecord)));

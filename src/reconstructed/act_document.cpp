@@ -596,8 +596,7 @@ KinokoActResource* kinoko_act_make_resource(KinokoArchiveReader* reader_ptr, uin
     if (type == kinoko::mesh::resource_type()) {
         auto *mesh = kinoko::mesh::create_resource();
         if (mesh && !kinoko::mesh::read_resource_properties(mesh, (KinokoArchiveReader**)(uintptr_t)(&reader_ptr), 1)) {
-            kinoko::mesh::clear_resource(mesh);
-            std::free(mesh);
+            kinoko::mesh::release_resource(mesh);
             return 0;
         }
         return reinterpret_cast<KinokoActResource*>(mesh);

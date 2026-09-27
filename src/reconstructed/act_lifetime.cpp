@@ -140,9 +140,7 @@ void* delete_resource(KinokoActResource* resource, unsigned char flags) {
     using namespace kinoko::act;
     const auto* methods = kinoko::legacy::load<const void*>(resource);
     if (methods == kinoko::mesh::resource_methods()) {
-        clear_resource(resource);
-        if (flags & 1) std::free(resource);
-        return resource;
+        return kinoko::mesh::release_resource(reinterpret_cast<kinoko::mesh::Resource*>(resource), flags);
     }
     const auto clear = [](auto& value) { clear_resource(reinterpret_cast<KinokoActResource*>(&value)); };
     if (methods == kinoko_act_host_symbols()->chip_resource_vtable)

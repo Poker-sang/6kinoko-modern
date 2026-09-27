@@ -1,19 +1,16 @@
 #include "kinoko/mesh_model.hpp"
-#include "kinoko/act_runtime.h"
-#include "kinoko/act_host.h"
-#include "kinoko/legacy_abi.h"
 #include <limits>
 #include <stdexcept>
 
 namespace kinoko::mesh {
 namespace {
 class Reader {
-    KinokoArchiveReader *stream_;
+    Input stream_;
 public:
-    explicit Reader(KinokoArchiveReader *stream) : stream_(stream) {}
+    explicit Reader(Input stream) : stream_(stream) {}
     void bytes(void *destination, size_t size) {
         if (size > std::numeric_limits<uint32_t>::max() ||
-            (size && !kinoko_reader_read_exact(stream_, destination, static_cast<uint32_t>(size))))
+            (size && !stream_.read_exact(stream_.context, destination, static_cast<uint32_t>(size))))
             throw std::runtime_error("truncated MSH stream");
     }
     template<class T> void value(T &out) { bytes(&out, sizeof(out)); }
@@ -94,16 +91,16 @@ std::unique_ptr<Node> read_node(Reader &reader, uint32_t version, NodeType type)
 }
 }
 
-std::unique_ptr<Node> read_model(KinokoArchiveReader *archive_reader) {
-    if (!archive_reader) return {};
-    Reader reader(archive_reader);
+std::unique_ptr<Node> decode_model(Input input) {
+    if (!input.read_exact) return {};
+    Reader reader(input);
     const auto version = reader.count();
     // 4594F0 accepts all versions >= 10, not just the latest writer version.
     return version >= 10 ? read_node(reader, version, NodeType::root) : nullptr;
 }
-std::unique_ptr<Material> read_material(KinokoArchiveReader *archive_reader) {
-    if (!archive_reader) return {};
-    Reader reader(archive_reader);
+std::unique_ptr<Material> decode_material(Input input) {
+    if (!input.read_exact) return {};
+    Reader reader(input);
     const auto version=reader.count();
     if(version>15) return {};
     auto material=std::make_unique<Material>();

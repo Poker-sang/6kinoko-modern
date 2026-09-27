@@ -1,4 +1,4 @@
-#include "kinoko/file_io.h"
+struct KinokoArchiveReader;
 #pragma once
 #include <array>
 #include <cstdint>
@@ -55,6 +55,13 @@ struct Node {
     std::unique_ptr<Geometry> geometry;
     std::vector<std::unique_ptr<Node>> children;
 };
+// The decoder borrows a byte source; archive/platform access stays outside it.
+struct Input {
+    void* context = nullptr;
+    bool (*read_exact)(void*, void*, std::uint32_t) = nullptr;
+};
+std::unique_ptr<Node> decode_model(Input input);
+std::unique_ptr<Material> decode_material(Input input);
 // Borrowed archive reader; caller retains ownership. This decodes the original
 // versioned MSH stream, not a D3DX/X-file replacement format.
 std::unique_ptr<Node> read_model(KinokoArchiveReader *archive_reader);

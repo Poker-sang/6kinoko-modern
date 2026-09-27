@@ -3,24 +3,9 @@ struct KinokoArchiveReader;
 struct SQVM;
 #pragma once
 #include "kinoko/act_layout_records.hpp"
-#include "kinoko/legacy_string.hpp"
+#include "kinoko/mesh_resource.hpp"
 #include <cstdint>
 namespace kinoko::mesh {
-struct ResourceState;
-struct RenderLink;
-struct Resource {
-    const void *methods;
-    int32_t id;
-    legacy::StringRecord name;uint32_t pad32;
-    legacy::StringRecord mesh_name;uint32_t pad60;
-    legacy::StringRecord prefix;uint32_t pad88;
-    // Replaces the private 144-byte VC8 controller's container storage.
-    ResourceState *state;
-    uint8_t reserved_controller[140];
-    RenderLink *renders;
-    uint32_t render_count,pad244;
-};
-static_assert(sizeof(Resource)==248 && offsetof(Resource,renders)==236);
 Resource *create_resource();
 int32_t read_resource_properties(Resource *resource,KinokoArchiveReader** reader_holder,int32_t version);
 void clear_resource(Resource *resource);

@@ -1,3 +1,4 @@
+#include "kinoko/mesh_resource.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_layout_3d.hpp"
 #include "kinoko/map_layout_records.hpp"
@@ -17,18 +18,6 @@ kinoko::graphics::Matrix* matrix_multiply(kinoko::graphics::Matrix* out,const ki
 }
 
 namespace kinoko::act {
-namespace {
-using kinoko::legacy::load;
-struct RenderNode;
-using Draw = uint8_t (__thiscall *)(void *);
-struct RenderMethods { void *destroy,*set_controller,*set_mesh; Draw draw; };
-struct RenderPrefix { const RenderMethods *methods; };
-struct RenderNode { RenderNode *next,*previous; RenderPrefix render; };
-struct MeshListPrefix { unsigned char preceding[236]; RenderNode *head; };
-static_assert(offsetof(RenderNode,render)==8);
-static_assert(offsetof(MeshListPrefix,head)==236);
-}
-
 // 43C690 does not install the 2D layer's transform-property aliases.
 int32_t bind_layout_3d(Layout3DRecord *layout, KinokoActLayer *layer) {
     if (!layer) return E_FAIL;
@@ -76,9 +65,7 @@ int32_t draw_layout_3d(Layout3DRecord *layout) {
     void* converted = nullptr;
     // 43CB5D deliberately returns before restoring the state on failed Query.
     if (!ResourceMethods(resource).query_type(&resource_type_descriptor(ResourceKind::mesh), &converted)) return E_FAIL;
-    auto *head=load<MeshListPrefix>(converted).head;
-    for (auto *node=head->next;node!=head;node=node->next)
-        node->render.methods->draw(&node->render);
+    static_cast<kinoko::mesh::Resource*>(converted)->draw();
     device->SetTransform(kinoko::graphics::transform_world,&previous);
     device->SetRenderState(kinoko::graphics::state_zenable,depth);
     device->SetRenderState(kinoko::graphics::state_zwriteenable,write_depth);
