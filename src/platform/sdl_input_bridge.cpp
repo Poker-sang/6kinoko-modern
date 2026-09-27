@@ -14,7 +14,11 @@ extern "C" int32_t kinoko_input_shutdown() {
     std::fill_n(kinoko_keyboard_state,256,0); return 1;
 }
 extern "C" int32_t kinoko_input_open_keyboard() { return window!=nullptr; }
-extern "C" int32_t kinoko_input_open_controllers() { return window!=nullptr; }
+extern "C" int32_t kinoko_input_open_controllers() {
+    // Manager/script initialization enumerates controllers before the first
+    // update frame. Publish the main-thread startup snapshot now, like 408C50.
+    return window ? kinoko_input_poll() : 0;
+}
 extern "C" int32_t kinoko_input_open_mouse() { return window!=nullptr; }
 extern "C" int32_t kinoko_input_poll() {
     const auto input=kinoko::platform::host().consume_input();
