@@ -6,9 +6,10 @@
 #include <memory>
 #include <stdexcept>
 namespace kinoko::legacy {
-// Active first eight bytes when capacity selects native owned storage.
+// Active prefix of the 16-byte inline field when capacity selects native storage.
 struct StringOwnerFields { char* data; std::string* owner; };
-static_assert(sizeof(StringOwnerFields)==8 && offsetof(StringOwnerFields,owner)==4);
+static_assert(sizeof(StringOwnerFields)<=sizeof(StringRecord::characters));
+static_assert(offsetof(StringOwnerFields,owner)==sizeof(char*));
 
 std::string* StringView::owner() const noexcept {
     std::string* result=nullptr;

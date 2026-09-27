@@ -6,7 +6,8 @@
 
 namespace kinoko::legacy {
 // Boundary schema only: native strings publish data at +0, own a std::string
-// at +4 and expose length/capacity at +16/+20. Capacity >=16 selects the
+// pointer after the data pointer, and expose length/capacity at +16/+20.
+// Capacity >=16 selects the
 // borrowed data pointer even when std::string uses its own short storage.
 // Untouched empty records and read-only legacy fixtures may still be inline.
 struct StringRecord final {
@@ -39,7 +40,7 @@ public:
         if (!is_heap()) return reinterpret_cast<char*>(bytes);
         // memcpy is required even for the pointer: generated native fields
         // need not have pointer alignment or a constructed C++ pointer object.
-        static_assert(sizeof(char*) == sizeof(std::uint32_t), "legacy string ABI is Win32");
+        static_assert(sizeof(char*) <= sizeof(StringRecord::characters));
         char* result;
         std::memcpy(&result, bytes, sizeof(result));
         return result;
