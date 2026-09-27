@@ -1,4 +1,5 @@
 #include "kinoko/act_resource_records_io.hpp"
+#include "kinoko/act_texture_leases.hpp"
 #include "kinoko/act_clone.h"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/act_key_records.hpp"
@@ -15,8 +16,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <new>
-#include <unordered_set>
-#include <mutex>
 
 namespace {
 namespace up = kinoko::native::upstream;
@@ -68,17 +67,16 @@ extern "C" KinokoActKey* __fastcall kinoko_method_clone_act_key(KinokoActKey* so
 }
 
 namespace {
-std::mutex cloned_texture_mutex;
-std::unordered_set<KinokoActResource*> cloned_texture_owners;
+kinoko::act::TextureCloneLeases cloned_texture_leases;
 // 42F9D0/42FA50 and 446AF0/446B70/449B70 copy different resource fields.
 // The MCD control is the actual Boost counter already used by archive clones.
 KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable, bool chip) {
     if (!source) return 0;
     auto destroy=[](unsigned char* value) {
-        if (value) kinoko_destroy_cact_resource((KinokoActResource*)(uintptr_t)(legacy_address(value)));
+        if (value) kinoko_destroy_cact_resource(reinterpret_cast<KinokoActResource*>(value));
     };
     std::unique_ptr<unsigned char,decltype(destroy)> owned(
-        static_cast<unsigned char*>(std::calloc(1,100)),destroy);
+        static_cast<unsigned char*>(std::calloc(1,sizeof(TextureResourceRecord))),destroy);
     if (!owned) return 0;
     auto* result=reinterpret_cast<KinokoActResource*>(owned.get());
     const ChipResourceFields chip_input(source), chip_output(result);
@@ -121,11 +119,16 @@ KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable,
         if (handle) {
             // Keep the original borrowed bit while recording the additional
             // native-store reference, so explicit Unload also releases it.
-            {
-                std::lock_guard<std::mutex> lock(cloned_texture_mutex);
-                cloned_texture_owners.insert(result);
-            }
             if (!kinoko_texture_retain(handle)) return 0;
+            try {
+                if (!cloned_texture_leases.insert(result,handle)) {
+                    kinoko_texture_release(handle);
+                    return 0;
+                }
+            } catch (...) {
+                kinoko_texture_release(handle);
+                throw;
+            }
         }
         texture_output.set(&TextureResourceRecord::texture,handle);
     }
@@ -133,11 +136,9 @@ KinokoActResource* clone_resource(KinokoActResource* source, const void* vtable,
 }
 }
 extern "C" int32_t kinoko_act_release_cloned_texture(KinokoActResource* resource) {
-    {
-        std::lock_guard<std::mutex> lock(cloned_texture_mutex);
-        if (!cloned_texture_owners.erase(resource)) return 0;
-    }
-    kinoko_texture_release(TextureResourceFields(resource).get(&TextureResourceRecord::texture));
+    const auto handle=cloned_texture_leases.take(resource);
+    if (!handle) return 0;
+    kinoko_texture_release(*handle);
     return 1;
 }
 extern "C" KinokoActResource* __fastcall kinoko_method_clone_chip_resource(KinokoActResource* source, void*) {

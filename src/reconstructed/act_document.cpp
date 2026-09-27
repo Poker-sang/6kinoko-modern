@@ -584,8 +584,8 @@ extern "C" int32_t __fastcall kinoko_method_load_resource_texture(KinokoActResou
     try {
         std::string path(prefix && *prefix ? prefix : "./");
         if (path.back() != '/' && path.back() != '\\') path += '/';
-        const auto* methods=kinoko::legacy::load<const unsigned char*>(receiver);
-        kinoko_call_thiscall0(resource,kinoko::legacy::load<void*>(methods+11*sizeof(void*)));
+        // Both texture and render-target method tables use this unload entry.
+        kinoko_method_unload_resource_texture(resource,nullptr);
         fields.set(&kinoko::act::TextureResourceRecord::borrows_texture, uint8_t{0});
         path += name;
         // 431D80 joins prefix/name; 40E540 appends each suffix.

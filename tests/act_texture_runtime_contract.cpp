@@ -1,4 +1,5 @@
 #include "kinoko/act_texture_runtime.hpp"
+#include "kinoko/act_texture_leases.hpp"
 #include <type_traits>
 
 using kinoko::act::TextureRuntimeState;
@@ -12,5 +13,9 @@ int main() {
     source.handle = 19;
     source.source_width = 256.0f;
     const auto copy = source;
-    return copy.handle == 19 && copy.source_width == 256.0f ? 0 : 1;
+    int resource=0;
+    kinoko::act::TextureCloneLeases leases;
+    if (!leases.insert(&resource, 19) || leases.insert(&resource, 20)) return 1;
+    if (leases.take(&resource) != 19 || leases.take(&resource).has_value()) return 2;
+    return copy.handle == 19 && copy.source_width == 256.0f ? 0 : 3;
 }
