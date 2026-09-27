@@ -1,0 +1,42 @@
+Microsoft (R) COFF/PE Dumper Version 14.44.35229.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file runtime-builds\modern-gpu-game-02\kinoko_modern_gpu.exe
+
+File Type: EXECUTABLE IMAGE
+
+  Image has the following dependencies:
+
+    USER32.dll
+    GDI32.dll
+    WINMM.dll
+    IMM32.dll
+    ole32.dll
+    dbghelp.dll
+    KERNEL32.dll
+    OLEAUT32.dll
+    VERSION.dll
+    ADVAPI32.dll
+    SETUPAPI.dll
+    SHELL32.dll
+    MSVCP140.dll
+    VCRUNTIME140.dll
+    api-ms-win-crt-heap-l1-1-0.dll
+    api-ms-win-crt-runtime-l1-1-0.dll
+    api-ms-win-crt-string-l1-1-0.dll
+    api-ms-win-crt-stdio-l1-1-0.dll
+    api-ms-win-crt-math-l1-1-0.dll
+    api-ms-win-crt-convert-l1-1-0.dll
+    api-ms-win-crt-utility-l1-1-0.dll
+    api-ms-win-crt-filesystem-l1-1-0.dll
+    api-ms-win-crt-locale-l1-1-0.dll
+
+  Summary
+
+       4C000 .data
+        1000 .g644
+       A4000 .rdata
+       1A000 .reloc
+        1000 .rsrc
+      245000 .text

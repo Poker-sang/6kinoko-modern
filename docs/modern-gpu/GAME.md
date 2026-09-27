@@ -1,4 +1,4 @@
-# SDL GPU game integration 
+# SDL GPU game integration
 
 The full-game target is `kinoko_modern_gpu`. It uses the original DAT/VM/gameplay
 sources, compiled against an audited source compatibility interface that records
@@ -33,7 +33,7 @@ need user visual validation. Per-extent depth targets replace the legacy shared
 backbuffer depth surface; cross-extent offscreen mesh depth sharing is not proven.
 
 No game or local tests are run. A successful build and a DLL-import audit are not
-proof of visual parity. Build results and exact EXE/hash follow in BUILD.md.
+proof of visual parity. Build results and exact EXE/hash are recorded in BUILD.md.
 
 The first full all-target build (modern-gpu-game-01, source 29ad5b46) succeeded.
 Its new game import table contains neither d3d9.dll nor d3dx9_33.dll. Follow-up

@@ -1,0 +1,45 @@
+{
+  "source_commit": "665a5dd7c037ab3772ca4db796885e245753a57d",
+  "full_build_succeeded": true,
+  "gpu_dat_staging_verified": true,
+  "d3d9_d3dx_imports_present": false,
+  "game_run": false,
+  "tests_run": false,
+  "files": [
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\kinoko_modern_gpu.exe",
+      "size": 3202560,
+      "sha256": "fd5454042883ae1eea3b7c7d9c4e6da323cd7a20cf020e38ec50bf15cafbbe8a"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\kinoko_retdec_rebuild.exe",
+      "size": 3145216,
+      "sha256": "fa65d372ad0c20111888c42d2db00a05421be9c8881f8dadbfc3eafe028067f8"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\shaders\\sprite.vert.dxbc",
+      "size": 1360,
+      "sha256": "6492adead9a1e49fa1f60dc6019e8bfcb15f096ece87382f745fb2309f3c4379"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\shaders\\sprite.frag.dxbc",
+      "size": 1876,
+      "sha256": "d3a014d9e2498438e20cf28ed653cbf517a0602c5c088ea1777493b891c92d7c"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\6kinoko_a.dat",
+      "size": 163424746,
+      "sha256": "dd3aff7e3e6bf0816c3073d113c3ccb12242a67e578d012c3b87190e7e24fc64"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\6kinoko_b.dat",
+      "size": 44681244,
+      "sha256": "4d47b8e241886be4300025324ddd7d1e3c5729232ff67e011f14163db60130d2"
+    },
+    {
+      "path": "runtime-builds\\modern-gpu-game-02\\6kinoko_c.dat",
+      "size": 11796163,
+      "sha256": "80327f6f680d53aaa5539f45e11d33c1c6ba6b862648760725f44a380121852e"
+    }
+  ]
+}
