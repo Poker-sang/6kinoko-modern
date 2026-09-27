@@ -54,8 +54,8 @@ public:
     bool owns() const { return record_.get(&SqratStorage::owns) != 0; }
     void owns(bool flag) { record_.set(&SqratStorage::owns, uint8_t(flag ? 1 : 0)); }
     void vtable(const void* value) { record_.set(&SqratStorage::vtable, value); }
-    int32_t payload_address() const {
-        return address(record_.bytes(&SqratStorage::value));
+    void* payload_data() const {
+        return record_.bytes(&SqratStorage::value);
     }
 private:
     kinoko::native::RecordView<SqratStorage> record_;
@@ -124,7 +124,7 @@ extern "C" void * kinoko_sqrat_root_construct(void * storage, struct SQVM * id) 
     auto vm = static_cast<SQVM *>(id);
     ObjectView object(storage);
     kinoko_trace_i32("450e30:construct-object", address(storage));
-    kinoko_trace_i32("450e30:construct-pair", object.payload_address());
+    kinoko_trace_i32("450e30:construct-pair", address(object.payload_data()));
     object.vtable(kinoko_sqrat_object_vtable());
     object.vm(vm); object.owns(true); object.reset();
     object.vtable(kinoko_sqrat_root_vtable());
@@ -278,7 +278,7 @@ extern "C" void * __fastcall kinoko_sqrat_copy_object(void * receiver, void*, vo
 extern "C" void * __fastcall kinoko_sqrat_object_reference(void * receiver, void*) {
     // This slot returns a reference into the host record, not a temporary
     // source Object. Only the legacy storage address crosses this ABI bridge.
-    return pointer(ObjectView(receiver).payload_address());
+    return ObjectView(receiver).payload_data();
 }
 extern "C" void * __fastcall kinoko_sqrat_delete_object(void * receiver, void*, int32_t flags) {
     ObjectView object(receiver);

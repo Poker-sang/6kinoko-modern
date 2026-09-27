@@ -78,7 +78,7 @@ extern "C" void* kinoko_sqplus_setup_hierarchy(void* root_object) {
     const auto value = root.value();
     root.reset(); // transfer this by-value argument's owned reference
     upstream::sqplus_setup_hierarchy(current_vm(), value);
-    return (void*)(intptr_t)(root.payload_address());
+    return root.payload_data();
 }
 
 extern "C" void * kinoko_sqplus_create_variable(void * object, const char * name_address) {

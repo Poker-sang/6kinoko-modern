@@ -97,7 +97,7 @@ extern "C" void * kinoko_sqplus_object_reset(void * object) {
     kinoko_trace("4a9570:before-clear");
     destination.reset();
     kinoko_trace("4a9570:after-clear");
-    return pointer(destination.payload_address());
+    return destination.payload_data();
 }
 extern "C" void * kinoko_sqplus_object_assign(void * object, const void * source) {
     kinoko_trace("4a95c0:begin");
