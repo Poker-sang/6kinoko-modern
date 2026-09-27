@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 #include <type_traits>
-#include "directsound_fixture.hpp"
+#include "audio_output_fixture.hpp"
 
 namespace {
 std::vector<unsigned char> fixture;
@@ -23,8 +23,7 @@ static_assert(std::is_nothrow_move_constructible_v<BgmTrack>);
 }
 
 extern "C" {
-int32_t kinoko_active_bgm_slot = 0, kinoko_archive_count = 1, kinoko_audio_primary_device_slot = 0, kinoko_audio_listener_slot = 0;
-char* kinoko_audio_device_slot = nullptr;
+int32_t kinoko_active_bgm_slot = 0, kinoko_archive_count = 1;
 char kinoko_packed_assets = 0;
 const KinokoAudioHostSymbols* kinoko_audio_host_symbols(void) {
     static const KinokoAudioHostSymbols symbols{&critical_section_identity, "test"};
@@ -87,7 +86,7 @@ int main() {
     Buffer source;
     {
         BgmTrack track;
-        track.buffer.reset(&source);
+        track.buffer = source.borrow();
         track.handle = 29;
         track.channels = 1;
         track.volume = 1;
@@ -113,10 +112,10 @@ int main() {
     Buffer sound;
     g_kinoko_se_entry_count = 1;
     g_kinoko_se_entries[0].id = 123;
-    g_kinoko_se_entries[0].buffer.reset(&sound);
-    sound.status = DSBSTATUS_PLAYING;
+    g_kinoko_se_entries[0].buffer = sound.borrow();
+    sound.status = 1u;
     CHECK(kinoko_audio_play_sound(123) == 1);
-    CHECK(sound.stops == 1 && sound.plays == 1 && sound.position == 0);
+    CHECK(sound.stops == 1 && sound.plays == 1 && sound.cursor == 0);
     kinoko_se_entries_release();
     CHECK(sound.releases == 1 && g_kinoko_se_entry_count == 0);
     kinoko_se_entries_release();
@@ -149,7 +148,7 @@ int main() {
     Buffer fade_buffer;
     {
         BgmTrack track;
-        track.buffer.reset(&fade_buffer);
+        track.buffer = fade_buffer.borrow();
         track.volume = 1;
         kinoko_bgm_begin_fade_locked(&track, 100, 0.0f, 0, false);
         track.fade_started = 10;
@@ -166,7 +165,7 @@ int main() {
 
     // Retired playback leaves the active queue before the loader frees its owner.
     Buffer retired_buffer;
-    g_kinoko_bgm_track.buffer.reset(&retired_buffer);
+    g_kinoko_bgm_track.buffer = retired_buffer.borrow();
     g_kinoko_bgm_track.handle = first;
     g_kinoko_bgm_track.retirement_requested = true;
     kinoko_active_bgm_slot = first;
@@ -181,7 +180,7 @@ int main() {
     // More than 32 overlapping BGM streams must not evict an unrelated owner.
     std::array<Buffer, 34> overlapping;
     for (auto& buffer : overlapping) {
-        g_kinoko_bgm_track.buffer.reset(&buffer);
+        g_kinoko_bgm_track.buffer = buffer.borrow();
         kinoko_bgm_archive_current_track();
     }
     CHECK(fading_tracks.size() == overlapping.size());
@@ -199,5 +198,5 @@ int main() {
     kinoko_audio_manager_construct();
     CHECK(g_kinoko_audio_manager_initialized);
     CHECK(kinoko_audio_shutdown_resources() == 1);
-    std::puts("PASS: audio layouts, handles, FIFO, buffer ownership, native SDK calls, CV3 and worker teardown");
+    std::puts("PASS: audio layouts, handles, FIFO, buffer ownership, portable output calls, CV3 and worker teardown");
 }

@@ -756,11 +756,8 @@ extern unsigned char kinoko_keyboard_state[256];
 
 extern char kinoko_packed_assets;
 
-extern int32_t kinoko_audio_primary_device_slot;
 
-extern char * kinoko_audio_device_slot;
 
-extern int32_t kinoko_audio_listener_slot;
 
 extern int32_t kinoko_layout_type_identity;
 

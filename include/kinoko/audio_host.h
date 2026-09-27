@@ -12,9 +12,6 @@ struct KinokoAudioHostSymbols {
 const struct KinokoAudioHostSymbols* kinoko_audio_host_symbols(void);
 extern int32_t kinoko_active_bgm_slot;
 extern char kinoko_packed_assets;
-extern int32_t kinoko_audio_primary_device_slot;
-extern char* kinoko_audio_device_slot;
-extern int32_t kinoko_audio_listener_slot;
 void kinoko_trace(const char* message);
 void kinoko_trace_i32(const char* label, int32_t value);
 void kinoko_trace_hresult(const char* label, long value);

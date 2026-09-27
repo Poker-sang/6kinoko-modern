@@ -139,11 +139,8 @@ unsigned char kinoko_keyboard_state[256];
 
 char kinoko_packed_assets = 0;
 
-int32_t kinoko_audio_primary_device_slot = 0;
 
-char * kinoko_audio_device_slot;
 
-int32_t kinoko_audio_listener_slot = 0;
 
 int32_t kinoko_layout_type_identity = 0;
 

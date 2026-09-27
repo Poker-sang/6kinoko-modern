@@ -124,7 +124,7 @@ target_include_directories(kinoko_audio_runtime PUBLIC include)
 target_compile_definitions(kinoko_audio_runtime PRIVATE _CRT_SECURE_NO_WARNINGS
     $<TARGET_PROPERTY:kinoko_retdec_rebuild,COMPILE_DEFINITIONS>)
 target_compile_options(kinoko_audio_runtime PRIVATE /Gy)
-target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_vorbis_decoder kinoko_actor_collision ole32 dxguid winmm user32)
+target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision ole32 winmm user32)
 
 add_library(kinoko_legacy_string STATIC
     src/reconstructed/legacy_string.cpp
@@ -348,7 +348,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     "${KINOKO_SQUIRREL2_ROOT}/squirrel/sqtable.cpp"
     "${KINOKO_SQUIRREL2_ROOT}/squirrel/sqvm.cpp"
 )
-target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_native_control kinoko_zlib kinoko_platform)
+target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_native_control kinoko_zlib kinoko_platform kinoko_audio_output)
 target_include_directories(kinoko_squirrel_cpp_vm PRIVATE
     "${KINOKO_SQUIRREL2_ROOT}/include"
     "${KINOKO_SQUIRREL2_ROOT}/squirrel"
@@ -610,7 +610,7 @@ add_test(NAME vorbis_decoder_contract COMMAND kinoko_vorbis_decoder_contract --s
 add_executable(kinoko_audio_runtime_contract tests/audio_runtime_contract.cpp)
 target_include_directories(kinoko_audio_runtime_contract PRIVATE include)
 target_compile_definitions(kinoko_audio_runtime_contract PRIVATE _CRT_SECURE_NO_WARNINGS)
-target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_vorbis_decoder kinoko_actor_collision ole32 dxguid winmm user32)
+target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision ole32 winmm user32)
 add_test(NAME audio_runtime_contract COMMAND kinoko_audio_runtime_contract)
 set_tests_properties(audio_runtime_contract PROPERTIES TIMEOUT 60)
 

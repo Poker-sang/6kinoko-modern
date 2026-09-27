@@ -1,0 +1,13 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"error\":\"Worker for session '2c7b0100' is not reachable\"}"
+      }
+    ],
+    "isError": true
+  },
+  "id": 2
+}

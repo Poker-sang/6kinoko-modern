@@ -45,3 +45,8 @@ snapshot and exact head SHA. Contracts were compiled, not executed. The later
 controller publication change affects the Windows bridge only; platform and
 codec sources are unchanged. Windows complete-game CI was still in progress
 at this snapshot; the final complete-game build succeeded locally as above.
+
+## User feedback before audio migration
+
+The user reported modern-04 looks normal on 2026-09-27. This is user gameplay
+feedback, not agent-run validation and not a contract execution result.
