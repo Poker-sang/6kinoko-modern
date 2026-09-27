@@ -47,6 +47,9 @@ int main() {
     const auto start=SDL_GetTicks();
     while(single->playing() && SDL_GetTicks()-start<1500) SDL_Delay(5);
     CHECK(!single->playing());
+    CHECK(single->seek(0));SDL_Delay(50);
+    CHECK(!single->playing() && single->position()==0);
+    CHECK(single->play(false));
     device.reset(); // Outstanding buffers retain the device safely.
     CHECK(second->stop() && second->seek(0) && second->play(true));
     CHECK(wait_progress(second,0));

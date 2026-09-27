@@ -68,3 +68,7 @@ on the removed dsound header. The workers no longer use COM objects; that obsole
 initialization/gating was removed. SDL initializes its own native audio driver.
 The failed build is retained. The independent x64 backend/contracts compiled at
 315756bb (portable-audio-01); no binary was executed.
+
+A follow-up source review added a one-shot completion rule: seeking a fully drained
+sound does not implicitly start it. It stays stopped until play() is called.
+The portable contract now covers that transition as well.

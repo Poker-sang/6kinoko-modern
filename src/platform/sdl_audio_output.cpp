@@ -90,7 +90,12 @@ public:
     }
     bool seek(std::size_t offset) override {
         std::lock_guard<std::mutex> control(control_);
-        StreamLock lock(stream_);if(!lock || !ring_.seek(offset)) return false;
+        StreamLock lock(stream_);if(!lock) return false;
+        // A one-shot can remain bound after draining. Repositioning it must
+        // not restart playback before the caller explicitly calls play().
+        const bool ended=ring_.exhausted() && SDL_GetAudioStreamAvailable(stream_)==0;
+        if(!ring_.seek(offset)) return false;
+        if(ended) ring_.stop();
         flushed_=failed_=false;
         return SDL_ClearAudioStream(stream_);
     }
