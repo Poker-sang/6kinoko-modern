@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/upstream_bindings.hpp"
 #include "kinoko/map_manager_records.hpp"
@@ -19,17 +20,11 @@ namespace {
 using namespace kinoko::map;
 using namespace kinoko::script;
 using kinoko::script::binding::Object;
-using QueryLayout = uint8_t (__thiscall *)(KinokoActLayout *, const void *, KinokoActLayout **);
-struct LayoutMethods { void *prefix[2]; QueryLayout query; };
-struct MapType { void *table, *cache; char name[sizeof(".?AVC2DMapLayout@@")]; };
-const MapType map_type{{}, {}, ".?AVC2DMapLayout@@"};
-static_assert(offsetof(LayoutMethods, query) == 8);
 KinokoActLayout *as_map(KinokoActLayout *layout) {
     if (!layout) return nullptr;
-    const auto *methods = LayoutView(layout).get(&LayoutRecord::methods);
-    const auto query = kinoko::legacy::load<QueryLayout>(methods + offsetof(LayoutMethods, query));
-    KinokoActLayout *result = nullptr;
-    return query(layout, &map_type, &result) ? result : nullptr;
+    static const kinoko::act::ResourceTypeDescriptor type{nullptr,nullptr,".?AVC2DMapLayout@@"};
+    void* result = nullptr;
+    return kinoko::act::LayoutMethods(layout).query_type(&type,&result) ? static_cast<KinokoActLayout*>(result) : nullptr;
 }
 void publish(KinokoMapManager *storage, SQVM *vm, void *map_class, void *root_storage) {
     const ManagerView manager(storage);

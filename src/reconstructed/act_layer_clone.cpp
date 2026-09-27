@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_array.h"
 #include "kinoko/act_key_records.hpp"
 #include "kinoko/act_runtime.h"
@@ -57,9 +58,7 @@ void clone_list(kinoko::act::LayerStorageView destination, kinoko::act::LayerSto
         if (!node || visited.size() >= 0x10000 || !visited.insert(node).second) throw std::bad_alloc();
         auto* original = node->key;
         if (!original) throw std::bad_alloc();
-        using Clone = void* (__thiscall*)(void*);
-        const auto* methods = kinoko::legacy::load<const void* const*>(original);
-        auto* copy = reinterpret_cast<Clone>(const_cast<void*>(methods[5]))(original);
+        auto* copy = KeyMethods(original).clone();
         std::unique_ptr<unsigned char, KeyDelete> owner(static_cast<unsigned char*>(copy));
         if (!copy || !kinoko_act_append_list(target.bytes(&LayerListRecord::head), copy)) throw std::bad_alloc();
         owner.release();
@@ -68,9 +67,7 @@ void clone_list(kinoko::act::LayerStorageView destination, kinoko::act::LayerSto
         if (bind) {
             auto* layout = KeyView(copy).get(&KeyRecord::layout);
             if (layout) {
-                using Bind = int32_t (__thiscall*)(KinokoActLayout*, KinokoActLayer*);
-                const auto* methods = kinoko::legacy::load<const void* const*>(layout);
-                reinterpret_cast<Bind>(const_cast<void*>(methods[6]))(layout, reinterpret_cast<KinokoActLayer*>(destination.data()));
+                LayoutMethods(layout).set_layer(reinterpret_cast<KinokoActLayer*>(destination.data()));
             }
         }
     }

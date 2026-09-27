@@ -1,3 +1,4 @@
+#include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_layout_3d.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/graphics_device.h"
@@ -18,9 +19,6 @@ kinoko::graphics::Matrix* matrix_multiply(kinoko::graphics::Matrix* out,const ki
 namespace kinoko::act {
 namespace {
 using kinoko::legacy::load;
-using Query = uint8_t (__thiscall *)(KinokoActResource *,const void *,void **);
-struct ResourceMethods { void *write,*read; Query query; };
-struct ResourcePrefix { const ResourceMethods *methods; };
 struct RenderNode;
 using Draw = uint8_t (__thiscall *)(void *);
 struct RenderMethods { void *destroy,*set_controller,*set_mesh; Draw draw; };
@@ -75,12 +73,9 @@ int32_t draw_layout_3d(Layout3DRecord *layout) {
     device->GetTransform(kinoko::graphics::transform_world,&previous);
     std::memcpy(&world,layout->world,sizeof(world));
     device->SetTransform(kinoko::graphics::transform_world,&world);
-    struct Descriptor { void *methods,*cache; char name[sizeof(".?AVCActResourceMesh@@")]; };
-    static const Descriptor type{nullptr,nullptr,".?AVCActResourceMesh@@"};
-    void *converted=nullptr;
-    const auto methods=load<ResourcePrefix>(resource).methods;
+    void* converted = nullptr;
     // 43CB5D deliberately returns before restoring the state on failed Query.
-    if (!methods->query(resource,&type,&converted)) return E_FAIL;
+    if (!ResourceMethods(resource).query_type(&resource_type_descriptor(ResourceKind::mesh), &converted)) return E_FAIL;
     auto *head=load<MeshListPrefix>(converted).head;
     for (auto *node=head->next;node!=head;node=node->next)
         node->render.methods->draw(&node->render);

@@ -21,7 +21,8 @@ native textures. It does not claim a full-game x64 port.
   remain unchanged. The render-target resource pass now reads native dimensions
   rather than the obsolete +72/+76 record offsets left after texture migration.
 - Document reading/cloning, ownership, archive writing/type lookup, resource
-  class binding, layout update/draw and layer association/position use the named
+  class binding, key/timeline clones, 3D/map layout queries, suspend/resume,
+  layout update/draw and layer association/position use the named
   interfaces. Mesh-manager and sprite interfaces are separate non-ACT services.
 
 New portable contracts compile production native resource allocation/string

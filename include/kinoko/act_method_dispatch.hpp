@@ -44,6 +44,10 @@ protected:
     template<class Fn> Fn entry(std::size_t slot) const noexcept { return method_boundary::entry<Fn>(object_,slot); }
 public:
     explicit SerializableMethods(void* object) : object_(object) {}
+    bool query_type(const void* descriptor, void** output) const {
+        using Fn = std::uint8_t (KINOKO_ACT_MEMBER *)(void*,const void*,void*);
+        return entry<Fn>(2)(object_,descriptor,output) != 0;
+    }
     void dispose() const {
         using Fn = void (KINOKO_ACT_MEMBER *)(void*);
         if (object_) entry<Fn>(3)(object_);
@@ -74,9 +78,8 @@ class ResourceMethods : public SerializableMethods {
 public:
     explicit ResourceMethods(KinokoActResource* resource) : SerializableMethods(resource) {}
     KinokoActResource* query(ResourceKind kind) const {
-        using Fn = std::uint8_t (KINOKO_ACT_MEMBER *)(void*,const void*,void*);
-        KinokoActResource* result = nullptr;
-        return entry<Fn>(2)(object_, &resource_type_descriptor(kind), &result) ? result : nullptr;
+        void* result = nullptr;
+        return query_type(&resource_type_descriptor(kind), &result) ? static_cast<KinokoActResource*>(result) : nullptr;
     }
     KinokoActResource* clone() const {
         using Fn = KinokoActResource* (KINOKO_ACT_MEMBER *)(void*);
@@ -118,6 +121,10 @@ public:
         using Fn = KinokoActDocument* (KINOKO_ACT_MEMBER *)(void*);
         return entry<Fn>(5)(object_);
     }
+    std::int32_t suspend_resources() const {
+        using Fn = std::int32_t (KINOKO_ACT_MEMBER *)(void*);
+        return entry<Fn>(7)(object_);
+    }
     std::int32_t resume_resources() const {
         using Fn = std::int32_t (KINOKO_ACT_MEMBER *)(void*);
         return entry<Fn>(8)(object_);
@@ -145,6 +152,15 @@ public:
     std::int32_t register_class() const {
         using Fn = std::int32_t (KINOKO_ACT_MEMBER *)(void*);
         return entry<Fn>(9)(object_);
+    }
+};
+// Keys and timelines share the clone slot but have different payloads.
+class KeyMethods : public SerializableMethods {
+public:
+    explicit KeyMethods(void* value) : SerializableMethods(value) {}
+    void* clone() const {
+        using Fn = void* (KINOKO_ACT_MEMBER *)(void*);
+        return entry<Fn>(5)(object_);
     }
 };
 class LayerMethods : public SerializableMethods {
