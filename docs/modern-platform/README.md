@@ -47,7 +47,7 @@ the complete Windows bridge; it does not run games or tests.
 
 ## Evidence and limits
 
-IDA MCP survey is preserved in survey_binary-survey.json (E-imports). The
+IDA MCP survey is preserved in survey_binary-survey.json and E-imports.json. The
 NoAutoAnalysis database had no decoded function at 407500/408C80, so its disasm
 outputs are NOT successful function verification. Automatic approval rejected
 a supplementary IDA database decode operation with 'blocked by policy'.
@@ -67,3 +67,8 @@ physical key remapping.
 
 Old rebuild automation workflows are archived under legacy-workflows/ so they
 cannot mutate this fork or push old branches. Current CI is platform.yml.
+
+The MCP import classifier labels SendMessageA as network; this is a category
+heuristic error, not evidence of networking. Actual imports include Win32 file,
+window, synchronization and multimedia services. Minimal survey alone omitted
+imports; E-imports.json preserves the subsequent standard survey.
