@@ -178,3 +178,11 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] Separate remaining renderer/runtime records from original x86 layouts.
 - [ ] Migrate remaining Win32 services and full-game x64.
 - Details: `../modern-gpu/GAME.md`. Legacy D3D9 comparison EXE remains available.
+
+## Old graphics backend retirement
+- [x] Remove old game target, cloned VM/native/binding libraries and SDK alias branches.
+- [x] Remove D3DX import library and comparison build switches/CI jobs.
+- [x] Preserve retired COM fixtures as non-build evidence, including mixed stage assertions.
+- [ ] Port retired stage/gameplay assertions to modern resource ownership; do not count them as active coverage.
+- [x] User reports modern-no-d3d9-01 normal; not agent-run validation.
+- Still-live legacy ABI, fixed-layout records and Win32 services need migration, not blind deletion.

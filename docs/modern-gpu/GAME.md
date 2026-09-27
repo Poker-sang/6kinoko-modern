@@ -3,21 +3,20 @@
 The full-game target is `kinoko_modern_gpu`. It uses the original DAT/VM/gameplay
 sources, compiled against explicit project-owned graphics interfaces that record
 SDL GPU commands. It does not link d3d9.lib or d3dx9_33.lib. The old
-`kinoko_retdec_rebuild` target and its native-device contracts remain for comparison.
+comparison target and D3DX import library have been removed.
 The game-owned modern sources no longer include SDK D3D9 enums/records or rewrite SDK class
-names with preprocessor macros. `graphics_api.hpp` selects explicit backend types;
-`graphics_types.hpp` owns modern command values and descriptions. Only the native
-comparison branch aliases SDK types. Modern target include guards reject accidental
+names with preprocessor macros. `graphics_api.hpp` defines the sole SDL GPU game interface;
+`graphics_types.hpp` owns modern command values and descriptions. The SDK alias branch is gone. All active target include guards reject accidental
 D3D9 header use. `KinokoGraphics` is a runtime object; its modern capabilities
 description contains only the fields used by the game, not the SDK 304-byte layout.
-Command values remain compatible with existing numeric game states. A comparison-only
-compile contract checks them against the SDK, plus matrix/vertex/map layouts.
+Command values remain compatible with existing numeric game states. They were checked against the SDK before removing the comparison build; modern
+matrix and vertex size checks remain in the project header.
 
 The API still retains legacy command methods and Windows status/window types.
 Renderer records and other original x86 object layouts still need migration;
 this is not a full-game x64 or Linux/macOS port.
 
-The default build now disables legacy comparison targets and all SDL D3D9 support.
+The build contains only the modern game backend and disables SDL D3D9 support.
 SDL_RENDER_D3D is forced OFF. A documented SDL local patch also excludes the
 Windows D3D9 adapter DLL loader and SDK header probe; its public adapter query
 returns unsupported (-1). No game code calls that SDL helper. The unused RetDec
@@ -25,11 +24,13 @@ Direct3DCreate9 DLL-loader wrapper has been removed from the shared CRT library.
 D3D9/D3DX header guards cover SDL itself as well as modern game targets.
 SDL GPU's D3D12 backend, DXGI, Vulkan and Metal are unaffected.
 
-`tools/build_staged.ps1` now builds/stages the modern game by default. The existing
-`-ModernOnly` switch remains accepted. Use `-LegacyComparison` to additionally
-build the old game/contracts (CMake: KINOKO_BUILD_LEGACY_COMPARISON=ON); this explicit
-historical comparison mode requires D3D9/D3DX. Its SDK interfaces, fixtures and
-original decompiled evidence are retained outside the default dependency graph.
+`tools/build_staged.ps1` builds/stages the modern game and all active contracts.
+The old comparison/modern-only switches and target cloning have been removed.
+The game, VM, bindings and native methods each have one source target. Compatible
+VM/gameplay contracts compile against that same implementation. COM-vtable fixture
+sources, including the mixed stage harness, are retained only as non-build
+migration evidence under `docs/legacy-render-contracts`; porting their remaining
+assertions is pending. They are not counted as active test coverage.
 
 The new path covers texture creation, CV2 ARGB1555/ARGB8888 conversion, mutable
 font atlas snapshots, binding, render targets, source/allocation dimensions,
@@ -70,4 +71,4 @@ validation. Prior full-game CI run 36322559102 completed successfully.
 The default dependency graph is statically audited by `tools/audit_d3d9_free.py`:
 MSVC compiler/linker input records plus DLL/load-entry markers in the EXE. This
 includes SDL, does not execute built code, and is also enforced in Windows CI.
-Use a fresh build directory; comparison builds intentionally cannot pass this audit.
+Use a fresh build directory; no comparison backend remains.

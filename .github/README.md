@@ -23,9 +23,11 @@ Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
 The default build uses only the modern game, with no D3D9/D3DX DLL imports,
 SDK header dependency, SDL D3D9 renderer or D3D9 DLL loader. Vendored SDL has a
 [documented local patch](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md).
-Use `tools/build_staged.ps1 -LegacyComparison` (plus the usual arguments) to opt
-into the historical D3D9 game/contracts. `-ModernOnly` remains accepted.
-The user reports `modern-gpu-api-04` currently normal; this is user feedback,
+The old comparison target, SDK alias branches, cloned libraries and D3DX import
+library have been removed. Active gameplay/VM contracts compile against the sole
+modern backend. Old COM fixture sources are retained as non-build migration
+evidence; their unported assertions are not counted as current test coverage.
+The user reports `modern-no-d3d9-01` currently normal; this is user feedback,
 not agent-run validation. Full-game x64 and non-Windows support remain pending.
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.

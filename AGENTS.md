@@ -139,7 +139,8 @@ See docs/modern-platform/README.md and dependencies.json.
 
 ## Modern default renderer (2026-09-27)
 
-The staged build defaults to kinoko_modern_gpu.exe. Use -LegacyComparison only
-for an explicit historical D3D9 comparison build; -ModernOnly remains accepted.
+The staged build produces kinoko_modern_gpu.exe and compiles all active contracts.
+The old comparison target and -LegacyComparison/-ModernOnly switches are removed.
+COM fixture evidence lives in docs/legacy-render-contracts and is not built.
 SDL's D3D9 backend/loader are disabled; local vendor changes are documented in
 third_party/SDL3-3.4.16/KINOKO_PATCHES.md. Preserve these when updating SDL.

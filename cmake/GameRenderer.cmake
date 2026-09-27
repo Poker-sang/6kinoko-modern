@@ -3,6 +3,10 @@ target_sources(kinoko_native_methods PRIVATE src/platform/gpu_game_device.cpp)
 target_link_libraries(kinoko_native_methods PUBLIC kinoko_gpu)
 target_link_libraries(kinoko_modern_gpu PRIVATE kinoko_gpu kinoko_platform kinoko_audio_output)
 add_dependencies(kinoko_modern_gpu kinoko_gpu_shaders)
+# These independent fixtures compile renderer consumers and now need the actual
+# project graphics implementation rather than SDK inline COM dispatch.
+target_link_libraries(kinoko_map_chip_cache_contract PRIVATE kinoko_native_methods)
+target_link_libraries(kinoko_application_contract PRIVATE kinoko_native_methods)
 
 add_executable(kinoko_gpu_resource_contract tests/gpu_resource_contract.cpp)
 target_include_directories(kinoko_gpu_resource_contract PRIVATE include)
