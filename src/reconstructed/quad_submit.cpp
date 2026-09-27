@@ -4,7 +4,7 @@
 #include "kinoko/quad_records.hpp"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/diagnostics.h"
-#include <d3d9.h>
+#include "d3d9_quad_sink.hpp"
 extern "C" {
 void kinoko_trace_i32(const char *,int32_t);
 }
@@ -33,11 +33,11 @@ extern "C" int32_t kinoko_quad_submit(KinokoQuad *storage,float x,float y) {
     if (trace) kinoko_trace_hresult("draw:set-texture-hr",texture_result);
     auto *device=kinoko_graphics.device;
     if (!device || !kinoko::legacy::load<const void *>(device)) return E_FAIL;
-    const auto format_result=device->SetFVF(D3DFVF_XYZRHW|D3DFVF_DIFFUSE|D3DFVF_TEX1);
+    kinoko::render::D3D9QuadSink sink(*device);
+    const auto format_result=sink.set_layout(kinoko::render::SpriteLayout::screen_rhw);
     if (trace) kinoko_trace_hresult("draw:set-fvf-hr",format_result);
     // Both setup HRESULTs are ignored in the original; the draw supplies return.
-    const auto result=device->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP,2,
-        quad.bytes(&QuadRecord::vertices),sizeof(KinokoSpriteVertex));
+    const auto result=sink.draw_quad(reinterpret_cast<const KinokoSpriteVertex*>(quad.bytes(&QuadRecord::vertices)));
     if (trace) kinoko_trace_hresult("draw:primitive-hr",result);
     return result;
 }

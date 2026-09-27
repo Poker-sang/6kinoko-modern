@@ -1,3 +1,4 @@
+#include "d3d9_texture.hpp"
 #include "kinoko/critical_section.h"
 #include "kinoko/renderer.h"
 #include "kinoko/quad_render.h"
@@ -15,11 +16,6 @@
 #include <list>
 #include <stdexcept>
 #include "kinoko/legacy_abi.h"
-extern "C" {
-
-HRESULT WINAPI D3DXCreateTexture(IDirect3DDevice9*,UINT,UINT,UINT,DWORD,
-                                D3DFORMAT,D3DPOOL,IDirect3DTexture9**);
-}
 namespace {
 using kinoko::legacy::field;
 using kinoko::legacy::pointer;
@@ -31,11 +27,11 @@ std::list<KinokoDeviceListener *> device_listeners;
 using GraphicsLock=kinoko::graphics::Lock;
 int32_t create(uint32_t width,uint32_t height) {
     if(kinoko_graphics.capabilities.TextureCaps&0x20) width=height=(std::max)(width,height);
-    kinoko::ComOwner<IDirect3DTexture9> texture;
+    kinoko::render::D3D9Texture texture(kinoko_graphics.device);
     {
         GraphicsLock lock;
-        if(FAILED(D3DXCreateTexture(kinoko_graphics.device,width,height,1,
-            D3DUSAGE_RENDERTARGET,D3DFMT_A8R8G8B8,D3DPOOL_DEFAULT,texture.put()))) return 0;
+        if(FAILED(texture.create({width,height,kinoko::render::PixelFormat::argb8888,
+            kinoko::render::TextureUsage::render_target}))) return 0;
     }
     const int32_t handle=kinoko_texture_register(texture.get(),width,height);
     if(handle) texture.detach();

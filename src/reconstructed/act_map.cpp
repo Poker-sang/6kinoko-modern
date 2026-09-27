@@ -1,3 +1,4 @@
+#include "d3d9_draw_state.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
 #include "kinoko/map_render.h"
@@ -109,11 +110,7 @@ extern "C" int32_t kinoko_map_draw_visible(KinokoActLayout *layout,float x,float
         map.get(&LayoutRecord::cached_chip_resource)) return E_FAIL;
     auto *device=kinoko_graphics.device;
     if (!device) return E_FAIL; // inherited unavailable-device boundary
-    DWORD address_u=0,address_v=0;
-    device->GetSamplerState(0,D3DSAMP_ADDRESSU,&address_u);
-    device->GetSamplerState(0,D3DSAMP_ADDRESSV,&address_v);
-    device->SetSamplerState(0,D3DSAMP_ADDRESSU,D3DTADDRESS_WRAP);
-    device->SetSamplerState(0,D3DSAMP_ADDRESSV,D3DTADDRESS_WRAP);
+    kinoko::render::D3D9DrawState saved(device,kinoko::render::ScopeKind::map_wrap);
     kinoko_render_set_depth(0,0);
     kinoko_render_set_blend(1);
     kinoko_render_set_alpha(1,0);
@@ -125,8 +122,7 @@ extern "C" int32_t kinoko_map_draw_visible(KinokoActLayout *layout,float x,float
             kinoko_quad_submit(reinterpret_cast<KinokoQuad *>(quads+index),x,y);
     }
     kinoko_texture_bind_stage(0,0);
-    device->SetSamplerState(0,D3DSAMP_ADDRESSU,address_u);
-    device->SetSamplerState(0,D3DSAMP_ADDRESSV,address_v);
+    saved.restore();
     return 0; // original ignores per-quad HRESULT and continues
 }
 

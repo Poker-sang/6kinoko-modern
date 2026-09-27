@@ -1,3 +1,4 @@
+#include "d3d9_draw_state.hpp"
 #include "kinoko/act_layout_render.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/string_layout.h"
@@ -71,16 +72,14 @@ extern "C" int32_t __fastcall kinoko_method_draw_string_layout(KinokoStringLayou
     if(!layer) return E_FAIL;
     if(!kinoko::map::LayerView(layer).get(&kinoko::map::LayerRecord::visible)) return 0;
     auto *device=kinoko_graphics.device;
-    DWORD saved[4]{};
-    const D3DRENDERSTATETYPE states[]={D3DRS_SRCBLEND,D3DRS_DESTBLEND,D3DRS_BLENDOP,D3DRS_ALPHABLENDENABLE};
-    for(int i=0;i<4;++i) device->GetRenderState(states[i],&saved[i]);
-    device->SetRenderState(D3DRS_ALPHABLENDENABLE,TRUE);kinoko::act::set_layout_blend(text.get(&TextRecord::blend));
+    kinoko::render::D3D9DrawState saved(device,kinoko::render::ScopeKind::blend);
+    kinoko::act::set_layout_blend(text.get(&TextRecord::blend));
     kinoko_render_set_filter(2);
     const uint32_t count=kinoko_string_queue_size(layout);
     for(uint32_t i=0;i<count;++i) {
         const GlyphView glyph(kinoko_string_queue_at(layout, i));
         kinoko_quad_submit(reinterpret_cast<KinokoQuad *>(glyph.bytes(&GlyphRecord::quad)),x,y);
     }
-    for(int i=0;i<4;++i) device->SetRenderState(states[i],saved[i]);
+    saved.restore();
     return 0;
 }

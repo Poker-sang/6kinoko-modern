@@ -1,5 +1,8 @@
 # Rendering migration checkpoint 1
 
+Follow-up: [checkpoint 2: resources and quad submission](RESOURCES.md).
+The remaining-boundary statements below describe checkpoint 1.
+
 ## Decision: SDL GPU
 
 Use SDL GPU for the replacement renderer. Keep D3D9 as the active Windows x86

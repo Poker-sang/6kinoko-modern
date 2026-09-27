@@ -1,3 +1,4 @@
+#include "d3d9_texture_retirement.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/texture_image.h"
@@ -85,22 +86,11 @@ extern "C" int32_t kinoko_texture_release(int32_t handle) {
     auto &slot = kinoko_texture_slots[handle];
     // Adopt the store's final reference for this scope. The public slot is a
     // borrowed renderer view and remains intact throughout device unbinding.
-    kinoko::ComOwner<IDirect3DBaseTexture9> texture(
-        static_cast<IDirect3DBaseTexture9 *>(slot.texture));
-    auto *device = kinoko_graphics.device;
-    // 405D60 unbinds a final reference from all eight texture stages first.
-    if (device) {
-        for (DWORD stage = 0; stage < 8; ++stage) {
-            IDirect3DBaseTexture9 *value = nullptr;
-            if (SUCCEEDED(device->GetTexture(stage, &value)) && value) {
-                // GetTexture returns a new reference, not a borrowed pointer.
-                kinoko::ComOwner<IDirect3DBaseTexture9> bound(value);
-                if (bound.get() == texture.get()) device->SetTexture(stage, nullptr);
-            }
-        }
-    }
+    kinoko::render::D3D9TextureRetirement texture(slot.texture);
+    // Query actual bindings; the handle cache may differ after a failed bind.
+    texture.unbind(kinoko_graphics.device);
     kinoko_texture_forget_bindings(handle); // original final-release cache invalidation
-    texture.reset(); // Preserve final Release before clearing the slot/name.
+    texture.release(); // Preserve final Release before clearing the slot/name.
     slot = {};
     owner.name.clear();
     return 1;

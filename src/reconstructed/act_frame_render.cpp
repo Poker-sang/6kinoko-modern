@@ -1,3 +1,5 @@
+#include "d3d9_blend_sink.hpp"
+#include "d3d9_draw_state.hpp"
 #include "kinoko/legacy_string.h"
 #include "kinoko/graphics_device.h"
 #include "kinoko/string_layout.h"
@@ -54,43 +56,19 @@ public:
 };
 // Original 452670..452720 / 4529FB..452A84 save these states around the
 // whole ACT pass, including layout virtual calls, not only BitBlt sprites.
-class DrawStates final {
-    IDirect3DDevice9* device_;
-    DWORD u_ = D3DTADDRESS_WRAP, v_ = D3DTADDRESS_WRAP;
-    DWORD values_[4]{};
-    static constexpr D3DRENDERSTATETYPE states_[4] = {
-        D3DRS_SRCBLEND, D3DRS_DESTBLEND, D3DRS_BLENDOP, D3DRS_ALPHABLENDENABLE};
-public:
-    explicit DrawStates(IDirect3DDevice9* device) : device_(device) {
-        if (!device_) return;
-        device_->GetSamplerState(0, D3DSAMP_ADDRESSU, &u_);
-        device_->GetSamplerState(0, D3DSAMP_ADDRESSV, &v_);
-        device_->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-        device_->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-        for (int i = 0; i < 4; ++i) device_->GetRenderState(states_[i], &values_[i]);
-        device_->SetRenderState(D3DRS_ALPHABLENDENABLE, TRUE);
-    }
-    ~DrawStates() {
-        if (!device_) return;
-        for (int i = 0; i < 4; ++i) device_->SetRenderState(states_[i], values_[i]);
-        device_->SetSamplerState(0, D3DSAMP_ADDRESSU, u_);
-        device_->SetSamplerState(0, D3DSAMP_ADDRESSV, v_);
-    }
-    DrawStates(const DrawStates&) = delete;
-    DrawStates& operator=(const DrawStates&) = delete;
-};
 void set_blend(IDirect3DDevice9* device, int32_t blend) {
-    DWORD src = D3DBLEND_ONE, dest = D3DBLEND_ZERO, op = D3DBLENDOP_ADD;
-    switch (blend) {
-    case 1: src = D3DBLEND_SRCALPHA; dest = D3DBLEND_INVSRCALPHA; break;
-    case 2: src = D3DBLEND_SRCALPHA; dest = D3DBLEND_ONE; break;
-    case 3: src = D3DBLEND_SRCALPHA; dest = D3DBLEND_ONE; op = D3DBLENDOP_REVSUBTRACT; break;
-    case 4: src = D3DBLEND_ZERO; dest = D3DBLEND_SRCCOLOR; break;
-    case 5: src = D3DBLEND_DESTCOLOR; dest = D3DBLEND_ONE; break;
+    using namespace kinoko::render;
+    auto src=BlendFactor::one,dest=BlendFactor::zero;
+    auto op=BlendOperation::add;
+    switch(blend) {
+    case 1: src=BlendFactor::source_alpha;dest=BlendFactor::inverse_source_alpha;break;
+    case 2: src=BlendFactor::source_alpha;dest=BlendFactor::one;break;
+    case 3: src=BlendFactor::source_alpha;dest=BlendFactor::one;op=BlendOperation::reverse_subtract;break;
+    case 4: src=BlendFactor::zero;dest=BlendFactor::source_color;break;
+    case 5: src=BlendFactor::destination_color;dest=BlendFactor::one;break;
     }
-    device->SetRenderState(D3DRS_SRCBLEND, src);
-    device->SetRenderState(D3DRS_DESTBLEND, dest);
-    device->SetRenderState(D3DRS_BLENDOP, op);
+    D3D9BlendSink sink(*device);
+    sink.set_source(src);sink.set_destination(dest);sink.set_operation(op);
 }
 int32_t prepare_sprite(void* item, const BlitCommand& command) {
     if (command.texture <= 0 || static_cast<uint32_t>(command.texture) >= KINOKO_TEXTURE_CAPACITY) return E_FAIL;
@@ -182,7 +160,7 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
     if (!ordered_layers(layers)) return 0;
     const float draw_x = x + document.get(&DocumentRecord::offset_x);
     const float draw_y = y + document.get(&DocumentRecord::offset_y);
-    DrawStates states(device);
+    kinoko::render::D3D9DrawState states(device,kinoko::render::ScopeKind::act_pass);
     int32_t result = 0;
     for (int32_t i = layer_distance(layers) - 1; i >= 0; --i) {
         const auto layout = kinoko_act_layer_layout(self, i);

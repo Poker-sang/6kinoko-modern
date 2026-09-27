@@ -148,3 +148,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 
 ## Latest user feedback
 - User reports `modern-audio-03` currently normal; not agent-run validation or exhaustive audio checks.
+
+## Rendering checkpoint 2
+- [x] Extract portable pixel upload, texture binding cache and sprite/quad submission interfaces.
+- [x] Connect D3D9 texture creation/mapping/retirement and scoped blend/address restoration adapters.
+- [x] Record user feedback: modern-render-02 currently normal (not agent-run validation).
+- [ ] Replace legacy COM registry consumers together with SDL GPU resources and shaders.
+- Details and remaining boundaries: `../modern-render/RESOURCES.md`.

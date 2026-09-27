@@ -2,11 +2,7 @@
 
 #include <stdint.h>
 
-typedef struct KinokoSpriteVertex {
-    float x, y, z, rhw;
-    uint32_t color;
-    float u, v;
-} KinokoSpriteVertex;
+#include "kinoko/sprite_vertex.h"
 
 /* Shared prefix of CSprite, the 232-byte quad and the 248-byte PAT frame. */
 typedef struct KinokoColoredQuad {
