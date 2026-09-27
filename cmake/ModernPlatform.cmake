@@ -41,3 +41,10 @@ target_link_libraries(kinoko_render_resources_contract PRIVATE kinoko_render_sta
 add_test(NAME render_resources_contract COMMAND kinoko_render_resources_contract)
 
 include(${CMAKE_CURRENT_LIST_DIR}/ModernGpu.cmake)
+
+# Runtime-only graphics records and explicit listener dispatch compile on every
+# portable target, including Windows x64, without original fixed-layout headers.
+add_executable(kinoko_graphics_runtime_contract tests/graphics_runtime_contract.cpp)
+target_include_directories(kinoko_graphics_runtime_contract PRIVATE include "${CMAKE_CURRENT_SOURCE_DIR}/cmake/no-d3d9")
+target_compile_features(kinoko_graphics_runtime_contract PRIVATE cxx_std_17)
+add_test(NAME graphics_runtime_contract COMMAND kinoko_graphics_runtime_contract)

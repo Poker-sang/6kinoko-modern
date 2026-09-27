@@ -627,7 +627,6 @@ const KinokoRuntimeBootSymbols *kinoko_runtime_boot_symbols(void) {
     static KinokoRuntimeBootSymbols symbols;
     symbols.map = reinterpret_cast<KinokoMapManager*>(&map_state.record);
     symbols.actors = reinterpret_cast<KinokoActorManager*>(&actor_state.record);
-    symbols.renderer_methods = &kinoko_renderer_methods_storage;
     symbols.render_layer_owner_slot = &kinoko_render_layer_owner_slot;
     return &symbols;
 }

@@ -1,8 +1,10 @@
 #include "kinoko/renderer.h"
 #include "kinoko/render_target.h"
 extern "C" void kinoko_trace(const char *);
-extern "C" KinokoRenderer *kinoko_renderer_construct(const void *methods) {
-    kinoko_renderer.methods=methods;
+extern "C" KinokoRenderer *kinoko_renderer_construct(void) {
+    kinoko_renderer.listener={&kinoko_renderer,
+        [](void* context) { kinoko_renderer_before_reset(static_cast<KinokoRenderer*>(context)); },
+        [](void* context) { kinoko_renderer_after_reset(static_cast<KinokoRenderer*>(context)); }};
     kinoko_renderer.state={};
     kinoko_renderer.state.depth_function=kinoko::graphics::compare_lessequal;
     kinoko_renderer.state.alpha_function=kinoko::graphics::compare_always;
@@ -27,7 +29,7 @@ extern "C" int32_t kinoko_renderer_initialize(void) {
     }
     kinoko_renderer.device = kinoko_graphics.device;
     kinoko_trace("401ae0:pre-list");
-    kinoko_add_device_listener((KinokoDeviceListener *)&kinoko_renderer);
+    kinoko_add_device_listener(&kinoko_renderer.listener);
     kinoko_trace("401ae0:post-list");
     kinoko_renderer.clear_color = 0;
     kinoko_renderer.present_pending = 0;

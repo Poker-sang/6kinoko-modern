@@ -38,7 +38,7 @@ int32_t kinoko_graphics_toggle_window() { return 0; }
 HRESULT kinoko_graphics_poll() { return S_OK; }
 int32_t kinoko_graphics_present() { return 0; }
 int32_t kinoko_renderer_initialize() { return 0; }
-int32_t __fastcall kinoko_renderer_before_reset(KinokoRenderer*, void*) { return 0; }
+int32_t kinoko_renderer_before_reset(KinokoRenderer*) { return 0; }
 void kinoko_remove_device_listener(KinokoDeviceListener*) {}
 int32_t kinoko_ime_dispatch(int32_t, uint32_t, uint32_t, int32_t) { return 0; }
 unsigned long kinoko_run_game_math(unsigned long (__stdcall *)(void*), void*) noexcept(false) { return 0; }

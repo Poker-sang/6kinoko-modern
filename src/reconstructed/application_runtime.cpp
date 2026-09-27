@@ -283,8 +283,8 @@ extern "C" void kinoko_application_shutdown() {
     kinoko_audio_shutdown_device();
     if (state.input_initialized) { kinoko_input_shutdown(); state.input_initialized = false; }
     if (state.renderer_initialized) {
-        kinoko_renderer_before_reset(&kinoko_renderer, nullptr);
-        kinoko_remove_device_listener(reinterpret_cast<KinokoDeviceListener*>(&kinoko_renderer));
+        kinoko_renderer_before_reset(&kinoko_renderer);
+        kinoko_remove_device_listener(&kinoko_renderer.listener);
         state.renderer_initialized = false;
     }
     if (state.graphics_initialized) { kinoko_graphics_release(); state.graphics_initialized = false; }

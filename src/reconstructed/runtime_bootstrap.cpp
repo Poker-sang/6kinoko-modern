@@ -22,7 +22,7 @@ extern "C" void kinoko_runtime_initialize_objects(const KinokoRuntimeBootSymbols
     static bool map_constructed = false;
     if (initialized) return;
     kinoko_graphics_initialize_runtime();
-    kinoko_renderer_construct(symbols->renderer_methods);
+    kinoko_renderer_construct();
     kinoko_initialize_texture_cache();
     kinoko_archive_initialize();
     kinoko_register_stage_list_cleanup();

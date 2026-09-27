@@ -238,17 +238,7 @@ struct SqratRootMethods {
 };
 #endif
 
-#ifdef __cplusplus
-struct RendererMethods {
-    decltype(&kinoko_renderer_before_reset) before_reset;
-    decltype(&kinoko_renderer_after_reset) after_reset;
-};
-#else
-struct RendererMethods {
-    int32_t (__fastcall *before_reset)(KinokoRenderer *object, void *unused);
-    int32_t (__fastcall *after_reset)(KinokoRenderer *object, void *unused);
-};
-#endif
+
 
 #ifdef __cplusplus
 struct ActScriptMethods {
@@ -807,7 +797,6 @@ extern struct SqratObjectMethods kinoko_sqrat_object_methods_storage;
 
 extern struct SqratRootMethods kinoko_sqrat_root_methods_storage;
 
-extern struct RendererMethods kinoko_renderer_methods_storage;
 
 extern struct ActScriptMethods kinoko_act_script_methods_storage;
 

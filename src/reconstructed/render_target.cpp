@@ -13,7 +13,7 @@
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <set>
-#include <list>
+#include "kinoko/device_listeners.hpp"
 #include <stdexcept>
 #include "kinoko/legacy_abi.h"
 namespace {
@@ -23,7 +23,7 @@ using kinoko::legacy::pointer;
 // value. It does not AddRef/retain the texture; the set owns only its nodes.
 std::set<uint32_t> render_targets;
 std::set<uint32_t> depth_targets;
-std::list<KinokoDeviceListener *> device_listeners;
+kinoko::graphics::DeviceListeners device_listeners;
 using GraphicsLock=kinoko::graphics::Lock;
 int32_t create(uint32_t width,uint32_t height) {
     if(kinoko_graphics.capabilities.TextureCaps&0x20) width=height=(std::max)(width,height);
@@ -76,34 +76,23 @@ extern "C" int32_t __fastcall kinoko_method_create_render_target(KinokoActResour
 extern "C" void kinoko_initialize_device_listeners(void) { device_listeners.clear(); }
 extern "C" int32_t kinoko_add_device_listener(KinokoDeviceListener *object) {
     GraphicsLock lock;
-    if(std::find(device_listeners.begin(),device_listeners.end(),object)!=device_listeners.end()) return 0;
-    if(device_listeners.size()==0x3ffffffeu) throw std::length_error("list<T> too long");
-    device_listeners.push_back(object);
-    return 1;
+    return device_listeners.add(object);
 }
 extern "C" void kinoko_remove_device_listener(KinokoDeviceListener *object) {
     GraphicsLock lock;
-    const auto found=std::find(device_listeners.begin(),device_listeners.end(),object);
-    if(found!=device_listeners.end()) device_listeners.erase(found);
+    device_listeners.remove(object);
 }
 extern "C" void kinoko_notify_device_listeners(KinokoDeviceEvent event) {
-    using Callback=void (__thiscall *)(KinokoDeviceListener *);
-    struct Methods { Callback before_reset,after_reset; };
-    // Queue owns nodes, not listeners; preserve registration order and actual
-    // virtual dispatch. The caller already holds the recursive graphics lock.
-    for (auto *object:device_listeners) {
-        const auto *methods=kinoko::legacy::load<const Methods *>(object);
-        const auto callback=event==KINOKO_DEVICE_BEFORE_RESET ? methods->before_reset : methods->after_reset;
-        callback(object);
-    }
+    // Caller holds the recursive graphics lock. No object-prefix/vtable cast.
+    device_listeners.notify(event);
 }
 
-extern "C" int32_t __fastcall kinoko_renderer_before_reset(KinokoRenderer *renderer,void*) {
+extern "C" int32_t kinoko_renderer_before_reset(KinokoRenderer *renderer) {
     // 401DA0 releases acquired references, leaving slot bits intact as original.
     renderer->backbuffer->Release();
     return renderer->depth_stencil->Release();
 }
-extern "C" int32_t __fastcall kinoko_renderer_after_reset(KinokoRenderer *renderer,void*) {
+extern "C" int32_t kinoko_renderer_after_reset(KinokoRenderer *renderer) {
     auto *device=renderer->device;
     for(DWORD stage=0;stage<8;++stage) kinoko_graphics.device->SetTexture(stage,nullptr);
     kinoko_initialize_texture_cache();

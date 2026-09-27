@@ -70,10 +70,6 @@ struct SqratRootMethods kinoko_sqrat_root_methods_storage = {
     kinoko_sqrat_copy_object
 };
 
-struct RendererMethods kinoko_renderer_methods_storage = {
-    kinoko_renderer_before_reset,
-    kinoko_renderer_after_reset
-};
 
 struct ActScriptMethods kinoko_act_script_methods_storage = {
     kinoko_method_write_act_script,
@@ -234,7 +230,6 @@ static_assert(sizeof(ActorOwnerMethods) == 2 * sizeof(void*));
 static_assert(sizeof(MapRenderLayerMethods) == 1 * sizeof(void*));
 static_assert(sizeof(SqratObjectMethods) == 3 * sizeof(void*));
 static_assert(sizeof(SqratRootMethods) == 3 * sizeof(void*));
-static_assert(sizeof(RendererMethods) == 2 * sizeof(void*));
 static_assert(sizeof(ActScriptMethods) == 4 * sizeof(void*));
 static_assert(sizeof(ActLayerReferenceMethods) == 3 * sizeof(void*));
 static_assert(sizeof(ActLayerMethods) == 9 * sizeof(void*));
