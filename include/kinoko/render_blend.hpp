@@ -16,7 +16,7 @@ public:
 enum class BlendPath { central, act_layout };
 struct BlendTransition { int32_t key; BlendOperation operation; BlendFactor source,destination; };
 // 402770 updates only changed states. Unchanged is distinct from a zero factor.
-constexpr BlendTransition transitions[]={
+inline constexpr BlendTransition transitions[]={
     {0,BlendOperation::add,BlendFactor::source_alpha,BlendFactor::inverse_source_alpha},
     {1,BlendOperation::add,BlendFactor::source_alpha,BlendFactor::one},
     {2,BlendOperation::reverse_subtract,BlendFactor::source_alpha,BlendFactor::one},
