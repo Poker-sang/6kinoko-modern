@@ -192,6 +192,7 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Remove renderer's original size/padding/vtable-prefix dependency; use explicit device listener context callbacks.
 - [x] Put renderer/texture-slot/listener records in a native-width runtime header; keep texture handles 32-bit indices.
 - [x] Compile runtime/listener contract for Windows x64 without original fixed-layout headers (not executed).
-- [ ] Separate font and ACT resource runtime ownership from original byte views.
+- [x] Separate font/atlas runtime storage from original byte views; preserve the x86 ACT configuration bridge.
+- [ ] Separate remaining ACT resource ownership and outer string/glyph layouts.
 - [ ] Migrate Squirrel wrapper addresses and original method ABI before lifting full-game Win32 restriction.
 - Audit scope and remaining blockers: `../modern-x64/README.md`.

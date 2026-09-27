@@ -1,3 +1,22 @@
+# Font runtime checkpoint
+
+Source: `8181b134d3b5df545d80222740d95683f71893ae`.
+
+- `modern-font-01`: full Win32 Release game and 67 contract executables compiled.
+- Game: `runtime-builds/modern-font-01/kinoko_modern_gpu.exe`.
+- Three DAT copied beside EXE and size/SHA256 checked; retain adjacent shaders.
+- Static D3D9 audit passed: 101 compiler / 77 linker dependency logs, no violations.
+- `modern-font-x64-01`: font runtime contract and actual GDI raster/upload object
+  compiled with Windows x64. Static PE/COFF inspection confirms AMD64 for both.
+  This is not a linked x64 game or an x64 rasterizer execution test.
+- The isolated object compile emits C4297 for the existing C-linkage exception
+  rethrow under default /EHsc. The full game retains its existing /EHsc- source
+  override; the isolated object is compile evidence only and is not linked/run.
+- No game, preview, CTest or contract executable was run. Runtime assertions are
+  compiled, not passed. User reports modern-width-01 normal, separately from this batch.
+- Exact artifacts: `font-01-artifacts.json`, `font-x64-01-artifacts.json`,
+  `font-01-d3d9-audit.json`. All build/staging logs and products are retained.
+
 # Runtime graphics width checkpoint
 
 Both builds use source `686d54ba2b6bcfd5aeaf616ecd6685b42a920cbd`.

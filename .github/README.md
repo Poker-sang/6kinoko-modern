@@ -27,10 +27,12 @@ The old comparison target, SDK alias branches, cloned libraries and D3DX import
 library have been removed. Active gameplay/VM contracts compile against the sole
 modern backend. Old COM fixture sources are retained as non-build migration
 evidence; their unported assertions are not counted as current test coverage.
-The user reports `modern-cleanup-02` currently normal; this is user feedback,
+The user reports `modern-width-01` currently normal; this is user feedback,
 not agent-run validation. Full-game x64 and non-Windows support remain pending.
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
+
+Font and atlas runtime storage now uses native pointer widths; the isolated Windows x64 font contract and rasterizer compile. GDI and outer ACT/VM boundaries still require migration.
 
 ## Documentation / 文档
 

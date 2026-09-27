@@ -25,10 +25,12 @@ Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
 旧版对照目标、SDK 别名分支、复制构建库和 D3DX 导入库已移除。
 仍适用的游戏逻辑/VM 测试使用唯一现代后端编译；旧 COM 测试源码仅作为非构建迁移证据
 保留，其中尚未迁移的断言不计入当前测试覆盖。
-用户反馈 `modern-cleanup-02` 目前正常，不记为代理运行验证。
+用户反馈 `modern-width-01` 目前正常，不记为代理运行验证。
 完整游戏的 x64 和非 Windows 平台支持仍待完成。
 Keep the staged `shaders` directory and three DAT files beside the game EXE.
 Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
+
+字体与图集运行时已采用原生指针宽度；独立 Windows x64 字体契约和栅格化代码已编译。GDI 及外层 ACT/VM 边界仍待迁移。
 
 ## Documentation / 文档
 

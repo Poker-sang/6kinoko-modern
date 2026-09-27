@@ -1,7 +1,7 @@
 # x64 preparation: runtime graphics records
 
 This batch prepares selected graphics runtime objects; the complete game remains
-Windows x86. The user reports modern-cleanup-02 currently normal. That is user
+Windows x86. The user reports modern-width-01 currently normal. That is user
 feedback, not agent-run validation.
 
 ## Completed boundary
@@ -43,17 +43,32 @@ layout assertions also protect valid on-disk/scalar formats.
 | Graphics device / SDL GPU resources | Device pointers, shared ownership and numeric GPU texture IDs already use native/explicit types; Windows HWND/HRESULT boundary remains. |
 | `legacy_memory.hpp` | Enforces 4-byte pointers and converts addresses through int32_t. Retain the guard until callers and object storage migrate; simply widening the helper would corrupt fixed records. |
 | `legacy_abi.cpp`, `legacy_method_entries.cpp` | Win32 method ABI and x86 entry adapters still block the full game. Replace at typed caller boundaries. |
-| ACT texture/font/layout records | `TextureResourcePrefix` includes a native vtable pointer plus original offsets. `FontRendererRecord` retains its 404-byte layout and native GDI/owner pointers. Separate these runtime owners from byte-backed views next. |
+| ACT texture/font/layout records | `TextureResourcePrefix` includes a native vtable pointer plus original offsets. `FontRenderer` and `FontAtlas` now use native storage; their former 404/436-byte layouts are historical evidence. Outer ACT string/glyph and resource-prefix records remain to migrate. |
 | Squirrel host wrappers / registrations | `squirrel_host_object.hpp` assumes 8-byte HSQOBJECT and 12-byte wrapper storage and exposes integer addresses. Registration and diagnostic callers also narrow pointers. Audit with the pinned VM/bytecode ABI; do not blindly redefine all VM integers. |
 | Diagnostics | Some pointer casts are only logged or discarded, while others drive branches. Classify separately; logging width alone is not the game ABI migration. |
 | Full-game build gate | CMake still requires MSVC Win32. The x64 result here covers the runtime type/listener contract only, not a complete game or GPU execution. |
 
 ## Next scope
 
-Separate font/ACT resource ownership from original byte-layout records, then
+Separate remaining ACT resource ownership from original byte-layout records, then
 migrate remaining typed host/VM boundaries and x86 entry adapters. Keep file and
 save formats explicitly fixed-width. Full x64 game compilation and user runtime
 validation are separate milestones. Retired COM fixture assertions remain a
 known coverage gap recorded in `../legacy-render-contracts/README.md`.
 
 Build evidence is recorded in BUILD.md. No game or local test was executed.
+
+## Font runtime checkpoint
+
+`font_runtime.hpp` replaces byte-backed font/atlas storage with native pointers,
+an embedded list and a native string. Rasterization/upload accepts typed renderer
+pointers; `string_font_configure.cpp` isolates the remaining x86 ACT bridge.
+CP932, GDI raster/outline operations, texture handles and explicit prune releases
+are preserved. DAT/save formats are unchanged. Original shallow pixel-pointer
+copy and borrowed atlas relocation semantics are retained; this is not a general
+shared-buffer owner. See `font-original-layouts/README.md`.
+
+The font/atlas contract is part of portable builds. On Windows the actual font
+raster/upload translation unit also compiles independently as an object target.
+GDI remains Windows-specific; this does not deliver cross-platform fonts or an
+x64 game. Runtime assertions and visual equivalence have not been executed.

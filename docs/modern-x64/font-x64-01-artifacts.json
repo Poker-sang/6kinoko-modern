@@ -1,0 +1,20 @@
+{
+  "source_commit": "8181b134d3b5df545d80222740d95683f71893ae",
+  "files": [
+    {
+      "path": "runtime-builds\\modern-font-x64-01\\kinoko_font_runtime_contract.exe",
+      "size": 19968,
+      "sha256": "84e121bd287304bbae0e1124beeed361a12085e178c659272bf91b763252c283",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-font-x64-01\\kinoko_font_raster_compile.dir\\Release\\string_font.obj",
+      "size": 84900,
+      "sha256": "567af4e9ce1a5e8fabb2403a8c9538c0b0ab28a3ac9095248d0050fa24b0d49d",
+      "machine": "AMD64"
+    }
+  ],
+  "tests_run": false,
+  "game_run": false,
+  "scope": "Font contract and actual rasterizer object compilation only"
+}
