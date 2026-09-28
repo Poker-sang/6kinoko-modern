@@ -1,3 +1,4 @@
+#include <type_traits>
 #include "kinoko/upstream_bindings.hpp"
 #include <sqrat/sqratTable.h>
 #include <sqrat/sqratFunction.h>
@@ -101,6 +102,11 @@ HSQOBJECT sqrat_object_value(HSQUIRRELVM vm, HSQOBJECT value) {
 void sqrat_destroy_object(HSQUIRRELVM vm, HSQOBJECT value, bool owns) {
     Adopted object(vm, value, owns); // actual ~Sqrat::Object owns the release
 }
+// Scalar Var::push accepts a reference; the generic class template takes a
+// value. Catch missing native-integer specialization in the production build.
+static_assert(std::is_same_v<decltype(&Sqrat::Var<SQInteger>::push),
+    void (*)(HSQUIRRELVM, SQInteger&)>, "SQInteger must use Sqrat integer conversion");
+
 bool sqrat_integer_argument(HSQUIRRELVM vm, SQInteger index, SQInteger& value) {
     const auto type = sq_gettype(vm, index);
     if (type != OT_INTEGER && type != OT_FLOAT) {

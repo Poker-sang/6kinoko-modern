@@ -91,3 +91,19 @@ Script::Run shares its source push/call/error sequence with RunInEnvironment.
 The embedding supplies the explicit environment used by original LocalScript
 4159F0 and the current-VM call adapter; ordinary Run still selects the root table.
 CompileString remains upstream code and compiles in the actual running VM.
+
+## Native 64-bit integers (2026-09-28)
+
+The original `#if defined(__int64)` never enables MSVC's integer specializations:
+`__int64` is a keyword, not a macro. On Windows x64, `SQInteger` consequently
+selected generic class-instance conversion, dereferenced a null instance for a
+numeric script argument, and also used the class-copy route when pushing integers.
+Register standard signed/unsigned `long long` specializations (including existing
+const/reference variants); MSVC's `__int64` is the same type. The scalar conversion
+algorithm remains `sq_getinteger` / `sq_pushinteger`.
+
+The production adapter has a compile-time specialization check. The upstream
+bindings contract covers ordinary and wide integers, float conversion, invalid
+input, scalar push type and const/reference variants. This batch compiles those
+cases for x86/x64 but does not execute them. User-captured crash RVA `0x9e6d6`
+in source `c9eee468` was traced with IDA to this precise numeric-to-instance path.

@@ -4,6 +4,7 @@
 #include <sqplus.h>
 #include <sqrat/sqratTable.h>
 #include <atomic>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -473,8 +474,34 @@ void source_class_initialization(HSQUIRRELVM vm) {
     up::sqrat_release(vm, replacement); up::sqrat_release(vm, get);
     up::sqrat_release(vm, set); up::sqrat_release(vm, type);
 }
+void native_integer_arguments(HSQUIRRELVM vm) {
+    const auto base = sq_gettop(vm);
+    const SQInteger wide = sizeof(SQInteger) > 4
+        ? static_cast<SQInteger>(INT64_C(0x123456789)) : SQInteger(123456789);
+    for (const SQInteger expected : {SQInteger(-17), SQInteger(0), SQInteger(42), wide, -wide}) {
+        up::sqrat_push_integer(vm, expected);
+        require(sq_gettype(vm, -1) == OT_INTEGER, "native integer push must not create a class instance");
+        SQInteger value = 0;
+        require(up::sqrat_integer_argument(vm, -1, value) && value == expected,
+            "native SQInteger conversion preserves value and sign");
+        require(Sqrat::Var<const SQInteger>(vm, -1).value == expected &&
+            Sqrat::Var<const SQInteger&>(vm, -1).value == expected,
+            "const native integers use scalar specializations too");
+        sq_pop(vm, 1);
+    }
+    sq_pushfloat(vm, -3.75f);
+    SQInteger value = 0;
+    require(up::sqrat_integer_argument(vm, -1, value) && value == -3,
+        "float-to-integer retains source VM truncation");
+    sq_pop(vm, 1);
+    sq_pushstring(vm, "not an integer", -1);
+    require(!up::sqrat_integer_argument(vm, -1, value), "non-numeric argument is rejected");
+    sq_pop(vm, 1);
+    require(sq_gettop(vm) == base, "numeric adapters preserve stack balance");
+}
 void cycle() {
     Machine root, independent;
+    native_integer_arguments(root.vm);
     objects(root.vm, independent.vm);
     classes(root.vm);
     source_class_initialization(root.vm);
@@ -486,6 +513,7 @@ void cycle() {
     // Child VM shares the original VM's ref table but has a separate stack.
     auto child = sq_newthread(root.vm, 32);
     require(child != nullptr, "child VM");
+    native_integer_arguments(child);
     objects(child, root.vm);
     slot_lifetime(child);
     object_operations(child);

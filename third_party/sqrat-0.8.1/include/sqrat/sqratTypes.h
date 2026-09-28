@@ -143,10 +143,10 @@ namespace Sqrat {
 	SCRAT_INTEGER(unsigned short)
 	SCRAT_INTEGER(signed short)
 
-#if defined(__int64)
-	SCRAT_INTEGER(unsigned __int64)
-	SCRAT_INTEGER(signed __int64)
-#endif
+// KINOKO: __int64 is a keyword, not a preprocessor macro in MSVC.
+// Standard long long also covers MSVC SQInteger (__int64) on Windows x64.
+	SCRAT_INTEGER(unsigned long long)
+	SCRAT_INTEGER(signed long long)
 
 	// Float Types
 	#define SCRAT_FLOAT( type ) \
