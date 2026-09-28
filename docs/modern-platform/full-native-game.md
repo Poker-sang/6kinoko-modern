@@ -32,3 +32,46 @@ for historical invalid-pointer contracts. Native portable callers require valid
 terminated string storage and retain the one-MiB cap; arbitrary address probing
 has no standard/SDL equivalent. This is an explicit legacy compatibility boundary.
 SqPlus release hooks use SQInteger return width on LP64, matching SQRELEASEHOOK.
+
+## Delivery evidence
+
+Built source: `6b39bfe4dfd8925003cc3d530ab91effcfc5af93`.
+[CI run 36460831199](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199)
+passed all six jobs: full Windows/Linux/universal macOS games and portable
+compilation on Windows/Linux/macOS. Later documentation or font-investigation
+commits are not the source of these binaries.
+
+Local Windows x64: `runtime-builds/modern-x64-native-05/kinoko_modern_gpu.exe`.
+The game and selected text-encoding/GPU-resource/application contracts compiled.
+Win32 `modern-native-05` compiled the game and all 85 contracts. Both deliveries
+passed DAT hash checks and static D3D9 dependency audits. The x64 executable
+SHA256 is `8500baa4f5f2af6ffedd99b8237026cd80044d76b84f892c5c35319026906f4d`.
+Build logs and audit JSON remain in their respective `build-runs/` directories.
+
+Downloaded native packages passed their original manifest hash checks. Local
+copies of the three user-owned DAT were staged and hash-verified, and executable
+permissions were preserved in these local-only delivery archives:
+
+- Linux: `runtime-builds/modern-linux-native-01/6kinoko-modern-linux-x64-6b39bfe4-with-data.tar.gz`
+  (104969200 bytes), SHA256
+  `1e4e06d4245b983a9355cd14e91354cbb567c221dd39e6c4562bbec7f02fc51d`.
+- macOS: `runtime-builds/modern-macos-native-01/6kinoko-modern-macos-universal-6b39bfe4-with-data.tar.gz`
+  (106065242 bytes), SHA256
+  `10dfa515c6bed5e603985989be11b9bed7d558bc0f714a06f567adc8f4b42598`.
+
+These DAT-containing archives are not uploaded to GitHub. Original data-free CI
+archives and manifests remain available locally. Download/build/dependency
+evidence is retained in `build-runs/native-ci-6b39bfe4-linux/` and
+`build-runs/native-ci-6b39bfe4-macos/`.
+
+Extract the entire archive on the target machine into a writable directory.
+Linux requires Ubuntu 24.04 x86_64 or a compatible newer system with Vulkan
+drivers; run `./launch.sh`. macOS requires Metal-capable macOS 14+; launch
+`Launch.command`. Its executable contains Intel and Apple Silicon slices and
+uses system frameworks/libraries, without Homebrew dylib dependencies. The
+macOS package is unsigned and not notarized.
+
+No game, CTest or contract executable was run by the agent. Target-machine
+startup, gameplay and save/load verification remain pending with the user.
+Portable dynamic text is retained, but bundled font metrics may differ from
+GDI; a future explicit UTF-8 localization API remains on the roadmap.

@@ -159,3 +159,12 @@ before introducing per-platform implementations. Keep OS-specific adapters only
 where a concrete compatibility requirement cannot be met by shared APIs, and
 document the reason. Continue committing each batch before builds and pushing
 source plus delivery records to the modern repository; retain all artifacts.
+
+## Full native build checkpoint (2026-09-29)
+
+Full Windows x86/x64, Linux x86_64 and universal macOS builds now succeed.
+See docs/modern-platform/full-native-game.md for source/CI/package evidence.
+Native gameplay is not validated. Keep the user-run testing policy. Preserve
+fonts/ and shaders/ alongside the executable and three DAT; CI packages exclude
+proprietary DAT. Retain dynamic text for future localization (do not delete it
+because most current UI uses image assets). Ordinary services remain SDL/C++.

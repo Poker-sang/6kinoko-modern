@@ -1,9 +1,9 @@
 # SDL platform foundation — modern-01
 
-Current production work: [portable file services](file-services.md), after the
-user-confirmed x64 gameplay and savedata fixes. The sections below describe the
-historical first SDL platform batch; renderer, audio and native-width migration
-have since progressed. They are not the current blocker inventory.
+Current production work: [full native game delivery](full-native-game.md).
+Windows x86/x64, Linux x86_64 and universal macOS games now compile and package.
+Non-Windows gameplay validation is pending. The sections below describe the
+historical first SDL platform batch, not the current blocker inventory.
 
 Fork baseline: rebuild `af5dd9a`. Remote: `Poker-sang/6kinoko-modern` (private).
 The source checkout and existing uncommitted rebuild evidence remain untouched.

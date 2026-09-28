@@ -336,3 +336,13 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Share the actual game graphics backend and resource contract with portable CI.
 - [ ] Migrate fonts, entrypoint and cross-platform shader staging/selection.
 - Details: [portable-game-graphics.md](portable-game-graphics.md).
+
+## Full native game checkpoint (2026-09-29)
+- [x] Full Linux x86_64 and macOS x86_64/arm64 game compilation/linking in CI.
+- [x] Portable SDL startup/messages, project statuses and standard C++ diagnostics counters.
+- [x] Replace GDI with shared font rasterization; retain dynamic text for localization.
+- [x] Stage SPIR-V/MSL/DXBC shaders and licensed font assets with native packages.
+- [x] Download/verify native artifacts; stage local DAT without uploading proprietary assets.
+- [ ] Run on target systems and validate first-level gameplay and save/load (user testing).
+- [ ] Extend retained text API with explicit UTF-8 localization support and font selection.
+- Details: [full-native-game.md](full-native-game.md). Earlier checkpoint blockers are historical.

@@ -1,88 +1,45 @@
 # 6kinoko-modern
 
-SDL3 modernization fork of 6kinoko-rebuild, using SDL window/input/audio/GPU and updated Ogg/Vorbis. Complete Windows x86 and experimental x64 games now build; full Linux/macOS games remain future work.
+SDL3 modernization fork of 6kinoko-rebuild. Complete games now build for Windows x86/x64, Linux x86_64 and macOS Intel/Apple Silicon. Non-Windows packages are compiled and staged, but target-machine gameplay validation is still pending.
 
 ## Build / 构建
 
-```sh
-cmake -S . -B build-runs/platform-01 -DKINOKO_PLATFORM_ONLY=ON -DCMAKE_BUILD_TYPE=Release -DKINOKO_RUNTIME_DIR="<absolute-new-runtime-directory>"
-cmake --build build-runs/platform-01 --config Release --parallel 4
-```
+Windows, after committing source (use a fresh name each time):
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_staged.ps1 -Name <unique-name> -SourceDir C:\WorkSpace\6kinoko -Generator "Visual Studio 17 2022"
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_x64_probe.ps1 -Name <unique-name> -SourceDir C:\WorkSpace\6kinoko -Generator "Visual Studio 17 2022"
 ```
 
-Use a new build name and runtime directory for every batch. 每批使用新的构建名称与运行目录。
+Linux/macOS full game (CMake 3.24+, C++17 compiler, SDL platform development dependencies, `glslangValidator`; macOS also needs `spirv-cross`):
+
+```sh
+cmake -S . -B build-runs/native-01 -DCMAKE_BUILD_TYPE=Release -DKINOKO_RUNTIME_DIR="<absolute-new-runtime-directory>"
+cmake --build build-runs/native-01 --target kinoko_modern_gpu --parallel 4
+```
+
+For a universal macOS build, add `'-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'` when configuring. The CI workflow lists Linux development packages and uses `brew install glslang spirv-cross` on macOS. `KINOKO_PLATFORM_ONLY=ON` remains available for portable module builds. `tools/build_staged.ps1` retains the Windows x86 all-target build.
+
+Always use new build/runtime directories. Copy your original `6kinoko_a.dat`, `6kinoko_b.dat` and `6kinoko_c.dat` beside the executable. Keep `shaders/` and `fonts/` beside it too. Game and contract execution remain with the user.
 
 ## Status / 状态
 
-The user confirmed startup and the four reported gameplay regressions (digits,
-stomp/kick interaction, background scrolling and road explosion effects) resolved
-in `modern-x64-gameplay-01`, source `54995147`. This is user verification.
+Source `6b39bfe4dfd8925003cc3d530ab91effcfc5af93` passed [all six CI jobs](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199): complete Windows, Linux and universal macOS games plus portable compilation on all three OSes.
 
-Latest delivery: `modern-x64-files-02`, source
-`47ec4e47067a075a91446ef2064f7afa0feb0abd`. DAT, ordinary files, savedata and input
-configuration use a portable file-service boundary. Unused 32-bit file-address
-adapters are deleted. The user confirmed the preceding savedata-01 load/save fix.
-The x64 game and three file/archive/save contracts compiled; `modern-files-02`
-compiled the Win32 game and all 81 contracts. Linux/macOS/Windows portable CI
-compilation passed (run 36438818634); file-service runtime acceptance is pending.
-EXE: `runtime-builds/modern-x64-files-02/kinoko_modern_gpu.exe`.
-Three original DAT files were staged and size/SHA256 verified; two sprite shaders
-are included. Keep the DAT files and `shaders` directory beside the EXE.
+Local Windows delivery: `runtime-builds/modern-x64-native-05/kinoko_modern_gpu.exe`. The x64 game and selected contracts compiled; `modern-native-05` compiled the Win32 game and all 85 contracts. DAT hashes and static D3D9 audits passed. No game, CTest or contract executable was run.
 
-Both builds passed static D3D9 audits. The agent ran no game, CTest or contract
-executable. Full level/save compatibility remains experimental.
-See [file service and evidence](../docs/modern-platform/file-services.md) and
-[build instructions](../docs/modern-x64/full-game.md).
+Native CI artifacts `game-ubuntu-24.04` and `game-macos-14` contain `.tar.gz` packages with executable permissions, shaders, fonts, licenses and a hash manifest. They never include original DAT. Linux targets Ubuntu 24.04 x86_64 or compatible newer systems with Vulkan drivers. macOS targets Metal-capable macOS 14+ and contains both CPU architectures; the package is unsigned/not notarized. Extract to a writable directory and use `launch.sh` or `Launch.command`.
 
-SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
+The user accepted the preceding `modern-x64-graphics-02` and earlier gameplay/save fixes. That feedback is not validation of the current font/backend changes or non-Windows runtime. Dynamic text remains available through the existing layout/atlas API, using portable CP932 decoding and bundled Noto Sans CJK JP. Font face names use this fallback; exact GDI metrics are not preserved. UTF-8 localization APIs are future work.
 
-The sole modern game backend has no D3D9/D3DX imports, SDK headers, SDL D3D9
-renderer or loader. SDL's [local patch](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md)
-must be preserved. Old COM fixtures remain non-build historical evidence.
-Portable module CI covers Windows x64, Linux and macOS; it is not full-game
-portability validation.
+SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7 · stb_truetype 1.26 · Noto Sans CJK JP. No game D3D9/D3DX backend remains. Preserve SDL's local patches. Original DAT/bytecode/save widths remain distinct from native pointers. Windows keeps its modal-drag hook and crash diagnostics; ordinary platform services use SDL or standard C++.
 
-ACT/resources, actor/camera, map/collision, input/audio/application and VM bridges
-now compile at native pointer width in the complete game. Native ownership and
-typed method dispatch are separate from original fixed-width serialized hashes,
-CV4 bytecode and save scalars. Compatibility implementation still needs runtime
-verification. Historical migration scopes and build attempts remain in
-[the x64 build record](../docs/modern-x64/BUILD.md).
-
-Earlier user reports marked `modern-width-01`, `modern-window-move-01`,
-`modern-act-chip-02`, `modern-mesh-native-01`, `modern-string-native-01`,
-`modern-x64-entry-03` and `modern-actor-native-03` normal. These are user feedback
-for earlier builds, not agent validation or acceptance of the new x64 executable.
-
-Next: user x64 runtime acceptance and remaining Windows service migration
-(including fonts) for complete Linux/macOS games.
+Next: target-machine launch/gameplay/save verification and any resulting platform fixes. Compilation alone does not establish runtime compatibility.
 
 ## Documentation / 文档
 
-[Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).
-
-[SDL audio migration / 音频迁移](../docs/modern-audio/README.md) · [Latest audio build / 音频构建交接](../docs/modern-audio/BUILD.md).
-
-[SDL GPU game integration / 游戏渲染迁移](../docs/modern-gpu/GAME.md).
-
-[Runtime graphics width audit / 图形运行时宽度审计](../docs/modern-x64/README.md).
-
-
-Portable application/audio worker, event and clock migration: [runtime services](../docs/modern-platform/runtime-services.md). Windows files-02 was accepted by the user; full Linux/macOS games remain blocked by host/font services.
-
-
-Internal graphics/ACT/actor synchronization now uses portable recursive mutexes; unused audio locks were removed. See [internal locks](../docs/modern-platform/internal-locks.md).
-
-
-ACT directory searches and executable-directory startup now use portable services. See [directory services](../docs/modern-platform/directory-services.md) for platform semantics and remaining full-game blockers.
-
-
-Window controls now use SDL events, fullscreen/restoration, cursor APIs and queued UTF-8 titles. See [SDL window controls](../docs/modern-platform/sdl-window-controls.md) for the retained IME/drag hook and validation.
-
-
-Unused IMM/DirectInput/COM host paths are removed; game-facing input and the full audio runtime now participate in portable compilation. See [input/audio host cleanup](../docs/modern-platform/native-input-audio.md).
-
-The actual game graphics backend now builds in portable CI with project-owned fixed-width types and no native window handles in its public API. Font rasterization, application startup and cross-platform shader staging still block a complete non-Windows game. See [graphics migration](../docs/modern-platform/portable-game-graphics.md).
+- [Full native game migration and delivery evidence](../docs/modern-platform/full-native-game.md)
+- [Dependency provenance](../docs/modern-platform/dependencies.json)
+- [Migration roadmap](../docs/modern-platform/TODO.md)
+- [Historical platform foundation](../docs/modern-platform/README.md)
+- [SDL GPU integration](../docs/modern-gpu/GAME.md)
+- [Native-width history](../docs/modern-x64/BUILD.md)
