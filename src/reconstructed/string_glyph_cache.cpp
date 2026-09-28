@@ -1,59 +1,21 @@
+#include "kinoko/string_runtime.hpp"
+#include "kinoko/resource_allocation.hpp"
 #include "kinoko/texture_store.h"
-#include "kinoko/legacy_memory.hpp"
-#include "kinoko/legacy_string.hpp"
 #include "kinoko/string_layout.h"
-#include "kinoko/string_font.h"
-#include "kinoko/act_layout_records.hpp"
-#include "kinoko/font_runtime.hpp"
-#include <stdexcept>
+#include "kinoko/legacy_memory.hpp"
 #include <algorithm>
 #include <climits>
-#include <cstddef>
-#include <cstdlib>
-#include <new>
-#include <string>
-#include <vector>
-
-
-namespace {
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
 using kinoko::legacy::StringView;
+using Layout=kinoko::text::StringLayout;
 
-using Atlas=kinoko::text::FontAtlas;
-using Atlases=std::vector<Atlas>;
-using LayoutRecord=kinoko::act::StringLayoutRecord;
-Atlases* atlases(KinokoStringLayout* layout) {
-    const kinoko::native::RecordView<LayoutRecord> record(layout);
-    return static_cast<Atlases*>(record.get(&LayoutRecord::atlas_owner));
-}
-void set_atlases(KinokoStringLayout* layout,Atlases* value) {
-    const kinoko::native::RecordView<LayoutRecord> record(layout);
-    record.set(&LayoutRecord::atlas_owner,static_cast<void*>(value));
-}
-
-}
-
-// 441250: VC8 deque<256-byte glyph sprite> has one sprite per block. Its
-// proxy/map/map-size/first/size fields start at CStringLayout+176.
 extern "C" int32_t kinoko_string_prune_atlases(KinokoStringLayout* receiver) {
-    auto* layout=receiver;
+    auto& layout=*reinterpret_cast<Layout*>(receiver);
     int32_t minimum=INT_MAX;
-    const uint32_t count=kinoko_string_queue_size(layout);
-    for(uint32_t i=0;i<count;++i) {
-        auto* sprite=kinoko_string_queue_at(layout, i);
-        minimum=(std::min)(minimum,kinoko::native::RecordView<kinoko::act::StringGlyphRecord>(sprite).get(&kinoko::act::StringGlyphRecord::id));
-    }
-    auto& pages=*atlases(layout);
-    for(size_t i=0;i<pages.size();) {
-        auto* atlas=&pages[i];
-        auto* lifetime=static_cast<kinoko::text::FontAtlas*>(atlas);
-        if(lifetime->last_glyph_id>=minimum ||
-           lifetime->references>0) { ++i;continue; }
-        kinoko_texture_release(lifetime->texture);
-        pages.erase(pages.begin()+i);
-        i=0;
-    }
+    for(const auto& glyph:layout.glyphs) minimum=(std::min)(minimum,glyph.id);
+    auto& pages=layout.atlases;
+    pages.erase(std::remove_if(pages.begin(),pages.end(),[minimum](const auto& page) {
+        return page->last_glyph_id<minimum && page->references<=0;
+    }),pages.end());
     return 1;
 }
 
@@ -61,162 +23,66 @@ extern "C" int32_t kinoko_string_prune_atlases(KinokoStringLayout* receiver) {
 // not rasterize text here: later update consumes stBackQueue using CharNextA.
 extern "C" int32_t kinoko_string_rebuild_queue(KinokoStringLayout* receiver) {
     auto* layout=receiver;
-    const kinoko::native::RecordView<kinoko::act::StringLayoutRecord> record(receiver);
-    StringView text(record.bytes(&kinoko::act::StringLayoutRecord::text));
-    StringView queue(record.bytes(&kinoko::act::StringLayoutRecord::pending));
+    auto& record=*reinterpret_cast<kinoko::text::StringLayout*>(receiver);
+    StringView text(&record.text);
+    StringView queue(&record.pending);
     std::string pending(text.data(),text.length());
     pending.append(queue.data(),queue.length());
     text.assign("",0);
     queue.assign("",0);
-    using Layout=kinoko::act::StringLayoutRecord;
-    record.set(&Layout::rebuild,uint8_t{1});
-    record.set(&Layout::cursor_x,0);
-    record.set(&Layout::cursor_y,0);
-    record.set(&Layout::line_height,record.get(&Layout::font_height));
-    record.set(&Layout::maximum_width,0);
+    using Layout=kinoko::text::StringLayout;
+    record.rebuild = uint8_t{1};
+    record.cursor_x = 0;
+    record.cursor_y = 0;
+    record.line_height = record.font_height;
+    record.maximum_width = 0;
     // Original passes the concatenated buffer through strlen (441160).
     queue.append(pending.c_str(),static_cast<uint32_t>(std::strlen(pending.c_str())));
-    const uint32_t count=kinoko_string_queue_size(layout);
-    for(uint32_t i=0;i<count;++i) {
-        auto* sprite=kinoko_string_queue_at(layout, i);
-        const auto glyph=kinoko::native::RecordView<kinoko::act::StringGlyphRecord>(sprite);
-        auto* atlas=glyph.get(&kinoko::act::StringGlyphRecord::atlas);
-        if(atlas) {
-            auto* lifetime=static_cast<kinoko::text::FontAtlas*>(atlas);
-            --lifetime->references;
-        }
-    }
-    kinoko_string_drop_queue_storage(layout);
+    record.glyphs.clear();
     return kinoko_string_prune_atlases(receiver);
 }
 
-// 43E890 ends at 43EA0F. RetDec erroneously included 43EA10's destructor
-// after its allocation-failure throw and lost the constructor's ECX receiver.
-extern "C" KinokoStringLayout* kinoko_construct_string_layout(KinokoStringLayout* layout) {
-    using Layout=kinoko::act::StringLayoutRecord;
-    using StringRecord=kinoko::legacy::StringRecord;
-    const kinoko::native::RecordView<Layout> text(layout);
-    text.set(&Layout::methods,kinoko_string_layout_methods());
-    for (auto member : {&Layout::text, &Layout::pending, &Layout::face}) {
-        const kinoko::native::RecordView<StringRecord> value(text.bytes(member));
-        value.set(&StringRecord::capacity, uint32_t{15});
-        value.set(&StringRecord::length, uint32_t{0});
-        value.bytes(&StringRecord::characters)[0] = 0;
-    }
-    text.set(&Layout::atlas_owner,static_cast<void*>(nullptr));
-    // Original constructor clears only the first two atlas spare words and
-    // four deque spare words; the remaining bytes are not assigned.
-    std::memset(text.bytes(&Layout::atlas_slots),0,2*sizeof(uint32_t));
-    text.set(&Layout::glyph_owner,static_cast<void*>(nullptr));
-    std::memset(text.bytes(&Layout::glyph_slots),0,4*sizeof(uint32_t));
-    set_atlases(layout,new Atlases);
-    kinoko_string_queue_construct(layout);
-    // Original CP932 face name, 13 bytes before its NUL terminator.
-    static const char face[]="\x82\x6c\x82\x72\x20\x83\x53\x83\x56\x83\x62\x83\x4e";
-    StringView(text.bytes(&Layout::face)).assign(face,13);
-    text.set(&Layout::alpha,1.0f);
-    text.set(&Layout::layer,static_cast<KinokoActLayer*>(nullptr));
-    text.set(&Layout::blend,1);
-    text.set(&Layout::scale_x,1.0f);
-    text.set(&Layout::scale_y,1.0f);
-    text.set(&Layout::base_red,255);
-    text.set(&Layout::base_green,255);
-    text.set(&Layout::base_blue,255);
-    text.set(&Layout::font_height,16);
-    text.set(&Layout::font_weight,1);
-    text.set(&Layout::red,0);
-    text.set(&Layout::green,0);
-    text.set(&Layout::blue,0);
-    text.set(&Layout::character_space,0);
-    text.set(&Layout::line_space,2);
-    text.set(&Layout::edge,uint8_t{0});
-    text.set(&Layout::alignment,0);
-    text.set(&Layout::wrap_width,-1);
-    text.set(&Layout::origin_x,0);
-    text.set(&Layout::origin_y,0);
-    text.set(&Layout::rebuild,uint8_t{0});
-    text.set(&Layout::cursor_y,0);
-    text.set(&Layout::cursor_x,0);
-    text.set(&Layout::line_height,16);
-    text.set(&Layout::maximum_width,0);
-    return layout;
-}
 
-extern "C" void kinoko_clear_string_layout(KinokoStringLayout* layout) {
-    using Layout=kinoko::act::StringLayoutRecord;
-    using StringRecord=kinoko::legacy::StringRecord;
-    const kinoko::native::RecordView<Layout> text(layout);
-    text.set(&Layout::methods,kinoko_string_layout_methods());
-    StringView(text.bytes(&Layout::text)).assign("",0);
-    StringView(text.bytes(&Layout::pending)).assign("",0);
-    kinoko_string_rebuild_queue(layout);
-    kinoko_string_prune_atlases(layout);
-    kinoko_string_queue_destroy(layout);
-    delete atlases(layout);set_atlases(layout,nullptr);
-    // Original 43EA10 releases face, pending and displayed text in that order.
-    for(auto member : {&Layout::face,&Layout::pending,&Layout::text}) {
-        const kinoko::native::RecordView<StringRecord> string(text.bytes(member));
-        StringView(string.data()).destroy();
-        string.set(&StringRecord::capacity,uint32_t{15});
-        string.set(&StringRecord::length,uint32_t{0});
-        string.bytes(&StringRecord::characters)[0]=0;
+extern "C" KinokoStringLayout* kinoko_create_string_layout() {
+    auto* layout=kinoko::act::allocate_resources<Layout>(kinoko_string_layout_methods());
+    if(!layout) return nullptr;
+    try {
+        static const char face[]="\x82\x6c\x82\x72\x20\x83\x53\x83\x56\x83\x62\x83\x4e";
+        StringView(&layout->face).assign(face,13);
+    } catch(...) {
+        kinoko::act::destroy_resources(layout,1,[](auto&){});
+        return nullptr;
     }
+    return reinterpret_cast<KinokoStringLayout*>(layout);
 }
-
 extern "C" KinokoStringLayout* __fastcall kinoko_method_delete_string_layout(KinokoStringLayout* object,void*,unsigned char flags) {
-    if(flags&2) {
-        auto* bytes=reinterpret_cast<unsigned char*>(object);
-        const uint32_t count=kinoko::legacy::load<uint32_t>(bytes-sizeof(uint32_t));
-        for(uint32_t i=count;i>0;--i) kinoko_clear_string_layout((KinokoStringLayout*)(uintptr_t)(reinterpret_cast<KinokoStringLayout*>(bytes+(i-1)*sizeof(kinoko::act::StringLayoutRecord))));
-        if(flags&1) std::free(bytes-sizeof(uint32_t));
-        return reinterpret_cast<KinokoStringLayout*>(bytes-sizeof(uint32_t));
-    }
-    kinoko_clear_string_layout(object);
-    if(flags&1) std::free(object);
-    return object;
+    return reinterpret_cast<KinokoStringLayout*>(kinoko::act::destroy_resources(
+        reinterpret_cast<Layout*>(object),flags,[](auto&){}));
 }
-
-// Glyph pointers remain borrowed, including across original atlas relocation.
 extern "C" void* kinoko_string_append_atlas(KinokoStringLayout* layout) {
-    atlases(layout)->emplace_back();return &atlases(layout)->back();
+    return reinterpret_cast<Layout*>(layout)->append_atlas(kinoko_texture_release);
 }
-extern "C" uint32_t kinoko_string_atlas_size(KinokoStringLayout* layout) { return static_cast<uint32_t>(atlases(layout)->size()); }
-extern "C" void* kinoko_string_atlas_at(KinokoStringLayout* layout,uint32_t index) { return &atlases(layout)->at(index); }
-
-extern "C" void kinoko_string_copy_queue_storage(KinokoStringLayout* object,KinokoStringLayout* source);
-extern "C" void kinoko_string_drop_queue_storage(KinokoStringLayout* object);
+extern "C" uint32_t kinoko_string_atlas_size(KinokoStringLayout* layout) {
+    return static_cast<uint32_t>(reinterpret_cast<Layout*>(layout)->atlases.size());
+}
+extern "C" void* kinoko_string_atlas_at(KinokoStringLayout* layout,uint32_t index) {
+    return reinterpret_cast<Layout*>(layout)->atlases.at(index).get();
+}
 extern "C" KinokoStringLayout* __fastcall kinoko_method_clone_string_layout(KinokoStringLayout* source,void*) {
-    using kinoko::legacy::address;
-    auto* out=static_cast<KinokoStringLayout*>(std::malloc(sizeof(kinoko::act::StringLayoutRecord)));
-    if(!out) return 0;
-    kinoko_construct_string_layout((KinokoStringLayout*)(uintptr_t)(out));
-    // 43EC30: three independent strings, scalar style fields, atlas/deque
-    // assignment, and all 60 tail bytes. Padding 129..131 remains untouched.
-    using Layout=kinoko::act::StringLayoutRecord;
-    const kinoko::native::RecordView<Layout> target(out), origin(source);
-    for(auto member : {&Layout::text,&Layout::pending,&Layout::face})
-        StringView(target.bytes(member)).assign(StringView(origin.bytes(member)),0,UINT32_MAX);
-    std::copy_n(origin.bytes(&Layout::font_height),
-        offsetof(Layout,edge)-offsetof(Layout,font_height),target.bytes(&Layout::font_height));
-    target.set(&Layout::edge,origin.get(&Layout::edge));
-    std::copy_n(origin.bytes(&Layout::alignment),
-        offsetof(Layout,atlas_owner)-offsetof(Layout,alignment),target.bytes(&Layout::alignment));
-    *atlases(out)=*atlases(source);
-    kinoko_string_copy_queue_storage((KinokoStringLayout*)(uintptr_t)(out), source);
-    std::copy_n(origin.bytes(&Layout::next_glyph_id),
-        sizeof(Layout)-offsetof(Layout,next_glyph_id),target.bytes(&Layout::next_glyph_id));
-    // 43EB80 clears cloned atlas values (retains vector capacity, no texture
-    // Release), then frees deque blocks/map while retaining its own proxy.
-    atlases(out)->clear();
-    kinoko_string_drop_queue_storage((KinokoStringLayout*)(uintptr_t)(out));
+    auto* out=kinoko_create_string_layout();
+    if(!out) return nullptr;
+    try {
+        reinterpret_cast<Layout*>(out)->copy_state(*reinterpret_cast<Layout*>(source));
+    } catch(...) {
+        kinoko_method_delete_string_layout(out,nullptr,1);
+        return nullptr;
+    }
     return out;
 }
 extern "C" KinokoStringLayout* __fastcall kinoko_method_destroy_string_layout(KinokoStringLayout* object,void*) {
-    return object?kinoko_method_delete_string_layout(object, nullptr, 1):0;
+    return kinoko_method_delete_string_layout(object,nullptr,1);
 }
 extern "C" int32_t kinoko_string_layout_type_identity;
-namespace { inline auto string_layout_type_info = &kinoko_string_layout_type_identity; }
 extern "C" int32_t __fastcall kinoko_method_string_layout_type(KinokoStringLayout*,void*) {
-    return kinoko::legacy::address(string_layout_type_info);
+    return kinoko::legacy::address(&kinoko_string_layout_type_identity);
 }
-

@@ -1,10 +1,10 @@
 #pragma once
 #include "kinoko/sprite.h"
 #include "kinoko/native_record_view.hpp"
+#include "kinoko/quad_state.hpp"
 #include <array>
 #include <cstdint>
 namespace kinoko::render {
-struct Position3 { float x, y, z; };
 // Borrowed texture handle. The enclosing layout/animation owns this storage.
 struct QuadRecord {
     const void* vtable;

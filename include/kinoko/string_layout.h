@@ -12,11 +12,8 @@ KinokoStringLayout* __fastcall kinoko_method_clone_string_layout(KinokoStringLay
 KinokoStringLayout* __fastcall kinoko_method_destroy_string_layout(KinokoStringLayout* object, void *unused);
 int32_t __fastcall kinoko_method_string_layout_type(KinokoStringLayout* object, void *unused);
 int32_t __fastcall kinoko_method_register_string_layout(KinokoStringLayout* object, void *unused);
-void kinoko_string_queue_construct(KinokoStringLayout* object);
-void kinoko_string_queue_destroy(KinokoStringLayout* object);
 uint32_t kinoko_string_queue_size(KinokoStringLayout* object);
 void* kinoko_string_queue_at(KinokoStringLayout* object, uint32_t index);
-void kinoko_string_drop_queue_storage(KinokoStringLayout* object);
 void* kinoko_string_append_glyph(KinokoStringLayout* object);
 uint32_t kinoko_string_atlas_size(KinokoStringLayout* layout);
 void* kinoko_string_atlas_at(KinokoStringLayout* layout, uint32_t index);
@@ -25,8 +22,7 @@ int32_t kinoko_string_add_character(KinokoStringLayout* object, const char *char
 int32_t __fastcall kinoko_method_update_string_layout(KinokoStringLayout* object, void *unused);
 int32_t __fastcall kinoko_method_draw_string_layout(KinokoStringLayout* object, void *unused, float x, float y);
 int32_t __fastcall kinoko_method_set_string_layer(KinokoStringLayout* object, void *unused, KinokoActLayer* layer);
-KinokoStringLayout* kinoko_construct_string_layout(KinokoStringLayout* object);
-void kinoko_clear_string_layout(KinokoStringLayout* object);
+KinokoStringLayout* kinoko_create_string_layout(void);
 int32_t kinoko_string_push_back(KinokoStringLayout* object, const char *text);
 int32_t kinoko_string_clear(KinokoStringLayout* object);
 int32_t kinoko_string_pop(KinokoStringLayout* object, int32_t count, int32_t front);

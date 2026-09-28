@@ -94,3 +94,10 @@ if(WIN32)
     target_include_directories(kinoko_legacy_string_width_compile PRIVATE include)
     target_compile_features(kinoko_legacy_string_width_compile PRIVATE cxx_std_17)
 endif()
+
+# Native text ownership and clone state compile on x86/x64 without Win32.
+add_executable(kinoko_string_runtime_contract tests/string_runtime_contract.cpp
+    src/reconstructed/legacy_string.cpp)
+target_include_directories(kinoko_string_runtime_contract PRIVATE include)
+target_compile_features(kinoko_string_runtime_contract PRIVATE cxx_std_17)
+add_test(NAME string_runtime_contract COMMAND kinoko_string_runtime_contract)

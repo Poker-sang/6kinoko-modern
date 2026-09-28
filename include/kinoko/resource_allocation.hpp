@@ -13,14 +13,23 @@ template<class T> struct alignas(T) ResourceAllocation {
 };
 template<class T> T* allocate_resources(const void* methods, std::size_t count = 1) noexcept {
     using Header = ResourceAllocation<T>;
-    static_assert(std::is_nothrow_default_constructible_v<T>);
     static_assert(alignof(T) <= alignof(std::max_align_t));
     if (!count || count > (std::numeric_limits<std::size_t>::max() - sizeof(Header)) / sizeof(T)) return nullptr;
     auto* header = static_cast<Header*>(std::malloc(sizeof(Header) + sizeof(T) * count));
     if (!header) return nullptr;
     new (header) Header{count};
     auto* values = reinterpret_cast<T*>(header + 1);
-    for (std::size_t i = 0; i < count; ++i) { new (values + i) T; values[i].methods = methods; }
+    std::size_t constructed=0;
+    try {
+        for (; constructed<count; ++constructed) {
+            new (values+constructed) T;
+            values[constructed].methods=methods;
+        }
+    } catch (...) {
+        while(constructed) values[--constructed].~T();
+        std::free(header);
+        return nullptr;
+    }
     return values;
 }
 template<class T, class Clear> void* destroy_resources(T* values, unsigned char flags, Clear clear) {

@@ -1,3 +1,4 @@
+#include "kinoko/string_runtime.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource_records_io.hpp"
 #include "kinoko/file_io_layout.h"
@@ -86,14 +87,14 @@ Schema act_schema{
 // 43F770 registers alignment with the bool template 443CC0 AND offset 128,
 // aliasing addEdge (43F97D), despite the runtime integer living at 132.
 Schema string_layout_schema{
-    {"stText",{3,3,offsetof(kinoko::act::StringLayoutRecord, text)}}, {"stBackQueue",{3,3,offsetof(kinoko::act::StringLayoutRecord, pending)}}, {"stFontFaceName",{3,3,offsetof(kinoko::act::StringLayoutRecord, face)}},
-    {"fontHeight",{0,0,offsetof(kinoko::act::StringLayoutRecord, font_height)}}, {"fontWeight",{0,0,offsetof(kinoko::act::StringLayoutRecord, font_weight)}},
-    {"colorR",{0,0,offsetof(kinoko::act::StringLayoutRecord, red)}}, {"colorG",{0,0,offsetof(kinoko::act::StringLayoutRecord, green)}}, {"colorB",{0,0,offsetof(kinoko::act::StringLayoutRecord, blue)}},
-    {"baseR",{0,0,offsetof(kinoko::act::StringLayoutRecord, base_red)}}, {"baseG",{0,0,offsetof(kinoko::act::StringLayoutRecord, base_green)}}, {"baseB",{0,0,offsetof(kinoko::act::StringLayoutRecord, base_blue)}},
-    {"charactorSpace",{0,0,offsetof(kinoko::act::StringLayoutRecord, character_space)}}, {"lineSpace",{0,0,offsetof(kinoko::act::StringLayoutRecord, line_space)}},
-    {"addEdge",{2,2,offsetof(kinoko::act::StringLayoutRecord, edge)}}, {"alignment",{2,2,offsetof(kinoko::act::StringLayoutRecord, edge)}},
-    {"scaleX",{1,1,offsetof(kinoko::act::StringLayoutRecord, scale_x)}}, {"scaleY",{1,1,offsetof(kinoko::act::StringLayoutRecord, scale_y)}}, {"wordBreakWidth",{0,0,offsetof(kinoko::act::StringLayoutRecord, wrap_width)}},
-    {"alpha",{1,1,offsetof(kinoko::act::StringLayoutRecord, alpha)}}, {"blend",{0,0,offsetof(kinoko::act::StringLayoutRecord, blend)}}
+    {"stText",{3,3,offsetof(kinoko::text::StringLayout, text)}}, {"stBackQueue",{3,3,offsetof(kinoko::text::StringLayout, pending)}}, {"stFontFaceName",{3,3,offsetof(kinoko::text::StringLayout, face)}},
+    {"fontHeight",{0,0,offsetof(kinoko::text::StringLayout, font_height)}}, {"fontWeight",{0,0,offsetof(kinoko::text::StringLayout, font_weight)}},
+    {"colorR",{0,0,offsetof(kinoko::text::StringLayout, red)}}, {"colorG",{0,0,offsetof(kinoko::text::StringLayout, green)}}, {"colorB",{0,0,offsetof(kinoko::text::StringLayout, blue)}},
+    {"baseR",{0,0,offsetof(kinoko::text::StringLayout, base_red)}}, {"baseG",{0,0,offsetof(kinoko::text::StringLayout, base_green)}}, {"baseB",{0,0,offsetof(kinoko::text::StringLayout, base_blue)}},
+    {"charactorSpace",{0,0,offsetof(kinoko::text::StringLayout, character_space)}}, {"lineSpace",{0,0,offsetof(kinoko::text::StringLayout, line_space)}},
+    {"addEdge",{2,2,offsetof(kinoko::text::StringLayout, edge)}}, {"alignment",{2,2,offsetof(kinoko::text::StringLayout, edge)}},
+    {"scaleX",{1,1,offsetof(kinoko::text::StringLayout, scale_x)}}, {"scaleY",{1,1,offsetof(kinoko::text::StringLayout, scale_y)}}, {"wordBreakWidth",{0,0,offsetof(kinoko::text::StringLayout, wrap_width)}},
+    {"alpha",{1,1,offsetof(kinoko::text::StringLayout, alpha)}}, {"blend",{0,0,offsetof(kinoko::text::StringLayout, blend)}}
 };
 // 42BD00 registers the 17 serialized C2DLayout members.
 Schema layout_schema{
@@ -608,10 +609,10 @@ extern "C" int32_t kinoko_string_read_properties(KinokoStringLayout *layout,
         if(!read(layout,*reader_holder,string_layout_schema,false)) return 0;
         // 43FB75..43FBAF moves stText+stBackQueue into the pending queue,
         // then clears stText. This preserves embedded NULs (unlike rebuild).
-        using Layout=kinoko::act::StringLayoutRecord;
-        const kinoko::native::RecordView<Layout> record(layout);
-        kinoko::legacy::StringView text(record.bytes(&Layout::text));
-        kinoko::legacy::StringView queue(record.bytes(&Layout::pending));
+        using Layout=kinoko::text::StringLayout;
+        auto& record=*reinterpret_cast<Layout*>(layout);
+        kinoko::legacy::StringView text(&record.text);
+        kinoko::legacy::StringView queue(&record.pending);
         std::string pending(text.data(),text.length());
         pending.append(queue.data(),queue.length());
         queue.assign(pending.data(),static_cast<uint32_t>(pending.size()));

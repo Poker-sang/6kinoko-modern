@@ -70,7 +70,6 @@ namespace {
 void clear_layout(KinokoActLayout* layout) {
     if (!layout) return;
     const auto methods = kinoko::legacy::load<const void*>(layout);
-    if (methods == kinoko_string_layout_methods()) { kinoko_clear_string_layout(reinterpret_cast<KinokoStringLayout*>(layout)); return; }
     if (methods == kinoko_act_host_symbols()->map_layout_vtable) kinoko_clear_map_layout((KinokoActLayout*)(uintptr_t)(address(layout)));
 }
 void clear_key(KinokoActKey* value) {
@@ -96,6 +95,8 @@ void kinoko_destroy_cact_key(void* value) {
     std::free(value);
 }
 extern "C" void* __fastcall kinoko_method_destroy_layout(KinokoActLayout* layout,void*) {
+    if(layout && kinoko::legacy::load<const void*>(layout)==kinoko_string_layout_methods())
+        return kinoko_method_destroy_string_layout(reinterpret_cast<KinokoStringLayout*>(layout),nullptr);
     clear_layout(layout);
     std::free(layout);
     return layout;

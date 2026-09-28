@@ -1,3 +1,4 @@
+#include "kinoko/string_runtime.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/act_document_association.hpp"
 #include "kinoko/act_script_payload.hpp"
@@ -249,12 +250,10 @@ int32_t kinoko_act_load_key(KinokoActKey* key, KinokoArchiveReader* reader_ptr,
     } else if(layout_type==0x9e695d47u) {
         // Original Boost hash of .?AVCStringLayout@@; use the genuine native
         // reader through its recovered holder/version ABI.
-        layout = static_cast<KinokoActLayout *>(std::calloc(1, sizeof(kinoko::act::StringLayoutRecord)));
+        layout = reinterpret_cast<KinokoActLayout *>(kinoko_create_string_layout());
         if (layout) {
-            (int32_t)(intptr_t)kinoko_construct_string_layout((KinokoStringLayout*)(layout));
             if (!kinoko_string_read_properties(reinterpret_cast<KinokoStringLayout *>(layout), (KinokoArchiveReader**)(uintptr_t)(&reader_ptr), version)) {
-                kinoko_clear_string_layout((KinokoStringLayout*)(layout));
-                std::free(layout);
+                kinoko_method_destroy_string_layout(reinterpret_cast<KinokoStringLayout*>(layout),nullptr);
                 layout = nullptr;
             }
         }

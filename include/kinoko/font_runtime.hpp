@@ -35,6 +35,6 @@ struct FontAtlas {
     std::int32_t last_glyph_id=0;
     FontRenderer renderer;
     std::int32_t texture=0, references=0;
-    // Texture release belongs to the layout's prune path, not this destructor.
+    // Texture release belongs to the shared page owner, not this destructor.
 };
 }

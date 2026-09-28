@@ -1,3 +1,4 @@
+#include "kinoko/string_runtime.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_texture_resource.hpp"
 #include "sqpcheader.h"
@@ -737,13 +738,16 @@ template<bool string_layout> KinokoActLayer* create_layer(KinokoActRuntime* play
     kinoko::legacy::StringView(record.bytes(&LayerStorageRecord::name)).assign(name, static_cast<uint32_t>(std::strlen(name)));
     kinoko::legacy::Allocation<KeyRecord> key(static_cast<KeyRecord*>(std::calloc(1,sizeof(KeyRecord))));
     const auto clear_layout=[](unsigned char* value) {
-        if constexpr(string_layout) if(value) kinoko_clear_string_layout((KinokoStringLayout*)(value));
-        std::free(value);
+        if constexpr(string_layout) kinoko_method_destroy_string_layout(reinterpret_cast<KinokoStringLayout*>(value),nullptr);
+        else std::free(value);
     };
-    auto* layout_storage=static_cast<unsigned char*>(std::calloc(1,string_layout?260:316));
+    unsigned char* layout_storage=nullptr;
+    if constexpr(string_layout) layout_storage=reinterpret_cast<unsigned char*>(kinoko_create_string_layout());
+    else {
+        layout_storage=static_cast<unsigned char*>(std::calloc(1,sizeof(Layout2DRecord)));
+        if(layout_storage) kinoko_construct_c2dlayout(reinterpret_cast<KinokoActLayout*>(layout_storage));
+    }
     if(!layout_storage) return 0;
-    if constexpr(string_layout) (int32_t)(intptr_t)kinoko_construct_string_layout((KinokoStringLayout*)(layout_storage));
-    else (int32_t)(intptr_t)kinoko_construct_c2dlayout((KinokoActLayout*)(layout_storage));
     std::unique_ptr<unsigned char,decltype(clear_layout)> layout(layout_storage,clear_layout);
     if (!key) return 0;
     key->methods = kinoko_act_host_symbols()->key_vtable;
@@ -2133,10 +2137,12 @@ int32_t string_property_set(SQVM* vm) {
     if(!object) return 0;
     SQInteger value=0;
     if(!kinoko::script::upstream::sqrat_integer_argument(vm,2,value)) return 0;
-    if(offset==88) value=std::clamp(value,1,127);
-    else if(offset==92) value=(std::max)(value,1);
-    else if(offset>=96 && offset<=116) value=std::clamp(value,0,255);
-    else if(offset==120 || offset==124) value=(std::max)(value,0);
+    using Text=kinoko::text::StringLayout;
+    if(offset==offsetof(Text,font_height)) value=std::clamp(value,1,127);
+    else if(offset==offsetof(Text,font_weight)) value=(std::max)(value,1);
+    else if(offset==offsetof(Text,red) || offset==offsetof(Text,green) || offset==offsetof(Text,blue) ||
+        offset==offsetof(Text,base_red) || offset==offsetof(Text,base_green) || offset==offsetof(Text,base_blue)) value=std::clamp(value,0,255);
+    else if(offset==offsetof(Text,character_space) || offset==offsetof(Text,line_space)) value=(std::max)(value,0);
     kinoko::legacy::store(object+offset, static_cast<int32_t>(value));
     return 0;
 }
@@ -2154,7 +2160,7 @@ int32_t string_face_set(SQVM* vm) {
     if(!object || SQ_FAILED(sq_getstring(vm,2,&value))) return 0;
     static const char face[]="\x82\x6c\x82\x72\x20\x83\x53\x83\x56\x83\x62\x83\x4e";
     if(!*value) value=face;
-    kinoko::legacy::StringView(object+offsetof(kinoko::act::StringLayoutRecord, face)).assign(value,static_cast<uint32_t>(std::strlen(value)));
+    kinoko::legacy::StringView(object+offsetof(kinoko::text::StringLayout, face)).assign(value,static_cast<uint32_t>(std::strlen(value)));
     return 0;
 }
 template<int Method> int32_t string_method(SQVM* vm) {
@@ -2199,20 +2205,21 @@ extern "C" int32_t kinoko_publish_string_layout_class(SQVM* vm,void* root,int32_
     bool ok=kinoko_sqrat_new_class(vm, out) && kinoko_sqrat_new_table(vm, setters) && kinoko_sqrat_new_table(vm, getters) &&
         initialize_native_property_class(vm, out, {setters, getters});
     struct Property { const char* name; int32_t offset,kind; bool readonly; };
+    using Text=kinoko::text::StringLayout;
     static const Property properties[]={
-        {"alpha",152,1,false},{"blend",156,0,false},{"alignment",132,0,false},
-        {"scaleX",136,1,false},{"scaleY",140,1,false},{"wordBreakWidth",144,0,false},
-        {"stText",4,3,false},{"stFontFaceName",60,3,false},{"fontHeight",88,0,false},
-        {"fontWeight",92,0,false},{"colorR",96,0,false},{"colorG",100,0,false},
-        {"colorB",104,0,false},{"baseR",108,0,false},{"baseG",112,0,false},{"baseB",116,0,false},
-        {"charactorSpace",120,0,false},{"lineSpace",124,0,false},{"addEdge",128,2,false},
-        {"cursorX",204,0,true},{"cursorY",208,0,true},{"queueCount",48,0,true}
+        {"alpha",offsetof(Text,alpha),1,false},{"blend",offsetof(Text,blend),0,false},{"alignment",offsetof(Text,alignment),0,false},
+        {"scaleX",offsetof(Text,scale_x),1,false},{"scaleY",offsetof(Text,scale_y),1,false},{"wordBreakWidth",offsetof(Text,wrap_width),0,false},
+        {"stText",offsetof(Text,text),3,false},{"stFontFaceName",offsetof(Text,face),3,false},{"fontHeight",offsetof(Text,font_height),0,false},
+        {"fontWeight",offsetof(Text,font_weight),0,false},{"colorR",offsetof(Text,red),0,false},{"colorG",offsetof(Text,green),0,false},
+        {"colorB",offsetof(Text,blue),0,false},{"baseR",offsetof(Text,base_red),0,false},{"baseG",offsetof(Text,base_green),0,false},{"baseB",offsetof(Text,base_blue),0,false},
+        {"charactorSpace",offsetof(Text,character_space),0,false},{"lineSpace",offsetof(Text,line_space),0,false},{"addEdge",offsetof(Text,edge),2,false},
+        {"cursorX",offsetof(Text,cursor_x),0,true},{"cursorY",offsetof(Text,cursor_y),0,true},{"queueCount",offsetof(Text,pending)+offsetof(kinoko::legacy::StringRecord,length),0,true}
     };
     for(const auto& p:properties) {
         const auto getter=p.kind==1?address(kinoko_c2dlayout_get_float):p.kind==2?address(kinoko_cact_layer_get_bool):
             p.kind==3?address(string_value_get):address(kinoko_c2dlayout_get_int);
         const auto setter=p.kind==1?address(kinoko_c2dlayout_set_float):p.kind==2?address(kinoko_cact_layer_set_bool):
-            p.kind==3?(p.offset==60?address(string_face_set):address(kinoko_cact_layer_set_string)):address(string_property_set);
+            p.kind==3?(p.offset==offsetof(Text,face)?address(string_face_set):address(kinoko_cact_layer_set_string)):address(string_property_set);
         if(ok) ok=kinoko_sqrat_set_offset_closure(vm, getters, p.name, p.offset, (void *)(intptr_t)(getter)) &&
             (p.readonly || kinoko_sqrat_set_offset_closure(vm, setters, p.name, p.offset, (void *)(intptr_t)(setter)));
     }
@@ -2231,7 +2238,7 @@ extern "C" int32_t kinoko_publish_string_layout_class(SQVM* vm,void* root,int32_
 }
 
 extern "C" int32_t __fastcall kinoko_method_register_string_layout(KinokoStringLayout* layout,void*) {
-    auto* layer=layout ? kinoko::native::RecordView<kinoko::act::StringLayoutRecord>(layout).get(&kinoko::act::StringLayoutRecord::layer) : nullptr;
+    auto* layer=layout ? reinterpret_cast<kinoko::text::StringLayout*>(layout)->layer : nullptr;
     if(!layer) return E_FAIL;
     const kinoko::act::LayerStorageView storage(layer);
     const auto wrapper=storage.view(&kinoko::act::LayerStorageRecord::layout_object);
@@ -2251,12 +2258,12 @@ extern "C" int32_t __fastcall kinoko_method_register_string_layout(KinokoStringL
     using namespace kinoko::act;
     const auto aliases = LayerStorageView(layer).view(&LayerStorageRecord::association)
         .view(&LayerAssociationRecord::property_aliases);
-    const kinoko::native::RecordView<StringLayoutRecord> text(layout);
-    aliases.set(&LayerPropertyAliases::alpha, reinterpret_cast<float*>(text.bytes(&StringLayoutRecord::alpha)));
-    aliases.set(&LayerPropertyAliases::blend, reinterpret_cast<int32_t*>(text.bytes(&StringLayoutRecord::blend)));
-    aliases.set(&LayerPropertyAliases::red, reinterpret_cast<int32_t*>(text.bytes(&StringLayoutRecord::red)));
-    aliases.set(&LayerPropertyAliases::green, reinterpret_cast<int32_t*>(text.bytes(&StringLayoutRecord::green)));
-    aliases.set(&LayerPropertyAliases::blue, reinterpret_cast<int32_t*>(text.bytes(&StringLayoutRecord::blue)));
+    auto& text=*reinterpret_cast<kinoko::text::StringLayout*>(layout);
+    aliases.set(&LayerPropertyAliases::alpha, reinterpret_cast<float*>(&text.alpha));
+    aliases.set(&LayerPropertyAliases::blend, reinterpret_cast<int32_t*>(&text.blend));
+    aliases.set(&LayerPropertyAliases::red, reinterpret_cast<int32_t*>(&text.red));
+    aliases.set(&LayerPropertyAliases::green, reinterpret_cast<int32_t*>(&text.green));
+    aliases.set(&LayerPropertyAliases::blue, reinterpret_cast<int32_t*>(&text.blue));
     return 0;
 }
 
