@@ -15,13 +15,13 @@ int32_t invoke(KinokoActor *receiver, KinokoActor *other) {
     const ActorView actor(receiver);
     auto *vm = actor.get(&ActorRecord::collision_vm);
     const SQInteger base = sq_gettop(vm);
-    int32_t argument[3];
+    KinokoOwnedObjectWords argument{};
     kinoko_actor_trace_collision(receiver, 0);
-    kinoko_sqplus_object_copy_construct((void *)(intptr_t)(argument), (const void *)(ActorView(other).bytes(&ActorRecord::script_object)));
+    kinoko_sqplus_object_copy_construct(&argument, (const void *)(ActorView(other).bytes(&ActorRecord::script_object)));
     // Existing call helper consumes this copied external reference, including
     // failures. Do not add a second destructor or force stack reset on success.
     const int32_t result = kinoko_script_callback_invoke_owned(reinterpret_cast<KinokoScriptCallback *>(actor.bytes(&ActorRecord::collision_vm)),
-        reinterpret_cast<KinokoOwnedObjectWords *>(argument), argument[1], argument[2]);
+        &argument, argument.type, argument.value);
     kinoko_actor_trace_collision(receiver, 1);
     if (result < 0) {
         kinoko_trace("actor:collision-callback-failed");

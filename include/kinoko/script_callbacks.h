@@ -20,7 +20,7 @@ extern "C" {
 KinokoScriptCallback *kinoko_script_callback_construct(KinokoScriptCallback *callback, const char *name);
 void kinoko_script_callback_clear(KinokoScriptCallback *callback);
 int32_t kinoko_script_callback_invoke(KinokoScriptCallback *callback);
-int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *callback, KinokoOwnedObjectWords *temporary, int32_t type, int32_t data);
+int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *callback, KinokoOwnedObjectWords *temporary, int32_t type, intptr_t data);
 
 /* The three stack words are a SqPlus SquirrelObject: vtable, type, value.
    Ownership of that by-value argument passes to the callee. */

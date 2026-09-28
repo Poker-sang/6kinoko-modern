@@ -23,9 +23,12 @@ extern "C" int32_t kinoko_script_callback_invoke(KinokoScriptCallback *callback)
         sq_settop(vm,base);
         return result;
     }
-    return ((int32_t)(uintptr_t)kinoko_sq_pop(vm, 2));
+    // Pop returns the VM identity, not a call status. Its low 32 bits can
+    // be negative on x64; returning them clears a successful update callback.
+    kinoko_sq_pop(vm, 2);
+    return result;
 }
-extern "C" int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *callback,KinokoOwnedObjectWords *argument,int32_t type,int32_t data) {
+extern "C" int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *callback,KinokoOwnedObjectWords *argument,int32_t type,intptr_t data) {
     if (!callback || !argument) return -1;
     const CallbackView view(callback);
     auto *vm=view.get(&KinokoScriptCallback::vm);

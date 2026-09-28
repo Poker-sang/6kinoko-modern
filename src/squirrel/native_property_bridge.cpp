@@ -132,9 +132,9 @@ extern "C" intptr_t kinoko_cact_layer_get_string(SQVM* id) {
     if (!field.storage()) return 0;
     const auto value = kinoko_string_data(field.storage());
     sq_pushstring(field.vm(), value ? value : "", -1);
-    // Preserve the legacy signed stack-slot-address comparison, not an assumed
-    // SQRESULT (sq_pushstring is void). Its unusual return ABI is not changed.
-    return ((int32_t)(uintptr_t)kinoko_sq_get_up(id, -1)) >= 0;
+    // sq_pushstring is void; one value was pushed. A stack-slot address is
+    // not a status and its low-word sign must not hide the return value.
+    return 1;
 }
 extern "C" intptr_t kinoko_cact_layer_set_string(SQVM* id) {
     NativeField field(id, true, false, true);

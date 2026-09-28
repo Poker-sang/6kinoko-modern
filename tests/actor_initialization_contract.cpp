@@ -72,7 +72,7 @@ KinokoScriptCallback *kinoko_script_callback_construct(KinokoScriptCallback *out
     CHECK(!name); out->vm=kinoko_actor_default_vm();
     kinoko_sqplus_object_initialize(&out->environment); kinoko_sqplus_object_initialize(&out->closure); return out;
 }
-int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *call,KinokoOwnedObjectWords *arg,int32_t,int32_t) {
+int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *call,KinokoOwnedObjectWords *arg,int32_t,intptr_t) {
     CHECK(call->closure.value==1 && call->environment.value==3 && arg->value==2);
     CHECK(strong==1 && fixture_actor.owner && *fixture_actor.owner==self());
     // Init is allowed to replace its own saved arguments during the callback.

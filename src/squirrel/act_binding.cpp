@@ -514,7 +514,10 @@ int32_t kinoko_publish_cact_layer_class(SQVM* vm, void* root_object)
 
     class_wrapper.vm = vm;
     copy_pair(class_wrapper.value, class_pair);
-    if ((int32_t)(intptr_t)(kinoko_sqrat_bind_object_function((void *)(&class_wrapper), "AssociateResource", (const void *)(method_source), sizeof(method_source), (void *)(kinoko_cact_associate_resource), 0)) < 0) {
+    // This adapter returns a VM pointer, not SQRESULT. Never classify a
+    // successful registration using the sign of a truncated heap address.
+    if (!kinoko_sqrat_bind_object_function(&class_wrapper, "AssociateResource",
+            method_source, sizeof(method_source), reinterpret_cast<void*>(kinoko_cact_associate_resource), 0)) {
         kinoko_sqrat_release_pair(vm, class_pair);
         kinoko_sqrat_trim_stack(vm, base);
         return 0;
