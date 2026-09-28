@@ -17,6 +17,13 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
+ACT publication, canonical map layouts/clones and collision reference storage now
+compile at native pointer width. The complete reconstructed ACT source set and
+related map/collision/text consumers compile in a 47-production-file x64 check,
+plus one signature/layout assertion unit (not executed). The unreachable old
+mesh-manager adapter is removed. Full-game linking and bytecode/save/runtime
+compatibility remain pending. See [ACT/map scope](../docs/modern-x64/act-map-publication-native.md).
+
 ACT 2D/3D rendering, cloning, Blit storage and native lifetime/container access
 now compile in an isolated x64 target (11 production files, not executed).
 ACT script publication, map/collision layouts and the mesh-manager ABI remain

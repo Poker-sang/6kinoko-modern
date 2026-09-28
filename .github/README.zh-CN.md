@@ -17,6 +17,11 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
+ACT 脚本发布、统一地图布局/克隆和碰撞引用存储已按本机指针宽度编译。
+全部重构 ACT 源文件及关联地图/碰撞/文本调用方共 47 个生产文件，加 1 个签名/布局
+断言文件通过独立 x64 编译（未执行）。无生产调用的旧网格管理器适配已移除。
+完整游戏链接、字节码/存档与运行兼容仍待完成。详见 [ACT/地图范围](../docs/modern-x64/act-map-publication-native.md)。
+
 ACT 2D/3D 绘制、克隆、Blit 存储及原生生命周期/容器访问已独立通过 x64 编译
 （11 个生产文件，未执行）。ACT 脚本发布、地图/碰撞布局和网格管理器 ABI 仍待完成。
 详见 [ACT 绘制迁移范围](../docs/modern-x64/act-render-native.md)。
