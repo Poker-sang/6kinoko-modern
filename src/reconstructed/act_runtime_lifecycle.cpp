@@ -5,7 +5,7 @@
 #include "kinoko/act_resource_records.hpp"
 #include "kinoko/stage_records.hpp"
 #include "kinoko/act_runtime.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/squirrel_pair.hpp"
 #include <cstdlib>
 #include <new>
@@ -26,8 +26,6 @@ struct FindState {
 namespace {
 using namespace kinoko::act;
 using kinoko::native::RecordView;
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
 
 RecordView<RuntimeRecord> runtime(KinokoActRuntime *value) { return RecordView<RuntimeRecord>(value); }
 int32_t* object_bytes(const RecordView<RuntimeRecord>& view) {

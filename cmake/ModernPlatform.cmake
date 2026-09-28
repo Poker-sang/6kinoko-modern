@@ -170,7 +170,9 @@ if(WIN32)
         src/reconstructed/act_script_lifecycle.cpp src/reconstructed/act_script_io.cpp
         src/reconstructed/act_layer_lifecycle.cpp src/reconstructed/act_layer_clone.cpp
         src/reconstructed/act_document_io.cpp src/reconstructed/act_document_clone.cpp
-        src/reconstructed/act_layer_access.cpp src/reconstructed/act_frame_update.cpp)
+        src/reconstructed/act_layer_access.cpp src/reconstructed/act_frame_update.cpp
+        src/reconstructed/act_runtime_lifecycle.cpp src/reconstructed/act_document_association.cpp
+        src/squirrel/squirrel_source_gc.cpp src/squirrel/squirrel_value_bridge.cpp)
     target_include_directories(kinoko_binding_act_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/squirrel"

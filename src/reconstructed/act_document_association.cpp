@@ -5,12 +5,11 @@
 #include "kinoko/act_array.h"
 #include "kinoko/act_array.hpp"
 #include <algorithm>
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 
 namespace kinoko::act {
 using LayerView = kinoko::native::RecordView<LayerAssociationRecord>;
-using kinoko::legacy::load;
-using kinoko::legacy::address;
+using kinoko::memory::load;
 
 void DocumentLoadAssociations::add_layer(KinokoActLayer *layer) {
     layers_.emplace(LayerView(layer).get(&LayerAssociationRecord::layer_id), layer);
@@ -88,7 +87,7 @@ void DocumentCloneAssociations::bind(KinokoActDocument *document) {
             const auto children = view.get(&LayerAssociationRecord::children);
             auto *source = layer_at(children, child);
             const auto id = LayerView(source).get(&LayerAssociationRecord::layer_id);
-            kinoko::legacy::store(reinterpret_cast<unsigned char *>(children.begin)
+            kinoko::memory::store(reinterpret_cast<unsigned char *>(children.begin)
                 + child * sizeof(KinokoActLayer *), layers_[id]);
         }
     }
@@ -101,6 +100,6 @@ extern "C" int32_t __fastcall kinoko_act_layer_set_resource(
     const kinoko::act::LayerView view(layer);
     view.set(&kinoko::act::LayerAssociationRecord::resource, resource);
     view.set(&kinoko::act::LayerAssociationRecord::resource_id,
-        kinoko::legacy::load<kinoko::act::ResourceIdentityRecord>(resource).id);
+        kinoko::memory::load<kinoko::act::ResourceIdentityRecord>(resource).id);
     return 0;
 }

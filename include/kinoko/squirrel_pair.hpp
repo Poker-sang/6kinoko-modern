@@ -29,13 +29,13 @@ inline SQRESULT capture(HSQUIRRELVM vm, SQInteger index, int32_t* bytes) {
     return result;
 }
 // ACT's untagged instance getter must preserve the output on type mismatch.
-inline SQRESULT instance_address(HSQUIRRELVM vm, SQInteger index, int32_t* output) {
+inline SQRESULT instance_address(HSQUIRRELVM vm, SQInteger index, void** output) {
     SQUserPointer user = nullptr;
     const auto result = sq_getinstanceup(vm, index, &user, nullptr);
-    if (SQ_SUCCEEDED(result)) *output = address(user);
+    if (SQ_SUCCEEDED(result)) *output = user;
     return result;
 }
-struct InstanceInfo { int32_t class_address = 0; int32_t user_address = 0; };
+struct InstanceInfo { void* class_address = nullptr; void* user_address = nullptr; };
 inline InstanceInfo inspect_instance(HSQUIRRELVM vm, const HSQOBJECT& value) {
     InstanceInfo result;
     if (sq_type(value) != OT_INSTANCE) return result;
@@ -43,11 +43,11 @@ inline InstanceInfo inspect_instance(HSQUIRRELVM vm, const HSQOBJECT& value) {
     sq_pushobject(vm, value);
     SQUserPointer user = nullptr;
     if (SQ_SUCCEEDED(sq_getinstanceup(vm, -1, &user, nullptr)))
-        result.user_address = address(user);
+        result.user_address = user;
     if (SQ_SUCCEEDED(sq_getclass(vm, -1))) {
         HSQOBJECT type;
         sq_getstackobj(vm, -1, &type);
-        result.class_address = data_bits(type);
+        result.class_address = reinterpret_cast<void*>(data_bits(type));
     }
     return result;
 }

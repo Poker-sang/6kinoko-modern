@@ -1,7 +1,7 @@
 {
   "sqplus/SqPlus.cpp": {
     "original_sha256": "aa286c545dc3655cdb81658f830d41053cde5e2ba25ba7ee3e90eaf9cce11aac",
-    "adapted_sha256": "80ab2694261b70b2bf472cb7f6028bc0a30e4e4357b68b7c3daac65ed0e94c7b"
+    "adapted_sha256": "538a990e91ffb58293d308300371848c72881966bb34e3e8a9ab2113b98262ce"
   },
   "sqplus/SqPlusFunctionCallImpl.h": {
     "original_sha256": "b802b88fc9b0155adbd060009c2c881ccf32e45fbcccd9c0a2b3bb4b87310efe",
@@ -17,7 +17,7 @@
   },
   "sqplus/sqplus.h": {
     "original_sha256": "c284abe781250b47ce21b466c4211b60c21d3d90923b7a944ff8cd4b565aae05",
-    "adapted_sha256": "eddf8bab8c53372cf708ccd7d343bc75f66e9d53292b966ac63b81148fcc4e2e"
+    "adapted_sha256": "f214508e1fbf26f404bcc79f1df3f85e855745e364cdf02604554c96eaad3559"
   },
   "sqplus/SquirrelVM.cpp": {
     "original_sha256": "28cefe7dd5c421bd1c298c16b8d6ee3954c0016e52dafc010634b99fced38163",

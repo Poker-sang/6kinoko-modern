@@ -1,3 +1,4 @@
+#include "kinoko/legacy_memory.hpp"
 // Real layer/key query source with only its allocator and trace ports controlled.
 // Raw fixture offsets are deliberately independent of the production schemas.
 #include "kinoko/act_layer_access.h"

@@ -15,6 +15,7 @@ extern "C" void kinoko_sq_stack_remove(SQVM* vm, int32_t index) {
 #include "sqclass.h"
 
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(void *) == 4, "The reconstructed VM requires Win32.");
 static_assert(sizeof(SQObject) == 8 && sizeof(SQObjectPtr) == 8,
               "The original VM stores 8-byte type/value pairs.");
@@ -24,11 +25,7 @@ static_assert(sizeof(SQVM) == 168 && offsetof(SQVM, _lasterror) == 64 &&
 static_assert(offsetof(SQRefCounted, _uiRef) == 4,
               "The original virtual objects store their reference count at +4.");
 
-template <typename T>
-T &at(int32_t address) {
-    return *reinterpret_cast<T *>(static_cast<uintptr_t>(
-        static_cast<uint32_t>(address)));
-}
+#endif
 }
 
 extern "C" void kinoko_sq_set_error_string(SQVM* vm, SQString* interned_string) {
@@ -71,12 +68,16 @@ extern "C" void kinoko_sq_pair_destroy(SQObjectPtr* object) {
 // These destroy members and unlink the GC node, but do not free the outer
 // allocation. Its existing scalar-deleting entry owns that final operation.
 extern "C" void kinoko_sq_closure_destroy(SQClosure* closure) {
+#if INTPTR_MAX == INT32_MAX
     static_assert(sizeof(SQClosure) == 64 && offsetof(SQClosure, _env) == 24);
+#endif
     (*closure).SQClosure::~SQClosure();
 }
 
 extern "C" void kinoko_sq_class_destroy(SQClass* klass) {
+#if INTPTR_MAX == INT32_MAX
     static_assert(sizeof(SQClass) == 92 && offsetof(SQClass, _attributes) == 68);
+#endif
     (*klass).SQClass::~SQClass();
 }
 

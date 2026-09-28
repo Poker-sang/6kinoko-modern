@@ -11,6 +11,7 @@
 #include "squserdata.h"
 
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(SQSharedState) == 180);
 static_assert(sizeof(SQVM) == 168 && sizeof(SQArray) == 36);
 static_assert(offsetof(SQCollectable, _uiRef) == 4);
@@ -18,6 +19,7 @@ static_assert(offsetof(SQCollectable, _next) == 12);
 static_assert(offsetof(SQCollectable, _prev) == 16);
 static_assert(offsetof(SQCollectable, _sharedstate) == 20);
 static_assert(offsetof(SQSharedState, _gc_chain) == 68);
+#endif
 }
 
 // MSVC x86 __fastcall receives this in ECX; unused EDX replaces no stack

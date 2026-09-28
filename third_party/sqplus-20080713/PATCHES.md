@@ -120,3 +120,16 @@ static/constant addresses, declaring-base selection, optional smart-pointer
 unwrapping and field offsets execute in SqPlus.cpp. The host copies its packed
 metadata into an aligned VarRef and requests null-native rejection before offset
 arithmetic; the standalone caller retains its original unchecked behavior.
+
+
+## Native-width type identity keys (modern fork)
+
+VarRef's offset/address/constant slot is mirrored by intptr_t in the host;
+instance/value descriptor identities stay native pointers. The source VarRef
+constructor, PopulateAncestryWithType and declaring-base lookup share
+`kinoko/squirrel_type_key.hpp`. x86 keeps signed 32-bit integer table keys and
+raw-set publication. x64 uses userpointer keys so two descriptors with identical
+low words cannot alias. This affects internal __SqTypes/__ot tables only, not
+serialized ACT IDs or game fields. Lookup preserves stack height. The standalone
+GetTypeName overload remains excluded by SQPLUS_HOST_OBJECT_ONLY; its unused
+historical integer-key implementation is not an x64 host API.

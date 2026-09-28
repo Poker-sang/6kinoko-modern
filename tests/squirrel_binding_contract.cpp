@@ -92,7 +92,7 @@ void run_script(HSQUIRRELVM vm, const char* code) {
 }
 void make_class(HSQUIRRELVM vm, Object& output, const char* name, const char* parent = nullptr) {
     const auto top = sq_gettop(vm);
-    require((int32_t)(intptr_t)(kinoko_sqplus_create_actor_class(pointer<int32_t>(output.location()), (struct SQVM *)(vm), (const char *)(name), (const char *)(parent))) == output.location(), "class returns output");
+    require((int32_t)(intptr_t)(kinoko_sqplus_create_actor_class(pointer<int32_t>(address(output.data())), (struct SQVM *)(vm), (const char *)(name), (const char *)(parent))) == address(output.data()), "class returns output");
     require(output.view().value()._type == OT_CLASS, "class created");
     require(sq_gettop(vm) == top, "class creation restores stack");
 }
@@ -105,7 +105,7 @@ void make_instance(HSQUIRRELVM vm, Object& klass, Object& output, void* native) 
 }
 void install_method(HSQUIRRELVM vm, Object& klass, const char* name, void* method, void* wrapper) {
     const auto top = sq_gettop(vm);
-    kinoko_sqplus_register_actor_method((struct SQVM *)(vm), pointer<int32_t>(klass.location()), name, (void *)(method), (void *)(wrapper), 0);
+    kinoko_sqplus_register_actor_method((struct SQVM *)(vm), pointer<int32_t>(address(klass.data())), name, (void *)(method), (void *)(wrapper), 0);
     require(sq_gettop(vm) == top, "method registration preserves stack");
 }
 void publish(HSQUIRRELVM vm, const char* name, Object& value) {
@@ -136,7 +136,7 @@ void class_contract(HSQUIRRELVM vm) {
     require(get_slot(vm, derived.view(), "__ca", child_ca.view()), "child ancestor array");
     require(data_bits(base_ca.view().value()) == data_bits(child_ca.view().value()), "reuse inherited __ca");
     base_ca.view().push(vm); require(sq_getsize(vm, -1) == 2, "append base and child once"); sq_pop(vm, 1);
-    require(kinoko_sqplus_create_class((struct SQVM *)(vm), (void *)(intptr_t)(failed.location()), kinoko_native_binding_type(-1), (const char *)("MissingParentChild"), (const char *)("MissingParent")) == 0, "missing base fails");
+    require(kinoko_sqplus_create_class((struct SQVM *)(vm), (void *)(intptr_t)(address(failed.data())), kinoko_native_binding_type(-1), (const char *)("MissingParentChild"), (const char *)("MissingParent")) == 0, "missing base fails");
     require(failed.view().value()._type == OT_NULL && sq_gettop(vm) == top, "failed class leaves null output and stack");
 
     std::array<unsigned char, 50> state{}; state.fill(0xA5);
@@ -144,32 +144,32 @@ void class_contract(HSQUIRRELVM vm) {
     require(state.front() == 0xA5 && state.back() == 0xA5, "48-byte binding canaries");
     require(load<int32_t>(state.data() + 1) == address(vm), "binding vm layout");
     for (int offset : {8, 24, 36}) ObjectView(state.data() + 1 + offset).release(vm);
-    require(kinoko_sqplus_define_actor_class(pointer<int32_t>(failed.location()), "ActorBinding", 0) == pointer<int32_t>(failed.location()), "actor class wrapper");
+    require(kinoko_sqplus_define_actor_class(pointer<int32_t>(address(failed.data())), "ActorBinding", 0) == pointer<int32_t>(address(failed.data())), "actor class wrapper");
     require(failed.view().value()._type == OT_CLASS, "actor binding assignment");
 
     new_table(vm, table.view());
-    kinoko_sqplus_bind_object_function(pointer<int32_t>(closure.location()), (void *)(intptr_t)(table.location()), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("default"), nullptr);
+    kinoko_sqplus_bind_object_function(pointer<int32_t>(address(closure.data())), (void *)(intptr_t)(address(table.data())), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("default"), nullptr);
     require(closure.view().value()._type == OT_NATIVECLOSURE, "capture created closure");
     closure.view().push(vm); table.view().push(vm);
     require(SQ_SUCCEEDED(kinoko_sq_call((SQVM*)(uintptr_t)(address(vm)), 1, 0, 0)), "default receiver mask accepts table"); sq_pop(vm, 1);
     Object wildcard(vm), typed(vm), overflow(vm);
-    kinoko_sqplus_bind_object_function(pointer<int32_t>(wildcard.location()), (void *)(intptr_t)(table.location()), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("wild"), const_cast<char*>("*"));
+    kinoko_sqplus_bind_object_function(pointer<int32_t>(address(wildcard.data())), (void *)(intptr_t)(address(table.data())), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("wild"), const_cast<char*>("*"));
     wildcard.view().push(vm); sq_pushinteger(vm, 1); sq_pushinteger(vm, 2);
     require(SQ_SUCCEEDED(kinoko_sq_call((SQVM*)(uintptr_t)(address(vm)), 2, 0, 0)), "wildcard omits all parameter checks"); sq_pop(vm, 1);
-    kinoko_sqplus_bind_object_function(pointer<int32_t>(typed.location()), (void *)(intptr_t)(table.location()), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("typed"), const_cast<char*>("i"));
+    kinoko_sqplus_bind_object_function(pointer<int32_t>(address(typed.data())), (void *)(intptr_t)(address(table.data())), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("typed"), const_cast<char*>("i"));
     typed.view().push(vm); table.view().push(vm); sq_pushinteger(vm, 7);
     require(SQ_SUCCEEDED(kinoko_sq_call((SQVM*)(uintptr_t)(address(vm)), 2, 0, 0)), "typed closure accepts integer"); sq_pop(vm, 1);
     { StackTop call(vm); typed.view().push(vm); table.view().push(vm); sq_pushfloat(vm, 7);
       require(SQ_FAILED(kinoko_sq_call((SQVM*)(uintptr_t)(address(vm)), 2, 0, 0)), "typed closure rejects float"); }
     const std::string longmask(100, 'i');
-    require((int32_t)(intptr_t)(kinoko_sqplus_bind_object_function(pointer<int32_t>(overflow.location()), (void *)(intptr_t)(table.location()), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("overflow"), const_cast<char*>(longmask.c_str()))) == 0, "source rejects oversized parameter mask");
+    require((int32_t)(intptr_t)(kinoko_sqplus_bind_object_function(pointer<int32_t>(address(overflow.data())), (void *)(intptr_t)(address(table.data())), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("overflow"), const_cast<char*>(longmask.c_str()))) == 0, "source rejects oversized parameter mask");
     require(overflow.view().value()._type == OT_NULL, "failed registration releases captured closure");
     sq_getlasterror(vm);
     require(text(vm) == "CreateFunction: typeMask string too long.", "original SquirrelError text preserved");
     sq_pop(vm, 1);
     require(!has_slot(vm, table.view(), "overflow"), "failed function is not published");
     Object string(vm);
-    require((int32_t)(intptr_t)(kinoko_sqplus_new_string((void *)(intptr_t)(string.location()), (const char *)("bound string"))) == string.location(), "string object return");
+    require((int32_t)(intptr_t)(kinoko_sqplus_new_string((void *)(intptr_t)(address(string.data())), (const char *)("bound string"))) == address(string.data()), "string object return");
     string.view().push(vm); require(text(vm) == "bound string", "string object value"); sq_pop(vm, 1);
     Object delegate(vm), published(vm);
     new_table(vm, delegate.view());
@@ -178,8 +178,8 @@ void class_contract(HSQUIRRELVM vm) {
     require(SQ_SUCCEEDED(sq_newslot(vm, -3, SQFalse)), "install real publication callback");
     sq_pop(vm, 1); table.view().push(vm); delegate.view().push(vm);
     require(SQ_SUCCEEDED(sq_setdelegate(vm, -2)), "registration table delegate"); sq_pop(vm, 1);
-    publishing_output = published.location(); saw_published_output = false;
-    kinoko_sqplus_bind_object_function(pointer<int32_t>(published.location()), (void *)(intptr_t)(table.location()), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("published"), nullptr);
+    publishing_output = address(published.data()); saw_published_output = false;
+    kinoko_sqplus_bind_object_function(pointer<int32_t>(address(published.data())), (void *)(intptr_t)(address(table.data())), (void *)(reinterpret_cast<void*>(&noop)), const_cast<char*>("published"), nullptr);
     publishing_output = 0;
     require(saw_published_output, "legacy output captured before _newslot publication callback");
     require(sq_gettop(vm) == top, "all class helpers balanced");
@@ -189,10 +189,10 @@ void lookup_contract(HSQUIRRELVM vm) {
     StackTop stack(vm);
     Object table(vm); new_table(vm, table.view());
     const std::string longname(300, 'n');
-    const auto data = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(table.location()), (const char *)(longname.c_str())));
+    const auto data = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(table.data())), (const char *)(longname.c_str())));
     require(data != 0, "allocate variable metadata");
-    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(table.location()), (const char *)(longname.c_str()))) == data, "reuse metadata identity");
-    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(table.location()), (const char *)(longname.substr(0, 255).c_str()))) == data, "prefix truncates at 255 characters");
+    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(table.data())), (const char *)(longname.c_str()))) == data, "reuse metadata identity");
+    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(table.data())), (const char *)(longname.substr(0, 255).c_str()))) == data, "prefix truncates at 255 characters");
     const Variable info{17, 0, 0, 0, 4, Constant}; store(data, info);
     table.view().push(vm); sq_pushstring(vm, longname.c_str(), -1);
     int32_t context[2] = {static_cast<int32_t>(sq_gettop(vm)), address(vm)};
@@ -211,10 +211,10 @@ void lookup_contract(HSQUIRRELVM vm) {
     sq_settop(vm, 0);
     table.view().push(vm); sq_pushstring(vm, "_vshort", -1); sq_newuserdata(vm, 19);
     require(SQ_SUCCEEDED(sq_rawset(vm, -3)), "install short metadata"); sq_pop(vm, 1);
-    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(table.location()), (const char *)("short"))) == 0, "reject undersized existing metadata");
+    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(table.data())), (const char *)("short"))) == 0, "reject undersized existing metadata");
     table.view().push(vm); sq_pushstring(vm, "_vwrong", -1); sq_pushinteger(vm, 55);
     require(SQ_SUCCEEDED(sq_rawset(vm, -3)), "install wrong-type metadata"); sq_pop(vm, 1);
-    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(table.location()), (const char *)("wrong"))) == 0, "never replace wrong-type metadata");
+    require((int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(table.data())), (const char *)("wrong"))) == 0, "never replace wrong-type metadata");
     for (const char* key : {"short", "wrong"}) {
         table.view().push(vm); sq_pushstring(vm, key, -1);
         context[0] = 2;
@@ -309,9 +309,9 @@ void instance_contract(HSQUIRRELVM vm) {
     Object klass(vm), instance(vm);
     make_class(vm, klass, "PropertyActor");
     auto* type = kinoko_native_binding_type(-1);
-    kinoko_sqplus_bind_integer(pointer<int32_t>(klass.location()), type, offsetof(Native, value), const_cast<char*>("value"), 0);
-    kinoko_sqplus_bind_float(pointer<int32_t>(klass.location()), type, offsetof(Native, x), const_cast<char*>("x"), 0);
-    kinoko_sqplus_bind_boolean(pointer<int32_t>(klass.location()), type, offsetof(Native, enabled), const_cast<char*>("enabled"), 0);
+    kinoko_sqplus_bind_integer(pointer<int32_t>(address(klass.data())), type, offsetof(Native, value), const_cast<char*>("value"), 0);
+    kinoko_sqplus_bind_float(pointer<int32_t>(address(klass.data())), type, offsetof(Native, x), const_cast<char*>("x"), 0);
+    kinoko_sqplus_bind_boolean(pointer<int32_t>(address(klass.data())), type, offsetof(Native, enabled), const_cast<char*>("enabled"), 0);
     Native native;
     make_instance(vm, klass, instance, &native); publish(vm, "propertyActor", instance);
     run_script(vm, R"nut(
@@ -328,7 +328,7 @@ if(propertyActor.value != 123 || propertyActor.x != 7.25 || propertyActor.enable
     types.view().push(vm); sq_pushinteger(vm, address(kinoko_native_binding_type(2)));
     require(SQ_SUCCEEDED(sq_rawget(vm, -2)) && text(vm) == "float", "descriptor names keyed by descriptor identity"); sq_settop(vm, 0);
     // Access to a static field is independent of the instance native pointer.
-    const auto metadata = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(klass.location()), (const char *)("value")));
+    const auto metadata = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(klass.data())), (const char *)("value")));
     auto info = load<Variable>(metadata); info.flags = Static; info.offset = address(&native.value); store(metadata, info);
     instance.view().push(vm); sq_setinstanceup(vm, -1, nullptr); sq_pushstring(vm, "value", -1);
     require(kinoko_sqplus_instance_get((struct SQVM *)(vm)) == 1 && integer(vm) == 123, "static property with null native instance"); sq_settop(vm, 0);
@@ -432,7 +432,7 @@ void table_callback_contract(HSQUIRRELVM vm) {
     StackTop stack(vm);
     Object table(vm); new_table(vm, table.view());
     int32_t score = 73;
-    const auto metadata = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(table.location()), (const char *)("score")));
+    const auto metadata = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(table.data())), (const char *)("score")));
     require(metadata != 0, "table callback metadata");
     store(metadata, Variable{address(&score), 0, 0, 0, 4, 0});
     sq_newclosure(vm, reinterpret_cast<SQFUNCTION>(&kinoko_sqplus_table_get), 0);
@@ -480,7 +480,7 @@ void mapped_property_contract(HSQUIRRELVM vm) {
     Object klass(vm), instance(vm), mapping(vm);
     make_class(vm, klass, "MappedPropertyActor");
     auto* declaring_type = kinoko_native_binding_type(-1);
-    kinoko_sqplus_bind_integer(pointer<int32_t>(klass.location()), declaring_type, 4,
+    kinoko_sqplus_bind_integer(pointer<int32_t>(address(klass.data())), declaring_type, 4,
         const_cast<char*>("value"), 0);
     static int foreign_type;
     klass.view().push(vm);
@@ -516,7 +516,7 @@ void mapped_property_contract(HSQUIRRELVM vm) {
     require(sq_gettop(vm) == 2, "failed base resolution preserves stack");
     sq_getlasterror(vm); require(text(vm) == "Invalid Instance Type", "source type error retained");
     sq_settop(vm, 0);
-    const auto info_address = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(klass.location()), (const char *)("value")));
+    const auto info_address = (int32_t)(intptr_t)(kinoko_sqplus_create_variable((void *)(intptr_t)(address(klass.data())), (const char *)("value")));
     auto info = load<Variable>(info_address); info.flags = Static; info.offset = address(mapped + 1);
     store(info_address, info);
     instance.view().push(vm); sq_pushstring(vm, "value", -1);
@@ -531,7 +531,7 @@ void child_binding_contract(HSQUIRRELVM vm) {
     StackTop stack(vm);
     Object klass(vm), instance(vm);
     make_class(vm, klass, "ThreadBoundActor");
-    kinoko_sqplus_bind_integer(pointer<int32_t>(klass.location()), kinoko_native_binding_type(-1),
+    kinoko_sqplus_bind_integer(pointer<int32_t>(address(klass.data())), kinoko_native_binding_type(-1),
         0, const_cast<char*>("score"), 0);
     int32_t native = 22;
     make_instance(vm, klass, instance, &native);

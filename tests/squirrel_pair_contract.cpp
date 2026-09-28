@@ -21,7 +21,7 @@ void contract(HSQUIRRELVM vm) {
     HSQOBJECT class_value; sq_getstackobj(vm, -1, &class_value);
     require(SQ_SUCCEEDED(sq_createinstance(vm, -1)), "source instance");
     int32_t user = -1;
-    require(SQ_SUCCEEDED(pair::instance_address(vm, -1, &user)) && user == 0, "null native pointer");
+    require(SQ_SUCCEEDED(pair::instance_address(vm, -1, reinterpret_cast<void**>(&user))) && user == 0, "null native pointer");
     sq_setinstanceup(vm, -1, &released); sq_setreleasehook(vm, -1, release_probe);
     require(SQ_SUCCEEDED(pair::capture(vm, -1, bytes)), "capture does not type-pun legacy storage");
     pair::retain(vm, bytes); pair::retain(vm, bytes);
@@ -29,7 +29,7 @@ void contract(HSQUIRRELVM vm) {
     const auto top = sq_gettop(vm);
     for (unsigned i = 0; i < 32; ++i) {
         const auto info = pair::inspect_instance(vm, pair::read(bytes));
-        require(info.class_address == data_bits(class_value) && info.user_address == address(&released), "source class and user diagnostics");
+        require(info.class_address == reinterpret_cast<void*>(data_bits(class_value)) && info.user_address == &released, "source class and user diagnostics");
         require(sq_gettop(vm) == top, "diagnostics leave the source VM stack balanced");
     }
     const auto saved = pair::read(bytes);
@@ -41,7 +41,7 @@ void contract(HSQUIRRELVM vm) {
     require(SQ_SUCCEEDED(sq_getweakrefval(vm, -1)) && sq_gettype(vm, -1) == OT_NULL, "weak reference invalidated by real source VM");
     sq_settop(vm, 0);
     sq_pushinteger(vm, 42); user = 123;
-    require(SQ_FAILED(pair::instance_address(vm, -1, &user)) && user == 123, "type mismatch preserves caller output");
+    require(SQ_FAILED(pair::instance_address(vm, -1, reinterpret_cast<void**>(&user))) && user == 123, "type mismatch preserves caller output");
     sq_reseterror(vm);
     pair::capture(vm, -1, bytes); pair::retain(vm, bytes); pair::release(vm, bytes);
     const auto non_instance = pair::inspect_instance(vm, pair::read(bytes));
