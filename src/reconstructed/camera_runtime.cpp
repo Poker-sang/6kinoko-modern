@@ -1,7 +1,7 @@
+#include "kinoko/owned_script_object.h"
 #include "kinoko/camera_records.hpp"
-#include "kinoko/legacy_memory.hpp"
 extern "C" {
-extern int32_t kinoko_camera_class_storage[3],kinoko_script_root_storage[3];
+extern int32_t kinoko_camera_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)],kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 void* kinoko_sqplus_object_new_instance(void*, const void*);
 void * kinoko_sqplus_object_assign(void * , const void * );
 void*  kinoko_sqplus_object_destroy(void *);
@@ -11,17 +11,16 @@ void kinoko_trace_i32(const char *,int32_t);
 }
 namespace {
 using namespace kinoko::camera;
-using kinoko::legacy::address;
 inline auto camera_instance_class = kinoko_camera_class_storage;
 inline auto camera_root_object = kinoko_script_root_storage;
 }
 extern "C" int32_t kinoko_camera_initialize(KinokoCamera *camera) {
     if (!camera) return 0;
     const View state(camera);
-    int32_t temporary[3]{};
-    auto* object=kinoko_sqplus_object_new_instance(temporary, camera_instance_class);
+    KinokoOwnedObjectWords temporary{};
+    auto* object=kinoko_sqplus_object_new_instance(&temporary, camera_instance_class);
     kinoko_sqplus_object_assign((void *)(state.bytes(&Record::script_object)), object);
-    (int32_t)(intptr_t)(kinoko_sqplus_object_destroy((void *)(temporary)));
+    (int32_t)(intptr_t)(kinoko_sqplus_object_destroy((void *)(&temporary)));
     kinoko_sqplus_object_set_instance((void *)(state.bytes(&Record::script_object)), (void *)(camera));
     const auto result=kinoko_sqplus_object_raw_set_name((void *)(camera_root_object), "camera", (const void *)(camera));
     // 466270 resets only these fields. Width/height and callback remain intact;

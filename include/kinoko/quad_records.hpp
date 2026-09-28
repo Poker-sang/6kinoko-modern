@@ -15,6 +15,10 @@ struct QuadRecord {
     float source_u_extent, source_v_extent;
 };
 using QuadView = native::RecordView<QuadRecord>;
+static_assert(offsetof(QuadRecord,texture)==sizeof(void*));
+static_assert(offsetof(QuadRecord,vertices)==sizeof(void*)+sizeof(int32_t));
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(QuadRecord) == 232);
 static_assert(offsetof(QuadRecord, positions) == 176);
+#endif
 }

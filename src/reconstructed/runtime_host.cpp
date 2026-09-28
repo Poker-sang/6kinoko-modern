@@ -1,3 +1,4 @@
+#include "kinoko/owned_script_object.h"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/act_layer_lifecycle.h"
 // Windows x86 runtime host. Original evidence: src/decompiled/6kinoko.exe.c.
@@ -17,7 +18,7 @@ namespace {
 // not guesses at the original complete C++ class sizes. All storage is trivial.
 template<class Record, size_t Extent> struct alignas(8) HostStorage {
     Record record;
-    std::array<unsigned char, Extent - sizeof(Record)> reserved;
+    std::array<unsigned char, (Extent > sizeof(Record) ? Extent - sizeof(Record) : 0)> reserved;
 };
 HostStorage<kinoko::actor::ManagerPrefix, 0x200> actor_state{};
 HostStorage<kinoko::map::ManagerRecord, 0x200> map_state{};
@@ -27,7 +28,8 @@ HostStorage<kinoko::collision::StateRecord, 120> collision_state{};
 KinokoScriptCallback global_callback{};
 static_assert(sizeof(actor_state) == 0x200 && sizeof(map_state) == 0x200);
 static_assert(sizeof(camera_state) == 0x200 && sizeof(input_state) == 0x600);
-static_assert(sizeof(collision_state) == 120 && sizeof(global_callback) == 28);
+static_assert(sizeof(collision_state) >= sizeof(kinoko::collision::StateRecord));
+static_assert(sizeof(global_callback)==sizeof(void*)+2*sizeof(KinokoOwnedObjectWords));
 }
 
 
@@ -84,17 +86,17 @@ static_assert(offsetof(KinokoScriptExtension, capacity) == offsetof(kinoko::lega
 
 char kinoko_sqrat_trace_enabled = 1;
 
-int32_t kinoko_actor_user_key_storage[3] = { 0, 0, 0 };
+int32_t kinoko_actor_user_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
-int32_t kinoko_actor_step_key_storage[3] = { 0, 0, 0 };
+int32_t kinoko_actor_step_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
-int32_t kinoko_actor_class_storage[3] = { 0, 0, 0 };
+int32_t kinoko_actor_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
 void* kinoko_stage_list_slot = 0;
 
 int32_t kinoko_stage_count = 0;
 
-int32_t kinoko_camera_class_storage[3] = { 0, 0, 0 };
+int32_t kinoko_camera_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
 KinokoActorManager* kinoko_render_layer_owner_slot = 0;
 
@@ -130,7 +132,7 @@ KinokoGraphics kinoko_graphics = {0};
 
 KinokoCriticalSection kinoko_graphics_lock = { 0 };
 
-int32_t kinoko_script_root_storage[3] = { 0, 0, 0 };
+int32_t kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
 char * kinoko_game_window_slot;
 

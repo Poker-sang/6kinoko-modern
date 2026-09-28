@@ -1,6 +1,7 @@
 #include "kinoko/squirrel_binding_detail.hpp"
 #include "kinoko/squirrel_native_arguments.h"
 #include "kinoko/method_entry.hpp"
+#include "kinoko/owned_script_object.h"
 
 namespace {
 using namespace kinoko::script;
@@ -142,12 +143,12 @@ extern "C" int32_t kinoko_sqplus_object_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     if (sq_gettop(static_cast<SQVM *>(vm)) < 3) return argument_error(static_cast<SQVM *>(vm));
-    int32_t arguments[3]{};
-    if (!kinoko_sqplus_argument_object_at(arguments, 0, vm, 2)) return argument_error(static_cast<SQVM *>(vm));
-    // This owning 12-byte value is passed by value. The original native
+    KinokoOwnedObjectWords argument{};
+    if (!kinoko_sqplus_argument_object_at(reinterpret_cast<int32_t*>(&argument), 0, vm, 2)) return argument_error(static_cast<SQVM *>(vm));
+    // This owning native-width value is passed by value. The original native
     // callee consumes it; a caller-side RAII release would be a double release.
     kinoko::method::invoke<int32_t>(receiver(method), method.function,
-        arguments[0], arguments[1], arguments[2]);
+        argument);
     return 0;
 }
 extern "C" int32_t kinoko_sqplus_integer_method(struct SQVM * vm) {

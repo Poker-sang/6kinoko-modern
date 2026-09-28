@@ -1,3 +1,4 @@
+#include "kinoko/owned_script_object.h"
 #pragma once
 // Private Win32 host/fixture boundary; public game ports remain in kinoko/*.h.
 #include "kinoko/input_device.h"
@@ -694,17 +695,17 @@ extern int32_t kinoko_ime_cursor;
 
 extern char kinoko_sqrat_trace_enabled;
 
-extern int32_t kinoko_actor_user_key_storage[3];
+extern int32_t kinoko_actor_user_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
-extern int32_t kinoko_actor_step_key_storage[3];
+extern int32_t kinoko_actor_step_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
-extern int32_t kinoko_actor_class_storage[3];
+extern int32_t kinoko_actor_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
 extern void* kinoko_stage_list_slot;
 
 extern int32_t kinoko_stage_count;
 
-extern int32_t kinoko_camera_class_storage[3];
+extern int32_t kinoko_camera_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
 extern KinokoActorManager* kinoko_render_layer_owner_slot;
 
@@ -738,7 +739,7 @@ extern KinokoGraphics kinoko_graphics;
 
 extern KinokoCriticalSection kinoko_graphics_lock;
 
-extern int32_t kinoko_script_root_storage[3];
+extern int32_t kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
 extern char * kinoko_game_window_slot;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "kinoko/integer_map.h"
+#include "kinoko/owned_script_object.h"
 #include "kinoko/integer_vector.h"
 #include "kinoko/native_record_view.hpp"
 #include "kinoko/native_control.hpp"
@@ -19,7 +20,7 @@ struct KinokoAnimationFrame;
 struct SQVM;
 
 namespace kinoko::actor {
-using ScriptStorage = std::array<unsigned char, 12>; // external refs: ObjectView
+using ScriptStorage = std::array<unsigned char, sizeof(KinokoOwnedObjectWords)>; // external refs: ObjectView
 using Bounds = kinoko::camera::Bounds;
 struct InitialData {
     std::array<unsigned char, 12> unknown;
@@ -45,7 +46,7 @@ struct ActorRecord {
     native::ControlRecord *step_control; // weak native control; never owns the Actor
     std::uint8_t active;
     std::array<unsigned char, 3> unknown41;
-    ScriptStorage script_object, initial_function, initial_argument; // saved Init inputs
+    alignas(void*) ScriptStorage script_object, initial_function, initial_argument; // saved Init inputs
     float spawn_x, spawn_y, spawn_z;
     SQVM *update_vm;
     ScriptStorage update_environment, update_function;
@@ -133,7 +134,7 @@ using CameraBoundsRecord = kinoko::camera::Record;
 // Only the verified prefix of the manager is described, not a new allocation
 // size. Index nodes and animation lists have distinct ownership semantics.
 struct AnimationIndex { uint32_t policy; KinokoAnimationLookup* owner; int32_t count; };
-static_assert(sizeof(AnimationIndex) == 12);
+static_assert(offsetof(AnimationIndex,owner) % alignof(void*) == 0);
 struct ManagerPrefix {
     const void *methods;
     KinokoActorPool *pool;
@@ -163,84 +164,20 @@ inline constexpr std::array<ScriptStorage ActorRecord::*, 7> script_members{
     &ActorRecord::initial_argument, &ActorRecord::update_environment,
     &ActorRecord::update_function, &ActorRecord::collision_environment, &ActorRecord::collision_function};
 
-static_assert(sizeof(InitialData) == 48 && sizeof(ActorRecord) == 0x220);
-static_assert(sizeof(ControlRecord) == 16 && sizeof(ControlTable) == 12);
-static_assert(sizeof(AnimationRecord) == 48 && sizeof(FrameRecord) == 248);
-static_assert(sizeof(FrameAppearance) == 28 && offsetof(FrameAppearance, color) == 4);
-static_assert(offsetof(FrameRecord, vertices) == 8 && offsetof(FrameRecord, base_positions) == 128);
-static_assert(offsetof(FrameRecord, positions) == 176 && offsetof(FrameRecord, pivot_x) == 236);
-static_assert(offsetof(CameraBoundsRecord, x) == 40 && offsetof(CameraBoundsRecord, bounds) == 72);
-static_assert(sizeof(ManagerPrefix) == 136);
-static_assert(sizeof(RenderLayerRecord) == 20 && offsetof(RenderLayerRecord, begin) == 12);
-static_assert(offsetof(ManagerPrefix, pool) == 4 && offsetof(ManagerPrefix, owner_list) == 8);
-static_assert(offsetof(ManagerPrefix, render_layers) == 20 && offsetof(ManagerPrefix, update_mask) == 64);
-static_assert(offsetof(ActorRecord, pool_handle) == 12 && offsetof(ActorRecord, priority_entry) == 16);
-static_assert(offsetof(ActorRecord, spawn_x) == 80 && offsetof(ActorRecord, update_vm) == 92);
-static_assert(offsetof(ActorRecord, rotation) == 164 && offsetof(ActorRecord, blend) == 196);
-#define KINOKO_ACTOR_FIELD(T, M, O) static_assert(offsetof(T, M) == O)
-KINOKO_ACTOR_FIELD(ActorRecord, owner_references, 8);
-KINOKO_ACTOR_FIELD(ActorRecord, registration_flag20, 20);
-KINOKO_ACTOR_FIELD(ActorRecord, active, 40);
-KINOKO_ACTOR_FIELD(ActorRecord, update_group, 232);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_group, 312);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_mask, 316);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_index, 336);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_scan_cache, 480);
-KINOKO_ACTOR_FIELD(ActorRecord, release_pending, 22);
-KINOKO_ACTOR_FIELD(ActorRecord, owner, 24);
-KINOKO_ACTOR_FIELD(ActorRecord, owner_control, 28);
-KINOKO_ACTOR_FIELD(ActorRecord, step, 32);
-KINOKO_ACTOR_FIELD(ActorRecord, step_control, 36);
-KINOKO_ACTOR_FIELD(ActorRecord, script_object, 44);
-KINOKO_ACTOR_FIELD(ActorRecord, initial_function, 56);
-KINOKO_ACTOR_FIELD(ActorRecord, initial_argument, 68);
-KINOKO_ACTOR_FIELD(ActorRecord, update_environment, 96);
-KINOKO_ACTOR_FIELD(ActorRecord, update_function, 108);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_environment, 124);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_function, 136);
-KINOKO_ACTOR_FIELD(ActorRecord, manager, 148);
-KINOKO_ACTOR_FIELD(ActorRecord, sprite_frame, 152);
-KINOKO_ACTOR_FIELD(ActorRecord, scale, 168);
-KINOKO_ACTOR_FIELD(ActorRecord, animation, 200);
-KINOKO_ACTOR_FIELD(ActorRecord, frame_time, 216);
-KINOKO_ACTOR_FIELD(ActorRecord, priority, 228);
-KINOKO_ACTOR_FIELD(ActorRecord, x, 240);
-KINOKO_ACTOR_FIELD(ActorRecord, previous_x, 248);
-KINOKO_ACTOR_FIELD(ActorRecord, previous_y, 252);
-KINOKO_ACTOR_FIELD(ActorRecord, velocity_x, 256);
-KINOKO_ACTOR_FIELD(ActorRecord, parent_velocity_y, 268);
-KINOKO_ACTOR_FIELD(ActorRecord, pitch, 276);
-KINOKO_ACTOR_FIELD(ActorRecord, hits, 284);
-KINOKO_ACTOR_FIELD(ActorRecord, crushed, 300);
-KINOKO_ACTOR_FIELD(ActorRecord, free_width, 304);
-KINOKO_ACTOR_FIELD(ActorRecord, free_height, 308);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_vm, 120);
-KINOKO_ACTOR_FIELD(ActorRecord, direction, 272);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_chip, 328);
-KINOKO_ACTOR_FIELD(ActorRecord, collision_placement, 332);
-KINOKO_ACTOR_FIELD(ActorRecord, inline_slots, 340);
-KINOKO_ACTOR_FIELD(ActorRecord, bounds_anchor_x, 352);
-KINOKO_ACTOR_FIELD(ActorRecord, initial, 376);
-KINOKO_ACTOR_FIELD(InitialData, width, 12);
-KINOKO_ACTOR_FIELD(InitialData, chip_flags, 16);
-KINOKO_ACTOR_FIELD(InitialData, chip_bound_type, 34);
-KINOKO_ACTOR_FIELD(ActorRecord, local_bounds, 424);
-KINOKO_ACTOR_FIELD(ActorRecord, world_bounds, 440);
-KINOKO_ACTOR_FIELD(ActorRecord, chip_cache_storage, 512);
-KINOKO_ACTOR_FIELD(AnimationRecord, loops, 24);
-KINOKO_ACTOR_FIELD(AnimationRecord, frames_begin, 8);
-KINOKO_ACTOR_FIELD(AnimationRecord, frames_capacity, 16);
-KINOKO_ACTOR_FIELD(AnimationRecord, duration_total, 44);
-KINOKO_ACTOR_FIELD(AnimationRecord, left, 28);
-KINOKO_ACTOR_FIELD(FrameRecord, duration, 240);
-KINOKO_ACTOR_FIELD(FrameRecord, owned_payload, 244);
-KINOKO_ACTOR_FIELD(ManagerPrefix, animation_lookup, 36);
-KINOKO_ACTOR_FIELD(ManagerPrefix, animations, 52);
-KINOKO_ACTOR_FIELD(ManagerPrefix, textures, 68);
-KINOKO_ACTOR_FIELD(ManagerPrefix, actors, 84);
-KINOKO_ACTOR_FIELD(ManagerPrefix, iteration, 100);
-KINOKO_ACTOR_FIELD(ManagerPrefix, iteration_count, 116);
-KINOKO_ACTOR_FIELD(ManagerPrefix, cleanup_pending, 120);
-KINOKO_ACTOR_FIELD(ManagerPrefix, callback_candidates, 124);
-#undef KINOKO_ACTOR_FIELD
+static_assert(sizeof(InitialData)==48 && sizeof(FrameAppearance)==28);
+static_assert(offsetof(InitialData,chip_flags)==16 && offsetof(InitialData,chip_bound_type)==34);
+static_assert(sizeof(ScriptStorage)==sizeof(KinokoOwnedObjectWords));
+static_assert(offsetof(ActorRecord,update_environment)==offsetof(ActorRecord,update_vm)+sizeof(void*));
+static_assert(offsetof(ActorRecord,update_function)==offsetof(ActorRecord,update_environment)+sizeof(ScriptStorage));
+static_assert(offsetof(ActorRecord,collision_function)==offsetof(ActorRecord,collision_environment)+sizeof(ScriptStorage));
+static_assert(sizeof(ActorIterationBuffer)==3*sizeof(void*));
+// PAT frame and generic quad consumers share field geometry, never fixed bytes.
+#define KINOKO_FRAME_PREFIX(member) static_assert(offsetof(FrameRecord,member)==offsetof(render::QuadRecord,member))
+KINOKO_FRAME_PREFIX(texture); KINOKO_FRAME_PREFIX(vertices);
+KINOKO_FRAME_PREFIX(base_positions); KINOKO_FRAME_PREFIX(positions);
+KINOKO_FRAME_PREFIX(source_v_extent);
+#undef KINOKO_FRAME_PREFIX
+#if INTPTR_MAX == INT32_MAX
+#include "kinoko/actor_x86_layout_checks.hpp"
+#endif
 }

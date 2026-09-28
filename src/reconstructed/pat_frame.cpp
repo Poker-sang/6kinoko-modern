@@ -4,15 +4,12 @@
 #include "kinoko/integer_vector.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/act_host.h"
-#include "kinoko/legacy_memory.hpp"
 #include <atomic>
 #include <cstdlib>
 #include <cstring>
 namespace {
 using namespace kinoko::actor;
 using kinoko::native::RecordView;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 
 // 405320: Z, then Y, then X, with single-precision stores between axes.
 // x87 4054D4..4054FF and 405620..40564B settle the Y/X signs obscured by

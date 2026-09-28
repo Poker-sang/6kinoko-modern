@@ -1,10 +1,13 @@
+#include "kinoko/owned_script_object.h"
 #include "kinoko/script_callbacks.h"
 #include "kinoko/actor_records.hpp"
-#include "kinoko/squirrel_binding_detail.hpp"
+#include "kinoko/squirrel_host_object.hpp"
+#include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_source_runtime.h"
 #include <windows.h>
 extern "C" {
-extern int32_t kinoko_actor_user_key_storage[3], kinoko_actor_step_key_storage[3], kinoko_actor_class_storage[3];
+extern SQVM *kinoko_primary_vm;
+extern int32_t kinoko_actor_user_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)], kinoko_actor_step_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)], kinoko_actor_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 void kinoko_trace(const char *);
 void kinoko_trace_i32(const char *, int32_t);
 }
@@ -13,11 +16,13 @@ inline auto class_update_method = kinoko_actor_class_storage;
 inline auto class_update_name = kinoko_actor_step_key_storage;
 inline auto class_collision_name = kinoko_actor_user_key_storage;
 using namespace kinoko::script;
-using namespace kinoko::script::binding;
+inline SQVM *current_vm() { return kinoko_primary_vm; }
+inline int32_t diagnostic_address(const void *p) { return static_cast<int32_t>(reinterpret_cast<uintptr_t>(p)); }
 using CallbackView = kinoko::native::RecordView<KinokoScriptCallback>;
 using namespace kinoko::actor;
-static_assert(sizeof(KinokoScriptCallback)==28);
-static_assert(offsetof(KinokoScriptCallback, environment)==4 && offsetof(KinokoScriptCallback, closure)==16);
+static_assert(sizeof(KinokoScriptCallback)==sizeof(void*)+2*sizeof(KinokoOwnedObjectWords));
+static_assert(offsetof(KinokoScriptCallback,environment)==sizeof(void*));
+static_assert(offsetof(KinokoScriptCallback,closure)==sizeof(void*)+sizeof(KinokoOwnedObjectWords));
 static_assert(offsetof(ActorRecord,update_environment)==offsetof(ActorRecord,update_vm)+offsetof(KinokoScriptCallback,environment));
 static_assert(offsetof(ActorRecord,update_function)==offsetof(ActorRecord,update_vm)+offsetof(KinokoScriptCallback,closure));
 static_assert(offsetof(ActorRecord,collision_function)==offsetof(ActorRecord,collision_vm)+offsetof(KinokoScriptCallback,closure));
@@ -33,7 +38,7 @@ class LocalObject {
 public:
     LocalObject() = default;
     explicit LocalObject(const void *source) { copy_from(source); }
-    LocalObject(const void* vtable,int32_t type,int32_t value) : value_{vtable,type,value} {}
+    explicit LocalObject(KinokoOwnedObjectWords value) : value_(value) {}
     LocalObject(const LocalObject&) = delete;
     LocalObject& operator=(const LocalObject&) = delete;
     ~LocalObject() { if (!released_) release(); }
@@ -99,16 +104,16 @@ extern "C" int32_t kinoko_actor_clear_script(KinokoActor *actor) {
     }
     return (int32_t)(intptr_t)(kinoko_sqplus_object_reset((void *)(instance)));
 }
-extern "C" int32_t __fastcall kinoko_actor_set_update_callback(KinokoActor *actor,void *,const void* vtable,int32_t type,int32_t value) {
-    LocalObject incoming(vtable,type,value);
+extern "C" int32_t __fastcall kinoko_actor_set_update_callback(KinokoActor *actor,void *,KinokoOwnedObjectWords object) {
+    LocalObject incoming(object);
     bind(update(actor),ActorView(actor).bytes(&ActorRecord::script_object),incoming.data());
     return incoming.release();
 }
-extern "C" int32_t __fastcall kinoko_actor_set_collision_callback(KinokoActor *actor,void *,const void* vtable,int32_t type,int32_t value) {
-    LocalObject incoming(vtable,type,value);
+extern "C" int32_t __fastcall kinoko_actor_set_collision_callback(KinokoActor *actor,void *,KinokoOwnedObjectWords object) {
+    LocalObject incoming(object);
     {
         LocalObject environment, function;
-        if (type==OT_CLOSURE) {
+        if (object.type==OT_CLOSURE) {
             environment.copy_from(ActorView(actor).bytes(&ActorRecord::script_object));
             function.copy_from(incoming.data());
             assign(collision(actor),current_vm(),environment.data(),function.data());
@@ -117,14 +122,14 @@ extern "C" int32_t __fastcall kinoko_actor_set_collision_callback(KinokoActor *a
     }
     return incoming.release();
 }
-extern "C" int32_t __fastcall kinoko_camera_set_update_callback(KinokoCamera *camera,void *,const void* vtable,int32_t type,int32_t value) {
+extern "C" int32_t __fastcall kinoko_camera_set_update_callback(KinokoCamera *camera,void *,KinokoOwnedObjectWords object) {
     if (!camera) return 0;
-    LocalObject incoming(vtable,type,value);
+    LocalObject incoming(object);
     kinoko_trace("4663c0:begin");
-    kinoko_trace_i32("4663c0:this",address(camera));
-    kinoko_trace_i32("4663c0:argument-type",address(vtable));
-    kinoko_trace_i32("4663c0:argument-data",type);
-    kinoko_trace_i32("4663c0:argument-aux",value);
+    kinoko_trace_i32("4663c0:this",diagnostic_address(camera));
+    kinoko_trace_i32("4663c0:argument-type",diagnostic_address(object.vtable));
+    kinoko_trace_i32("4663c0:argument-data",object.type);
+    kinoko_trace_i32("4663c0:argument-aux",static_cast<int32_t>(object.value));
     const kinoko::camera::View view(camera);
     bind(reinterpret_cast<KinokoScriptCallback *>(view.bytes(&kinoko::camera::Record::update_vm)),
         view.bytes(&kinoko::camera::Record::script_object),incoming.data());
@@ -140,5 +145,5 @@ extern "C" int32_t __fastcall kinoko_camera_update(KinokoCamera *camera,void *) 
 extern "C" void kinoko_actor_clear_failed_collision_callback(KinokoActor *actor) {
     KinokoOwnedObjectWords empty{};
     kinoko_sqplus_object_initialize((void *)(&empty));
-    kinoko_actor_set_collision_callback(actor, nullptr, (const void*)(uintptr_t)(empty.vtable), empty.type, empty.value);
+    kinoko_actor_set_collision_callback(actor, nullptr, empty);
 }

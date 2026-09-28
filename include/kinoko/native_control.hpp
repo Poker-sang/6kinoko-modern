@@ -16,8 +16,11 @@ struct ControlTable {
     const void *unknown_entry, *dispose, *destroy;
 };
 using ReferenceRecord = KinokoNativeReference;
-static_assert(sizeof(ControlRecord) == 16 && alignof(ControlRecord) == 4);
-static_assert(offsetof(ControlRecord, strong) == 4 && offsetof(ControlRecord, weak) == 8);
-static_assert(offsetof(ControlRecord, allocation) == 12);
-static_assert(sizeof(ControlTable) == 12 && sizeof(ReferenceRecord) == 8);
+// Native counted-base fields. Actor fields borrow controls; ownership operations
+// still dispatch through Boost's real C++ interface, not this snapshot.
+static_assert(offsetof(ControlRecord,strong)==sizeof(void*));
+static_assert(offsetof(ControlRecord,weak)==sizeof(void*)+sizeof(int32_t));
+static_assert(offsetof(ControlRecord,allocation)==sizeof(void*)+2*sizeof(int32_t));
+static_assert(sizeof(ControlRecord)==2*sizeof(void*)+2*sizeof(int32_t));
+static_assert(sizeof(ControlTable)==3*sizeof(void*) && sizeof(ReferenceRecord)==2*sizeof(void*));
 }

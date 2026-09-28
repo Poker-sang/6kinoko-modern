@@ -141,20 +141,20 @@ int32_t kinoko_call_camera_update(SQVM *vm) {
     if (!method) return sq_throwerror(vm, "Invalid Instance Type");
     // 4668B3 passes the three words of a by-value SqPlus argument. The callee
     // consumes its reference; this caller does not destroy it again.
-    int32_t arguments[3]{};
-    kinoko_sqplus_argument_object(arguments, 0, vm);
+    KinokoOwnedObjectWords argument{};
+    kinoko_sqplus_argument_object(reinterpret_cast<int32_t*>(&argument), 0, vm);
     if (camera_native_trace_count < 16) {
         kinoko_trace_i32("466890:vm", address(vm));
         kinoko_trace_i32("466890:native-instance", address(target.instance));
         kinoko_trace_i32("466890:type-info", address(target.method_slot));
         kinoko_trace_i32("466890:method", address(method));
-        kinoko_trace_i32("466890:arg0", arguments[0]);
-        kinoko_trace_i32("466890:arg1", arguments[1]);
-        kinoko_trace_i32("466890:arg2", arguments[2]);
+        kinoko_trace_i32("466890:arg0", address(argument.vtable));
+        kinoko_trace_i32("466890:arg1", argument.type);
+        kinoko_trace_i32("466890:arg2", static_cast<int32_t>(argument.value));
         ++camera_native_trace_count;
     }
     kinoko::method::invoke<int32_t>(target.instance, method,
-                                arguments[0], arguments[1], arguments[2]);
+                                arguments[0], arguments[1], static_cast<int32_t>(argument.value));
     return 0;
 }
 int32_t register_camera_binding_impl() {

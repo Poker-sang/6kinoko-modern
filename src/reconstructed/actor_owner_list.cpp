@@ -1,5 +1,4 @@
 #include "kinoko/actor_owner_list.h"
-#include "kinoko/legacy_memory.hpp"
 #include "kinoko/actor_records.hpp"
 #include "kinoko/actor_pool_dispatch.hpp"
 #include <list>
@@ -8,9 +7,6 @@
 extern "C" { extern int32_t kinoko_actor_owner_methods_storage; }
 namespace {
 inline auto actor_manager_vtable = &kinoko_actor_owner_methods_storage;
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
 using namespace kinoko::actor;
 using Owners = std::list<KinokoActor *>;
 ManagerView view(KinokoActorManager *manager) { return ManagerView(manager); }
@@ -29,7 +25,7 @@ extern "C" KinokoActor *kinoko_actor_owner_list_acquire(KinokoActorManager *mana
     if (!manager) return 0;
     const auto pool = view(manager).get(&ManagerPrefix::pool);
     uint32_t handle = 0;
-    auto *actor = pool_methods(pool).acquire(pool,&handle);
+    auto *actor = pool_methods(pool).acquire(pool,nullptr,&handle);
     if (!actor) return 0;
     const ActorView state(actor);
     state.set(&ActorRecord::pool_handle,handle);
@@ -48,7 +44,7 @@ extern "C" void kinoko_actor_owner_list_clear(KinokoActorManager *manager) {
         state.set(&ActorRecord::owner_references,references);
         if (!references) {
             const auto pool = view(manager).get(&ManagerPrefix::pool);
-            pool_methods(pool).retire(pool,state.get(&ActorRecord::pool_handle));
+            pool_methods(pool).retire(pool,nullptr,state.get(&ActorRecord::pool_handle));
         }
     }
     list.clear();
@@ -59,7 +55,7 @@ extern "C" KinokoActorManager* __fastcall kinoko_method_actor_owner_delete(Kinok
     view(manager).set(&ManagerPrefix::methods,static_cast<const void *>(actor_manager_vtable));
     kinoko_actor_owner_list_clear(manager);
     const auto pool = view(manager).get(&ManagerPrefix::pool);
-    if (pool) pool_methods(pool).destroy(pool,1);
+    if (pool) pool_methods(pool).destroy(pool,nullptr,1);
     delete &owners(manager);
     view(manager).set(&ManagerPrefix::owner_list,static_cast<void *>(nullptr));
     view(manager).set(&ManagerPrefix::pool,static_cast<KinokoActorPool *>(nullptr));

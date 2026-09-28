@@ -1,6 +1,7 @@
 #include "kinoko/actor_pool.h"
 #include "kinoko/actor_lifecycle.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/method_entry.hpp"
 #include "kinoko/actor_records.hpp"
 #include <windows.h>
 #include <list>
@@ -11,8 +12,6 @@
 
 namespace {
 
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
 struct Pool {
     std::vector<KinokoActor *> actors;
     std::vector<uint32_t> generations;
@@ -26,7 +25,10 @@ struct PoolHost {
     CRITICAL_SECTION lock;
     uint32_t unknown76;
 };
+static_assert(offsetof(PoolHost,state)==sizeof(void*));
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(PoolHost)==80 && offsetof(PoolHost,lock)==52);
+#endif
 using PoolView=kinoko::native::RecordView<PoolHost>;
 PoolView host(KinokoActorPool* manager) { return PoolView(manager); }
 Pool& pool(KinokoActorPool* manager) { return *host(manager).get(&PoolHost::state); }
@@ -38,10 +40,17 @@ struct Lock {
     ~Lock() { LeaveCriticalSection(section); }
 };
 void destroy_actor(KinokoActor *actor, unsigned char flags) {
-    using Delete = int32_t (__thiscall *)(void*, unsigned char);
-    auto method = kinoko::legacy::load<Delete>(kinoko::actor::ActorView(actor).get(&kinoko::actor::ActorRecord::vtable));
-    method(actor, flags);
+    auto method=kinoko::method::entry<kinoko::method::Entry<KinokoActor*,unsigned char>>(actor,0);
+    method(actor,nullptr,flags);
 }
+}
+
+extern "C" KinokoActorPool* kinoko_actor_pool_create() {
+    kinoko::memory::Allocation<PoolHost> storage(static_cast<PoolHost*>(std::calloc(1,sizeof(PoolHost))));
+    if(!storage) return nullptr;
+    auto* result=kinoko_actor_pool_construct(reinterpret_cast<KinokoActorPool*>(storage.get()));
+    if(result) storage.release();
+    return result;
 }
 
 extern "C" KinokoActorPool *kinoko_actor_pool_construct(KinokoActorPool *receiver) {
@@ -66,7 +75,7 @@ extern "C" KinokoActor *kinoko_actor_pool_acquire(KinokoActorPool *receiver, uin
     if (++state.generation > 0xffffu) state.generation = 1;
     *output=(slot&0xffffu)|(state.generation<<16);
     if (fresh) {
-        kinoko::legacy::Allocation<void> storage(std::malloc(sizeof(kinoko::actor::ActorRecord)));
+        kinoko::memory::Allocation<void> storage(std::malloc(sizeof(kinoko::actor::ActorRecord)));
         if (!storage) throw std::bad_alloc();
         auto *actor = kinoko_actor_construct(static_cast<KinokoActor *>(storage.get()));
         state.actors.push_back(actor);

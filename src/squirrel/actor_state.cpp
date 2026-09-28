@@ -3,10 +3,8 @@
 #include "kinoko/actor_records.hpp"
 #include "kinoko/script_callbacks.h"
 #include "kinoko/squirrel_host_compat.h"
-#include "kinoko/legacy_memory.hpp"
 namespace {
 using namespace kinoko::actor;
-using kinoko::legacy::address;
 template<class T> void copy(const ActorView& out,const ActorView& in,T ActorRecord::*member) {
     out.set(member,in.get(member));
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <squirrel.h>
+#include "kinoko/owned_script_object.h"
 #include "kinoko/upstream_bindings.hpp"
 #include "kinoko/native_record_view.hpp"
 #include <cstddef>
@@ -16,6 +17,9 @@ struct ObjectStorage {
     HSQOBJECT value;
 };
 static_assert(offsetof(ObjectStorage, value) == sizeof(void*));
+static_assert(sizeof(KinokoOwnedObjectWords)==sizeof(ObjectStorage));
+static_assert(offsetof(KinokoOwnedObjectWords,type)==offsetof(ObjectStorage,value)+offsetof(HSQOBJECT,_type));
+static_assert(offsetof(KinokoOwnedObjectWords,value)==offsetof(ObjectStorage,value)+offsetof(HSQOBJECT,_unVal));
 #if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(HSQOBJECT) == 8 && sizeof(ObjectStorage) == 12);
 #endif

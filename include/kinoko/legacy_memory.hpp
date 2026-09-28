@@ -1,4 +1,5 @@
 #pragma once
+#include "kinoko/memory_access.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -21,16 +22,8 @@ template<class T> T& field(std::int32_t base, std::uint32_t offset = 0) noexcept
     return *reinterpret_cast<T*>(static_cast<std::uintptr_t>(
         static_cast<std::uint32_t>(base) + offset));
 }
-template<class T> T load(const void* source) noexcept {
-    static_assert(std::is_trivially_copyable_v<T>);
-    T value; std::memcpy(&value, source, sizeof value); return value;
-}
-template<class T> void store(void* destination, const T& value) noexcept {
-    static_assert(std::is_trivially_copyable_v<T>);
-    std::memcpy(destination, &value, sizeof value);
-}
-struct Free {
-    void operator()(void* value) const noexcept { std::free(value); }
-};
-template<class T> using Allocation = std::unique_ptr<T, Free>;
+using memory::load;
+using memory::store;
+using memory::Free;
+using memory::Allocation;
 }

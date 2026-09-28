@@ -3,6 +3,7 @@
 #include "kinoko/actor_lifecycle.h"
 
 #include <stdint.h>
+#include "kinoko/owned_script_object.h"
 
 #ifndef KINOKO_SCRIPT_CALLBACK_RECORD
 #define KINOKO_SCRIPT_CALLBACK_RECORD
@@ -24,11 +25,11 @@ int32_t kinoko_script_callback_invoke_owned(KinokoScriptCallback *callback, Kino
 /* The three stack words are a SqPlus SquirrelObject: vtable, type, value.
    Ownership of that by-value argument passes to the callee. */
 int32_t __fastcall kinoko_actor_set_update_callback(KinokoActor *actor, void *unused,
-    const void* vtable, int32_t type, int32_t value);
+    KinokoOwnedObjectWords object);
 int32_t __fastcall kinoko_actor_set_collision_callback(KinokoActor *actor, void *unused,
-    const void* vtable, int32_t type, int32_t value);
+    KinokoOwnedObjectWords object);
 int32_t __fastcall kinoko_camera_set_update_callback(KinokoCamera *camera, void *unused,
-    const void* vtable, int32_t type, int32_t value);
+    KinokoOwnedObjectWords object);
 int32_t __fastcall kinoko_camera_update(KinokoCamera *camera, void *unused);
 int32_t kinoko_actor_step_callback(KinokoActor *actor);
 int32_t kinoko_actor_clear_script(KinokoActor *actor);

@@ -7,7 +7,7 @@ namespace {
 using Buffer=std::vector<uint32_t>;
 struct BufferRecord { uint32_t *begin, *end; Buffer* owner; };
 using BufferView=kinoko::native::RecordView<BufferRecord>;
-static_assert(sizeof(BufferRecord)==12);
+static_assert(sizeof(BufferRecord)==3*sizeof(void*));
 void check(uint32_t bytes) {
     if(bytes%4 || bytes>0x7ffffffc) throw std::length_error("native record buffer");
 }
@@ -47,9 +47,9 @@ extern "C" int32_t kinoko_native_buffer_ensure(void* slot,uint32_t bytes) {
         auto* owner=previous.owner;
         // Preserve the original unsigned range validation even for malformed
         // fixture ranges, without subtracting pointers to unrelated objects.
-        const auto used=static_cast<uint32_t>(reinterpret_cast<uintptr_t>(previous.end)-
-            reinterpret_cast<uintptr_t>(previous.begin));
-        if(used%4 || used>bytes && (!owner || used>owner->size()*4)) return 0;
+        const auto used=reinterpret_cast<uintptr_t>(previous.end)-
+            reinterpret_cast<uintptr_t>(previous.begin);
+        if(used>0x7ffffffcu || used%4 || used>bytes && (!owner || used>owner->size()*4)) return 0;
         if(owner && owner->size()*4>=bytes) return 1;
         if(!kinoko_native_buffer_resize(slot,bytes)) return 0;
         auto* begin=view.get(&BufferRecord::begin);

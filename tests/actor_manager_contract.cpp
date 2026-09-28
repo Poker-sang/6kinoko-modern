@@ -46,6 +46,7 @@ extern "C" {
 const void *kinoko_actor_owner_methods(void) { return nullptr; }
 const void *kinoko_actor_render_layer_methods(void) { return nullptr; }
 KinokoActorPool *kinoko_actor_pool_construct(KinokoActorPool *p) { return p; }
+KinokoActorPool *kinoko_actor_pool_create() { return static_cast<KinokoActorPool*>(std::calloc(1,sizeof(void*))); }
 void kinoko_actor_owner_list_construct(KinokoActorManager *) {}
 uint32_t kinoko_actor_owner_list_size(KinokoActorManager *) { return 512; }
 void kinoko_actor_owner_list_clear(KinokoActorManager *) {}

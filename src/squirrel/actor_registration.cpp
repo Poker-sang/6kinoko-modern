@@ -11,10 +11,10 @@
 namespace {
 using namespace kinoko::script;
 using namespace kinoko::script::binding;
-template<class Function> int32_t entry(Function function) {
-    return static_cast<int32_t>(reinterpret_cast<intptr_t>(function));
+template<class Function> void* entry(Function function) {
+    return reinterpret_cast<void*>(function);
 }
-struct ActorMethod { const char* name; int32_t target; int32_t wrapper; };
+struct ActorMethod { const char* name; void* target; void* wrapper; };
 enum class FieldKind { Integer, Float, Boolean };
 struct ActorField { const char* name; int32_t offset; FieldKind kind; int32_t flags; };
 // Original 460E00 registration order and storage offsets. In particular,
@@ -91,11 +91,11 @@ constexpr ActorField fields[] = {
 } // namespace
 
 extern "C" int32_t kinoko_actor_register_script_class(void) {
-    int32_t actor[3]{};
+    int32_t actor[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)]{};
     kinoko_sqplus_define_actor_class(actor, "Actor", 0);
     kinoko_sqplus_object_assign(kinoko_actor_class_object(), (const void *)(actor));
     for (const auto& method : methods)
-        kinoko_sqplus_register_actor_method(kinoko_actor_default_vm(), actor, method.name, (void *)(intptr_t)(method.target), (void *)(intptr_t)(method.wrapper), 0);
+        kinoko_sqplus_register_actor_method(kinoko_actor_default_vm(), actor, method.name, method.target, method.wrapper, 0);
     auto* descriptor = kinoko_native_binding_type(-1);
     for (const auto& field : fields) {
         auto bind = field.kind == FieldKind::Integer ? kinoko_sqplus_bind_integer :
@@ -103,7 +103,7 @@ extern "C" int32_t kinoko_actor_register_script_class(void) {
         bind(actor, descriptor, field.offset, const_cast<char*>(field.name), field.flags);
     }
     // Construct OT_NULL explicitly; zero-filled object storage is not OT_NULL.
-    int32_t null_object[3]{}, key[3]{};
+    int32_t null_object[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)]{}, key[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)]{};
     kinoko_sqplus_object_initialize((void *)(null_object));
     kinoko_sqplus_object_assign(kinoko_actor_step_key(), kinoko_sqplus_new_string((void *)(key), (const char *)("step")));
     (int32_t)(intptr_t)(kinoko_sqplus_object_destroy((void *)(key)));

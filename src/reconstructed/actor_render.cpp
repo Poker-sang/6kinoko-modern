@@ -1,12 +1,10 @@
 #include "kinoko/angle_math.h"
 #include "kinoko/actor_render.h"
 #include "kinoko/actor_records.hpp"
-#include "kinoko/legacy_memory.hpp"
 #include <cmath>
 namespace {
 using namespace kinoko::actor;
 using kinoko::native::RecordView;
-using kinoko::legacy::pointer;
 }
 
 // 45F0F0 / 45F350, with camera projection from 466320. The frame is borrowed

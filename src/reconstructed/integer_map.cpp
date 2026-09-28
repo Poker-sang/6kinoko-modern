@@ -16,12 +16,3 @@ extern "C" int32_t* kinoko_integer_map_find(KinokoIntegerMap* map,int32_t key) {
     const auto found=map->values.find(key);
     return found==map->values.end()?nullptr:&found->second;
 }
-// 4706C0: out-iterator is returned by address. Only this legacy boundary
-// converts nodes/sentinel to integer slots; the native lookup uses nullptr.
-extern "C" int32_t* kinoko_integer_map_lookup_index(const KinokoIntegerMapIndex* index,int32_t* entry,const int32_t* key) {
-    const kinoko::native::RecordView<KinokoIntegerMapIndex> view(const_cast<KinokoIntegerMapIndex*>(index));
-    auto* owner=view.get(&KinokoIntegerMapIndex::owner);
-    auto* found=kinoko_integer_map_find(owner,*key);
-    *entry=static_cast<int32_t>(reinterpret_cast<intptr_t>(found?static_cast<void*>(found):owner));
-    return entry;
-}

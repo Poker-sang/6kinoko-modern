@@ -64,9 +64,8 @@ public:
         return actor_;
     }
 
-    int32_t sync_animation(const void* vtable, int32_t type, int32_t value) const {
-        KinokoOwnedObjectWords incoming{vtable, type, value};
-        if (type == 0x0a008000 && view_.get(&ActorRecord::animation)) {
+    int32_t sync_animation(KinokoOwnedObjectWords incoming) const {
+        if (incoming.type == 0x0a008000 && view_.get(&ActorRecord::animation)) {
             kinoko_actor_sync_animation_state(actor_, reinterpret_cast<KinokoActor*>((kinoko_sqplus_object_instance(&incoming, (void *)(intptr_t)(0)))));
         }
         // The by-value SqPlus object owns an external VM reference on entry.
@@ -135,6 +134,6 @@ extern "C" KinokoActor* kinoko_actor_set_init_data(KinokoActor* actor, const voi
 
 // 45FE80: consume one 12-byte SquirrelObject with the original thiscall ABI.
 extern "C" int32_t __fastcall kinoko_actor_sync_animation(KinokoActor* actor, void *,
-    const void* vtable, int32_t type, int32_t value) {
-    return ActorMethods(actor).sync_animation(vtable, type, value);
+    KinokoOwnedObjectWords object) {
+    return ActorMethods(actor).sync_animation(object);
 }

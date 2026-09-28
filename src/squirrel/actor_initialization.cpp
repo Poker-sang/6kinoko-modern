@@ -6,15 +6,13 @@
 #include "kinoko/script_callbacks.h"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_game_objects.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/squirrel_host_object.hpp"
 #include <cstdlib>
 
 
 namespace {
 using namespace kinoko::actor;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 // These are external SqPlus references, not SQObjectPtr values. Their release
 // order and the consuming initialization-call ABI match Squirrel 2.2.2.
 void assign(void *destination,const void *source) {
@@ -179,7 +177,7 @@ extern "C" int32_t kinoko_actor_initialize(KinokoActor *actor,KinokoActorManager
 
 extern "C" KinokoActor *kinoko_actor_create_map_instance(KinokoActorManager *manager,
     const KinokoSquirrelObject *callback,float x,float y,int32_t chip_id,const unsigned char *initial_data) {
-    const auto function=kinoko::legacy::load<KinokoOwnedObjectWords>(callback);
+    const auto function=kinoko::memory::load<KinokoOwnedObjectWords>(callback);
     const KinokoOwnedObjectWords argument{kinoko_squirrel_object_vtable(),OT_INTEGER,chip_id};
     return kinoko_actor_manager_create(manager,&function,x,y,-1.0f,&argument,initial_data);
 }

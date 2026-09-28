@@ -124,3 +124,21 @@ if(WIN32)
     target_include_directories(kinoko_windows_services_width_compile PRIVATE include)
     target_compile_features(kinoko_windows_services_width_compile PRIVATE cxx_std_17)
 endif()
+
+# Compile the real actor/camera and container implementations at native width.
+# This object target deliberately does not claim that the full host can link yet.
+if(WIN32)
+    add_library(kinoko_actor_native_width_compile OBJECT
+        src/reconstructed/actor_pool.cpp src/reconstructed/actor_manager.cpp
+        src/reconstructed/actor_owner_list.cpp src/reconstructed/actor_priority.cpp
+        src/reconstructed/animation_storage.cpp src/reconstructed/actor_animation.cpp
+        src/reconstructed/actor_render.cpp src/reconstructed/camera_runtime.cpp
+        src/reconstructed/camera_projection.cpp src/reconstructed/script_callbacks.cpp
+        src/reconstructed/integer_map.cpp src/reconstructed/integer_vector.cpp
+        src/reconstructed/native_buffer.cpp src/reconstructed/native_control.cpp
+        src/squirrel/actor_state.cpp src/squirrel/actor_lifecycle.cpp
+        src/squirrel/actor_initialization.cpp)
+    target_include_directories(kinoko_actor_native_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
+    target_compile_features(kinoko_actor_native_width_compile PRIVATE cxx_std_17)
+endif()

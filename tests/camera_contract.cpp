@@ -1,3 +1,4 @@
+#include "kinoko/owned_script_object.h"
 #include "kinoko/camera_records.hpp"
 #include "kinoko/quad_records.hpp"
 #include "kinoko/legacy_memory.hpp"
@@ -10,7 +11,7 @@ using kinoko::legacy::address;
 using kinoko::legacy::pointer;
 static std::vector<int> calls;
 extern "C" {
-int32_t kinoko_camera_class_storage[3]{},kinoko_script_root_storage[3]{};
+int32_t kinoko_camera_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)]{},kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)]{};
 void* kinoko_sqplus_object_new_instance(void* out, const void*) { calls.push_back(1);return out; }
 void * kinoko_sqplus_object_assign(void * out, const void * in) { calls.push_back(2);std::memcpy(static_cast<void *>(out),in,12);return out; }
 void*  kinoko_sqplus_object_destroy(void *) { calls.push_back(3);return (void*)(intptr_t)(0); }

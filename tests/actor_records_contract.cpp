@@ -70,7 +70,7 @@ int main() {
     animation.left = 1; animation.top = 2; animation.right = 5; animation.bottom = 8;
     animation.duration_total = 0x1234; animation.has_bounds = 1;
     kinoko_animation_bind(reinterpret_cast<KinokoActorManager*>(&manager),37,reinterpret_cast<KinokoAnimation*>(&animation));
-    CHECK(kinoko_actor_set_take((KinokoActor *)(intptr_t)(actor_address), 37) == address(frames.data()));
+    CHECK(kinoko_actor_set_take((KinokoActor *)(intptr_t)(actor_address), 37) == frames.data());
     CHECK(actor.get(&ActorRecord::take) == 37);
     const auto local = actor.get(&ActorRecord::local_bounds);
     const auto world = actor.get(&ActorRecord::world_bounds);
@@ -102,7 +102,7 @@ int main() {
     CHECK(actor.get(&ActorRecord::world_bounds).right == 9.75f);
     lookup_result = address(lookup.get(&AnimationIndex::owner));
     const auto previous_animation = actor.get(&ActorRecord::animation);
-    CHECK(kinoko_actor_set_take((KinokoActor *)(intptr_t)(actor_address), 999) == lookup_result);
+    CHECK(kinoko_actor_set_take((KinokoActor *)(intptr_t)(actor_address), 999) == reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<uint32_t>(lookup_result))));
     CHECK(actor.get(&ActorRecord::take) == 999 && actor.get(&ActorRecord::frame_time) == 0);
     CHECK(actor.get(&ActorRecord::animation) == previous_animation);
     ActorRecord source{}; source.frame_index = 100; source.frame_time = 71;

@@ -9,8 +9,8 @@ const void *kinoko_actor_pool_methods(void);
 const void *kinoko_actor_pool_base_methods(void);
 KinokoActor *kinoko_actor_pool_acquire(KinokoActorPool *pool, uint32_t *handle);
 int32_t kinoko_actor_pool_retire(KinokoActorPool *pool, uint32_t handle);
-/* The 80-byte host owns an opaque native container state at +4. No STL
-   layout is exposed to C. The existing critical section remains at +52. */
+/* Native host owns container state and a native critical section. */
+KinokoActorPool* kinoko_actor_pool_create(void);
 KinokoActor* __fastcall kinoko_method_lookup_actor(KinokoActorPool* manager, void *unused, uint32_t handle);
 KinokoActorPool *kinoko_actor_pool_construct(KinokoActorPool *pool);
 

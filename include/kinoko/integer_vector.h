@@ -19,5 +19,5 @@ const int32_t* kinoko_integer_vector_data(const KinokoIntegerVector* slot);
 void kinoko_integer_vector_append(KinokoIntegerVector* slot,int32_t value);
 #ifdef __cplusplus
 }
-static_assert(sizeof(KinokoIntegerVector)==12);
+static_assert(sizeof(KinokoIntegerVector)==sizeof(void*)+2*sizeof(uint32_t));
 #endif

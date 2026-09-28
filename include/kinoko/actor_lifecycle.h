@@ -2,19 +2,10 @@
 #include <stdint.h>
 typedef struct KinokoActor KinokoActor;
 #include "kinoko/native_control.h"
-#if !defined(_MSC_VER) || !defined(_M_IX86)
-#error The recovered Actor ABI requires MSVC Win32.
-#endif
+#include "kinoko/owned_script_object.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Trivial externally owned SqPlus argument: the callee consumes its reference.
-   Never replace this with SQObjectPtr or a nontrivial by-value C++ class. */
-typedef struct KinokoOwnedObjectWords {
-    const void* vtable;
-    int32_t type;
-    int32_t value;
-} KinokoOwnedObjectWords;
 KinokoActor *kinoko_actor_construct(KinokoActor *actor);
 KinokoActor *kinoko_actor_dispose(KinokoActor *actor);
 int32_t kinoko_actor_set_step_owned(KinokoActor *actor, KinokoOwnedObjectWords *object);

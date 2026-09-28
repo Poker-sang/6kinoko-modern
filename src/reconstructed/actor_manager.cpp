@@ -9,7 +9,6 @@
 #include "kinoko/integer_vector.h"
 #include "kinoko/integer_map.h"
 #include "kinoko/native_buffer.h"
-#include "kinoko/legacy_memory.hpp"
 #include <cstdlib>
 #include <cstring>
 #include <climits>
@@ -18,8 +17,6 @@ extern "C" int32_t kinoko_collision_dispatch_all(KinokoActorManager *);
 namespace {
 using namespace kinoko::actor;
 using kinoko::native::RecordView;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 
 bool insert_actor(const ManagerView manager, const ActorView actor) {
     auto *entry=kinoko_actor_priority_insert(manager.bytes(&ManagerPrefix::actors),
@@ -31,7 +28,7 @@ bool insert_actor(const ManagerView manager, const ActorView actor) {
 }
 void retire(const ManagerView manager, const ActorView actor) {
     auto *pool=manager.get(&ManagerPrefix::pool);
-    pool_methods(pool).retire(pool,actor.get(&ActorRecord::pool_handle));
+    pool_methods(pool).retire(pool,nullptr,actor.get(&ActorRecord::pool_handle));
 }
 }
 
@@ -43,11 +40,11 @@ extern "C" KinokoActorManager *kinoko_actor_manager_construct(KinokoActorManager
     const ManagerView state(manager);
     state.set(&ManagerPrefix::methods,kinoko_actor_owner_methods());
     kinoko_actor_owner_list_construct(manager);
-    auto *pool=static_cast<KinokoActorPool *>(std::calloc(1,80));
-    if (!pool || !kinoko_actor_pool_construct(pool)) return nullptr;
+    auto *pool=kinoko_actor_pool_create();
+    if (!pool) return nullptr;
     state.set(&ManagerPrefix::pool,pool);
     kinoko_animation_lookup_construct(manager);
-    kinoko_animation_list_construct((void*)(uintptr_t)(address(state.bytes(&ManagerPrefix::animations))));
+    kinoko_animation_list_construct(state.bytes(&ManagerPrefix::animations));
     kinoko_integer_vector_construct((KinokoIntegerVector*)(state.bytes(&ManagerPrefix::textures)));
     kinoko_priority_construct(state.bytes(&ManagerPrefix::actors));
     for (int32_t i=0;i<4;++i) {
@@ -82,7 +79,7 @@ extern "C" KinokoActor *kinoko_actor_manager_create(KinokoActorManager *manager,
     const ManagerView state(manager);
     uint32_t handle{};
     auto *pool=state.get(&ManagerPrefix::pool);
-    auto *actor=pool_methods(pool).acquire(pool,&handle);
+    auto *actor=pool_methods(pool).acquire(pool,nullptr,&handle);
     if (!actor) return nullptr;
     const ActorView view(actor);
     view.set(&ActorRecord::pool_handle,handle);
@@ -90,7 +87,7 @@ extern "C" KinokoActor *kinoko_actor_manager_create(KinokoActorManager *manager,
     if (initial_data) kinoko_actor_set_init_data(actor,initial_data);
     // 463CB6 explicitly retires the handle when initialization fails.
     if (!kinoko_actor_initialize(actor,manager,callback,x,y,z,argument)) {
-        pool_methods(pool).retire(pool,handle);
+        pool_methods(pool).retire(pool,nullptr,handle);
         return nullptr;
     }
     if (!insert_actor(state,view)) return nullptr;

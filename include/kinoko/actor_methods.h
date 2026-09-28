@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "kinoko/owned_script_object.h"
 typedef struct KinokoActor KinokoActor;
 
 #ifdef __cplusplus
@@ -22,7 +23,7 @@ int32_t kinoko_actor_reset_priority(KinokoActor *actor, int32_t priority);
 int32_t __fastcall kinoko_actor_release(KinokoActor *actor, void *unused);
 KinokoActor *kinoko_actor_set_init_data(KinokoActor *actor, const void *source);
 int32_t __fastcall kinoko_actor_sync_animation(KinokoActor *actor, void *unused,
-    const void* vtable, int32_t type, int32_t value);
+    KinokoOwnedObjectWords object);
 
 #ifdef __cplusplus
 }
