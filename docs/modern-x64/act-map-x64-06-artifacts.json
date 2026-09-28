@@ -1,0 +1,249 @@
+{
+  "source_commit": "28eb3e9c3110a2fc12218b7fc7f682afef9e8e6d",
+  "executed_built_code": false,
+  "full_game": false,
+  "production_translation_units": 47,
+  "compile_assertion_translation_units": 1,
+  "artifacts": [
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_array.obj",
+      "machine": "AMD64",
+      "sha256": "8bbb3ef5049eb91487d39e31e3531e440f9ae1f01dcb9618dc78149cef398c54"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_binding.obj",
+      "machine": "AMD64",
+      "sha256": "eaa578fe5a8612e4382732fec99ac0471bdbdf0d15b7ad880e63e3acd51188a5"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_clone.obj",
+      "machine": "AMD64",
+      "sha256": "693d49c76121b551903851ef4efdb15e70e325e1e49a93a956f0c0bff748e711"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_document.obj",
+      "machine": "AMD64",
+      "sha256": "91056acc99b3a5125699db6f502f6817fa8985985cf3bc93df07bf4255668953"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_document_association.obj",
+      "machine": "AMD64",
+      "sha256": "b25048703012169f01f421bca2c758f250bf4fe118aeffbd4fe24e1cb25e9775"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_document_clone.obj",
+      "machine": "AMD64",
+      "sha256": "b8e538303e34a84a2125d037b3b3a0835c39b72860a04af71f67c9e2b4dc1655"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_document_io.obj",
+      "machine": "AMD64",
+      "sha256": "ce39ce66cb9152f05c0e9fbdb00a3e147eb15bcfe7130515cc8e3ec4902d3bb3"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_document_resources.obj",
+      "machine": "AMD64",
+      "sha256": "4231387e7a081bc11ccda57fc2ecbf67b9395c99174e6b8629050e5dd5509b5a"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_draw_storage.obj",
+      "machine": "AMD64",
+      "sha256": "70a970b9c5d37490ac6f1787870e4fb87ac2dd59c6ca263718a302c2c8e7d54e"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_frame_render.obj",
+      "machine": "AMD64",
+      "sha256": "3e0a6be00726fc6debdf2fe13b9d708acc62b54989e43036dc61339ddb68d9bd"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_frame_update.obj",
+      "machine": "AMD64",
+      "sha256": "2d761c5a9a9722399ecb381329da467c0f3ed61661e582bc1733873e24896d92"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_layer_access.obj",
+      "machine": "AMD64",
+      "sha256": "b6614992fb71d11c658e900b6bfaa47540fe218fd564484b81020d6d84c2d016"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_layer_clone.obj",
+      "machine": "AMD64",
+      "sha256": "9dc915932bf7892c5b5d2504a26d37f34a9ea389a30a56f0d718e2c40cbf3f66"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_layer_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "26f42609b2240c2c2f13095c9e6db7687df07324c6279f48f22b4777786cdb22"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_layout.obj",
+      "machine": "AMD64",
+      "sha256": "bd4aaeba15b8fa479ffbe3863c8558f131fe84a7be7ff355e58f0b955fa1e7be"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_layout_3d.obj",
+      "machine": "AMD64",
+      "sha256": "f596f042da51e8e59212312ed939892ee0a676a33f301091fb5d3ce952e0ecd6"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_lifetime.obj",
+      "machine": "AMD64",
+      "sha256": "419eeb278cd65368d3fbf25753e875439643d38c6eca81d16874e7944621f56b"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_list.obj",
+      "machine": "AMD64",
+      "sha256": "cfbebc1ce03c2ab0d644902df5ebdf58e512e3111554eb21d4d79afba9dd385d"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_map.obj",
+      "machine": "AMD64",
+      "sha256": "6430a08365e2dc108861bb46a47e3efa1a2e4c3d535cd614db0465ceafdefec0"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_map_width_compile.obj",
+      "machine": "AMD64",
+      "sha256": "916aa01e80db38357dcfc52305e05faf46e03cef765bb5d7c049634580f0219d"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_mesh.obj",
+      "machine": "AMD64",
+      "sha256": "2e6f3e3d9cd4143953926d1c1c4aa651a978b320a950f6d4820f846aedf916ea"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_render_state.obj",
+      "machine": "AMD64",
+      "sha256": "535db04869bcfb99fe6118976fcdf5208cbe9cd518d71107d42b0c8bc2cdce14"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_resource.obj",
+      "machine": "AMD64",
+      "sha256": "80e7692384e9140da78e18cb7656f3693aeb9eb5bf59afd53fe35664c50c95db"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_runtime_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "ab840b1d3eae70736289763196ae7019ef25c9ef386f79c16827c82a3e668978"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_script_io.obj",
+      "machine": "AMD64",
+      "sha256": "fd52aaf7e01598bfb52388cf3363a751c7cfc08d7271a6ee1d2fefdfa792683b"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_script_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "87bd6e35a4caf405bd3d25b85db7e372f4875b867fb1f790a6ba9cf70bc84266"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_serializable.obj",
+      "machine": "AMD64",
+      "sha256": "17c0868408f4395dc2a3a3210851a1db2d10bd177337b71a9a1bc2386a9d3656"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_source.obj",
+      "machine": "AMD64",
+      "sha256": "b75fd172d9c50617ee61cde847c04c9b081578548a55eca797bb3a25738b4b10"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/act_texture_io.obj",
+      "machine": "AMD64",
+      "sha256": "9383cde4ae64dce3f0ea672f82bc4fbf34400b43aa721c6a3b01ec19b49a96b0"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/actor_collision.obj",
+      "machine": "AMD64",
+      "sha256": "249d1b4d90070321ac68c8a3f3077a99b80dee88a3fd0dbb6f878df9aa88e74e"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/actor_motion.obj",
+      "machine": "AMD64",
+      "sha256": "65205aed08c0f7fc1b435c8e9521a6fdb582cad4b39ef0519ebf5a9691531013"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/camera_map_binding.obj",
+      "machine": "AMD64",
+      "sha256": "4c5030a91a85c9f5a3c6a19cab6fdaf148d85396b1ad3cbd165336944acd9230"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/collision_manager.obj",
+      "machine": "AMD64",
+      "sha256": "0f90b7a51ee15a65d309a52dc409ec7aadb06d5ee3142956e9efba2acc0b8400"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/collision_queries.obj",
+      "machine": "AMD64",
+      "sha256": "0542a13494282aaa9834c8ca3474246cb13b8579a93a618d2f281f46e7401418"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_activation.obj",
+      "machine": "AMD64",
+      "sha256": "d913e4df2ae746730403a19a724f8c82ba799de08a309a06d7f57b7d157a054d"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_chip_cache.obj",
+      "machine": "AMD64",
+      "sha256": "37c4651b33c2ed63748eb6fad547fb40606b8f40f8b5bd26a30a180810e3fedf"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_collision.obj",
+      "machine": "AMD64",
+      "sha256": "9d2f7254a6058d5d387c2da8619458f44060cdc8b54bccbb15aa7d40a3f8382d"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_containers.obj",
+      "machine": "AMD64",
+      "sha256": "f688b8d8dcd767bdb44bc3563d3402119d071de56d1fdd0dcfe8a916b2b6cfea"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_copy.obj",
+      "machine": "AMD64",
+      "sha256": "463f65ee834b69bedf0c0aa7915bbad5cd1412f29b55436e4443cfe997380061"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_layers.obj",
+      "machine": "AMD64",
+      "sha256": "1f9c6bf4fb590633821bcd87f21f9d75117cf3c7dd436769860ed77b56166bf2"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_layout_lifetime.obj",
+      "machine": "AMD64",
+      "sha256": "ac20548a9e48f1c665d28389acbd7d703f4252cf11a097ece3a9474b43561002"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_loading.obj",
+      "machine": "AMD64",
+      "sha256": "8e4929d677df1fcc25e63b2c1d4ed71cea41223b4f7e0ba48baf807e249a5601"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_manager.obj",
+      "machine": "AMD64",
+      "sha256": "edc0a5a41fc75bf4ac155a1e48f3171158c5e354cd5c813b10851ab5f20a4dc9"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/map_render.obj",
+      "machine": "AMD64",
+      "sha256": "cf2d139166dd7abf057e8ab80ec6c0ed1c2764d58dec892eaefe9f2bf58c8815"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/native_property_bridge.obj",
+      "machine": "AMD64",
+      "sha256": "97cf47b5a815ae226ddeb992519d03633559b2cf676846dd4fe9fa3d4c674b76"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/sqrat_object_bridge.obj",
+      "machine": "AMD64",
+      "sha256": "a7dcabfeef0417a2d769506b9732486dd61a383ed7ef49198b5904441656ba1f"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/string_layout_render.obj",
+      "machine": "AMD64",
+      "sha256": "d938d25801578091ada3e53dd35d4644b041784f4e65d1c6ba9b29db228fb25d"
+    },
+    {
+      "path": "build-runs/modern-act-map-x64-06/kinoko_act_map_width_compile.dir/Release/string_render.obj",
+      "machine": "AMD64",
+      "sha256": "8cc71d0cfd9885d1901a1dbd03795addca36a66795c82f1b1180e9db04a8a8fc"
+    }
+  ]
+}

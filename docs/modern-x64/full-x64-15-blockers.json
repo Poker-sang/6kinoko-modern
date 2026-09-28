@@ -1,0 +1,731 @@
+{
+  "source_commit": "28eb3e9c3110a2fc12218b7fc7f682afef9e8e6d",
+  "target": "kinoko_modern_gpu",
+  "full_build_succeeded": false,
+  "source_guards_enabled": true,
+  "executed_built_code": false,
+  "unique_diagnostics": 114,
+  "by_code": {
+    "C2607": 92,
+    "C2338": 4,
+    "C2664": 1,
+    "C2593": 1,
+    "C2039": 4,
+    "C3861": 11,
+    "C2397": 1
+  },
+  "by_file": {
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\game_script_host.h": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\legacy_memory.hpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp": 28,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\actor_methods.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_device.h": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_cluster.h": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_keys.h": 4,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h": 6,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp": 6,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp": 6,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\sprite.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h": 8,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp": 8,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\input_registration.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\table_serialization.cpp": 2,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp": 4,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_compile_bridge.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp": 8,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\squirrel_api_types.h": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp": 6,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp": 3
+  },
+  "diagnostics": [
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\game_script_host.h",
+      "line": 16,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\legacy_memory.hpp",
+      "line": 11,
+      "code": "C2338",
+      "message": "static_assert failed: 'Legacy object addresses are Win32 values'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 79,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 80,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 81,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 82,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 86,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 87,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 88,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 89,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 90,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 91,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 92,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 93,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 94,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 95,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 96,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 97,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 98,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 99,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 100,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 101,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 102,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 103,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 104,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 105,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 106,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 107,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 108,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\audio_records.hpp",
+      "line": 109,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\actor_methods.cpp",
+      "line": 18,
+      "code": "C2338",
+      "message": "static_assert failed: 'Actor methods require the original Win32 layout.'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_device.h",
+      "line": 44,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_device.h",
+      "line": 45,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_device.h",
+      "line": 46,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_cluster.h",
+      "line": 25,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_cluster.h",
+      "line": 26,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_cluster.h",
+      "line": 27,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_keys.h",
+      "line": 27,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_keys.h",
+      "line": 29,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_keys.h",
+      "line": 30,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_keys.h",
+      "line": 31,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h",
+      "line": 34,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h",
+      "line": 35,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h",
+      "line": 36,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h",
+      "line": 37,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h",
+      "line": 38,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\input_manager.h",
+      "line": 39,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp",
+      "line": 46,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp",
+      "line": 47,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp",
+      "line": 48,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp",
+      "line": 49,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp",
+      "line": 50,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\application_runtime.hpp",
+      "line": 51,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 8,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 9,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 10,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 11,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 12,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 13,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\sprite.cpp",
+      "line": 16,
+      "code": "C2338",
+      "message": "static_assert failed: 'Original CSprite field offsets'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp",
+      "line": 22,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp",
+      "line": 79,
+      "code": "C2664",
+      "message": "“SQRESULT sq_getinteger(HSQUIRRELVM,SQInteger,SQInteger *)”: 无法将参数 3 从“int32_t *”转换为“SQInteger *”"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp",
+      "line": 279,
+      "code": "C2593",
+      "message": "“operator =”不明确"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 23,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 24,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 25,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 26,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 27,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 28,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 29,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 30,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 45,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 45,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 87,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 87,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 89,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 89,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 283,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 283,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp",
+      "line": 53,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp",
+      "line": 96,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp",
+      "line": 114,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\input_registration.cpp",
+      "line": 122,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\table_serialization.cpp",
+      "line": 30,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\table_serialization.cpp",
+      "line": 89,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp",
+      "line": 32,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp",
+      "line": 33,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp",
+      "line": 39,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 19,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 20,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 21,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 173,
+      "code": "C2397",
+      "message": "从“const SQInteger”转换到“int32_t”需要收缩转换"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_compile_bridge.cpp",
+      "line": 59,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp",
+      "line": 20,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp",
+      "line": 21,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp",
+      "line": 22,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 19,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 20,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 21,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 22,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 23,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 24,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 25,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 26,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\squirrel_api_types.h",
+      "line": 36,
+      "code": "C2338",
+      "message": "static_assert failed: 'Recovered addresses are the original Win32 ABI, not portable pointers.'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 9,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 10,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 11,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 12,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 13,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 14,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp",
+      "line": 8,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp",
+      "line": 9,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp",
+      "line": 10,
+      "code": "C2607",
+      "message": "静态断言失败"
+    }
+  ],
+  "limitations": "Compiler diagnostics from this build, not a complete pointer-flow or runtime correctness audit. Guard failures cause cascading diagnostics; counts are not independent migration tasks."
+}

@@ -36,7 +36,7 @@
 
 ## Compile evidence and limits
 
-`modern-act-map-x64-05`, source `126cc91`, compiles 47 production translation
+`modern-act-map-x64-06`, source `28eb3e9c`, compiles 47 production translation
 units plus one layout/signature assertion unit. This includes every reconstructed
 act_*.cpp, act_binding.cpp, actual map/collision and actor motion code, text
 render consumers, camera/map registration and Sqrat/native property bridges.
@@ -44,7 +44,9 @@ It is an object build, not a linked or playable x64 game. Checks were not execut
 The original x86-only ref-watch walker remains a diagnostic boundary: x64 keeps
 native event/name logging without passing truncated addresses to that walker.
 
-Full Win32 staging and full-game x64 probe results are recorded in BUILD.md.
+Full Win32 staging (`modern-act-map-02`, 77 contracts compiled) and full-game
+x64 probe (`modern-full-x64-15`, still blocked) are recorded in BUILD.md.
+D3D9 static audit passed; three DAT were staged and verified.
 All failed/intermediate attempts are retained. Earlier attempts exposed a map
 method-table pointer type, an unused legacy header dependency, one missed VM
 array, and a template allocation alias; these are fixed in the final source.

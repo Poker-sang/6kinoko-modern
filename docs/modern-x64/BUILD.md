@@ -1,5 +1,33 @@
 # x64 preparation build evidence
 
+## Native ACT publication/map/collision checkpoint
+
+- Final build source: `28eb3e9c3110a2fc12218b7fc7f682afef9e8e6d`.
+- `modern-act-map-02`: complete Win32 Release no-trace game plus 77 contracts
+  compiled. Three DAT copied beside the EXE and size/SHA256 verified.
+- EXE: `runtime-builds/modern-act-map-02/kinoko_modern_gpu.exe`.
+- EXE SHA256: `75C0988C23B88826526262F49645C56FCBA00B750BA4093DB5ABB8CA67612620`.
+- D3D9 static audit passed: 120 compiler / 87 linker logs, no violations.
+- `modern-act-map-x64-06`: 47 production translation units + one signature/layout
+  assertion unit compiled; all 48 COFF objects statically verified AMD64. Includes
+  all reconstructed act_*.cpp, ACT script publication, map/collision, actor motion,
+  text render consumers, camera/map registration and relevant VM property bridges.
+- `modern-full-x64-15`: real full game remains blocked before linking with source
+  guards enabled; 114 unique diagnostics (previous 125). Map/ACT/collision groups
+  cleared while 28 audio-layout diagnostics became visible. Counts include cascades
+  and are neither remaining task counts nor a completion percentage. Remaining
+  work is audio/input/application/bitmap/file services, actor diagnostics/method
+  boundary and remaining VM bridges. Bytecode/save/runtime compatibility is pending.
+- No game, CTest or contract executable was run. User's prior acceptance remains
+  user feedback, not agent runtime validation.
+- Retained attempts: x64-01 (map pointer type / legacy header), x64-02 (remaining
+  VM array), x64-03 (template allocation alias), x64-04 (subset compile success),
+  x64-05 (expanded source set success), Win32-01 (one fixture missing its explicit
+  legacy-memory include), full-x64-14 (intermediate full probe). No artifacts deleted.
+- Evidence: `act-map-02-artifacts.json`, `act-map-02-d3d9-audit.json`,
+  `act-map-x64-06-artifacts.json`, `full-x64-15-artifacts.json`,
+  `full-x64-15-blockers.json`. [Scope and remaining work](act-map-publication-native.md).
+
 ## Native ACT rendering/lifetime priority checkpoint
 
 - Build source: `bed6033e0d13ff16ce05bc046dae3ee57b132afa`.

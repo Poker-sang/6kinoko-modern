@@ -26,7 +26,11 @@ retained and failed due to a declaration preprocessor error, corrected in 02.
 No game or test executables were run. Full-game compilation evidence follows
 in BUILD.md after the staged build and full x64 probe.
 
-## Remaining ACT work (priority)
+## Remaining ACT work at this historical checkpoint
+
+The native publication/map follow-up is now implemented and compiled; see
+[ACT/map checkpoint](act-map-publication-native.md). The list below records the
+prior handoff, not the current remaining migration scope.
 
 1. The large act_binding.cpp still has original two-word local VM slots,
    integer callback addresses and scalar property offsets. Migrate storage,

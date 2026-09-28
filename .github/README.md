@@ -24,10 +24,8 @@ plus one signature/layout assertion unit (not executed). The unreachable old
 mesh-manager adapter is removed. Full-game linking and bytecode/save/runtime
 compatibility remain pending. See [ACT/map scope](../docs/modern-x64/act-map-publication-native.md).
 
-ACT 2D/3D rendering, cloning, Blit storage and native lifetime/container access
-now compile in an isolated x64 target (11 production files, not executed).
-ACT script publication, map/collision layouts and the mesh-manager ABI remain
-pending. See [ACT rendering scope](../docs/modern-x64/act-render-native.md).
+The earlier ACT rendering checkpoint covered 11 production files (not executed),
+now included in the broader check above. See [rendering history](../docs/modern-x64/act-render-native.md).
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
@@ -46,8 +44,7 @@ Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, 
 
 Font/atlas, shared string ownership and Squirrel object payload storage now
 compile in isolated Windows x64 checks. ACT texture rendering uses a typed
-state snapshot. The complete game still requires x86 ACT/VM layouts and method
-adapters; these isolated checks do not establish x64 gameplay compatibility.
+state snapshot. The complete game still requires remaining x86 VM/host interfaces; these isolated checks do not establish x64 gameplay compatibility.
 The user reports `modern-window-move-01` normal; this is user runtime feedback.
 ACT textures/render targets now use native resource storage throughout creation,
 clone, property I/O, script bindings, render access and cleanup. Retained clone
@@ -58,7 +55,7 @@ array metadata. ACT calls use named typed interfaces with an explicit legacy
 method-table adapter. The actual resource/string and method adapter contracts
 compile independently for Windows x64. Mesh resources now also own native
 controller/render objects, with typed 3D drawing and a portable MSH/MAT decoder.
-Full-game x64, outer ACT layouts, the mesh-manager ABI and VM bindings remain pending. See [texture scope](../docs/modern-x64/act-texture-native.md)
+Full-game x64 and remaining VM/host interfaces remain pending. See [texture scope](../docs/modern-x64/act-texture-native.md)
 and [chip/method scope](../docs/modern-x64/act-chip-methods.md).
 The user reports `modern-act-chip-02` normal; this is user runtime feedback.
 See [mesh migration scope](../docs/modern-x64/mesh-native.md).
