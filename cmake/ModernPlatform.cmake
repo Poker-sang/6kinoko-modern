@@ -1,3 +1,8 @@
+# Portable targets are created before the full-game compile options below.
+# Keep UTF-8 literals identical on MSVC regardless of the machine ANSI locale.
+if(MSVC)
+    add_compile_options("$<$<COMPILE_LANGUAGE:C,CXX>:/utf-8>")
+endif()
 # This module has no dependency on the legacy Win32/x86 runtime.
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
