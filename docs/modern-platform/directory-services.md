@@ -32,3 +32,17 @@ Full Linux/macOS games still require window/COM/IME/font and other host migratio
 
 The early directory-01/02 builds are retained as superseded implementation
 attempts. The delivered revision uses SDL rather than their per-OS backends.
+
+## Delivery evidence
+
+Source `5816934cd1165d37646a6bfbc42e1aa45c8db72c`:
+- `modern-x64-directory-03`: full x64 Release game compiled, plus directory,
+  runtime-services and application contracts (contracts-build.log).
+- `modern-directory-03`: Win32 game and 83 contracts compiled.
+- Both staged/SHA256-verified the three original DAT; shaders staged.
+- Both static D3D9 dependency audits passed. No game or contract ran.
+- EXE: `runtime-builds/modern-x64-directory-03/kinoko_modern_gpu.exe`.
+- Prior directory-01/02 builds and all logs remain; use directory-03 for SDL implementation.
+
+Each source batch was committed before building. Deliverables and history are
+backed up on codex/sdl-platform in the modern repository only.
