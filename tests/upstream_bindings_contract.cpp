@@ -1,6 +1,3 @@
-#include "sqpcheader.h"
-#include "sqvm.h"
-#include "sqtable.h"
 #include "kinoko/upstream_bindings.hpp"
 #include "kinoko/squirrel_binding.h"
 #include "kinoko/sqplus_source_entries.hpp"
@@ -14,6 +11,9 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include "sqpcheader.h"
+#include "sqvm.h"
+#include "sqtable.h"
 
 namespace up = kinoko::script::upstream;
 namespace {

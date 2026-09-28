@@ -34,10 +34,15 @@ platform are still Windows-hosted SDL GPU. This was targeted fault analysis,
 not a security/import-completeness audit. Original CV4 was read statically.
 
 Background scrolling and road effects use the affected script/ACT paths; no
-special-case visual or gameplay compensation is added. All four reported symptoms
-still require user runtime verification after these shared fixes.
+special-case visual or gameplay compensation is added. The user subsequently confirmed all four reported symptoms resolved in
+`modern-x64-gameplay-01`. This is user verification, not an agent test run.
 
 ## Validation
 
-Pending fresh x64 and Win32 builds; no game, CTest or contract execution authorized.
+Source 54995147 built the x64 game and staged DAT successfully. The Win32 game
+also compiled, but the all-target build exposed a macro collision in the added
+float contract: internal VM headers preceded SqPlus declarations. Reorder only
+the contract includes; game source is unchanged. Preserve the failed build logs.
+Fresh builds after this contract-only correction are pending.
+No game, CTest or contract execution performed by the agent.
 Existing diagnostic log/dumps and all build artifacts remain in place.
