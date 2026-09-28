@@ -831,7 +831,7 @@ extern struct SpriteMethods kinoko_sprite_methods_storage;
 
 
 
-int32_t kinoko_compile_file_native(struct SQVM* vm);
+intptr_t kinoko_compile_file_native(struct SQVM* vm);
 
 int32_t kinoko_script_bind_root_value(int32_t *object, int32_t *value, char *name, int32_t flags);
 

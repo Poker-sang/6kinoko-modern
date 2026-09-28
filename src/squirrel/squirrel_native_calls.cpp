@@ -126,7 +126,7 @@ int32_t kinoko_native_invoke_integer_member(HSQUIRRELVM machine) {
     const auto self = native_self(vm);
     SQInteger argument = 0;
     if (!method || !self || SQ_FAILED(sq_getinteger(vm, 2, &argument))) return 0;
-    kinoko::method::invoke<void>(self, method, argument);
+    kinoko::method::invoke<void>(self, method, static_cast<int32_t>(argument));
     return 0;
 }
 } // namespace
@@ -170,7 +170,8 @@ int32_t kinoko_native_invoke_draw_member(HSQUIRRELVM machine) {
     sq_getinteger(vm, 5, &height); sq_getinteger(vm, 4, &width);
     sq_getinteger(vm, 3, &y); sq_getinteger(vm, 2, &x);
     const auto result = kinoko::method::invoke<int32_t>(self, method,
-        x, y, width, height, static_cast<KinokoActResource*>(resource), sx, sy, blend, alpha);
+        static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(width), static_cast<int32_t>(height),
+        static_cast<KinokoActResource*>(resource), static_cast<int32_t>(sx), static_cast<int32_t>(sy), static_cast<int32_t>(blend), alpha);
     sq_pushinteger(vm, result);
     return 1;
 }

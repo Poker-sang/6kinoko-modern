@@ -324,7 +324,7 @@ int32_t kinoko_host_close_window(void) {
     return kinoko_script_close_window();
 }
 
-int32_t kinoko_compile_file_native(struct SQVM* vm) {
+intptr_t kinoko_compile_file_native(struct SQVM* vm) {
     const char* path;
     int32_t result;
     HSQOBJECT environment = kinoko::script::borrowed_value(

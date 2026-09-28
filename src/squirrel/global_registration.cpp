@@ -17,9 +17,9 @@ struct NativeMethod { const char* name; void* target; SQFUNCTION wrapper; };
 // Original 473010 order; targets retain their existing recovered ABI adapters.
 const NativeMethod methods[] = {
     {"PostQuitMessage", entry(kinoko_host_close_window), kinoko_native_void_entry},
-    {"ReadCSV", entry(kinoko_script_read_csv), kinoko_native_string_object_result_entry},
-    {"LoadTable", entry(kinoko_savedata_load_file_entry), kinoko_native_string_object_result_entry},
-    {"SaveTable", entry(kinoko_savedata_save_file_entry), kinoko_native_string_object_result_entry},
+    {"ReadCSV", entry(read_csv), kinoko_native_string_object_result_entry},
+    {"LoadTable", entry(load_table), kinoko_native_string_object_result_entry},
+    {"SaveTable", entry(save_table), kinoko_native_string_object_result_entry},
     {"SetGlobalUpdateFunction", entry(kinoko_script_set_global_update), kinoko_script_global_update_entry},
     {"SetInitFunctionByID", entry(kinoko_script_set_init), kinoko_native_integer_pair_entry},
     {"LoadAnimationData", entry(kinoko_script_load_animation), kinoko_native_string_bool_result_entry},

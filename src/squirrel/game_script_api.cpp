@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/game_script_api.h"
 #include "kinoko/game_script_host.h"
 #include "kinoko/game_host.h"
@@ -38,11 +39,11 @@ extern "C" int32_t kinoko_script_load_animation(const char* path) {
     char directory[260]{};
     static volatile LONG trace_count;
     const auto trace=InterlockedIncrement(&trace_count);
-    if(trace<=32) { kinoko_trace_i32("actor:load-animation-entry",address(path)); kinoko_trace_squirrel_name("actor:load-animation-path",address(path)); }
+    if(trace<=32) { kinoko_trace_i32("actor:load-animation-entry",diagnostic_address(path)); diagnostic_name("actor:load-animation-path",path); }
     kinoko_game_split_path(path,directory);
-    kinoko_trace_i32("464f80:path",address(path));
-    kinoko_trace_squirrel_name("464f80:path-text",address(path));
-    kinoko_trace_i32("464f80:directory",address(directory));
+    kinoko_trace_i32("464f80:path",diagnostic_address(path));
+    diagnostic_name("464f80:path-text",path);
+    kinoko_trace_i32("464f80:directory",diagnostic_address(directory));
     const auto result=kinoko_pat_load(kinoko_game_objects()->actors,path,directory);
     if(trace<=32) kinoko_trace_i32("actor:load-animation-result",result);
     return result; // 4696ED returns the PAT result; old reconstruction returned zero.
@@ -60,7 +61,7 @@ extern "C" KinokoActor* kinoko_script_create_collision(const char* name) {
 extern "C" int32_t kinoko_script_load_act(const char* path) { return kinoko_stage_load(path)!=nullptr; }
 extern "C" int32_t kinoko_script_load_map(const char* path) {
     static int32_t trace_count;
-    if(trace_count<32) { kinoko_trace("469840:LoadMap-entry"); kinoko_trace_squirrel_name("469840:path",address(path)); }
+    if(trace_count<32) { kinoko_trace("469840:LoadMap-entry"); diagnostic_name("469840:path",path); }
     const auto result=kinoko_game_load_map_file(path);
     if(trace_count<32) { kinoko_trace_i32("469840:LoadMap-result",result); ++trace_count; }
     return static_cast<uint8_t>(result)!=0; // 469856 tests AL, not the complete word.
@@ -94,7 +95,7 @@ extern "C" int32_t kinoko_script_set_global_update(KinokoOwnedObjectWords closur
     }
     if(trace_count<=8) {
         const auto env=state.get(&KinokoScriptCallback::environment),fn=state.get(&KinokoScriptCallback::closure);
-        kinoko_trace_i32("stagevm:set-global-vm",address(state.get(&KinokoScriptCallback::vm)));
+        kinoko_trace_i32("stagevm:set-global-vm",diagnostic_address(state.get(&KinokoScriptCallback::vm)));
         kinoko_trace_i32("stagevm:set-global-env-type",env.type); kinoko_trace_i32("stagevm:set-global-env-data",env.value);
         kinoko_trace_i32("stagevm:set-global-func-type",fn.type); kinoko_trace_i32("stagevm:set-global-func-data",fn.value);
     }
@@ -118,7 +119,7 @@ extern "C" KinokoOwnedObjectWords* kinoko_script_create_actor(KinokoOwnedObjectW
     static volatile LONG trace_count;
     const auto trace=InterlockedIncrement(&trace_count);
     if(trace<=32) {
-        kinoko_trace_i32("actor-create:result-object",address(result)); kinoko_trace_i32("actor-create:manager-state",address(manager));
+        kinoko_trace_i32("actor-create:result-object",diagnostic_address(result)); kinoko_trace_i32("actor-create:manager-state",diagnostic_address(manager));
         kinoko_trace_i32("actor-create:first-type",closure.type); kinoko_trace_i32("actor-create:first-data",closure.value);
         kinoko_trace_i32("actor-create:second-type",argument.type); kinoko_trace_i32("actor-create:second-data",argument.value);
     }
@@ -127,7 +128,7 @@ extern "C" KinokoOwnedObjectWords* kinoko_script_create_actor(KinokoOwnedObjectW
     // Native manager borrows these values throughout initialization. The owning
     // by-value parameters remain alive until after result's reference is acquired.
     auto* actor=kinoko_actor_manager_create(manager,&closure,x,y,z,&argument,nullptr);
-    if(trace<=32) kinoko_trace_i32("actor-create:callback-result",address(actor));
+    if(trace<=32) kinoko_trace_i32("actor-create:callback-result",diagnostic_address(actor));
     kinoko_sqplus_object_initialize((void *)(result));
     if(actor) assign(result,kinoko::actor::ActorView(actor).bytes(&kinoko::actor::ActorRecord::script_object));
     return result;
@@ -136,7 +137,7 @@ extern "C" int32_t kinoko_script_create_map_actors(const char* name,KinokoOwnedO
     Reference owner(environment);
     const auto& objects=*kinoko_game_objects();
     auto* layout=kinoko_map_lookup_layout(objects.map,name);
-    kinoko_trace_squirrel_name("actor:map-layer",address(name)); kinoko_trace_i32("actor:map-layout",address(layout));
+    diagnostic_name("actor:map-layer",name); kinoko_trace_i32("actor:map-layout",diagnostic_address(layout));
     return layout ? kinoko_map_create_actors(objects.actors,layout,reinterpret_cast<const KinokoSquirrelObject*>(&environment)) : 0;
 }
 extern "C" int32_t kinoko_script_create_event(const char* name,KinokoOwnedObjectWords closure,KinokoOwnedObjectWords environment) {
