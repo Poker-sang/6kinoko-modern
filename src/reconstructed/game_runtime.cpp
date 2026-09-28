@@ -23,7 +23,6 @@
 extern "C" {
 void kinoko_trace(const char*);
 void kinoko_trace_i32(const char*,int32_t);
-int __cdecl _purecall(void);
 KinokoGameMasks kinoko_game_masks{-1,-1};
 }
 namespace {
@@ -125,7 +124,7 @@ void* __fastcall destroy_scene(Scene* scene,void*,unsigned flags) {
     return scene;
 }
 void __fastcall scene_noop(Scene*,void*) {}
-int32_t __fastcall pure_scene(Scene*,void*) { return _purecall(); }
+int32_t __fastcall pure_scene(Scene*,void*) { std::abort(); }
 int32_t __fastcall scene_transition(Scene*,void*,int32_t) { return 0; }
 int32_t __fastcall scene_update(Scene*,void*) {
     if (kinoko_graphics.cooperative_status==kinoko::graphics::ok) kinoko_game_update();

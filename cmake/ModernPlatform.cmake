@@ -314,3 +314,7 @@ target_link_libraries(kinoko_input_service PUBLIC kinoko_platform)
 add_executable(kinoko_input_service_contract tests/input_service_contract.cpp)
 target_link_libraries(kinoko_input_service_contract PRIVATE kinoko_input_service)
 add_test(NAME input_service_contract COMMAND kinoko_input_service_contract)
+
+add_executable(kinoko_text_encoding_contract tests/text_encoding_contract.cpp)
+target_link_libraries(kinoko_text_encoding_contract PRIVATE kinoko_platform)
+add_test(NAME text_encoding_contract COMMAND kinoko_text_encoding_contract)
