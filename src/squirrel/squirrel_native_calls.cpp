@@ -104,9 +104,9 @@ int32_t kinoko_native_property_dispatch(SQVM* id, bool write) {
 }
 }
 
-extern "C" int32_t kinoko_native_property_set_callback(SQVM* vm) { return kinoko_native_property_dispatch(vm, false); }
+extern "C" intptr_t kinoko_native_property_set_callback(SQVM* vm) { return kinoko_native_property_dispatch(vm, false); }
 
-extern "C" int32_t kinoko_native_property_get_callback(SQVM* vm) { return kinoko_native_property_dispatch(vm, true); }
+extern "C" intptr_t kinoko_native_property_get_callback(SQVM* vm) { return kinoko_native_property_dispatch(vm, true); }
 
 namespace {
 int32_t kinoko_native_weakref(HSQUIRRELVM vm) {
@@ -114,7 +114,7 @@ int32_t kinoko_native_weakref(HSQUIRRELVM vm) {
     return upstream::sqrat_weakref(vm);
 }
 }
-extern "C" int32_t kinoko_native_class_weakref_callback(SQVM* id) {
+extern "C" intptr_t kinoko_native_class_weakref_callback(SQVM* id) {
     return kinoko_native_weakref(id);
 }
 
@@ -130,7 +130,7 @@ int32_t kinoko_native_invoke_integer_member(HSQUIRRELVM machine) {
     return 0;
 }
 } // namespace
-extern "C" int32_t kinoko_native_integer_member_callback(SQVM* id) {
+extern "C" intptr_t kinoko_native_integer_member_callback(SQVM* id) {
     return kinoko_native_invoke_integer_member(id);
 }
 
@@ -149,7 +149,7 @@ int32_t kinoko_native_invoke_nullary_member(HSQUIRRELVM machine) {
     return 0;
 }
 } // namespace
-extern "C" int32_t kinoko_native_nullary_member_callback(SQVM* id) {
+extern "C" intptr_t kinoko_native_nullary_member_callback(SQVM* id) {
     return kinoko_native_invoke_nullary_member(id);
 }
 
@@ -175,7 +175,7 @@ int32_t kinoko_native_invoke_draw_member(HSQUIRRELVM machine) {
     return 1;
 }
 } // namespace
-extern "C" int32_t kinoko_native_draw_member_callback(SQVM* id) {
+extern "C" intptr_t kinoko_native_draw_member_callback(SQVM* id) {
     return kinoko_native_invoke_draw_member(id);
 }
 
@@ -233,10 +233,10 @@ extern "C" void kinoko_native_capture_receiver_pair(SQVM* id, void** pair) {
     kinoko_native_capture_receiver(id, pair);
 }
 
-extern "C" int32_t kinoko_input_save_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_string_callback_entry); }
-extern "C" int32_t kinoko_input_assign_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_three_integer_callback_entry); }
-extern "C" int32_t kinoko_input_wait_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_bool_two_integer_callback_entry); }
-extern "C" int32_t kinoko_input_get_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_integer_two_integer_callback_entry); }
+extern "C" intptr_t kinoko_input_save_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_string_callback_entry); }
+extern "C" intptr_t kinoko_input_assign_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_three_integer_callback_entry); }
+extern "C" intptr_t kinoko_input_wait_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_bool_two_integer_callback_entry); }
+extern "C" intptr_t kinoko_input_get_entry(SQVM* vm) { return kinoko_native_call_binding(vm, kinoko_native_integer_two_integer_callback_entry); }
 namespace {
 int32_t kinoko_native_invoke_string_only_callback(void* callback, HSQUIRRELVM machine, int32_t index) {
     auto vm=machine; const SQChar* value=nullptr;
@@ -286,7 +286,7 @@ int32_t kinoko_native_invoke_integer_pair_callback(HSQUIRRELVM machine) {
     return call_pair(vm,callback,key,closure,environment);
 }
 } // namespace
-extern "C" int32_t kinoko_native_integer_pair_entry(SQVM* id) {
+extern "C" intptr_t kinoko_native_integer_pair_entry(SQVM* id) {
     return kinoko_native_invoke_integer_pair_callback(id);
 }
 namespace {
@@ -300,10 +300,10 @@ int32_t kinoko_native_invoke_string_object_callback(HSQUIRRELVM machine) {
     return 0;
 }
 } // namespace
-extern "C" int32_t kinoko_native_string_object_callback(SQVM* id) {
+extern "C" intptr_t kinoko_native_string_object_callback(SQVM* id) {
     return kinoko_native_invoke_string_object_callback(id);
 }
-extern "C" int32_t kinoko_native_create_event_callback(SQVM* id) {
+extern "C" intptr_t kinoko_native_create_event_callback(SQVM* id) {
     auto vm = id;
     return kinoko_native_string_pair_callback_entry(target(vm), id, 2);
 }
@@ -316,7 +316,7 @@ int32_t kinoko_native_invoke_integer_result_callback(HSQUIRRELVM machine) {
     sq_pushinteger(vm,result); return 1;
 }
 } // namespace
-extern "C" int32_t kinoko_native_integer_result_entry(SQVM* id) {
+extern "C" intptr_t kinoko_native_integer_result_entry(SQVM* id) {
     return kinoko_native_invoke_integer_result_callback(id);
 }
 
@@ -449,7 +449,7 @@ int32_t kinoko_native_one_integer(HSQUIRRELVM vm) {
 extern "C" int32_t kinoko_native_truthy_entry(SQVM* vm, int32_t index) {
     return kinoko_native_truthy(vm, index);
 }
-extern "C" int32_t kinoko_native_no_arguments_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_no_arguments_entry(SQVM* vm) {
     return kinoko_native_no_arguments(vm);
 }
 extern "C" int32_t kinoko_native_string_object_entry(void* callback, SQVM* vm, int32_t index) {
@@ -464,36 +464,36 @@ extern "C" int32_t kinoko_native_string_two_integer_truth_entry(void* callback, 
 extern "C" int32_t kinoko_native_string_three_integer_truth_entry(void* callback, SQVM* vm, int32_t index) {
     return kinoko_native_string_integer_truth(callback, vm, index, true);
 }
-extern "C" int32_t kinoko_native_void_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_void_entry(SQVM* vm) {
     return kinoko_native_no_arguments(vm);
 }
-extern "C" int32_t kinoko_native_string_object_result_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_string_object_result_entry(SQVM* vm) {
     auto *machine = vm;
     return kinoko_native_string_object(target(machine), machine, 2);
 }
-extern "C" int32_t kinoko_native_string_bool_result_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_string_bool_result_entry(SQVM* vm) {
     auto *machine = vm;
     return kinoko_native_string_bool(target(machine), machine, 2);
 }
-extern "C" int32_t kinoko_native_two_floats_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_two_floats_entry(SQVM* vm) {
     return kinoko_native_two_floats(vm);
 }
-extern "C" int32_t kinoko_native_string_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_string_entry(SQVM* vm) {
     auto *machine = vm;
     return kinoko_native_invoke_string_only_callback(target(machine), machine, 2);
 }
-extern "C" int32_t kinoko_native_integer_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_integer_entry(SQVM* vm) {
     return kinoko_native_one_integer(vm);
 }
-extern "C" int32_t kinoko_native_string_two_integer_truth_callback(SQVM* vm) {
+extern "C" intptr_t kinoko_native_string_two_integer_truth_callback(SQVM* vm) {
     auto *machine = vm;
     return kinoko_native_string_integer_truth(target(machine), machine, 2, false);
 }
-extern "C" int32_t kinoko_native_string_three_integer_truth_callback(SQVM* vm) {
+extern "C" intptr_t kinoko_native_string_three_integer_truth_callback(SQVM* vm) {
     auto *machine = vm;
     return kinoko_native_string_integer_truth(target(machine), machine, 2, true);
 }
-extern "C" int32_t kinoko_native_two_integer_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_native_two_integer_entry(SQVM* vm) {
     auto *machine = vm;
     return kinoko_native_invoke_two_integer_callback(target(machine), machine, 2);
 }

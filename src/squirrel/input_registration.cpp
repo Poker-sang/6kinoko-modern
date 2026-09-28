@@ -1,3 +1,4 @@
+#include "kinoko/input_manager.h"
 #include "kinoko/squirrel_binding_detail.hpp"
 #include "kinoko/script_registration.h"
 #include "script_registration_host.hpp"

@@ -1,4 +1,3 @@
-#include "kinoko/input_manager.h"
 #include "kinoko/script_file.h"
 #include "kinoko/game_script_api.h"
 #include "kinoko/game_runtime.h"
@@ -14,15 +13,15 @@ int32_t kinoko_host_show_message(const char* text);
 int32_t kinoko_host_sleep(int32_t dwMilliseconds);
 int32_t kinoko_host_milliseconds(void);
 int32_t kinoko_host_close_window(void);
-int32_t kinoko_native_void_entry(struct SQVM* a1);
-int32_t kinoko_native_string_object_result_entry(struct SQVM* a1);
-int32_t kinoko_native_string_bool_result_entry(struct SQVM* a1);
-int32_t kinoko_native_two_floats_entry(struct SQVM* a1);
-int32_t kinoko_native_string_entry(struct SQVM* a1);
-int32_t kinoko_native_integer_entry(struct SQVM* a1);
-int32_t kinoko_native_string_two_integer_truth_callback(struct SQVM* a1);
-int32_t kinoko_native_string_three_integer_truth_callback(struct SQVM* a1);
-int32_t kinoko_native_two_integer_entry(struct SQVM* a1);
+intptr_t kinoko_native_void_entry(struct SQVM* a1);
+intptr_t kinoko_native_string_object_result_entry(struct SQVM* a1);
+intptr_t kinoko_native_string_bool_result_entry(struct SQVM* a1);
+intptr_t kinoko_native_two_floats_entry(struct SQVM* a1);
+intptr_t kinoko_native_string_entry(struct SQVM* a1);
+intptr_t kinoko_native_integer_entry(struct SQVM* a1);
+intptr_t kinoko_native_string_two_integer_truth_callback(struct SQVM* a1);
+intptr_t kinoko_native_string_three_integer_truth_callback(struct SQVM* a1);
+intptr_t kinoko_native_two_integer_entry(struct SQVM* a1);
 int32_t kinoko_script_bind_root_value(int32_t * a1, int32_t * a2, char * a3, int32_t a4);
 int32_t kinoko_script_bind_root_integer(int32_t * a1, int32_t a2, char * a3);
 int32_t kinoko_compile_file_native(struct SQVM* vm);

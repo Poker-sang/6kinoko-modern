@@ -7,8 +7,8 @@ extern "C" void kinoko_trace_i32(const char*,int32_t);
 namespace {
 using namespace kinoko::script;
 inline auto commit_actor_result = kinoko_push_script_object;
-inline int32_t destroy_object_result(void* object) {
-    return address(kinoko_sqplus_object_destroy(object));
+inline void destroy_object_result(void* object) {
+    kinoko_sqplus_object_destroy(object);
 }
 KinokoOwnedObjectWords transfer(HSQUIRRELVM vm,const HSQOBJECT& borrowed) {
     auto value=borrowed;
@@ -19,7 +19,7 @@ bool read(HSQUIRRELVM vm,int index,HSQOBJECT& result) {
     return vm && index>0 && index<=sq_gettop(vm) && SQ_SUCCEEDED(sq_getstackobj(vm,index,&result));
 }
 }
-extern "C" int32_t kinoko_script_global_update_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_script_global_update_entry(SQVM* vm) {
     auto* target=kinoko_native_target_from_userdata(vm);
     HSQOBJECT environment{},closure{};
     if(!target || !read(vm,3,environment) || !read(vm,2,closure)) return 0;
@@ -29,7 +29,7 @@ extern "C" int32_t kinoko_script_global_update_entry(SQVM* vm) {
     reinterpret_cast<Function>(target)(fn,env);
     return 0;
 }
-extern "C" int32_t kinoko_script_create_actor_entry(SQVM* vm) {
+extern "C" intptr_t kinoko_script_create_actor_entry(SQVM* vm) {
     auto* target=kinoko_native_target_from_userdata(vm);
     HSQOBJECT closure{},argument{};
     float x{},y{},z{};
