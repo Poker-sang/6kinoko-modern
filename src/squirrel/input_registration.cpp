@@ -138,7 +138,7 @@ extern "C" int32_t kinoko_input_initialize_script_instance(KinokoInputManager* m
     kinoko_trace("46e6f0:begin");
     kinoko_trace_i32("46e6f0:this", static_cast<int32_t>(reinterpret_cast<uintptr_t>(manager)));
     kinoko_trace_i32("46e6f0:g644", static_cast<int32_t>(reinterpret_cast<uintptr_t>(host.vm)));
-    const auto input_class = pair::read(host.input_class);
+    const auto input_class = pair::read(static_cast<const int32_t*>(host.input_class));
     kinoko_trace_i32("46e6f0:g629-type", static_cast<int32_t>(input_class._type));
     kinoko_trace_i32("46e6f0:g629-data", static_cast<int32_t>(data_bits(input_class)));
     ObjectStorage instance{};

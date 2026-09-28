@@ -1804,7 +1804,7 @@ static void kinoko_loadse_blob(const char *source)
     }
     reader = reader_slot;
     size = kinoko_reader_size(reader);
-    kinoko_trace_squirrel_name("loadse:path", (int32_t)(intptr_t)path);
+    kinoko::script::diagnostic_name("loadse:path", path);
     kinoko_trace_i32("loadse:size", (int32_t)size);
     if (size == 0 || size > 16u * 1024u * 1024u) {
         kinoko_reader_close(reader);
