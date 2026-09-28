@@ -1,0 +1,51 @@
+{
+  "source_commit": "e720bc466dda17c600023c84a9cd3680da79ae3d",
+  "full_game_pe_amd64": true,
+  "bytecode_contract_compiled": true,
+  "bytecode_contract_run": false,
+  "game_run": false,
+  "files": [
+    {
+      "name": "kinoko_modern_gpu.exe",
+      "size": 3773952,
+      "sha256": "43915aa22f5276a0f3cba295f4570689f1c25da25c8956b05f804b4573061088",
+      "machine": "AMD64",
+      "optional_header": "PE32+"
+    },
+    {
+      "name": "tools\\kinoko_bytecode_wire_contract.exe",
+      "size": 205824,
+      "sha256": "907d16c707b12a56b3ef2065a61d44abbcc51d10d076748ac3fec5512eb39c0d",
+      "machine": "AMD64",
+      "optional_header": "PE32+"
+    },
+    {
+      "name": "6kinoko_a.dat",
+      "size": 163424746,
+      "sha256": "dd3aff7e3e6bf0816c3073d113c3ccb12242a67e578d012c3b87190e7e24fc64",
+      "reference_matches": true
+    },
+    {
+      "name": "6kinoko_b.dat",
+      "size": 44681244,
+      "sha256": "4d47b8e241886be4300025324ddd7d1e3c5729232ff67e011f14163db60130d2",
+      "reference_matches": true
+    },
+    {
+      "name": "6kinoko_c.dat",
+      "size": 11796163,
+      "sha256": "80327f6f680d53aaa5539f45e11d33c1c6ba6b862648760725f44a380121852e",
+      "reference_matches": true
+    }
+  ],
+  "shaders": [
+    {
+      "name": "shaders\\sprite.frag.dxbc",
+      "sha256": "d3a014d9e2498438e20cf28ed653cbf517a0602c5c088ea1777493b891c92d7c"
+    },
+    {
+      "name": "shaders\\sprite.vert.dxbc",
+      "sha256": "6492adead9a1e49fa1f60dc6019e8bfcb15f096ece87382f745fb2309f3c4379"
+    }
+  ]
+}

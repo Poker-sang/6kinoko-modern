@@ -1,6 +1,6 @@
 # 6kinoko-modern
 
-SDL3 platform migration fork of 6kinoko-rebuild. This first step replaces the window, physical input and audio output and upgrades Ogg/Vorbis. The full game is still Windows x86; portable modules build separately. No gameplay validation is claimed.
+SDL3 modernization fork of 6kinoko-rebuild, using SDL window/input/audio/GPU and updated Ogg/Vorbis. Complete Windows x86 and experimental x64 games now build; full Linux/macOS games remain future work.
 
 ## Build / 构建
 
@@ -17,86 +17,42 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
-Input/audio/application boundaries now compile at native pointer width across
-12 production files plus one assertion unit. This includes complete input VM
-objects, typed scene dispatch and IME handles. The latest Win32 no-trace build is
-`modern-input-audio-02` (77 contracts compiled, none executed; DAT verified).
-The full x64 probe still fails before linking with 62 diagnostics, including
-cascades. File/bitmap, actor and VM boundaries remain. See
-[input/audio/application scope](../docs/modern-x64/input-audio-application-native.md).
+The complete x64 game compiled and linked in `modern-full-x64-24`, source
+`e720bc466dda17c600023c84a9cd3680da79ae3d`. Static inspection confirms AMD64 / PE32+.
+EXE: `runtime-builds/modern-full-x64-24/kinoko_modern_gpu.exe`.
+Three original DAT files were staged and size/SHA256 verified; two sprite shaders
+are included. Keep the DAT files and `shaders` directory beside the EXE.
 
-ACT publication, canonical map layouts/clones and collision reference storage now
-compile at native pointer width. The complete reconstructed ACT source set and
-related map/collision/text consumers compile in a 47-production-file x64 check,
-plus one signature/layout assertion unit (not executed). The unreachable old
-mesh-manager adapter is removed. Full-game linking and bytecode/save/runtime
-compatibility remain pending. See [ACT/map scope](../docs/modern-x64/act-map-publication-native.md).
-
-The earlier ACT rendering checkpoint covered 11 production files (not executed),
-now included in the broader check above. See [rendering history](../docs/modern-x64/act-render-native.md).
+The same source built the Win32 game and 78 contracts in `modern-full-width-03`.
+The new original-width bytecode contract also compiled separately for x64.
+Both builds passed static D3D9 audits. No game, CTest or contract executable was
+run. Experimental x64 runtime, real DAT bytecode loading and save compatibility
+remain unvalidated; compilation does not prove all runtime pointer flows correct.
+See [full-game delivery](../docs/modern-x64/full-game-native.md) and
+[build instructions/evidence](../docs/modern-x64/full-game.md).
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
-Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
-The default build uses only the modern game, with no D3D9/D3DX DLL imports,
-SDK header dependency, SDL D3D9 renderer or D3D9 DLL loader. Vendored SDL has a
-[documented local patch](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md).
-The old comparison target, SDK alias branches, cloned libraries and D3DX import
-library have been removed. Active gameplay/VM contracts compile against the sole
-modern backend. Old COM fixture sources are retained as non-build migration
-evidence; their unported assertions are not counted as current test coverage.
-The user reports `modern-width-01` currently normal; this is user feedback,
-not agent-run validation. Full-game x64 and non-Windows support remain pending.
-Keep the staged `shaders` directory and three DAT files beside the game EXE.
-Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
+The sole modern game backend has no D3D9/D3DX imports, SDK headers, SDL D3D9
+renderer or loader. SDL's [local patch](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md)
+must be preserved. Old COM fixtures remain non-build historical evidence.
+Portable module CI covers Windows x64, Linux and macOS; it is not full-game
+portability validation.
 
-Font/atlas, shared string ownership and Squirrel object payload storage now
-compile in isolated Windows x64 checks. ACT texture rendering uses a typed
-state snapshot. The complete game still requires remaining x86 VM/host interfaces; these isolated checks do not establish x64 gameplay compatibility.
-The user reports `modern-window-move-01` normal; this is user runtime feedback.
-ACT textures/render targets now use native resource storage throughout creation,
-clone, property I/O, script bindings, render access and cleanup. Retained clone
-references live in each object; the pointer-keyed ownership table is removed.
-Chip resources now use native storage and shared MCD ownership across cloning,
-loading, map caches and script access. Texture/chip allocations also use native
-array metadata. ACT calls use named typed interfaces with an explicit legacy
-method-table adapter. The actual resource/string and method adapter contracts
-compile independently for Windows x64. Mesh resources now also own native
-controller/render objects, with typed 3D drawing and a portable MSH/MAT decoder.
-Full-game x64 and remaining VM/host interfaces remain pending. See [texture scope](../docs/modern-x64/act-texture-native.md)
-and [chip/method scope](../docs/modern-x64/act-chip-methods.md).
-The user reports `modern-act-chip-02` normal; this is user runtime feedback.
-See [mesh migration scope](../docs/modern-x64/mesh-native.md).
+ACT/resources, actor/camera, map/collision, input/audio/application and VM bridges
+now compile at native pointer width in the complete game. Native ownership and
+typed method dispatch are separate from original fixed-width serialized hashes,
+CV4 bytecode and save scalars. Compatibility implementation still needs runtime
+verification. Historical migration scopes and build attempts remain in
+[the x64 build record](../docs/modern-x64/BUILD.md).
 
-String layouts and glyph queues now use native C++ storage throughout factories,
-ACT/script properties, cloning, rendering and destruction. Stable shared atlas
-pages survive vector growth and source-layout destruction after text replication.
-The native ownership contract compiles separately at Windows x64 (not executed).
-The user reports `modern-mesh-native-01` normal; this is user runtime feedback.
-See [string migration scope](../docs/modern-x64/string-native.md).
+Earlier user reports marked `modern-width-01`, `modern-window-move-01`,
+`modern-act-chip-02`, `modern-mesh-native-01`, `modern-string-native-01`,
+`modern-x64-entry-03` and `modern-actor-native-03` normal. These are user feedback
+for earlier builds, not agent validation or acceptance of the new x64 executable.
 
-The next milestone is a complete Windows x64 game. An experimental full-game
-compiler probe now records actual blockers without disabling source layout or
-address guards. ACT/generic script calls pass explicit receiver/reserved slots
-and typed floats at both widths. Serialized type hashes keep original 32-bit
-results; crash diagnostics and locks compile with native Windows x64 layouts.
-The complete x64 game is still blocked; isolated compile success is not gameplay.
-The user reports `modern-string-native-01` normal. See the [full-game milestone](../docs/modern-x64/full-game.md).
-
-Actor/camera script slots, callback ownership, pool allocation, animation addressing
-and core container/reference records now use native pointer width. Seventeen real
-implementation files and the new ownership contract compile at Windows x64;
-runtime assertions were not executed. VM registration/property bridges and
-ACT/map/application layouts still block the complete x64 game. The user reports
-`modern-x64-entry-03` normal.
-
-Common SqPlus class/property bindings, global closure signatures and ACT
-document/layer/script/runtime ownership now use native widths. Actual binding,
-ACT lifecycle and source VM value/GC implementations compile independently at
-Windows x64; no runtime tests were executed. Remaining ACT publication slots,
-map/input/application dependencies and bytecode-format compatibility still need
-work before a complete playable x64 game. The user reports `modern-actor-native-03`
-normal. See [binding/ACT scope](../docs/modern-x64/binding-act-native.md).
+Next: user x64 runtime acceptance and remaining Windows service migration
+(including fonts) for complete Linux/macOS games.
 
 ## Documentation / 文档
 

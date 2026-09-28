@@ -131,8 +131,8 @@ EXE。不得把参考目录作为 `WorkingDirectory`，也不得依赖 `-SourceD
 This repository is 6kinoko-modern, branched from rebuild af5dd9a. Push only to
 Poker-sang/6kinoko-modern, never to rebuild. Modernization deliberately replaces
 platform implementations and compatible dependencies; preserve gameplay/data contracts.
-SDL portable modules build with KINOKO_PLATFORM_ONLY=ON. The complete game still
-requires Windows x86 while the remaining Win32 services and original ABI are migrated.
+SDL portable modules build with KINOKO_PLATFORM_ONLY=ON. The complete game builds for Windows x86 and experimental Windows x64.
+The x64 runtime is unvalidated; remaining Windows services still limit other platforms.
 Keep all artifacts, commit before builds, stage three DAT beside the EXE.
 Do not run the game or local tests; compile contracts and label unexecuted results.
 See docs/modern-platform/README.md and dependencies.json.

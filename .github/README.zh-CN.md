@@ -1,6 +1,6 @@
 # 6kinoko-modern
 
-6kinoko-rebuild 的现代化分支。本批接入 SDL3 窗口、物理输入与音频输出，升级 Ogg/Vorbis。完整游戏目前仍限 Windows x86；可移植模块单独构建，尚未验证游戏运行。
+6kinoko-rebuild 的现代化分支，采用 SDL 窗口、输入、音频和 GPU，升级 Ogg/Vorbis。完整 Windows x86 与实验性 x64 游戏均已构建；完整 Linux/macOS 游戏仍待迁移。
 
 ## Build / 构建
 
@@ -17,69 +17,37 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
-输入/音频/应用边界的 12 个生产文件及 1 个断言文件已通过本机位宽编译，
-包括完整输入 VM 对象、具名场景调用和 IME 句柄。最新 Win32 无日志构建为
-`modern-input-audio-02`（77 个合约仅编译、未执行，DAT 已校验）。
-全量 x64 探针仍在链接前失败，共 62 条诊断，包含连带错误；文件/位图、角色
-及 VM 边界仍待迁移。详见
-[输入/音频/应用范围](../docs/modern-x64/input-audio-application-native.md)。
+完整 x64 游戏已在 `modern-full-x64-24` 编译、链接成功，源码提交为
+`e720bc466dda17c600023c84a9cd3680da79ae3d`。静态检查确认 AMD64 / PE32+。
+EXE：`runtime-builds/modern-full-x64-24/kinoko_modern_gpu.exe`。
+三个原版 DAT 已复制并校验大小和 SHA256，两个精灵着色器已部署。
+请保留 EXE 同目录的 DAT 文件和 `shaders` 目录。
 
-ACT 脚本发布、统一地图布局/克隆和碰撞引用存储已按本机指针宽度编译。
-全部重构 ACT 源文件及关联地图/碰撞/文本调用方共 47 个生产文件，加 1 个签名/布局
-断言文件通过独立 x64 编译（未执行）。无生产调用的旧网格管理器适配已移除。
-完整游戏链接、字节码/存档与运行兼容仍待完成。详见 [ACT/地图范围](../docs/modern-x64/act-map-publication-native.md)。
-
-较早的 ACT 绘制检查点覆盖 11 个生产文件（未执行），现已包含在上述扩大检查中。
-详见 [ACT 绘制历史](../docs/modern-x64/act-render-native.md)。
+同一源码在 `modern-full-width-03` 完成 Win32 游戏及 78 个合约的编译。
+新增的原版位宽字节码合约也已单独通过 x64 编译。两架构 D3D9 静态审计通过。
+未运行游戏、CTest 或任何合约程序。实验性 x64 的真实 DAT 字节码加载、游戏行为
+及存档兼容仍未验证；编译成功不代表所有运行时指针流已经正确。
+详见[完整游戏交付](../docs/modern-x64/full-game-native.md)及
+[构建说明与证据](../docs/modern-x64/full-game.md)。
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
-Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
-默认只构建现代版，移除其 D3D9/D3DX DLL 导入、SDK 头文件依赖、SDL D3D9 渲染器
-及 D3D9 DLL 加载入口。SDL 包含[已记录的本地补丁](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md)。
-旧版对照目标、SDK 别名分支、复制构建库和 D3DX 导入库已移除。
-仍适用的游戏逻辑/VM 测试使用唯一现代后端编译；旧 COM 测试源码仅作为非构建迁移证据
-保留，其中尚未迁移的断言不计入当前测试覆盖。
-用户反馈 `modern-width-01` 目前正常，不记为代理运行验证。
-完整游戏的 x64 和非 Windows 平台支持仍待完成。
-Keep the staged `shaders` directory and three DAT files beside the game EXE.
-Portable modules: Windows x64, Linux, macOS build workflow; contracts compiled, not executed.
+唯一现代后端不再依赖 D3D9/D3DX 导入、SDK 头文件、SDL D3D9 渲染器及加载器。
+更新 SDL 时须保留[本地补丁](../third_party/SDL3-3.4.16/KINOKO_PATCHES.md)。
+旧 COM 合约仅作非构建历史证据。可移植模块 CI 覆盖 Windows x64、Linux 和 macOS，
+不代表完整游戏已通过跨平台验证。
 
-字体/图集、共享字符串所有权和 Squirrel 对象负载存储已通过独立 Windows x64 编译；
-ACT 纹理渲染改用具名状态快照。完整游戏仍依赖剩余 x86 VM/宿主接口，
-这些独立编译结果不代表 x64 游戏运行兼容。
-用户反馈 `modern-window-move-01` 正常，这是用户运行验证。
-ACT 纹理/渲染目标已在创建、克隆、属性读写、脚本绑定、渲染访问和释放中使用原生资源存储。
-克隆持有的额外引用直接保存在对象内，原指针键所有权表已移除。芯片资源的克隆、加载、
-地图缓存和脚本访问已统一为原生存储与共享 MCD 所有权；纹理/芯片数组也改用本机宽度元数据。
-ACT 调用统一为具名类型接口，旧方法表保留在明确的适配边界内。实际资源/字符串及方法适配
-契约已通过独立 Windows x64 编译。网格资源也已改用原生控制器/渲染对象所有权、具名 3D 绘制
-接口和可移植的 MSH/MAT 解码器；完整游戏 x64 和剩余 VM/宿主接口仍待迁移。
-详见[纹理范围](../docs/modern-x64/act-texture-native.md)及[芯片/方法接口范围](../docs/modern-x64/act-chip-methods.md)。
-用户反馈 `modern-act-chip-02` 正常，这是用户运行验证。
-详见[网格迁移范围](../docs/modern-x64/mesh-native.md)。
+ACT/资源、角色/相机、地图/碰撞、输入/音频/应用与 VM 桥接已按原生指针宽度
+参与完整游戏编译。原生所有权、具名方法调用与原版固定宽度序列化哈希、CV4 字节码
+和存档标量分离；兼容实现仍待运行验证。历史迁移范围和构建尝试保留在
+[x64 构建记录](../docs/modern-x64/BUILD.md)。
 
-字符串布局和字形队列的创建、ACT/脚本属性、克隆、渲染与销毁已统一为原生 C++ 存储。
-图集使用地址稳定的共享所有权，容器扩容或复制文字后销毁源布局不再使字形引用失效。
-原生所有权契约已独立通过 Windows x64 编译（未执行）。
-用户反馈 `modern-mesh-native-01` 正常，这是用户运行反馈。
-详见[字符串迁移范围](../docs/modern-x64/string-native.md)。
+此前用户反馈 `modern-width-01`、`modern-window-move-01`、`modern-act-chip-02`、
+`modern-mesh-native-01`、`modern-string-native-01`、`modern-x64-entry-03` 与
+`modern-actor-native-03` 正常。这些是旧版本的用户反馈，不是代理验证，也不是
+新 x64 可执行文件的验收结论。
 
-下一里程碑是完整 Windows x64 游戏。新增完整目标编译诊断入口，记录实际阻塞，
-不绕过源代码布局与地址保护。ACT/通用脚本调用在两种位宽下显式传递接收者、保留参数
-和真实浮点值；序列化类型哈希保持原版 32 位结果，崩溃诊断与临界区已通过 Windows x64 编译。
-完整 x64 游戏仍被阻塞，独立编译成功不代表游戏可运行。
-用户反馈 `modern-string-native-01` 正常。详见[完整游戏里程碑](../docs/modern-x64/full-game.md)。
-
-角色/相机脚本槽、回调所有权、对象池分配、动画寻址和基础容器/引用记录已使用原生指针宽度。
-17 个实际实现文件及新增所有权契约已通过 Windows x64 编译，运行时断言未执行。
-VM 注册/属性桥接及 ACT/地图/应用布局仍阻塞完整 x64 游戏。
-用户反馈 `modern-x64-entry-03` 正常。
-
-通用 SqPlus 类/属性绑定、全局脚本回调签名及 ACT 文档/图层/脚本/运行时所有权已使用原生位宽。
-实际绑定、ACT 生命周期和源码 VM 值/GC 实现已通过独立 Windows x64 编译，未执行运行时测试。
-剩余 ACT 发布对象槽、地图/输入/应用依赖及字节码格式兼容仍需处理，尚未得到完整可玩的 x64 游戏。
-用户反馈 `modern-actor-native-03` 正常。详见[绑定/ACT 范围](../docs/modern-x64/binding-act-native.md)。
+下一步：用户 x64 运行验收，以及字体等剩余 Windows 服务迁移，推进完整 Linux/macOS 游戏。
 
 ## Documentation / 文档
 

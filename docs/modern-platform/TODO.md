@@ -1,12 +1,19 @@
 # Modern 迁移与后续功能 TODO
 
-## 当前检查点：输入／音频／应用边界
+## 当前检查点：完整 x64 EXE
+- [x] modern-full-x64-24 完整游戏编译链接，静态确认 AMD64 / PE32+；DAT 与着色器已部署。
+- [x] modern-full-width-03 全量 Win32 构建与 78 个合约编译；两架构 D3D9 静态审计通过。
+- [x] 原版 CV4 固定位宽读写及独立字节码合约源码；x64 合约仅编译。
+- [ ] 用户验证 x64 真实 DAT 加载、游戏行为及存档兼容；代理未运行游戏或测试。
+- 范围与证据：`../modern-x64/full-game-native.md`。下方旧批次记录仅作历史，运行验收未完成。
+
+## 已完成编译检查点：输入／音频／应用边界
 - [x] 输入管理器、脚本临时对象及宿主输入/地图类缓冲采用完整本机对象宽度。
 - [x] 输入/场景虚调用显式传递占位参数；IME 使用 HWND/HIMC/WPARAM/LPARAM。
 - [x] 音频原生所有权移除 legacy 地址依赖，保留 32 位句柄和输入配置文件格式。
 - [x] 12 个生产文件及 1 个断言文件独立通过 x64 编译，静态确认 AMD64；未执行。
 - [x] modern-input-audio-02 全量 Win32 无日志构建、77 合约编译、DAT 校验及 D3D9 静态审计。
-- [ ] 清理完整 x64 探针剩余文件/位图服务、角色边界与 VM 桥接阻塞；最新 62 条诊断含连带错误。
+- [x] 清理文件/位图、角色边界与 VM 桥接编译阻塞；最终完整游戏已链接。
 - 范围与证据：`../modern-x64/input-audio-application-native.md`、`../modern-x64/BUILD.md`。
 
 ## 已完成编译检查点：ACT 收尾
@@ -25,7 +32,8 @@
 - [x] 崩溃日志使用对应架构寄存器；临界区使用本机布局，实际源文件通过 x64 编译。
 - [ ] 按完整编译诊断迁移基础容器/引用计数边界，再迁移角色、相机和 ACT/地图布局及分配尺寸。
 - [ ] 将三整数 SqPlus 对象参数、注册键与嵌入式 VM 对象迁移为完整指针宽度；清除剩余直接调用 ABI。
-- [ ] 完整 x64 游戏链接、DAT 校验，随后由用户确认基本运行。
+- [x] 完整 x64 游戏链接、DAT 校验。
+- [ ] 由用户确认 x64 基本运行。
 - [ ] 迁移 GDI 字体及剩余 Windows 服务，交付 Linux 可玩版本。
 - [ ] 完成 macOS 构建、打包及用户运行验证。
 - 构建入口、实际阻塞和兼容约束：`../modern-x64/full-game.md`。
@@ -236,7 +244,7 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Migrate chip factories, shared MCD lifecycle, map/script consumers and property serialization.
 - [x] Centralize ACT resource/document/layer/layout/key operations in named typed method interfaces; preserve real virtual callback ordering.
 - [x] Replace texture/chip scalar/array allocation cookies with aligned native metadata and reverse C++ destruction.
-- [ ] Retire the remaining method-table ABI adapter and non-resource x86 layouts/allocators as their implementations migrate; current adapters do not enable a full x64 game.
+- [ ] Retire the remaining method-table ABI adapter and non-resource x86 layouts/allocators as their implementations migrate; the complete game now links, while runtime validation remains pending.
 - [x] Replace the 260-byte outer string layout and 256-byte glyph record together with factories, serialization, script properties, clone, draw and destruction.
 - [x] Keep atlas addresses stable and retain shared pages across ReplicateText/source destruction.
 - [x] Compile native string lifetime/clone and exception-safe allocation contracts at Windows x64; do not execute.

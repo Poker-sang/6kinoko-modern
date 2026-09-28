@@ -1,4 +1,17 @@
-# x64 preparation build evidence
+# x64 build evidence
+
+## Complete x64 game checkpoint (current)
+
+Source `e720bc466dda17c600023c84a9cd3680da79ae3d`: `modern-full-x64-24`
+compiled and linked the complete AMD64 / PE32+ game, staged/verified three DAT
+and two shaders. `modern-full-width-03` built the Win32 game and 78 contracts.
+Both static D3D9 audits passed. The x64 bytecode contract also compiled.
+No game or test executed; runtime, real DAT and save compatibility remain pending.
+See [delivery and implementation scope](full-game-native.md) and the matching
+`full-x64-24-*` / `full-width-03-*` evidence JSON files.
+
+Earlier checkpoints below are historical, not current blocker lists.
+
 
 ## Native input/audio/application checkpoint
 
