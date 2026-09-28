@@ -1,3 +1,4 @@
+#include "kinoko/act_resource_records.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.h"
 #include "kinoko/legacy_string.hpp"
@@ -150,16 +151,16 @@ extern "C" int32_t kinoko_c2dlayout_set_color(SQVM* id) {
 extern "C" void* kinoko_acting_player_property(SQVM* id, int32_t* offset) {
     const auto target = descriptor(id, offset, false);
     if (!target) return 0;
-    return *offset == 8 ? field(target, 8) : read<void*>(field(target, *offset));
+    return *offset == (offsetof(kinoko::act::RuntimeRecord,stage_active)) ? field(target, (offsetof(kinoko::act::RuntimeRecord,stage_active))) : read<void*>(field(target, *offset));
 }
 extern "C" int32_t kinoko_acting_player_get_property(SQVM* id) {
     int32_t offset = 0;
     auto storage = kinoko_acting_player_property(id, &offset);
     if (!storage) return 0;
     auto vm = id;
-    if (offset == 8 || offset == 132) sq_pushbool(vm, read<uint8_t>(storage) != 0);
-    else if (offset == 124 || offset == 128) sq_pushfloat(vm, read<SQFloat>(storage));
-    else if (offset == 148) sq_pushstring(vm, kinoko_string_data((const void*)(storage)), -1);
+    if (offset == (offsetof(kinoko::act::RuntimeRecord,stage_active)) || offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,visible))) sq_pushbool(vm, read<uint8_t>(storage) != 0);
+    else if (offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_x)) || offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_y))) sq_pushfloat(vm, read<SQFloat>(storage));
+    else if (offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,name))) sq_pushstring(vm, kinoko_string_data((const void*)(storage)), -1);
     else sq_pushinteger(vm, read<int32_t>(storage));
     return 1;
 }
@@ -169,12 +170,12 @@ extern "C" int32_t kinoko_acting_player_set_property(SQVM* id) {
     auto storage = kinoko_acting_player_property(id, &offset);
     if (!storage) return 0;
     auto vm = id;
-    if (offset == 8 || offset == 132) {
+    if (offset == (offsetof(kinoko::act::RuntimeRecord,stage_active)) || offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,visible))) {
         SQBool value; sq_tobool(vm, 2, &value); write<uint8_t>(storage, value != 0);
-    } else if (offset == 148) {
+    } else if (offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,name))) {
         const SQChar* value = nullptr;
         if (SQ_SUCCEEDED(sq_getstring(vm, 2, &value))) assign_string(storage, value);
-    } else if (offset == 124 || offset == 128) {
+    } else if (offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_x)) || offset == (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_y))) {
         SQFloat value = 0; if (argument(vm, value)) write(storage, value);
     } else {
         int32_t value = 0; if (argument(vm, value)) write(storage, value);

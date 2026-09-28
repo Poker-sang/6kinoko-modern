@@ -81,10 +81,10 @@ struct ResourcePublicationRecord {
 };
 static_assert(offsetof(ResourcePublicationRecord, name) == 8);
 struct LayerPublicationRecord {
-    unsigned char unknown0[112];
+    alignas(void*) unsigned char unknown0[sizeof(kinoko::act::LayerAssociationRecord)];
     unsigned char name[24];
 };
-static_assert(offsetof(LayerPublicationRecord, name) == 112);
+static_assert(offsetof(LayerPublicationRecord, name) == offsetof(kinoko::act::LayerStorageRecord,name));
 struct ScriptPublicationRecord {
     unsigned char unknown0[64];
     unsigned char path[24];
@@ -1002,9 +1002,9 @@ namespace {
 std::map<int32_t, void*> act_script_owners;
 void refresh_act_script_callbacks(SQVM* vm, void* script, const int32_t *environment) {
     kinoko::act::LayerObjectRecord wrapper{kinoko_sqrat_object_vtable(), vm, {environment[0], environment[1]}, 0, {}};
-    kinoko_copy_act_callback(vm, (void*)(uintptr_t)(script), 4, (void*)(&wrapper), "Init");
-    kinoko_copy_act_callback(vm, (void*)(uintptr_t)(script), 24, (void*)(&wrapper), "Update");
-    kinoko_copy_act_callback(vm, (void*)(uintptr_t)(script), 44, (void*)(&wrapper), "OnCreate");
+    kinoko_copy_act_callback(vm, (void*)(uintptr_t)(script), offsetof(kinoko::act::ScriptStorageRecord,initialize), (void*)(&wrapper), "Init");
+    kinoko_copy_act_callback(vm, (void*)(uintptr_t)(script), offsetof(kinoko::act::ScriptStorageRecord,update), (void*)(&wrapper), "Update");
+    kinoko_copy_act_callback(vm, (void*)(uintptr_t)(script), offsetof(kinoko::act::ScriptStorageRecord,release), (void*)(&wrapper), "OnCreate");
 }
 }
 

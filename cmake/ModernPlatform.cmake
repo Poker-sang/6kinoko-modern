@@ -157,6 +157,7 @@ endif()
 
 if(WIN32)
     add_library(kinoko_binding_act_width_compile OBJECT
+        tests/binding_act_width_compile.cpp
         src/squirrel/squirrel_class_binding.cpp src/squirrel/squirrel_native_variables.cpp
         src/squirrel/squirrel_native_arguments.cpp src/squirrel/squirrel_method_dispatch.cpp
         src/squirrel/squirrel_host_compat.cpp src/squirrel/squirrel_vm_bootstrap.cpp

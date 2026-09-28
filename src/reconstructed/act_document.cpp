@@ -259,8 +259,8 @@ int32_t kinoko_act_load_key(KinokoActKey* key, KinokoArchiveReader* reader_ptr,
         }
     } else if (layout_type == 0xc9ca5c20u) {
         layout = reinterpret_cast<KinokoActLayout*>(kinoko_act_make_map_layout(reader_ptr));
-        if (layout && !kinoko_act_read_map_records((KinokoActLayout*)(uintptr_t)(address(layout)), reader_ptr)) {
-            kinoko_act_free_map_records((KinokoActLayout*)(uintptr_t)(address(layout)));
+        if (layout && !kinoko_act_read_map_records(layout, reader_ptr)) {
+            kinoko_act_free_map_records(layout);
             std::free(layout);
             layout = nullptr;
         }
@@ -325,8 +325,8 @@ int32_t kinoko_act_load_layer(KinokoActLayer* layer, KinokoArchiveReader* reader
         kinoko_trace_squirrel_name(
             "act:key-script", address(kinoko_string_data(kinoko::act::KeyView(key).bytes(&kinoko::act::KeyRecord::script_name))));
         kinoko_trace_i32("act:key-layout", address(layout));
-        if (layout && field<int32_t>(address(layout)) ==
-                address(kinoko_act_host_symbols()->map_layout_vtable)) {
+        if (layout && kinoko::legacy::load<const void*>(layout) ==
+                kinoko_act_host_symbols()->map_layout_vtable) {
             const auto placement = kinoko::native::RecordView<kinoko::map::LayoutRecord>(layout).get(&kinoko::map::LayoutRecord::placements);
             auto key_begin = reinterpret_cast<uintptr_t>(placement.begin);
             auto key_end = reinterpret_cast<uintptr_t>(placement.end);
@@ -601,7 +601,7 @@ KinokoActResource* kinoko_act_make_resource(KinokoArchiveReader* reader_ptr, uin
     }
     // 449C50 registers the render target's raw RTTI name in the same factory.
     static const char target_name[] = ".?AVCActRenderTarget@@";
-    static const auto target_type = static_cast<uint32_t>(kinoko_boost_hash_range((const char*)(uintptr_t)(address(target_name)), (const char*)(uintptr_t)(address(target_name + sizeof(target_name) - 1))));
+    static const auto target_type = static_cast<uint32_t>(kinoko_boost_hash_range(target_name, target_name + sizeof(target_name) - 1));
     const bool render_target = type == target_type;
     const bool texture = type == 0xc6fdb98au || render_target;
     if (!texture && type != 0xfbaaf527u) {
@@ -655,7 +655,7 @@ int32_t kinoko_act_load(KinokoActDocument* this_ptr, KinokoArchiveReader* reader
         return 0;
     }
     kinoko::act::DocumentView view(this_ptr);
-    const auto layer_slot = address(view.bytes(&kinoko::act::DocumentRecord::layers));
+    const auto layer_slot = view.bytes(&kinoko::act::DocumentRecord::layers);
     if (!kinoko_act_read_u32(reader_ptr, &layer_count) ||
         layer_count > 0x10000) {
         kinoko_trace("act:layer-vector-failed");
@@ -691,7 +691,7 @@ int32_t kinoko_act_load(KinokoActDocument* this_ptr, KinokoArchiveReader* reader
     }
     // 428310..428346: resolve parents before even reading resource_count.
     associations.bind_loaded_parents(document, layer_count);
-    const auto resource_slot = address(view.bytes(&kinoko::act::DocumentRecord::resources));
+    const auto resource_slot = view.bytes(&kinoko::act::DocumentRecord::resources);
     if (!kinoko_act_read_u32(reader_ptr, &resource_count) ||
         resource_count > 0x10000) {
         kinoko_trace("act:resource-vector-failed");

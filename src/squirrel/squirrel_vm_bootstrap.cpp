@@ -1,3 +1,4 @@
+#include <squirrel.h>
 #include <sqstdaux.h>
 #include <sqstdio.h>
 #include <sqstdblob.h>

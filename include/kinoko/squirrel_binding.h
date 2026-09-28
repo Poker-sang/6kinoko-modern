@@ -35,10 +35,10 @@ int32_t  kinoko_sqplus_find_table_variable(void **out_ptr, const void *context);
 int32_t  kinoko_sqplus_read_variable(const void *context, const void* varinfo, intptr_t source_ptr);
 int32_t  kinoko_sqplus_write_variable(const void *context, const void* varinfo, void* destination);
 int32_t  kinoko_sqplus_resolve_instance_variable(struct SQVM* vm, int32_t top, void **out_varinfo, void **out_source);
-int32_t  kinoko_sqplus_table_get(struct SQVM * a1);
-int32_t  kinoko_sqplus_instance_get(struct SQVM * a1);
-int32_t  kinoko_sqplus_table_set(struct SQVM * a1);
-int32_t  kinoko_sqplus_instance_set(struct SQVM * a1);
+intptr_t  kinoko_sqplus_table_get(struct SQVM * a1);
+intptr_t  kinoko_sqplus_instance_get(struct SQVM * a1);
+intptr_t  kinoko_sqplus_table_set(struct SQVM * a1);
+intptr_t  kinoko_sqplus_instance_set(struct SQVM * a1);
 int32_t  kinoko_sqplus_argument_integer(struct SQVM * a1, int32_t a2);
 long double  kinoko_sqplus_argument_float(struct SQVM * a1, int32_t a2);
 void*  kinoko_sqplus_argument_object(int32_t *target, int32_t unused, struct SQVM * vm);
@@ -47,12 +47,12 @@ int32_t  kinoko_sqplus_call_integer(void * a1, void * a2, int32_t a3, struct SQV
 int32_t  kinoko_sqplus_call_rectangle(void * a1, void * a2, int32_t a3, struct SQVM * a4, int32_t a5);
 int32_t  kinoko_sqplus_call_move(void * a1, void * a2, int32_t a3, struct SQVM * a4, int32_t a5);
 void * kinoko_sqplus_resolve_method(void * result_ptr, struct SQVM * vm);
-int32_t  kinoko_sqplus_void_method(struct SQVM * a1);
-int32_t  kinoko_sqplus_object_method(struct SQVM * a1);
-int32_t  kinoko_sqplus_integer_method(struct SQVM * a1);
-int32_t  kinoko_sqplus_integer_result_method(struct SQVM * a1);
-int32_t  kinoko_sqplus_rectangle_method(struct SQVM * a1);
-int32_t  kinoko_sqplus_move_method(struct SQVM * a1);
+intptr_t  kinoko_sqplus_void_method(struct SQVM * a1);
+intptr_t  kinoko_sqplus_object_method(struct SQVM * a1);
+intptr_t  kinoko_sqplus_integer_method(struct SQVM * a1);
+intptr_t  kinoko_sqplus_integer_result_method(struct SQVM * a1);
+intptr_t  kinoko_sqplus_rectangle_method(struct SQVM * a1);
+intptr_t  kinoko_sqplus_move_method(struct SQVM * a1);
 
 #ifdef __cplusplus
 }

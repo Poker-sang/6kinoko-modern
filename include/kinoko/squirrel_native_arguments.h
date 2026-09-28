@@ -16,7 +16,7 @@ int32_t kinoko_native_integer_arg(struct SQVM * vm, int32_t index, int32_t* valu
 int32_t kinoko_native_float_arg(struct SQVM * vm, int32_t index, float* value);
 /* Borrowed pair: no reference-count change. Positive argument indices only. */
 int32_t kinoko_native_value_pair(struct SQVM * vm, int32_t index, int32_t* value);
-/* Constructs a 12-byte owning wrapper from a positive argument index. */
+/* Constructs a native-width owning wrapper from a positive argument index. */
 int32_t kinoko_squirrel_pair_from_stack(struct SQVM * vm, int32_t index, int32_t* target);
 
 #ifdef __cplusplus

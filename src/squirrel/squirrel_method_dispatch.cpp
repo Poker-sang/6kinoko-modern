@@ -134,13 +134,13 @@ extern "C" void * kinoko_sqplus_resolve_method(void * output_address, struct SQV
     store(output_address, result);
     return output_address;
 }
-extern "C" int32_t kinoko_sqplus_void_method(struct SQVM * vm) {
+extern "C" intptr_t kinoko_sqplus_void_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     kinoko::method::invoke<void>(receiver(method), method.function);
     return 0;
 }
-extern "C" int32_t kinoko_sqplus_object_method(struct SQVM * vm) {
+extern "C" intptr_t kinoko_sqplus_object_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     if (sq_gettop(static_cast<SQVM *>(vm)) < 3) return argument_error(static_cast<SQVM *>(vm));
@@ -152,23 +152,23 @@ extern "C" int32_t kinoko_sqplus_object_method(struct SQVM * vm) {
         argument);
     return 0;
 }
-extern "C" int32_t kinoko_sqplus_integer_method(struct SQVM * vm) {
+extern "C" intptr_t kinoko_sqplus_integer_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     return kinoko_sqplus_call_integer(method.receiver, method.function, method.offset, vm, 2);
 }
-extern "C" int32_t kinoko_sqplus_integer_result_method(struct SQVM * vm) {
+extern "C" intptr_t kinoko_sqplus_integer_result_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     sq_pushinteger(static_cast<SQVM *>(vm), kinoko::method::invoke<int32_t>(receiver(method), method.function));
     return 1;
 }
-extern "C" int32_t kinoko_sqplus_rectangle_method(struct SQVM * vm) {
+extern "C" intptr_t kinoko_sqplus_rectangle_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     return kinoko_sqplus_call_rectangle(method.receiver, method.function, method.offset, vm, 2);
 }
-extern "C" int32_t kinoko_sqplus_move_method(struct SQVM * vm) {
+extern "C" intptr_t kinoko_sqplus_move_method(struct SQVM * vm) {
     ResolvedMethod method;
     if (!resolve(vm, method)) return instance_error(vm);
     return kinoko_sqplus_call_move(method.receiver, method.function, method.offset, vm, 2);

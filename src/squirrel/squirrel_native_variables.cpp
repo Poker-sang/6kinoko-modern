@@ -127,7 +127,7 @@ extern "C" int32_t  kinoko_sqplus_resolve_instance_variable(struct SQVM* vm_addr
     return 1;
 }
 
-extern "C" int32_t  kinoko_sqplus_table_get(struct SQVM * vm) { return table_access(vm, false); }
-extern "C" int32_t  kinoko_sqplus_instance_get(struct SQVM * vm) { return instance_access(vm, false); }
-extern "C" int32_t  kinoko_sqplus_table_set(struct SQVM * vm) { return table_access(vm, true); }
-extern "C" int32_t  kinoko_sqplus_instance_set(struct SQVM * vm) { return instance_access(vm, true); }
+extern "C" intptr_t  kinoko_sqplus_table_get(struct SQVM * vm) { return table_access(vm, false); }
+extern "C" intptr_t  kinoko_sqplus_instance_get(struct SQVM * vm) { return instance_access(vm, false); }
+extern "C" intptr_t  kinoko_sqplus_table_set(struct SQVM * vm) { return table_access(vm, true); }
+extern "C" intptr_t  kinoko_sqplus_instance_set(struct SQVM * vm) { return instance_access(vm, true); }
