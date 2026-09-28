@@ -26,8 +26,8 @@ Latest delivery: `modern-x64-files-02`, source
 configuration use a portable file-service boundary. Unused 32-bit file-address
 adapters are deleted. The user confirmed the preceding savedata-01 load/save fix.
 The x64 game and three file/archive/save contracts compiled; `modern-files-02`
-compiled the Win32 game and all 81 contracts. File-service runtime acceptance
-and Linux/macOS CI compilation are pending.
+compiled the Win32 game and all 81 contracts. Linux/macOS/Windows portable CI
+compilation passed (run 36438818634); file-service runtime acceptance is pending.
 EXE: `runtime-builds/modern-x64-files-02/kinoko_modern_gpu.exe`.
 Three original DAT files were staged and size/SHA256 verified; two sprite shaders
 are included. Keep the DAT files and `shaders` directory beside the EXE.

@@ -44,8 +44,10 @@ Source `47ec4e47067a075a91446ef2064f7afa0feb0abd`:
 - Three DAT staged and size/SHA256 verified on both builds; two sprite shaders
   beside each EXE. Both static D3D9 audits passed.
 - Native file formats are unchanged. No original saves/configs copied or edited.
-- Local WSL has no Linux installation. Non-Windows compilation awaits CI;
-  no Linux/macOS full-game or runtime success is claimed.
+- Local WSL has no Linux installation. CI run 36438818634, commit ac469cbc,
+  successfully compiled portable modules including this service and the actual
+  reader implementation on Linux, macOS and Windows. Full Linux/macOS game or
+  runtime success is not claimed. No contracts were executed.
 
 User confirmed the preceding savedata-01 works. This files-02 batch is not yet
 user-validated. All old successful/failed builds and logs are retained.

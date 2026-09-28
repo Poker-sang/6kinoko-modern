@@ -25,7 +25,8 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 已接入可移植文件服务边界，删除无调用的 32 位文件地址适配。
 用户已确认上一版 savedata-01 的存档读写修复正常。
 x64 游戏及三个文件/归档/存档合约已编译；`modern-files-02` 完成 Win32
-游戏及全部 81 个合约的编译。本批运行验收及 Linux/macOS CI 编译仍待确认。
+游戏及全部 81 个合约的编译。Linux/macOS/Windows 平台模块 CI 编译已通过
+（36438818634）；本批游戏运行验收仍待确认。
 EXE：`runtime-builds/modern-x64-files-02/kinoko_modern_gpu.exe`。
 三个原版 DAT 已复制并校验大小和 SHA256，两个精灵着色器已部署。
 请保留 EXE 同目录的 DAT 文件和 `shaders` 目录。
