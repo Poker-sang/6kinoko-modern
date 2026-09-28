@@ -17,6 +17,14 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
+Input/audio/application boundaries now compile at native pointer width across
+12 production files plus one assertion unit. This includes complete input VM
+objects, typed scene dispatch and IME handles. The latest Win32 no-trace build is
+`modern-input-audio-02` (77 contracts compiled, none executed; DAT verified).
+The full x64 probe still fails before linking with 62 diagnostics, including
+cascades. File/bitmap, actor and VM boundaries remain. See
+[input/audio/application scope](../docs/modern-x64/input-audio-application-native.md).
+
 ACT publication, canonical map layouts/clones and collision reference storage now
 compile at native pointer width. The complete reconstructed ACT source set and
 related map/collision/text consumers compile in a 47-production-file x64 check,

@@ -17,6 +17,13 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
+输入/音频/应用边界的 12 个生产文件及 1 个断言文件已通过本机位宽编译，
+包括完整输入 VM 对象、具名场景调用和 IME 句柄。最新 Win32 无日志构建为
+`modern-input-audio-02`（77 个合约仅编译、未执行，DAT 已校验）。
+全量 x64 探针仍在链接前失败，共 62 条诊断，包含连带错误；文件/位图、角色
+及 VM 边界仍待迁移。详见
+[输入/音频/应用范围](../docs/modern-x64/input-audio-application-native.md)。
+
 ACT 脚本发布、统一地图布局/克隆和碰撞引用存储已按本机指针宽度编译。
 全部重构 ACT 源文件及关联地图/碰撞/文本调用方共 47 个生产文件，加 1 个签名/布局
 断言文件通过独立 x64 编译（未执行）。无生产调用的旧网格管理器适配已移除。

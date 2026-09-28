@@ -1,5 +1,32 @@
 # x64 preparation build evidence
 
+## Native input/audio/application checkpoint
+
+- Source: `f551e898c4f77ed9e4432a9663907b6a452569f7`.
+- `modern-input-audio-02`: complete Win32 Release no-trace game and 77 contracts
+  compiled. Three DAT copied beside the EXE and size/SHA256 verified.
+- EXE: `runtime-builds/modern-input-audio-02/kinoko_modern_gpu.exe`.
+- EXE SHA256: `8660EAC30761B88EDED1AFFEAD1C138DB6B32FB600EF6B68D84F3896F409DF76`.
+- D3D9 static audit passed: 121 compiler / 87 linker logs, zero violations.
+- `modern-input-audio-x64-04`: 12 production translation units + one signature/
+  layout assertion unit compiled. All 13 objects statically verified AMD64.
+  Covers audio runtime, physical input, aggregation/copy/frame/keys/configuration,
+  script registration, application/game loop, scene queue and IME.
+- `modern-full-x64-17`: full game remains blocked before linking; 62 unique
+  diagnostics (previous 114). Audio/input/application layout groups cleared.
+  Counts contain cascades, not independent tasks or a completion percentage.
+  Remaining groups: file/bitmap services, actor method/diagnostic boundaries,
+  remaining host/VM bridges. Original bytecode/save compatibility is still pending.
+- Retained attempts: independent x64-01 (missing pair header), x64-02 (pair API
+  argument mismatch), x64-03 (successful intermediate compile), Win32-01 (old
+  scene fixture call signatures), full-x64-16 (intermediate probe, 62 diagnostics).
+  Final registration diagnostics use ObjectView for the wrapped class value.
+- No game, CTest or contract executable executed. Acceptance of modern-act-map-02
+  is user feedback, not agent runtime validation.
+- Evidence: `input-audio-02-artifacts.json`, `input-audio-02-d3d9-audit.json`,
+  `input-audio-x64-04-artifacts.json`, `full-x64-17-artifacts.json`,
+  `full-x64-17-blockers.json`. [Scope](input-audio-application-native.md).
+
 ## Native ACT publication/map/collision checkpoint
 
 - Final build source: `28eb3e9c3110a2fc12218b7fc7f682afef9e8e6d`.

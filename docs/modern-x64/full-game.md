@@ -1,12 +1,13 @@
 # Full-game x64 milestone
 
-Latest checkpoint: `modern-full-x64-15`, source `28eb3e9c`, remains blocked
-before linking (114 unique compiler diagnostics; cascades included). ACT/map/
-collision production code now has a 47-file native AMD64 compile check, plus
-one signature/layout assertion unit. The main remaining groups are audio,
-input/application/bitmap/file services, actor diagnostic/method boundaries and
-remaining VM bridges. Bytecode/save/runtime compatibility is still pending.
-See [ACT/map scope](act-map-publication-native.md) and [build evidence](BUILD.md).
+Latest checkpoint: `modern-full-x64-17`, source `f551e898`, remains blocked
+before linking (62 unique compiler diagnostics, previously 114; cascades included).
+Input/audio/application now have a 12-production-file native AMD64 compile check
+plus one assertion unit; the earlier 47-file ACT/map check remains available.
+Remaining groups are bitmap/file services, actor diagnostic/method boundaries and
+host/VM bridges. Original DAT bytecode/save/runtime compatibility is pending.
+See [input/audio/application scope](input-audio-application-native.md),
+[ACT/map scope](act-map-publication-native.md) and [build evidence](BUILD.md).
 
 The first hard milestone is a complete Windows x64 game, then a playable Linux
 build, then macOS validation. A portable contract is not completion of that goal.

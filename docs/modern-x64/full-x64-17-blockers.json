@@ -1,0 +1,411 @@
+{
+  "source_commit": "f551e898c4f77ed9e4432a9663907b6a452569f7",
+  "target": "kinoko_modern_gpu",
+  "full_build_succeeded": false,
+  "source_guards_enabled": true,
+  "executed_built_code": false,
+  "unique_diagnostics": 62,
+  "by_code": {
+    "C2338": 4,
+    "C2607": 41,
+    "C2664": 1,
+    "C2593": 1,
+    "C2039": 4,
+    "C3861": 10,
+    "C2397": 1
+  },
+  "by_file": {
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\legacy_memory.hpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\actor_methods.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp": 6,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\sprite.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h": 8,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp": 8,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\table_serialization.cpp": 2,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp": 4,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_compile_bridge.cpp": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp": 3,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp": 8,
+    "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\squirrel_api_types.h": 1,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp": 6,
+    "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp": 3
+  },
+  "diagnostics": [
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\legacy_memory.hpp",
+      "line": 11,
+      "code": "C2338",
+      "message": "static_assert failed: 'Legacy object addresses are Win32 values'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\actor_methods.cpp",
+      "line": 18,
+      "code": "C2338",
+      "message": "static_assert failed: 'Actor methods require the original Win32 layout.'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 8,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 9,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 10,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 11,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 12,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\file_io.cpp",
+      "line": 13,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\sprite.cpp",
+      "line": 16,
+      "code": "C2338",
+      "message": "static_assert failed: 'Original CSprite field offsets'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp",
+      "line": 22,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp",
+      "line": 79,
+      "code": "C2664",
+      "message": "“SQRESULT sq_getinteger(HSQUIRRELVM,SQInteger,SQInteger *)”: 无法将参数 3 从“int32_t *”转换为“SQInteger *”"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_legacy_api.cpp",
+      "line": 279,
+      "code": "C2593",
+      "message": "“operator =”不明确"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 23,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 24,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 25,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 26,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 27,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 28,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 29,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\bitmap.h",
+      "line": 30,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 45,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 45,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 87,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 87,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 89,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 89,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 283,
+      "code": "C2039",
+      "message": "\"address\": 不是 \"kinoko::script\" 的成员"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\actor_diagnostics.cpp",
+      "line": 283,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp",
+      "line": 53,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp",
+      "line": 96,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\script_file.cpp",
+      "line": 114,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\table_serialization.cpp",
+      "line": 30,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\table_serialization.cpp",
+      "line": 89,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp",
+      "line": 32,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp",
+      "line": 33,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\reconstructed\\squirrel_object.cpp",
+      "line": 39,
+      "code": "C3861",
+      "message": "“address”: 找不到标识符"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 19,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 20,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 21,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_source_runtime.cpp",
+      "line": 173,
+      "code": "C2397",
+      "message": "从“const SQInteger”转换到“int32_t”需要收缩转换"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_compile_bridge.cpp",
+      "line": 59,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp",
+      "line": 20,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp",
+      "line": 21,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_operations.cpp",
+      "line": 22,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 19,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 20,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 21,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 22,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 23,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 24,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 25,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_thread.cpp",
+      "line": 26,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\include\\kinoko\\squirrel_api_types.h",
+      "line": 36,
+      "code": "C2338",
+      "message": "static_assert failed: 'Recovered addresses are the original Win32 ABI, not portable pointers.'"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 9,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 10,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 11,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 12,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 13,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_generator_bridge.cpp",
+      "line": 14,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp",
+      "line": 8,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp",
+      "line": 9,
+      "code": "C2607",
+      "message": "静态断言失败"
+    },
+    {
+      "file": "C:\\WorkSpace\\6kinoko-modern\\src\\squirrel\\squirrel_array_bridge.cpp",
+      "line": 10,
+      "code": "C2607",
+      "message": "静态断言失败"
+    }
+  ],
+  "limitations": "Compiler diagnostics from this build, not a complete pointer-flow or runtime correctness audit. Guard failures cause cascading diagnostics; counts are not independent migration tasks."
+}

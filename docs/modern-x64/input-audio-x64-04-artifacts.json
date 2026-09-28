@@ -1,0 +1,77 @@
+{
+  "source_commit": "f551e898c4f77ed9e4432a9663907b6a452569f7",
+  "target": "kinoko_input_audio_width_compile",
+  "production_translation_units": 12,
+  "assertion_translation_units": 1,
+  "all_objects_amd64": true,
+  "linked_game": false,
+  "game_run": false,
+  "tests_run": false,
+  "objects": [
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\application_runtime.obj",
+      "sha256": "98517ae4e27afe95828df7d7d04d9e4dc61525a19d0a9b16acf36ea835fc973c",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\audio_runtime.obj",
+      "sha256": "8625be4ce624275ae3e1a49332e1f35d284b1823b7e420db77f3451579cabc9c",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\game_runtime.obj",
+      "sha256": "d67d20ce8428376387050fedff724bac96a996b0907d3f3d6f650c7f465163ad",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\ime_input.obj",
+      "sha256": "8691a17c9a8b8c348ef8a10b80acde95a447c71b1250b39e2f31ee03dd759673",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_aggregation.obj",
+      "sha256": "c386e68a6f6682159133e0512fe96f5f5456147e29b02f8c029dd6e7348fd66a",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_audio_width_compile.obj",
+      "sha256": "0a414d8595ee3a547f7fb16ae68ff9e497be9abf2fd75bc911b87f9b3d7ab867",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_copy.obj",
+      "sha256": "b55e26396806edc2470696aff743f7cda6d238498f6d9274c1a5e03eb0df9308",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_frame.obj",
+      "sha256": "aad2f832374f15de72b67d3920de243339639e24d48bdedb2bb1276baa009139",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_keys.obj",
+      "sha256": "e882b9729b80e67ce14c6e39adb38590debf88113e6ea6617e36b0d374770a1b",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_registration.obj",
+      "sha256": "86b5585bd227005b725a4487405d6d7a57b93da0fe4a2d94f835d49351d49b5d",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\input_runtime.obj",
+      "sha256": "7949abc664503858d1aa7e4e742ddb62cc05f282b0f4b369f9afaaae98ed19c9",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\physical_input.obj",
+      "sha256": "9ac02346c2f7e78867abab4a39c0ee0936699b1e0f176ced7a83e56e2b6a99e9",
+      "machine": "AMD64"
+    },
+    {
+      "path": "build-runs\\modern-input-audio-x64-04\\kinoko_input_audio_width_compile.dir\\Release\\scene_queue.obj",
+      "sha256": "6ba818dfc93a9d84a82d09e87551d60ab8ab1855425af139eef40a7d6f8f9276",
+      "machine": "AMD64"
+    }
+  ]
+}
