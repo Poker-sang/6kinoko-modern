@@ -208,9 +208,11 @@ if(WIN32)
         src/reconstructed/map_layout_lifetime.cpp src/reconstructed/map_loading.cpp
         src/reconstructed/map_manager.cpp src/reconstructed/map_render.cpp
         src/reconstructed/actor_collision.cpp src/reconstructed/collision_manager.cpp
-        src/reconstructed/collision_queries.cpp)
+        src/reconstructed/collision_queries.cpp
+        src/squirrel/act_binding.cpp src/squirrel/native_property_bridge.cpp)
     target_include_directories(kinoko_act_map_width_compile PRIVATE include
-        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/squirrel")
     target_compile_definitions(kinoko_act_map_width_compile PRIVATE
         WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
     target_compile_features(kinoko_act_map_width_compile PRIVATE cxx_std_17)

@@ -113,21 +113,21 @@ void assign_string(void* field, const char* value) {
 
 extern "C" void* kinoko_cact_layer_property_offset(SQVM* id, int32_t* offset) { return descriptor(id, offset, true); }
 extern "C" void* kinoko_c2dlayout_property_offset(SQVM* id, int32_t* offset) { return descriptor(id, offset, false); }
-extern "C" int32_t kinoko_cact_layer_get_int(SQVM* id) { return get_number<int32_t>(id, true); }
-extern "C" int32_t kinoko_cact_layer_set_int(SQVM* id) { return set_number<int32_t>(id, true); }
-extern "C" int32_t kinoko_cact_layer_get_float(SQVM* id) { return get_number<SQFloat>(id, true); }
-extern "C" int32_t kinoko_cact_layer_set_float(SQVM* id) { return set_number<SQFloat>(id, true); }
-extern "C" int32_t kinoko_cact_layer_get_pointer_int(SQVM* id) { return get_number<int32_t>(id, true, true); }
-extern "C" int32_t kinoko_cact_layer_set_pointer_int(SQVM* id) { return set_number<int32_t>(id, true, true); }
-extern "C" int32_t kinoko_cact_layer_get_pointer_float(SQVM* id) { return get_number<SQFloat>(id, true, true); }
-extern "C" int32_t kinoko_cact_layer_set_pointer_float(SQVM* id) { return set_number<SQFloat>(id, true, true); }
-extern "C" int32_t kinoko_c2dlayout_get_int(SQVM* id) { return get_number<int32_t>(id, false); }
-extern "C" int32_t kinoko_c2dlayout_set_int(SQVM* id) { return set_number<int32_t>(id, false); }
-extern "C" int32_t kinoko_c2dlayout_get_float(SQVM* id) { return get_number<SQFloat>(id, false); }
-extern "C" int32_t kinoko_c2dlayout_set_float(SQVM* id) { return set_number<SQFloat>(id, false); }
-extern "C" int32_t kinoko_cact_layer_get_bool(SQVM* id) { return get_bool(id, true); }
-extern "C" int32_t kinoko_cact_layer_set_bool(SQVM* id) { return set_bool(id, true); }
-extern "C" int32_t kinoko_cact_layer_get_string(SQVM* id) {
+extern "C" intptr_t kinoko_cact_layer_get_int(SQVM* id) { return get_number<int32_t>(id, true); }
+extern "C" intptr_t kinoko_cact_layer_set_int(SQVM* id) { return set_number<int32_t>(id, true); }
+extern "C" intptr_t kinoko_cact_layer_get_float(SQVM* id) { return get_number<SQFloat>(id, true); }
+extern "C" intptr_t kinoko_cact_layer_set_float(SQVM* id) { return set_number<SQFloat>(id, true); }
+extern "C" intptr_t kinoko_cact_layer_get_pointer_int(SQVM* id) { return get_number<int32_t>(id, true, true); }
+extern "C" intptr_t kinoko_cact_layer_set_pointer_int(SQVM* id) { return set_number<int32_t>(id, true, true); }
+extern "C" intptr_t kinoko_cact_layer_get_pointer_float(SQVM* id) { return get_number<SQFloat>(id, true, true); }
+extern "C" intptr_t kinoko_cact_layer_set_pointer_float(SQVM* id) { return set_number<SQFloat>(id, true, true); }
+extern "C" intptr_t kinoko_c2dlayout_get_int(SQVM* id) { return get_number<int32_t>(id, false); }
+extern "C" intptr_t kinoko_c2dlayout_set_int(SQVM* id) { return set_number<int32_t>(id, false); }
+extern "C" intptr_t kinoko_c2dlayout_get_float(SQVM* id) { return get_number<SQFloat>(id, false); }
+extern "C" intptr_t kinoko_c2dlayout_set_float(SQVM* id) { return set_number<SQFloat>(id, false); }
+extern "C" intptr_t kinoko_cact_layer_get_bool(SQVM* id) { return get_bool(id, true); }
+extern "C" intptr_t kinoko_cact_layer_set_bool(SQVM* id) { return set_bool(id, true); }
+extern "C" intptr_t kinoko_cact_layer_get_string(SQVM* id) {
     NativeField field(id, true);
     if (!field.storage()) return 0;
     const auto value = kinoko_string_data(field.storage());
@@ -136,13 +136,13 @@ extern "C" int32_t kinoko_cact_layer_get_string(SQVM* id) {
     // SQRESULT (sq_pushstring is void). Its unusual return ABI is not changed.
     return ((int32_t)(uintptr_t)kinoko_sq_get_up(id, -1)) >= 0;
 }
-extern "C" int32_t kinoko_cact_layer_set_string(SQVM* id) {
+extern "C" intptr_t kinoko_cact_layer_set_string(SQVM* id) {
     NativeField field(id, true, false, true);
     const SQChar* value = nullptr;
     if (field.storage() && SQ_SUCCEEDED(sq_getstring(field.vm(), 2, &value))) assign_string(field.storage(), value);
     return 0;
 }
-extern "C" int32_t kinoko_c2dlayout_set_color(SQVM* id) {
+extern "C" intptr_t kinoko_c2dlayout_set_color(SQVM* id) {
     NativeField field(id, false, false, true);
     int32_t value = 0;
     if (field.storage() && argument(field.vm(), value)) field.value(std::clamp(value, 0, 255));
@@ -153,7 +153,7 @@ extern "C" void* kinoko_acting_player_property(SQVM* id, int32_t* offset) {
     if (!target) return 0;
     return *offset == (offsetof(kinoko::act::RuntimeRecord,stage_active)) ? field(target, (offsetof(kinoko::act::RuntimeRecord,stage_active))) : read<void*>(field(target, *offset));
 }
-extern "C" int32_t kinoko_acting_player_get_property(SQVM* id) {
+extern "C" intptr_t kinoko_acting_player_get_property(SQVM* id) {
     int32_t offset = 0;
     auto storage = kinoko_acting_player_property(id, &offset);
     if (!storage) return 0;
@@ -164,7 +164,7 @@ extern "C" int32_t kinoko_acting_player_get_property(SQVM* id) {
     else sq_pushinteger(vm, read<int32_t>(storage));
     return 1;
 }
-extern "C" int32_t kinoko_acting_player_set_property(SQVM* id) {
+extern "C" intptr_t kinoko_acting_player_set_property(SQVM* id) {
     if (!id || sq_gettop(id) < 3) return 0;
     int32_t offset = 0;
     auto storage = kinoko_acting_player_property(id, &offset);
@@ -182,12 +182,12 @@ extern "C" int32_t kinoko_acting_player_set_property(SQVM* id) {
     }
     return 0;
 }
-extern "C" int32_t kinoko_native_view_get_short(SQVM* id) {
+extern "C" intptr_t kinoko_native_view_get_short(SQVM* id) {
     NativeField field(id, false);
     if (!field.storage()) return 0;
     sq_pushinteger(field.vm(), field.value<int16_t>()); return 1;
 }
-extern "C" int32_t kinoko_native_view_set_short(SQVM* id) {
+extern "C" intptr_t kinoko_native_view_set_short(SQVM* id) {
     NativeField field(id, false, false, true);
     int32_t value = 0;
     if (field.storage() && argument(field.vm(), value)) field.value(static_cast<uint16_t>(value));

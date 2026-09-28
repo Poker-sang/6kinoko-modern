@@ -766,19 +766,19 @@ extern const void* kinoko_mesh_manager_methods;
 
 extern char kinoko_resource2d_class_published;
 
-extern int32_t kinoko_acting_player_class_pair[2];
+extern int32_t kinoko_acting_player_class_pair[2*sizeof(void*)/sizeof(int32_t)];
 
-extern int32_t kinoko_resource2d_class_pair[2];
+extern int32_t kinoko_resource2d_class_pair[2*sizeof(void*)/sizeof(int32_t)];
 
-extern int32_t kinoko_layout_set_pair[2];
+extern int32_t kinoko_layout_set_pair[2*sizeof(void*)/sizeof(int32_t)];
 
-extern int32_t kinoko_layout_get_pair[2];
+extern int32_t kinoko_layout_get_pair[2*sizeof(void*)/sizeof(int32_t)];
 
-extern int32_t kinoko_layout_class_pair[2];
+extern int32_t kinoko_layout_class_pair[2*sizeof(void*)/sizeof(int32_t)];
 
-extern int32_t kinoko_layer_set_pair[2];
+extern int32_t kinoko_layer_set_pair[2*sizeof(void*)/sizeof(int32_t)];
 
-extern int32_t kinoko_layer_get_pair[2];
+extern int32_t kinoko_layer_get_pair[2*sizeof(void*)/sizeof(int32_t)];
 
 extern int32_t kinoko_script_void_result_identity;
 

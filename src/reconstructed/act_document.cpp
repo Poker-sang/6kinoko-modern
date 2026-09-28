@@ -142,7 +142,7 @@ KinokoActLayout* kinoko_act_make_map_layout(KinokoArchiveReader* reader_ptr)
     if (!layout) return 0;
     kinoko::map::LayoutView record(layout.get());
     record.set(&kinoko::map::LayoutRecord::methods,
-        kinoko_act_host_symbols()->map_layout_vtable);
+        static_cast<const unsigned char*>(kinoko_act_host_symbols()->map_layout_vtable));
     record.view(&kinoko::map::LayoutRecord::sprite_and_base).set(&kinoko::render::QuadRecord::vtable,
         kinoko_act_host_symbols()->map_view_vtable);
     record.set(&kinoko::map::LayoutRecord::max_chip_width, INT32_MAX);

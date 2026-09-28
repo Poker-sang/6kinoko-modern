@@ -49,7 +49,7 @@ int32_t kinoko_act_read_u32(KinokoArchiveReader* reader_ptr, uint32_t *value);
 int32_t kinoko_act_read_u8(KinokoArchiveReader* reader_ptr, uint8_t *value);
 int32_t kinoko_begin_stage_this(KinokoActRuntime* resource_ptr, int32_t stage);
 int32_t kinoko_bind_act_resource_object(KinokoActRuntime* resource_ptr);
-int32_t kinoko_cact_associate_resource(struct SQVM* vm);
+intptr_t kinoko_cact_associate_resource(struct SQVM* vm);
 void* kinoko_construct_cact_script(void* this_ptr);
 void kinoko_destroy_cact_key(void* key);
 void kinoko_destroy_cact_list(void* list_slot);
@@ -66,15 +66,15 @@ int32_t kinoko_execute_act_callback(void* script_ptr,
 int32_t kinoko_execute_act_source_script(
     struct SQVM* vm, void* script_ptr, const int32_t *environment_pair);
 int32_t kinoko_get_act_resource_class(struct SQVM* vm, KinokoActResource* resource, int32_t out[2]);
-int32_t kinoko_map_chip_count(struct SQVM* vm);
+intptr_t kinoko_map_chip_count(struct SQVM* vm);
 int kinoko_map_compare_records(const void *a, const void *b);
-int32_t kinoko_map_get_chip_by_position(struct SQVM* vm);
-int32_t kinoko_map_get_chip_id(struct SQVM* vm);
-int32_t kinoko_map_get_chip_layout(struct SQVM* vm);
-int32_t kinoko_map_prearrangement(struct SQVM* vm);
-int32_t kinoko_map_set_chip_id(struct SQVM* vm);
-int32_t kinoko_map_set_chip_layout(struct SQVM* vm);
-int32_t kinoko_map_set_chip_rect(struct SQVM* vm);
+intptr_t kinoko_map_get_chip_by_position(struct SQVM* vm);
+intptr_t kinoko_map_get_chip_id(struct SQVM* vm);
+intptr_t kinoko_map_get_chip_layout(struct SQVM* vm);
+intptr_t kinoko_map_prearrangement(struct SQVM* vm);
+intptr_t kinoko_map_set_chip_id(struct SQVM* vm);
+intptr_t kinoko_map_set_chip_layout(struct SQVM* vm);
+intptr_t kinoko_map_set_chip_rect(struct SQVM* vm);
 struct kinoko_mcd_chip *kinoko_mcd_find_chip(
     struct kinoko_mcd_data *data, uint32_t chip_id);
 struct kinoko_mcd_texture *kinoko_mcd_find_texture(
@@ -112,7 +112,7 @@ int32_t kinoko_publish_cact_layer_members(
     struct SQVM* vm, const int32_t *class_pair);
 int32_t kinoko_publish_cact_layer_property(
     struct SQVM* vm, const char *name, int32_t offset,
-    int32_t getter, int32_t setter);
+    void* getter, void* setter);
 int32_t kinoko_publish_cact_resource2d_class(struct SQVM* vm,
                                                      void* root_object);
 int32_t kinoko_publish_map_view_class(struct SQVM* vm, void* root,
@@ -120,7 +120,7 @@ int32_t kinoko_publish_map_view_class(struct SQVM* vm, void* root,
     int32_t property_count, int32_t is_map, int32_t out[2]);
 int32_t kinoko_register_runtime_act_script(struct SQVM* vm, KinokoActRuntime* resource_ptr,
                                                  KinokoActDocument* act);
-int32_t kinoko_resource_get_chip_info(struct SQVM* vm);
+intptr_t kinoko_resource_get_chip_info(struct SQVM* vm);
 int32_t kinoko_root_table_construct_this(KinokoActRuntime* resource_ptr,
                                                  struct SQVM* vm,
                                                  void* output_ptr);

@@ -37,13 +37,13 @@ extern "C" {
 const struct KinokoActHostSymbols* kinoko_act_host_symbols(void);
 int32_t kinoko_act_script_output_compiled(void);
 extern char kinoko_resource2d_class_published;
-extern int32_t kinoko_acting_player_class_pair[2];
-extern int32_t kinoko_resource2d_class_pair[2];
-extern int32_t kinoko_layout_set_pair[2];
-extern int32_t kinoko_layout_get_pair[2];
-extern int32_t kinoko_layout_class_pair[2];
-extern int32_t kinoko_layer_set_pair[2];
-extern int32_t kinoko_layer_get_pair[2];
+extern int32_t kinoko_acting_player_class_pair[2*sizeof(void*)/sizeof(int32_t)];
+extern int32_t kinoko_resource2d_class_pair[2*sizeof(void*)/sizeof(int32_t)];
+extern int32_t kinoko_layout_set_pair[2*sizeof(void*)/sizeof(int32_t)];
+extern int32_t kinoko_layout_get_pair[2*sizeof(void*)/sizeof(int32_t)];
+extern int32_t kinoko_layout_class_pair[2*sizeof(void*)/sizeof(int32_t)];
+extern int32_t kinoko_layer_set_pair[2*sizeof(void*)/sizeof(int32_t)];
+extern int32_t kinoko_layer_get_pair[2*sizeof(void*)/sizeof(int32_t)];
 /* The established 28-byte host storage includes a 24-byte string record and
    one reserved word. It is not a modern std::string or an owning C++ wrapper. */
 typedef struct KinokoScriptExtension {
@@ -60,8 +60,8 @@ extern int32_t kinoko_release_watch_count;
 
 int32_t _3f__3f_2_40_YAPAXI_40_Z(int32_t size);
 int32_t __fastcall kinoko_act_layer_associate_method(KinokoActLayer* receiver, void* unused_edx);
-int32_t kinoko_sqrat_call_integer0(struct SQVM* a1);
-int32_t kinoko_sqrat_call_integer1(struct SQVM* a1);
+intptr_t kinoko_sqrat_call_integer0(struct SQVM* a1);
+intptr_t kinoko_sqrat_call_integer1(struct SQVM* a1);
 int32_t kinoko_is_release_watch_data(int32_t data);
 int32_t kinoko_load_act_texture(const char *texture_name);
 __declspec(noinline) void kinoko_trace_i32(const char *label,

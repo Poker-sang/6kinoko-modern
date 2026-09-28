@@ -1,11 +1,9 @@
 #pragma once
 #include "kinoko/collision_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/native_control.h"
 
 namespace kinoko::collision {
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 // A successful lock owns precisely one temporary strong reference. The native
 // pair borrows an allocation slot; never retain the borrowed Actor itself.
 class LockedParent final {
@@ -18,7 +16,7 @@ public:
     LockedParent(const LockedParent&) = delete;
     LockedParent& operator=(const LockedParent&) = delete;
     KinokoActor *actor() const {
-        return locked_.allocation ? kinoko::legacy::load<KinokoActor *>(locked_.allocation) : nullptr;
+        return locked_.allocation ? kinoko::memory::load<KinokoActor *>(locked_.allocation) : nullptr;
     }
     bool has_slot() const { return locked_.allocation != nullptr; }
 };

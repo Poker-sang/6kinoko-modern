@@ -159,19 +159,19 @@ const void* kinoko_mesh_manager_methods = 0;
 
 char kinoko_resource2d_class_published = 0;
 
-int32_t kinoko_acting_player_class_pair[2] = {0, 0};
+int32_t kinoko_acting_player_class_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
-int32_t kinoko_resource2d_class_pair[2] = {0, 0};
+int32_t kinoko_resource2d_class_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
-int32_t kinoko_layout_set_pair[2] = {0, 0};
+int32_t kinoko_layout_set_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
-int32_t kinoko_layout_get_pair[2] = {0, 0};
+int32_t kinoko_layout_get_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
-int32_t kinoko_layout_class_pair[2] = {0, 0};
+int32_t kinoko_layout_class_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
-int32_t kinoko_layer_set_pair[2] = {0, 0};
+int32_t kinoko_layer_set_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
-int32_t kinoko_layer_get_pair[2] = {0, 0};
+int32_t kinoko_layer_get_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 
 int32_t kinoko_script_void_result_identity;
 

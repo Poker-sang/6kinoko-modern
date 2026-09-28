@@ -1,5 +1,6 @@
 #include "kinoko/map_render.h"
 #include <cstddef>
+#include "kinoko/method_entry.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/actor_records.hpp"
 
@@ -48,8 +49,8 @@ extern "C" int32_t __fastcall kinoko_map_render_layer_entry(
     struct Methods { void *prefix[8]; Draw draw; void *update_all; Update update; };
     auto *methods=kinoko::map::LayoutView(layer.layout).get(&kinoko::map::LayoutRecord::methods);
     const auto update=kinoko::memory::load<Update>(methods+offsetof(Methods,update));
-    update(layer.layout,left,top,right,bottom);
+    kinoko::method::invoke<int32_t>(layer.layout,reinterpret_cast<void*>(update),left,top,right,bottom);
     // Reload table after virtual update, preserving the original dispatch order.
     methods=kinoko::map::LayoutView(layer.layout).get(&kinoko::map::LayoutRecord::methods);
-    return kinoko::memory::load<Draw>(methods+offsetof(Methods,draw))(layer.layout,x,y);
+    return kinoko::method::invoke<int32_t>(layer.layout,kinoko::memory::load<void*>(methods+offsetof(Methods,draw)),x,y);
 }
