@@ -20,14 +20,19 @@ foreach($letter in @('a','b','c')) {
 }
 New-Item -ItemType Directory -Path $buildTree | Out-Null
 $revision | Set-Content -LiteralPath (Join-Path $buildTree 'source-commit.txt') -Encoding ascii
+# Native stderr is diagnostic data; the exit code decides success.
+$ErrorActionPreference='Continue'
 & cmake -S $repo -B $buildTree -A x64 -G $Generator -DKINOKO_EXPERIMENTAL_X64=ON `
     -DKINOKO_RETDEC_DISABLE_TRACE=ON "-DKINOKO_REFERENCE_DIR=$assets" "-DKINOKO_RUNTIME_DIR=$runDirectory" *> (Join-Path $buildTree 'configure.log')
 $configureExit=$LASTEXITCODE
+$ErrorActionPreference='Stop'
 $buildExit=$null
 $staged=$false
 if($configureExit -eq 0) {
+    $ErrorActionPreference='Continue'
     & cmake --build $buildTree --config Release --target kinoko_modern_gpu --parallel 4 *> (Join-Path $buildTree 'build.log')
     $buildExit=$LASTEXITCODE
+    $ErrorActionPreference='Stop'
     if($buildExit -eq 0) {
         & (Join-Path $PSScriptRoot 'stage_dat.ps1') -Executable (Join-Path $runDirectory 'kinoko_modern_gpu.exe') -SourceDir $assets *> (Join-Path $buildTree 'dat.log')
         $staged=$true

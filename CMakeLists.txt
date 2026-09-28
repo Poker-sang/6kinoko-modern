@@ -145,10 +145,13 @@ target_include_directories(kinoko_native_control PUBLIC include)
 include(cmake/BoostCount.cmake)
 target_link_libraries(kinoko_native_control PUBLIC kinoko_boost_count)
 
-add_library(kinoko_legacy_abi STATIC
-    src/reconstructed/legacy_abi.cpp
-    src/reconstructed/legacy_method_entries.cpp)
+# Production uses reconstructed explicit-receiver entries. The original true
+# thiscall helper is retained only for the historical ABI contracts.
+add_library(kinoko_method_entries STATIC src/reconstructed/legacy_method_entries.cpp)
+target_include_directories(kinoko_method_entries PUBLIC include)
+add_library(kinoko_legacy_abi STATIC src/reconstructed/legacy_abi.cpp)
 target_include_directories(kinoko_legacy_abi PUBLIC include)
+target_link_libraries(kinoko_legacy_abi PUBLIC kinoko_method_entries)
 
 add_library(kinoko_retdec_support STATIC
     src/platform/legacy_memory_ops.cpp
@@ -386,7 +389,7 @@ target_link_libraries(kinoko_modern_gpu PRIVATE
     kinoko_audio_runtime
     kinoko_actor_collision
     kinoko_native_methods
-    kinoko_legacy_abi
+    kinoko_method_entries
     kinoko_retdec_support
     kinoko_diagnostics
     kinoko_zlib

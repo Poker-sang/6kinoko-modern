@@ -3,6 +3,7 @@
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_source_runtime.h"
 #include "kinoko/method_entry.hpp"
+#include "kinoko/act_types.h"
 #include <array>
 
 
