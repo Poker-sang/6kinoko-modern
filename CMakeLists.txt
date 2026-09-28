@@ -511,6 +511,13 @@ target_link_options(kinoko_savedata_file_contract PRIVATE /OPT:REF /OPT:ICF)
 add_test(NAME savedata_file_contract COMMAND kinoko_savedata_file_contract)
 set_tests_properties(savedata_file_contract PROPERTIES TIMEOUT 60)
 
+add_executable(kinoko_bytecode_wire_contract tests/bytecode_wire_contract.cpp)
+target_include_directories(kinoko_bytecode_wire_contract PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
+target_link_libraries(kinoko_bytecode_wire_contract PRIVATE kinoko_squirrel_cpp_vm)
+target_link_options(kinoko_bytecode_wire_contract PRIVATE /OPT:REF /OPT:ICF)
+add_test(NAME bytecode_wire_contract COMMAND kinoko_bytecode_wire_contract)
+set_tests_properties(bytecode_wire_contract PROPERTIES TIMEOUT 60)
+
 add_executable(kinoko_squirrel_source_vm_contract tests/squirrel_source_vm_contract.cpp)
 target_include_directories(kinoko_squirrel_source_vm_contract PRIVATE
     include "${KINOKO_SQUIRREL2_ROOT}/include")
@@ -830,7 +837,7 @@ set(KINOKO_TOOL_TARGETS
     kinoko_actor_records_contract
     kinoko_com_owner_contract
     kinoko_audio_runtime_contract
-    kinoko_squirrel_c_api_contract
+    kinoko_squirrel_c_api_contract kinoko_bytecode_wire_contract
     kinoko_actor_lifecycle_contract
     kinoko_actor_manager_contract kinoko_application_contract kinoko_base_utilities_contract
     kinoko_actor_render_contract

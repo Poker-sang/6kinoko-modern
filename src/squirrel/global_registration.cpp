@@ -13,6 +13,15 @@ inline auto show_call_stack_entry = kinoko_native_no_arguments_entry;
 template<class Function> void* entry(Function function) {
     return reinterpret_cast<void*>(function);
 }
+int32_t read_csv(const char* path, ObjectStorage object) {
+    return kinoko_script_read_csv(path, object.vtable, object.value._type, data_bits(object.value));
+}
+int32_t load_table(const char* path, ObjectStorage object) {
+    return kinoko_savedata_load_file_entry(path, object.vtable, object.value._type, data_bits(object.value));
+}
+int32_t save_table(const char* path, ObjectStorage object) {
+    return kinoko_savedata_save_file_entry(path, object.vtable, object.value._type, data_bits(object.value));
+}
 struct NativeMethod { const char* name; void* target; SQFUNCTION wrapper; };
 // Original 473010 order; targets retain their existing recovered ABI adapters.
 const NativeMethod methods[] = {
