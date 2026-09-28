@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/act_document_association.hpp"
@@ -54,7 +55,7 @@
 #include "kinoko/method_entry.hpp"
 #include <string>
 #include <memory>
-#include <windows.h>
+
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <cmath>

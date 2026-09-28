@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource_records_io.hpp"
@@ -683,9 +684,9 @@ extern "C" int32_t kinoko_load_act_texture(const char *texture_name) {
     if (!length || length + 5 > sizeof(path)) return 0;
     std::memcpy(path, texture_name, length + 1);
     const char *extension = std::strrchr(path, '.');
-    if (extension && _stricmp(extension, ".cv2") == 0) {
+    if (extension && kinoko::compare_asset_names(extension, ".cv2") == 0) {
         // Already normalized.
-    } else if (extension && _stricmp(extension, ".cv4") == 0) {
+    } else if (extension && kinoko::compare_asset_names(extension, ".cv4") == 0) {
         std::memcpy(path + length - 4, ".cv2", 4);
     } else {
         std::memcpy(path + length, ".cv2", 5);

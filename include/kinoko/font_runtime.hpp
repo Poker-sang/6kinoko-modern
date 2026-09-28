@@ -10,7 +10,6 @@ namespace kinoko::text {
 // the original pointer-list assignment (not a deep buffer clone); generic tagged
 // rendering must not be added without revisiting that ownership contract.
 struct FontRenderer {
-    void *device_context=nullptr, *font_handle=nullptr, *previous_font=nullptr;
     char face[256]{};
     std::uint8_t colors[6]{};
     std::int32_t font_height=0, font_weight=400;

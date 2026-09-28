@@ -81,7 +81,7 @@ extern "C" int32_t kinoko_sqplus_call_rectangle(void * object, void * method, in
     }
     const auto result = kinoko::method::invoke<int32_t>(static_cast<unsigned char*>(object)+offset,
         method, values[0], values[1], values[2], values[3]);
-    // Preserve the original low-byte BOOL result, not result != 0.
+    // Preserve the original low-byte int32_t result, not result != 0.
     sq_pushbool(vm, result & 255);
     return 1;
 }

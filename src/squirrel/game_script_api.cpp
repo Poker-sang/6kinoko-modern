@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/game_script_api.h"
 #include "kinoko/game_script_host.h"
@@ -11,7 +12,7 @@
 #include "kinoko/render_queue.h"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_host_compat.h"
-#include <windows.h>
+
 #include <cstdio>
 extern "C" {
 void kinoko_trace(const char*);
@@ -37,8 +38,8 @@ void copy(KinokoOwnedObjectWords& destination,const KinokoOwnedObjectWords& sour
 }
 extern "C" int32_t kinoko_script_load_animation(const char* path) {
     char directory[260]{};
-    static volatile LONG trace_count;
-    const auto trace=InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace=++trace_count;
     if(trace<=32) { kinoko_trace_i32("actor:load-animation-entry",diagnostic_address(path)); diagnostic_name("actor:load-animation-path",path); }
     kinoko_game_split_path(path,directory);
     kinoko_trace_i32("464f80:path",diagnostic_address(path));
@@ -73,8 +74,8 @@ extern "C" void* kinoko_script_create_render_layer(const char* name) { return ki
 extern "C" int32_t kinoko_script_set_global_update(KinokoOwnedObjectWords closure,KinokoOwnedObjectWords environment) {
     Reference environment_owner(environment),closure_owner(closure);
     const kinoko::native::RecordView<KinokoScriptCallback> state(kinoko_game_global_callback());
-    static volatile LONG trace_count;
-    if(InterlockedIncrement(&trace_count)<=8) {
+    static std::atomic<int32_t> trace_count;
+    if(++trace_count<=8) {
         kinoko_trace("stagevm:set-global-update");
         kinoko_trace_i32("stagevm:set-global-first-type",closure.type);
         kinoko_trace_i32("stagevm:set-global-first-data",closure.value);
@@ -105,7 +106,7 @@ extern "C" int32_t kinoko_script_set_init(int32_t id,KinokoOwnedObjectWords clos
     Reference environment_owner(environment),closure_owner(closure);
     int32_t result=0;
     if(closure.type==OT_CLOSURE && environment.type==OT_TABLE) {
-        char name[256]; sprintf_s(name,sizeof(name),"Init%04x",static_cast<unsigned>(id));
+        char name[256]; std::snprintf(name,sizeof(name),"Init%04x",static_cast<unsigned>(id));
         result=kinoko_sqplus_object_raw_set_name((void *)(&environment), name, (const void *)(&closure));
         kinoko_trace_i32("actor:init-registration-id",id); kinoko_trace_i32("actor:init-registration-result",result);
     }
@@ -116,8 +117,8 @@ extern "C" KinokoOwnedObjectWords* kinoko_script_create_actor(KinokoOwnedObjectW
     Reference argument_owner(argument),closure_owner(closure);
     if(!result) return nullptr;
     auto* manager=kinoko_game_objects()->actors;
-    static volatile LONG trace_count;
-    const auto trace=InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace=++trace_count;
     if(trace<=32) {
         kinoko_trace_i32("actor-create:result-object",diagnostic_address(result)); kinoko_trace_i32("actor-create:manager-state",diagnostic_address(manager));
         kinoko_trace_i32("actor-create:first-type",closure.type); kinoko_trace_i32("actor-create:first-data",closure.value);

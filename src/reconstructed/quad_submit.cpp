@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
@@ -14,9 +15,9 @@ namespace {
 template<class Publish> int32_t submit(void* storage,int32_t texture,
     std::array<KinokoSpriteVertex,4>& vertices,
     const std::array<kinoko::render::Position3,4>& positions,float x,float y,Publish publish) {
-    if (!storage || !kinoko_graphics.device) return E_FAIL;
-    static volatile LONG traces;
-    const bool trace=InterlockedIncrement(&traces)<=8;
+    if (!storage || !kinoko_graphics.device) return kinoko::graphics::error_failure;
+    static std::atomic<int32_t> traces;
+    const bool trace=++traces<=8;
     if (trace) {
         kinoko_trace_i32("draw:vertex-buffer",kinoko::script::diagnostic_address(storage));
         kinoko_trace_i32("draw:handle",texture);
@@ -31,7 +32,7 @@ template<class Publish> int32_t submit(void* storage,int32_t texture,
     const auto texture_result=kinoko_texture_bind_stage(0,texture);
     if (trace) kinoko_trace_hresult("draw:set-texture-hr",texture_result);
     auto *device=kinoko_graphics.device;
-    if (!device || !kinoko::memory::load<const void *>(device)) return E_FAIL;
+    if (!device || !kinoko::memory::load<const void *>(device)) return kinoko::graphics::error_failure;
     kinoko::render::GraphicsQuadSink sink(*device);
     const auto format_result=sink.set_layout(kinoko::render::SpriteLayout::screen_rhw);
     if (trace) kinoko_trace_hresult("draw:set-fvf-hr",format_result);
@@ -43,7 +44,7 @@ template<class Publish> int32_t submit(void* storage,int32_t texture,
 }
 // Legacy layouts still use their original fixed quad record.
 extern "C" int32_t kinoko_quad_submit(KinokoQuad* storage,float x,float y) {
-    if(!storage) return E_FAIL;
+    if(!storage) return kinoko::graphics::error_failure;
     using kinoko::render::QuadRecord;
     const kinoko::render::QuadView quad(storage);
     auto vertices=quad.get(&QuadRecord::vertices);

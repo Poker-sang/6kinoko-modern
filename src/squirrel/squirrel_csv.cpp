@@ -1,7 +1,10 @@
+#include <SDL3/SDL.h>
+#include "kinoko/platform.hpp"
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_api_types.h"
 #include "kinoko/csv_bridge.h"
-#include <windows.h>
+
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -54,7 +57,7 @@ Rows parse(const char *text) {
             }
             ++cursor; break;
         default:
-            const char *next = CharNextA(cursor);
+            const char *next = kinoko::text::next(cursor);
             if (!comment) field.append(cursor, next - cursor);
             cursor = next; break;
         }
@@ -67,7 +70,7 @@ const char *cell(const Rows &rows, size_t row, size_t column) {
 // 40C4B0 uses the original 256-byte secure-copy buffer for textual fields.
 std::string text_cell(const Rows &rows, size_t row, size_t column) {
     char buffer[256];
-    strcpy_s(buffer, sizeof buffer, cell(rows, row, column));
+    kinoko::copy_string(buffer, sizeof buffer, cell(rows, row, column));
     return buffer;
 }
 SQObjectPtr string(SQVM &vm, const std::string &text) {
@@ -139,7 +142,7 @@ extern "C" int32_t kinoko_read_csv(struct SQVM* vm, void* window, const char *pa
         }
     }
     if (!error) return 1;
-    MessageBoxA(static_cast<HWND>(window), path, error, 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,error,path,kinoko::platform::host().window());
     return 0;
 }
 

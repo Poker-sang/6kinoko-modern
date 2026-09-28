@@ -1,3 +1,6 @@
+#include <SDL3/SDL.h>
+#include "kinoko/platform.hpp"
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/owned_script_object.h"
 #include "kinoko/script_file.h"
@@ -7,7 +10,7 @@
 #include "kinoko/squirrel_game_objects.h"
 #include "kinoko/squirrel_source_runtime.h"
 #include "kinoko/squirrel_vm_bootstrap.h"
-#include <windows.h> // Script error window; no longer inherited from file I/O.
+ // Script error window; no longer inherited from file I/O.
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -39,7 +42,7 @@ inline auto& script_root_slot = kinoko_script_root_storage;
 SQVM* bytecode_vm() { return bytecode_vm_slot; }
 HSQUIRRELVM primary_vm() { return reinterpret_cast<HSQUIRRELVM>(primary_vm_slot); }
 bool compiled_assets() { return compiled_assets_slot != 0; }
-HWND debug_window() { return reinterpret_cast<HWND>(debug_window_slot); }
+
 SQRESULT invoke(HSQUIRRELVM vm, SQInteger count, SQBool result, SQBool errors) {
     return kinoko_sq_call(vm, count, result, errors);
 }
@@ -115,11 +118,11 @@ extern "C" int32_t kinoko_script_load_file(const char* path, const void* environ
     if (!path) return 0;
     diagnostic_name("402d40:file", path);
     const char* lookup = path;
-    char packed_lookup[MAX_PATH];
+    char packed_lookup[260];
     if (compiled_assets()) {
         const size_t length = std::strlen(path);
         // 402D40 writes four bytes before the start for shorter names.
-        if (length < 4 || strcpy_s(packed_lookup, sizeof(packed_lookup), path) != 0) return 0;
+        if (length < 4 || kinoko::copy_string(packed_lookup, sizeof(packed_lookup), path) != 0) return 0;
         std::memcpy(packed_lookup + length - 4, ".cv4", 4);
         lookup = packed_lookup;
     }
@@ -193,6 +196,6 @@ extern "C" int32_t kinoko_script_show_call_stack() noexcept(false) {
         }
     }
     text += "================\n";
-    MessageBoxA(debug_window(), text.c_str(), "CallStack", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"CallStack",text.c_str(),kinoko::platform::host().window());
     return 0;
 }

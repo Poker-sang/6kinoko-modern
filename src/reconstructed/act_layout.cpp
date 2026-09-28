@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "graphics_draw_state.hpp"
 #include "kinoko/quad_transform.hpp"
@@ -29,12 +30,12 @@ KinokoActResource *texture_resource(KinokoActLayer *layer) {
 int32_t bind_texture(KinokoActLayout *layout) {
     const View view(layout);
     auto *layer=view.get(&Layout2DRecord::layer);
-    if(!layer) return E_FAIL;
+    if(!layer) return kinoko::graphics::error_failure;
     auto *resource=texture_resource(layer);
-    if(!resource) return E_FAIL;
+    if(!resource) return kinoko::graphics::error_failure;
     const auto texture=texture_runtime_state(resource);
     const auto handle=texture.handle;
-    if(!handle) return E_FAIL;
+    if(!handle) return kinoko::graphics::error_failure;
     if(!view.get(&Layout2DRecord::pivots_initialized)) {
         auto rotation=view.get(&Layout2DRecord::rotation_pivot);
         auto scale=view.get(&Layout2DRecord::scale_pivot);
@@ -47,7 +48,7 @@ int32_t bind_texture(KinokoActLayout *layout) {
 }
 }
 int32_t bind_layout_2d(KinokoActLayout *layout,KinokoActLayer *layer) {
-    if(!layout || !layer) return E_FAIL;
+    if(!layout || !layer) return kinoko::graphics::error_failure;
     const View view(layout);
     view.set(&Layout2DRecord::layer,layer);
     // 42BA50 exposes aliases to 17 consecutive transform/color property words.
@@ -61,19 +62,19 @@ int32_t bind_layout_2d(KinokoActLayout *layout,KinokoActLayer *layer) {
     return 0;
 }
 int32_t update_layout_2d(KinokoActLayout *layout) {
-    if(!layout) return E_FAIL;
+    if(!layout) return kinoko::graphics::error_failure;
     const View view(layout);
     auto *layer=view.get(&Layout2DRecord::layer);
-    if(!layer) return E_FAIL;
+    if(!layer) return kinoko::graphics::error_failure;
     if(!(LayerView(layer).get(&Layer::visibility_flags) & 0xff)) return 0;
     auto *resource=texture_resource(layer);
-    if(!resource) return E_FAIL;
+    if(!resource) return kinoko::graphics::error_failure;
     const auto texture=texture_runtime_state(resource);
     if(!view.get(&Layout2DRecord::texture) || view.get(&Layout2DRecord::texture)!=texture.handle) bind_texture(layout);
     const int handle=view.get(&Layout2DRecord::texture);
-    if(!handle || static_cast<uint32_t>(handle)>=KINOKO_TEXTURE_CAPACITY) return E_FAIL;
+    if(!handle || static_cast<uint32_t>(handle)>=KINOKO_TEXTURE_CAPACITY) return kinoko::graphics::error_failure;
     const auto &slot=kinoko_texture_slots[handle];
-    if(!slot.width || !slot.height) return E_FAIL; // inherited invalid-texture boundary
+    if(!slot.width || !slot.height) return kinoko::graphics::error_failure; // inherited invalid-texture boundary
     auto quad=view.get(&Layout2DRecord::quad);
     quad.texture=handle;quad.texture_width=static_cast<float>(slot.width);quad.texture_height=static_cast<float>(slot.height);
     const auto left=static_cast<int32_t>(texture.source_x),top=static_cast<int32_t>(texture.source_y);
@@ -94,7 +95,7 @@ int32_t update_layout_2d(KinokoActLayout *layout) {
     LayerMethods(layer).position(&world.x,&world.y,&world.z);
     render::translate_quad(quad,world);
     const auto alpha=std::clamp(static_cast<int32_t>(static_cast<double>(view.get(&Layout2DRecord::alpha))*255.0),0,255);
-    // Original uses the LOW BYTE of each integer color, not saturation.
+    // Original uses the LOW uint8_t of each integer color, not saturation.
     const uint32_t color=(static_cast<uint32_t>(alpha)<<24)|
         (uint32_t(static_cast<uint8_t>(view.get(&Layout2DRecord::red)))<<16)|
         (uint32_t(static_cast<uint8_t>(view.get(&Layout2DRecord::green)))<<8)|
@@ -104,20 +105,20 @@ int32_t update_layout_2d(KinokoActLayout *layout) {
     return 0;
 }
 int32_t draw_layout_2d(KinokoActLayout *layout,float x,float y) {
-    if(!layout) return E_FAIL;
+    if(!layout) return kinoko::graphics::error_failure;
     const View view(layout);
     auto *layer=view.get(&Layout2DRecord::layer);
-    if(!layer) return E_FAIL;
+    if(!layer) return kinoko::graphics::error_failure;
     if(!(LayerView(layer).get(&Layer::visibility_flags) & 0xff)) return 0;
-    if(!texture_resource(layer)) return E_FAIL;
+    if(!texture_resource(layer)) return kinoko::graphics::error_failure;
     auto *device=kinoko_graphics.device;
-    if(!device) return E_FAIL; // inherited absent-device boundary
+    if(!device) return kinoko::graphics::error_failure; // inherited absent-device boundary
     kinoko::render::GraphicsDrawState saved(device,kinoko::render::ScopeKind::blend);
     set_layout_blend(view.get(&Layout2DRecord::blend));
     kinoko_texture_bind_stage(0,view.get(&Layout2DRecord::texture));
     kinoko_quad_submit(reinterpret_cast<KinokoQuad *>(view.bytes(&Layout2DRecord::quad)),x,y);
     kinoko_texture_bind_stage(0,0);
     saved.restore();
-    return 0; // original ignores submit HRESULT; update belongs to PrepareDraw
+    return 0; // original ignores submit kinoko::graphics::Result; update belongs to PrepareDraw
 }
 }

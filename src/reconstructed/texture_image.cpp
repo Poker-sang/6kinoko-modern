@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/texture_image.h"
 #include "kinoko/bitmap.hpp"
 #include "kinoko/graphics_device.h"
@@ -21,7 +22,7 @@ extern "C" kinoko::graphics::Result kinoko_texture_load_image(const char* path, 
     uint32_t* width, uint32_t* height) {
     if (!path || !output || !kinoko_graphics.device) return kinoko::graphics::error_invalidcall;
     const auto length = std::strlen(path);
-    char lookup[MAX_PATH];
+    char lookup[260];
     if (length<3 || length+1>sizeof(lookup)) return kinoko::graphics::error_invalidcall;
     std::memcpy(lookup,path,length+1);
     std::memcpy(lookup+length-3,"cv2",3);

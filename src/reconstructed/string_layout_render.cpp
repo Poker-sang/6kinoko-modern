@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "graphics_draw_state.hpp"
@@ -8,8 +9,8 @@
 #include "kinoko/quad_render.h"
 #include "kinoko/memory_access.hpp"
 #include <cstring>
-// CharNextA remains with the existing GDI/ANSI text backend until font migration.
-#include <windows.h>
+// kinoko::text::next remains with the existing GDI/ANSI text backend until font migration.
+
 using kinoko::legacy::StringView;
 namespace {
 using TextRecord=kinoko::text::StringLayout;
@@ -27,8 +28,8 @@ extern "C" int32_t __fastcall kinoko_method_update_string_layout(KinokoStringLay
     StringView pending(&text.pending),displayed(&text.text);
     // Original consumes pending multibyte characters before visibility testing.
     while(pending.length()) {
-        const auto bytes=static_cast<uint32_t>(CharNextA(pending.data())-pending.data());
-        char character[8]{};memcpy_s(character,sizeof(character),pending.data(),bytes);
+        const auto bytes=static_cast<uint32_t>(kinoko::text::next(pending.data())-pending.data());
+        char character[8]{};kinoko::copy_bytes(character,sizeof(character),pending.data(),bytes);
         kinoko_string_add_character(layout, character);
         displayed.append(character,static_cast<uint32_t>(std::strlen(character)));
         pending.assign(pending,bytes,UINT32_MAX);

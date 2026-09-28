@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/file_io_layout.h"
 #include "kinoko/compat/resource_rules.hpp"
 #include "kinoko/legacy_string.hpp"
@@ -42,7 +43,7 @@ uint32_t KINOKO_METHOD_ENTRY size_package(KinokoArchiveReader* reader, void*) { 
 int32_t KINOKO_METHOD_ENTRY read_package(KinokoArchiveReader* reader, void*, void* data, uint32_t size) {
     auto& entry = packaged(reader);
     const uint32_t end = entry.entry_offset + entry.entry_size;
-    // 410B90 uses DWORD arithmetic, ignores ReadFile's BOOL, and decodes the
+    // 410B90 uses uint32_t arithmetic, ignores ReadFile's int32_t, and decodes the
     // clamped request (not transferred count). Keep this original virtual ABI.
     if (end < size + entry.read_position) size = end - entry.read_position;
     kinoko_file_read(reader->handle, data, size, &reader->transferred);

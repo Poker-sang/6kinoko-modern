@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/map_activation.h"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/map_render.h"
@@ -60,7 +61,7 @@ extern "C" int32_t kinoko_map_create_actors(KinokoActorManager *manager,
         const PlacementView record(placement_at(layout, index));
         const auto id = record.get(&Placement::chip_id);
         char name[256];
-        sprintf_s(name, sizeof(name), "Init%04x", static_cast<unsigned int>(id));
+        std::snprintf(name, sizeof(name), "Init%04x", static_cast<unsigned int>(id));
         InitCallback callback(environment, name);
         if (!callback.is_closure()) continue;
         float x = static_cast<float>(record.get(&Placement::left));

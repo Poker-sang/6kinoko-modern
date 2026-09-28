@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "graphics_blend_sink.hpp"
 #include "graphics_draw_state.hpp"
@@ -70,9 +71,9 @@ void set_blend(kinoko::graphics::Device* device, int32_t blend) {
     sink.set_source(src);sink.set_destination(dest);sink.set_operation(op);
 }
 int32_t prepare_sprite(void* item, const BlitCommand& command) {
-    if (command.texture <= 0 || static_cast<uint32_t>(command.texture) >= KINOKO_TEXTURE_CAPACITY) return E_FAIL;
+    if (command.texture <= 0 || static_cast<uint32_t>(command.texture) >= KINOKO_TEXTURE_CAPACITY) return kinoko::graphics::error_failure;
     const auto& texture = kinoko_texture_slots[command.texture];
-    if (!texture.width || !texture.height) return E_FAIL;
+    if (!texture.width || !texture.height) return kinoko::graphics::error_failure;
     KinokoSprite sprite{};
     sprite.vtable = const_cast<void*>(kinoko_act_host_symbols()->sprite_vtable);
     kinoko_sprite_set_rect(&sprite, nullptr, command.texture, command.source_x,
@@ -84,7 +85,7 @@ int32_t prepare_sprite(void* item, const BlitCommand& command) {
     target.set(&BlitSprite::sprite, sprite);
     return 0;
 }
-void trace_draw(KinokoActRuntime* self, const RuntimeView& resource, LONG actor_index, LONG trace_index) {
+void trace_draw(KinokoActRuntime* self, const RuntimeView& resource, int32_t actor_index, int32_t trace_index) {
     const auto act = resource.get(&RuntimeRecord::active_document);
     const DocumentView document(act);
     if (actor_index <= 64) {
@@ -111,7 +112,7 @@ void trace_draw(KinokoActRuntime* self, const RuntimeView& resource, LONG actor_
 }
 
 extern "C" int32_t kinoko_act_prepare_draw(KinokoActRuntime* self) {
-    if (!self) return E_FAIL;
+    if (!self) return kinoko::graphics::error_failure;
     const RuntimeView resource(self);
     if (resource.get(&RuntimeRecord::hidden)) return 0;
     kinoko::runtime::Lock lock(resource.get(&RuntimeRecord::lock));
@@ -124,34 +125,34 @@ extern "C" int32_t kinoko_act_prepare_draw(KinokoActRuntime* self) {
     for (int32_t i = layer_distance(layers) - 1; i >= 0; --i) {
         const auto layout = kinoko_act_layer_layout(self, i);
         if (layout) {
-            if (LayoutMethods(layout).update() < 0) result = E_FAIL;
+            if (LayoutMethods(layout).update() < 0) result = kinoko::graphics::error_failure;
         }
     }
     const auto commands = kinoko_act_command_span((KinokoActRuntime*)(intptr_t)(self));
     const auto count = commands.begin ? static_cast<int32_t>((commands.end - commands.begin) / sizeof(BlitCommand)) : 0;
     kinoko_act_resize_sprites((KinokoActSpriteStorage*)(resource.bytes(&RuntimeRecord::draw_sprites)), count);
     const auto sprites = kinoko_act_sprite_span((KinokoActRuntime*)(intptr_t)(self));
-    if ((sprites.begin ? static_cast<int32_t>((sprites.end - sprites.begin) / sizeof(BlitSprite)) : 0) != count) return E_OUTOFMEMORY;
+    if ((sprites.begin ? static_cast<int32_t>((sprites.end - sprites.begin) / sizeof(BlitSprite)) : 0) != count) return kinoko::graphics::error_out_of_memory;
     for (int32_t i = 0; i < count; ++i)
         if (prepare_sprite(sprites.begin + i * sizeof(BlitSprite),
-                load<BlitCommand>(commands.begin + i * sizeof(BlitCommand))) < 0) result = E_FAIL;
+                load<BlitCommand>(commands.begin + i * sizeof(BlitCommand))) < 0) result = kinoko::graphics::error_failure;
     return result;
 }
 
 extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
     auto* device = kinoko_graphics.device;
-    if (!self) return E_FAIL;
+    if (!self) return kinoko::graphics::error_failure;
     const RuntimeView resource(self);
     if (resource.get(&RuntimeRecord::hidden)) return 0;
-    static volatile LONG actor_trace_count, trace_count;
-    const auto actor_index = InterlockedIncrement(&actor_trace_count);
-    const auto trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> actor_trace_count, trace_count;
+    const auto actor_index = ++actor_trace_count;
+    const auto trace_index = ++trace_count;
     trace_draw(self, resource, actor_index, trace_index);
     kinoko::runtime::Lock lock(resource.get(&RuntimeRecord::lock));
     DrawTarget target(resource.get(&RuntimeRecord::render_target), device);
     if (!resource.get(&RuntimeRecord::stage_active)) return 0;
     const auto act = resource.get(&RuntimeRecord::active_document);
-    if (!act) return E_FAIL;
+    if (!act) return kinoko::graphics::error_failure;
     const DocumentView document(act);
     if (!document.get(&DocumentRecord::visible)) return 0;
     const auto layers = document.get(&DocumentRecord::layers);
@@ -184,7 +185,7 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
                 set_blend(blit_device, command.blend);
                 const auto draw = method(sprite, 7);
                 if (draw && kinoko::method::invoke<int32_t>(sprite, draw,
-                    draw_x + command.x, draw_y + command.y) < 0) result = E_FAIL;
+                    draw_x + command.x, draw_y + command.y) < 0) result = kinoko::graphics::error_failure;
             }
             kinoko_texture_bind_stage(0, 0);
         }

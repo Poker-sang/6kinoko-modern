@@ -1,10 +1,11 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/scene_operations.h"
 #include "kinoko/actor_records.hpp"
 #include "kinoko/game_host.h"
 #include "kinoko/map_render.h"
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
-#include <windows.h>
+
 #include <cstring>
 extern "C" {
 void kinoko_trace(const char*);
@@ -18,8 +19,8 @@ int32_t bits(float value) { int32_t result; std::memcpy(&result,&value,sizeof(re
 constexpr const char* layer_names[]={"actor_back","actor_middle","actor_front","actor_water"};
 }
 extern "C" void kinoko_actor_move_with_camera(KinokoActorManager* manager,KinokoCamera* camera,float dx,float dy) {
-    static volatile LONG trace_count;
-    const auto trace=InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace=++trace_count;
     if(!manager || !camera) return;
     const ManagerView owner(manager);
     const kinoko::camera::View view(camera);
@@ -83,8 +84,8 @@ extern "C" void* kinoko_scene_create_render_layer(const char* name) {
     if(!actor_layer) layer=kinoko_map_make_render_layer(objects.map,name);
     if(!layer) return nullptr; // existing null-layer compatibility guard
     kinoko::script::diagnostic_name("map:render-order-layer",name);
-    static volatile LONG trace_count;
-    if(InterlockedIncrement(&trace_count)<=16) {
+    static std::atomic<int32_t> trace_count;
+    if(++trace_count<=16) {
         kinoko_trace("46a210:entry"); kinoko_trace_i32("46a210:value",diagnostic_address(layer));
         kinoko_trace_i32("46a210:g613",(int32_t)(intptr_t)kinoko_render_queue_identity());
     }

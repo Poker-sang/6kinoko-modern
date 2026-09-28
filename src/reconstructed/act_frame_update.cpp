@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.h"
@@ -36,8 +37,8 @@ int32_t layer_count(KinokoActDocument *document) {
 extern "C" int32_t kinoko_act_layer_update(KinokoActLayer *object) {
     if (!object) return -1;
     const RecordView<LayerKeys> layer(object);
-    static volatile LONG trace_count;
-    if (InterlockedIncrement(&trace_count) <= 160) {
+    static std::atomic<int32_t> trace_count;
+    if (++trace_count <= 160) {
         const auto callback = layer.get(&LayerKeys::update_callback);
         kinoko_trace_i32("41efb0:layer", diagnostic_address(object));
         const char* labels[] = {"41efb0:callback-vm", "41efb0:callback-env-type",
@@ -54,8 +55,8 @@ extern "C" int32_t kinoko_act_layer_update(KinokoActLayer *object) {
 // holders come from the active runtime. Callbacks can change either container.
 extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
     const RuntimeView resource(self);
-    static volatile LONG trace_count;
-    const auto trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace_index = ++trace_count;
     if (trace_index <= 48) {
         const auto act = self ? resource.get(&RuntimeRecord::active_document) : 0;
         kinoko_trace_i32("451640:resource", diagnostic_address(self));

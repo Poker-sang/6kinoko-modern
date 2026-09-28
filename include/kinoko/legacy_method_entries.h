@@ -1,3 +1,4 @@
+#include "kinoko/compiler_compat.h"
 struct KinokoActor;
 struct KinokoActorPool;
 struct KinokoActorManager;
@@ -14,9 +15,6 @@ struct SQVM;
 // Legacy vtables store raw addresses with recovered C types. Invoke these
 // entries through method_entry.hpp, never through those cdecl slot types.
 // On x64 unused_edx remains an explicit argument; it must still be passed.
-#if !defined(_MSC_VER)
-#error The recovered method entries currently require MSVC.
-#endif
 #ifdef __cplusplus
 extern "C" {
 #endif

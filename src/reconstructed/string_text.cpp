@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/string_layout.h"
 #include "kinoko/act_layout_records.hpp"
@@ -5,7 +6,7 @@
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.hpp"
-#include <windows.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <deque>
@@ -49,7 +50,7 @@ extern "C" int32_t kinoko_string_clear(KinokoStringLayout* object) {
     return kinoko_string_mark_rebuild(object);
 }
 extern "C" int32_t kinoko_string_character_bytes(const char* text) {
-    return text && *text?static_cast<int32_t>(CharNextA(text)-text):0;
+    return text && *text?static_cast<int32_t>(kinoko::text::next(text)-text):0;
 }
 extern "C" int32_t kinoko_string_pop(KinokoStringLayout* object,int32_t count,int32_t front) {
     if(count<0) return 0;
@@ -64,10 +65,10 @@ extern "C" int32_t kinoko_string_pop(KinokoStringLayout* object,int32_t count,in
         if(front) {
             // 4406AA subtracts one before the erase end iterator. Preserve the
             // original quirk: an ASCII pending character erases zero bytes.
-            const uint32_t bytes=static_cast<uint32_t>(CharNextA(data)-data)-1;
+            const uint32_t bytes=static_cast<uint32_t>(kinoko::text::next(data)-data)-1;
             pending.assign(pending,bytes,UINT32_MAX);
         } else {
-            const uint32_t bytes=static_cast<uint32_t>(data+size-CharPrevA(data,data+size));
+            const uint32_t bytes=static_cast<uint32_t>(data+size-kinoko::text::previous(data,data+size));
             pending.assign(pending,0,size-bytes);
         }
         --count;

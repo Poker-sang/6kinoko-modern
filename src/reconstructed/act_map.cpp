@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "graphics_draw_state.hpp"
 #include "kinoko/graphics_device.h"
@@ -10,7 +11,7 @@
 #include "kinoko/native_buffer.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/diagnostics.h"
-#include <windows.h>
+
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <vector>
@@ -31,15 +32,15 @@ Position3 world_position(KinokoActLayer *layer) {
 
 extern "C" int32_t kinoko_map_update_visible(KinokoActLayout *layout,
     int32_t left, int32_t top, int32_t right, int32_t bottom) {
-    if (!layout) return E_FAIL;
+    if (!layout) return kinoko::graphics::error_failure;
     const LayoutView map(layout);
     auto *layer=map.get(&LayoutRecord::owning_layer);
-    if (!layer) return E_FAIL;
+    if (!layer) return kinoko::graphics::error_failure;
     if (!LayerView(layer).get(&LayerRecord::visible)) return 0;
     auto *data=kinoko_map_query_chip_data(layout);
     layer=map.get(&LayoutRecord::owning_layer);
     if (!data || !layer || LayerView(layer).get(&LayerRecord::resource) !=
-        map.get(&LayoutRecord::cached_chip_resource)) return E_FAIL;
+        map.get(&LayoutRecord::cached_chip_resource)) return kinoko::graphics::error_failure;
 
     flush_changed_chips(layout);
     std::vector<VisibleChip> visible;
@@ -47,13 +48,13 @@ extern "C" int32_t kinoko_map_update_visible(KinokoActLayout *layout,
     if (!query_visible(layout,&cache,left,top,right,bottom,
         [&](kinoko_mcd_chip *chip, Placement *record, int32_t index) {
             visible.push_back({chip,record,index}); return true;
-        })) return E_FAIL;
+        })) return kinoko::graphics::error_failure;
     map.set(&LayoutRecord::render_scan_cache,cache);
     map.set(&LayoutRecord::render_count,int32_t{0});
     if (visible.empty()) return 0;
-    if (visible.size() > INT32_MAX/sizeof(QuadRecord)) return E_FAIL;
+    if (visible.size() > INT32_MAX/sizeof(QuadRecord)) return kinoko::graphics::error_failure;
     auto buffer=map.view(&LayoutRecord::render_quads);
-    if (!kinoko_native_buffer_resize((void*)(buffer.data()), static_cast<uint32_t>(visible.size()*sizeof(QuadRecord)))) return E_FAIL;
+    if (!kinoko_native_buffer_resize((void*)(buffer.data()), static_cast<uint32_t>(visible.size()*sizeof(QuadRecord)))) return kinoko::graphics::error_failure;
     const auto origin=world_position(layer);
     const float scale=map.get(&LayoutRecord::scale);
     auto *output=buffer.get(&QuadBuffer::begin);
@@ -95,16 +96,16 @@ extern "C" int32_t kinoko_map_update_visible(KinokoActLayout *layout,
 }
 
 extern "C" int32_t kinoko_map_draw_visible(KinokoActLayout *layout,float x,float y) {
-    if (!layout) return E_FAIL;
+    if (!layout) return kinoko::graphics::error_failure;
     const LayoutView map(layout);
     auto *layer=map.get(&LayoutRecord::owning_layer);
-    if (!layer) return E_FAIL;
+    if (!layer) return kinoko::graphics::error_failure;
     const LayerView owner(layer);
     if (!owner.get(&LayerRecord::visible)) return 0;
     if (!owner.get(&LayerRecord::resource) || owner.get(&LayerRecord::resource)!=
-        map.get(&LayoutRecord::cached_chip_resource)) return E_FAIL;
+        map.get(&LayoutRecord::cached_chip_resource)) return kinoko::graphics::error_failure;
     auto *device=kinoko_graphics.device;
-    if (!device) return E_FAIL; // inherited unavailable-device boundary
+    if (!device) return kinoko::graphics::error_failure; // inherited unavailable-device boundary
     kinoko::render::GraphicsDrawState saved(device,kinoko::render::ScopeKind::map_wrap);
     kinoko_render_set_depth(0,0);
     kinoko_render_set_blend(1);
@@ -118,7 +119,7 @@ extern "C" int32_t kinoko_map_draw_visible(KinokoActLayout *layout,float x,float
     }
     kinoko_texture_bind_stage(0,0);
     saved.restore();
-    return 0; // original ignores per-quad HRESULT and continues
+    return 0; // original ignores per-quad kinoko::graphics::Result and continues
 }
 
 

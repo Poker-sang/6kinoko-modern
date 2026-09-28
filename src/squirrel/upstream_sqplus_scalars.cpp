@@ -8,7 +8,7 @@
 namespace kinoko::script::upstream {
 namespace {
 using binding::Variable;
-static_assert(sizeof(INT) == 4 && sizeof(unsigned) == 4 && sizeof(FLOAT) == 4);
+static_assert(sizeof(int32_t) == 4 && sizeof(unsigned) == 4 && sizeof(FLOAT) == 4);
 static_assert(sizeof(bool) == 1 && std::numeric_limits<char>::is_signed);
 static_assert(SqPlus::VAR_TYPE_INT == 0 && SqPlus::VAR_TYPE_UINT == 1 &&
               SqPlus::VAR_TYPE_FLOAT == 2 && SqPlus::VAR_TYPE_BOOL == 3);
@@ -23,7 +23,7 @@ SQInteger with_scalar(const Variable& info, Operation&& operation) {
             if (info.size == 1) return operation(char{});
             if (info.size == 2) return operation(short{});
         }
-        return operation(INT{});
+        return operation(int32_t{});
     case SqPlus::VAR_TYPE_UINT: return operation(unsigned{});
     case SqPlus::VAR_TYPE_FLOAT: return operation(FLOAT{});
     case SqPlus::VAR_TYPE_BOOL: return operation(bool{});

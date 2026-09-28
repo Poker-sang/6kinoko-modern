@@ -45,3 +45,34 @@ target_compile_features(kinoko_game_graphics PUBLIC cxx_std_17)
 add_executable(kinoko_gpu_resource_contract tests/gpu_resource_contract.cpp)
 target_link_libraries(kinoko_gpu_resource_contract PRIVATE kinoko_game_graphics)
 add_test(NAME gpu_resource_contract COMMAND kinoko_gpu_resource_contract)
+
+if(NOT WIN32)
+    find_program(KINOKO_GLSLANG glslangValidator REQUIRED)
+    if(APPLE)
+        find_program(KINOKO_SPIRV_CROSS spirv-cross REQUIRED)
+    endif()
+    set(shader_dir "${KINOKO_RUNTIME_DIR}/shaders")
+    set(shader_outputs)
+    foreach(stage vert frag)
+        set(spv "${shader_dir}/sprite.${stage}.spv")
+        add_custom_command(OUTPUT "${spv}"
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${shader_dir}"
+            COMMAND "${KINOKO_GLSLANG}" -V -S ${stage} -o "${spv}" "${CMAKE_SOURCE_DIR}/shaders/sprite.${stage}.glsl"
+            DEPENDS "${CMAKE_SOURCE_DIR}/shaders/sprite.${stage}.glsl" VERBATIM)
+        if(APPLE)
+            set(msl "${shader_dir}/sprite.${stage}.msl")
+            add_custom_command(OUTPUT "${msl}"
+                COMMAND "${KINOKO_SPIRV_CROSS}" "${spv}" --msl --msl-version 20100 --output "${msl}"
+                DEPENDS "${spv}" VERBATIM)
+            list(APPEND shader_outputs "${msl}")
+        else()
+            list(APPEND shader_outputs "${spv}")
+        endif()
+    endforeach()
+    add_custom_target(kinoko_gpu_shaders DEPENDS ${shader_outputs})
+endif()
+add_custom_target(kinoko_font_assets
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${KINOKO_RUNTIME_DIR}/fonts"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/third_party/noto/NotoSansCJKjp-Regular.otf" "${KINOKO_RUNTIME_DIR}/fonts/NotoSansCJKjp-Regular.otf"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/third_party/noto/LICENSE" "${KINOKO_RUNTIME_DIR}/fonts/LICENSE"
+    VERBATIM)

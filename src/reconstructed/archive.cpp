@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/archive.hpp"
 
 #include <algorithm>
@@ -182,8 +183,8 @@ bool DatArchive::open(const std::filesystem::path& path,
             entries_.clear();
             return false;
         }
-        // The original resource node stores the first DWORD as the file
-        // offset and the second DWORD as the byte count.
+        // The original resource node stores the first uint32_t as the file
+        // offset and the second uint32_t as the byte count.
         const std::uint32_t offset = read_u32(index, cursor);
         const std::uint32_t size = read_u32(index, cursor + 4);
         const std::size_t path_size = index[cursor + 8];

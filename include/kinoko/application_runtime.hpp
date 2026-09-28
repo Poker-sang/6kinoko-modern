@@ -1,5 +1,5 @@
+#include "kinoko/compiler_compat.h"
 #pragma once
-#include <windows.h> // Native window boundary, not thread ownership.
 #include "kinoko/runtime_sync.hpp"
 #include <atomic>
 #include <cstddef>
@@ -36,8 +36,6 @@ struct TransitionMethods {
 struct Transition { const TransitionMethods *methods; };
 // Native host configuration; no disk or original-memory overlay.
 struct Configuration {
-    HWND window = nullptr;
-    HINSTANCE instance = nullptr;
     int32_t width = 0, height = 0;
     Manager *manager = nullptr;
     int32_t initial_scene = 0;

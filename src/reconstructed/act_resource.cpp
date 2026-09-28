@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include <atomic>
 #include "kinoko/runtime_clock.h"
 #include "kinoko/act_method_dispatch.hpp"
@@ -85,7 +86,7 @@ public:
             kinoko_trace_i32("451620:act", kinoko::script::diagnostic_address(source));
             kinoko_trace_i32("451620:resolution", step);
         }
-        // Original 451620 uses a DWORD ADD. Compute modulo 2^32, then copy the
+        // Original 451620 uses a uint32_t ADD. Compute modulo 2^32, then copy the
         // result bits to the signed clock; no signed-overflow expression.
         if (source) {
             const uint32_t next = static_cast<uint32_t>(time()) + static_cast<uint32_t>(step);

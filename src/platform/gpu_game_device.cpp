@@ -63,8 +63,15 @@ struct Device::State {
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
     State(std::uint32_t x,std::uint32_t y):width(x),height(y) {
-        const auto vs=shader("sprite.vert.dxbc"),fs=shader("sprite.frag.dxbc");
-        renderer=std::make_unique<gpu::Renderer>(platform::host().window(),gpu::ShaderEncoding::dxbc,gpu::ShaderCode{vs.data(),vs.size()},gpu::ShaderCode{fs.data(),fs.size()});
+#if defined(_WIN32)
+        constexpr auto encoding=gpu::ShaderEncoding::dxbc;const char* extension="dxbc";const char* entry="main";
+#elif defined(__APPLE__)
+        constexpr auto encoding=gpu::ShaderEncoding::msl;const char* extension="msl";const char* entry="main0";
+#else
+        constexpr auto encoding=gpu::ShaderEncoding::spirv;const char* extension="spv";const char* entry="main";
+#endif
+        const auto vs=shader((std::string("sprite.vert.")+extension).c_str()),fs=shader((std::string("sprite.frag.")+extension).c_str());
+        renderer=std::make_unique<gpu::Renderer>(platform::host().window(),encoding,gpu::ShaderCode{vs.data(),vs.size(),entry},gpu::ShaderCode{fs.data(),fs.size(),entry});
         auto screen=std::make_shared<Image>(x,y,kinoko::graphics::format_a8r8g8b8,true);screen->id=0;
         back=new Surface(screen);depth=new Surface(screen);target=back;target->AddRef();
         states[kinoko::graphics::state_zenable]=states[kinoko::graphics::state_zwriteenable]=true;states[kinoko::graphics::state_zfunc]=kinoko::graphics::compare_lessequal;

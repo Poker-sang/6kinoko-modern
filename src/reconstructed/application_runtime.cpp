@@ -1,5 +1,7 @@
 #include "kinoko/runtime_paths.h"
-#include "kinoko/windows_owner.hpp"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "kinoko/base_utilities.h"
 #include "kinoko/game_runtime.h"
 #include "kinoko/input_service.h"
@@ -35,7 +37,7 @@ void join(Thread& thread) {
     if (!thread) return;
     thread.reset();
 }
-DWORD WINAPI load_scene_worker(void*) {
+unsigned long __stdcall load_scene_worker(void*) {
     if (state.config.manager) {
         auto* next = state.config.manager->methods->create_scene(
             state.config.manager, nullptr, state.requested_scene);
@@ -45,7 +47,7 @@ DWORD WINAPI load_scene_worker(void*) {
     return 0;
 }
 void update_statistics() {
-    const DWORD now = kinoko_clock_milliseconds();
+    const uint32_t now = kinoko_clock_milliseconds();
     if (!state.config.show_fps || now - state.statistics_time < 1000) return;
     state.statistics_time += 1000;
     char title[256];
@@ -54,7 +56,7 @@ void update_statistics() {
     kinoko::platform::host().request_title(title);
     state.frame_count = state.draw_count = state.present_count = 0;
 }
-DWORD WINAPI game_loop(void*) {
+unsigned long __stdcall game_loop(void*) {
     // This is a timer-registry borrow: unregister it, never close it separately.
     auto* const frame_event = kinoko_frame_timer_register();
     kinoko_trace("game:entry");
@@ -70,11 +72,11 @@ DWORD WINAPI game_loop(void*) {
     kinoko_trace("game:exit");
     return 0;
 }
-DWORD WINAPI game_worker(void*) {
+unsigned long __stdcall game_worker(void*) {
     kinoko_run_game_math(game_loop, nullptr);
     return 0;
 }
-DWORD WINAPI display_worker(void*) {
+unsigned long __stdcall display_worker(void*) {
     while (state.is_running()) {
         if (state.config.separate_draw) {
             if (state.scene_lock.try_lock()) {
@@ -94,7 +96,7 @@ DWORD WINAPI display_worker(void*) {
     }
     return 0;
 }
-DWORD WINAPI retire_worker(void*) {
+unsigned long __stdcall retire_worker(void*) {
     while (state.is_running()) {
         if (wait(state.retire_event.get()) != 0) break;
         kinoko_destroy_retired_scenes();
@@ -106,7 +108,6 @@ bool initialize(const Configuration& configuration) {
     kinoko_application_set_archive_mode(configuration.archives != 0);
     state.timer_period = kinoko_clock_request_resolution()!=0;
     kinoko_seed_random(kinoko_clock_milliseconds());
-    kinoko_process_initialize(configuration.instance, configuration.window);
     if (!configuration.show_cursor) SDL_HideCursor();
     state.running.store(true);
     if (configuration.graphics) {
@@ -148,6 +149,7 @@ void message_loop() {
         SDL_Delay(1);
     }
 }
+#ifdef _WIN32
 WNDPROC sdl_window_proc{};
 constexpr UINT_PTR move_frame_timer_id=0x6b696e6f;
 UINT_PTR move_frame_timer{};
@@ -177,7 +179,9 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM param
         last_move_frame=0;
         if (!move_frame_timer) move_frame_timer=SetTimer(window,move_frame_timer_id,16,nullptr);
     } else if (message == WM_EXITSIZEMOVE) {
-        stop_move_frames(window);
+    #ifdef _WIN32
+    stop_move_frames(window);
+#endif
     } else if (message == WM_TIMER && moving_window && move_frame_timer && key == move_frame_timer) {
         poll_move_frame();
         return 0;
@@ -186,6 +190,7 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM param
     if (moving_window && (message == WM_MOVING || message == WM_SIZING)) poll_move_frame();
     return result;
 }
+#endif
 }
 
 // 40D836..40D872: input service, keyboard and enumeration are required when
@@ -281,11 +286,9 @@ extern "C" void kinoko_application_shutdown() {
     if (state.graphics_initialized) { kinoko_graphics_release(); state.graphics_initialized = false; }
     if (state.timer_period) { kinoko_clock_release_resolution(); state.timer_period = false; }
 }
-extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
+extern "C" int kinoko_application_run(int show_command) {
     using namespace kinoko::application;
     kinoko_application_initialize_host();
-    kinoko::windows::HandleOwner singleton(CreateMutexA(nullptr, TRUE, kinoko_application_title()));
-    if (GetLastError() == ERROR_ALREADY_EXISTS) return 1;
     if (!kinoko_use_executable_directory()) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Startup error",
             "Cannot access the executable directory.", nullptr);
@@ -296,6 +299,7 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     if (!platform.open(u8"魔理沙と６つのキノコ",640,480)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"SDL initialization failed",SDL_GetError(),nullptr); return 1;
     }
+#ifdef _WIN32
     HWND window=static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(platform.window()),
         SDL_PROP_WINDOW_WIN32_HWND_POINTER,nullptr));
     if (!window) { platform.close(); return 1; }
@@ -311,15 +315,22 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
             SDL_MinimizeWindow(platform.window());
         else if(show_command==SW_SHOWMAXIMIZED) SDL_MaximizeWindow(platform.window());
     }
+#else
+    (void)show_command;
+    SDL_ShowWindow(platform.window());
+#endif
     Configuration config;
-    config.window = window; config.instance = instance;
     config.manager = kinoko::game::create_manager();
     kinoko_application_open_archives();
     if (!config.manager || !initialize(config)) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error",u8"初期化失敗",platform.window());
     else message_loop();
+#ifdef _WIN32
     stop_move_frames(window);
+#endif
     kinoko_application_shutdown();
+#ifdef _WIN32
     SetWindowLongPtrW(window,GWLP_WNDPROC,reinterpret_cast<LONG_PTR>(sdl_window_proc));
+#endif
     platform.close();
     return 0;
 }

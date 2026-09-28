@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/map_collision.h"
 #include "kinoko/map_query.hpp"
 #include "kinoko/map_layout_records.hpp"
@@ -33,7 +34,7 @@ extern "C" int32_t kinoko_map_collision_append(KinokoCollisionState *state,
 
 // Original 435220, with iterator setup/steps 4361C0/436290/4362F0.
 // Keep R137's internal caller contract, including empty-map success and chip
-// lookup fallback. This migration does not expand the public HRESULT interface.
+// lookup fallback. This migration does not expand the public kinoko::graphics::Result interface.
 extern "C" int32_t kinoko_map_collision_query(KinokoCollisionState *state,
     KinokoActLayout *layout, int32_t *cached, int32_t left, int32_t top,
     int32_t right, int32_t bottom, int32_t *count) {

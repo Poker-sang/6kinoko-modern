@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/diagnostics.h"
 #include "kinoko/squirrel_host_object.hpp"
@@ -6,7 +7,7 @@
 #include "sqtable.h"
 #include <cstdio>
 namespace {
-volatile LONG watch_events;
+std::atomic<int32_t> watch_events;
 void table_snapshot(const char* label, SQTable* table) {
     if (!label || !table) return;
     char message[640];
@@ -27,22 +28,30 @@ void table_snapshot(const char* label, SQTable* table) {
 }
 }
 extern "C" void kinoko_trace_squirrel_table_entries(const char* label, SQTable* table) {
+#ifdef _MSC_VER
     __try { table_snapshot(label, table); }
     __except (EXCEPTION_EXECUTE_HANDLER) { kinoko_trace("sq-table:snapshot-fault"); }
+#else
+    if(kinoko_diagnostics_accepts(label)) table_snapshot(label, table);
+#endif
 }
 extern "C" void kinoko_trace_ref_watch(const char* label, SQSharedState* shared_state,
     int32_t type, intptr_t data) {
     if (!kinoko_is_release_watch_data(data)) return;
-    const auto sequence = InterlockedIncrement(&watch_events);
+    const auto sequence = ++watch_events;
     if (sequence > 4096) return;
+#ifdef _MSC_VER
     __try {
+#endif
         const auto value = kinoko::script::borrowed_value(type, data);
         const auto* object = reinterpret_cast<const SQRefCounted*>(data);
         char message[256];
-        std::snprintf(message, sizeof(message), "sq-watch:%ld %s type=%08X data=%p internal=%llu refs=%llu",
+        std::snprintf(message, sizeof(message), "sq-watch:%d %s type=%08X data=%p internal=%llu refs=%llu",
             sequence, label ? label : "event", static_cast<unsigned>(type), static_cast<const void*>(object),
             static_cast<unsigned long long>(object->_uiRef),
             static_cast<unsigned long long>(shared_state ? shared_state->_refs_table.DiagnosticRefs(value) : 0));
         kinoko_trace(message);
+#ifdef _MSC_VER
     } __except (EXCEPTION_EXECUTE_HANDLER) { kinoko_trace("sq-watch:fault"); }
+#endif
 }

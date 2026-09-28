@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/string_font.h"
 #include "kinoko/act_layout_records.hpp"
@@ -8,7 +9,7 @@ extern "C" void kinoko_string_font_configure(kinoko::text::FontRenderer* r,Kinok
     // 440910/440CA0 preserve the other config bytes and set equal RGB endpoints.
     using Layout=kinoko::text::StringLayout;
     auto& text=*reinterpret_cast<Layout*>(layout);
-    strcpy_s(reinterpret_cast<char*>(r->face),256,
+    kinoko::copy_string(reinterpret_cast<char*>(r->face),256,
         StringView(&text.face).data());
     const uint8_t colors[]={static_cast<uint8_t>(text.red),
         static_cast<uint8_t>(text.green),

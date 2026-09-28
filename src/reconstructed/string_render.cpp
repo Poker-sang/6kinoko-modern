@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/renderer.h"
@@ -11,7 +12,7 @@
 #include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/texture_store.h"
-#include <windows.h>
+
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <cstring>

@@ -1,3 +1,4 @@
+#include "kinoko/compiler_compat.h"
 #pragma once
 #include <stdint.h>
 #include <stddef.h>

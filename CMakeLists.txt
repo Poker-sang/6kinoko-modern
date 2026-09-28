@@ -29,19 +29,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(NOT WIN32)
-    message(FATAL_ERROR "The first runtime target is Windows x86.")
+option(KINOKO_EXPERIMENTAL_X64 "Compatibility option for existing build scripts" OFF)
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4 AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR "The game requires 32-bit or 64-bit pointers")
 endif()
-
-option(KINOKO_EXPERIMENTAL_X64 "Diagnose the full x64 game build; remaining source ABI guards stay enabled" OFF)
 if(NOT MSVC)
-    message(FATAL_ERROR "The reconstructed runtime currently requires MSVC.")
-endif()
-if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
-    if(NOT KINOKO_EXPERIMENTAL_X64 OR NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
-        message(FATAL_ERROR "Use -A Win32 for the supported game; tools/build_x64_probe.ps1 records experimental x64 compiler blockers.")
-    endif()
-    message(WARNING "Experimental full x64 game build: source layout/address guards remain active. This is not a supported runtime configuration.")
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-include${CMAKE_CURRENT_SOURCE_DIR}/include/kinoko/compiler_compat.h>"
+        -ffunction-sections -fdata-sections -frounding-math -ffp-contract=off)
 endif()
 
 if(MSVC)
@@ -133,14 +127,18 @@ add_library(kinoko_audio_runtime STATIC src/reconstructed/audio_runtime.cpp)
 target_include_directories(kinoko_audio_runtime PUBLIC include)
 target_compile_definitions(kinoko_audio_runtime PRIVATE _CRT_SECURE_NO_WARNINGS
     $<TARGET_PROPERTY:kinoko_modern_gpu,COMPILE_DEFINITIONS>)
+if(MSVC)
 target_compile_options(kinoko_audio_runtime PRIVATE /Gy)
-target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision winmm user32)
+endif()
+target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision)
 
 add_library(kinoko_legacy_string STATIC
     src/reconstructed/legacy_string.cpp
     src/platform/legacy_string_scan.cpp)
 target_include_directories(kinoko_legacy_string PUBLIC include)
+if(MSVC)
 target_compile_options(kinoko_legacy_string PRIVATE /Gy)
+endif()
 
 add_library(kinoko_native_control STATIC src/reconstructed/native_control.cpp)
 target_include_directories(kinoko_native_control PUBLIC include)
@@ -151,17 +149,23 @@ target_link_libraries(kinoko_native_control PUBLIC kinoko_boost_count)
 # thiscall helper is retained only for the historical ABI contracts.
 add_library(kinoko_method_entries STATIC src/reconstructed/legacy_method_entries.cpp)
 target_include_directories(kinoko_method_entries PUBLIC include)
-add_library(kinoko_legacy_abi STATIC src/reconstructed/legacy_abi.cpp)
+add_library(kinoko_legacy_abi STATIC EXCLUDE_FROM_ALL src/reconstructed/legacy_abi.cpp)
 target_include_directories(kinoko_legacy_abi PUBLIC include)
 target_link_libraries(kinoko_legacy_abi PUBLIC kinoko_method_entries)
 
 add_library(kinoko_retdec_support STATIC
-    src/platform/legacy_memory_ops.cpp
-    src/platform/address_space.cpp)
+    src/platform/legacy_memory_ops.cpp)
 target_include_directories(kinoko_retdec_support PUBLIC include)
 target_compile_definitions(kinoko_retdec_support PRIVATE _CRT_SECURE_NO_WARNINGS)
+if(MSVC)
 target_compile_options(kinoko_retdec_support PRIVATE /Gy)
-add_library(kinoko_diagnostics STATIC src/platform/diagnostics.cpp)
+endif()
+if(WIN32)
+    add_library(kinoko_diagnostics STATIC src/platform/diagnostics.cpp)
+else()
+    add_library(kinoko_diagnostics STATIC src/platform/portable_diagnostics.cpp)
+    target_link_libraries(kinoko_diagnostics PUBLIC kinoko_platform)
+endif()
 target_include_directories(kinoko_diagnostics PUBLIC include)
 target_compile_definitions(kinoko_diagnostics PRIVATE _CRT_SECURE_NO_WARNINGS
     $<TARGET_PROPERTY:kinoko_modern_gpu,COMPILE_DEFINITIONS>)
@@ -186,16 +190,21 @@ add_library(kinoko_base_utilities STATIC
     src/reconstructed/process_paths.cpp
     src/reconstructed/critical_section.cpp)
 target_include_directories(kinoko_base_utilities PUBLIC include)
+if(MSVC)
 target_compile_options(kinoko_base_utilities PRIVATE /Gy)
+endif()
 target_link_libraries(kinoko_base_utilities PUBLIC kinoko_zlib)
 target_link_libraries(kinoko_native_methods PUBLIC kinoko_base_utilities)
 
 add_executable(kinoko_modern_gpu WIN32
     src/reconstructed/runtime_host.cpp
     src/reconstructed/runtime_method_tables.cpp
-    src/platform/windows_entry.cpp
-    src/platform/resources/windows_resources.rc
 )
+if(WIN32)
+    target_sources(kinoko_modern_gpu PRIVATE src/platform/windows_entry.cpp src/platform/resources/windows_resources.rc)
+else()
+    target_sources(kinoko_modern_gpu PRIVATE src/platform/sdl_entry.cpp)
+endif()
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT kinoko_modern_gpu)
 target_include_directories(kinoko_modern_gpu PRIVATE
     include
@@ -362,6 +371,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
 )
 target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_native_control kinoko_zlib kinoko_platform kinoko_audio_output kinoko_file_service)
 target_include_directories(kinoko_squirrel_cpp_vm PRIVATE
+    third_party/stb
     "${KINOKO_SQUIRREL2_ROOT}/include"
     "${KINOKO_SQUIRREL2_ROOT}/squirrel"
     include
@@ -377,6 +387,7 @@ endif()
 include(cmake/Bindings.cmake)
 target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_legacy_string kinoko_upstream_bindings)
 target_link_libraries(kinoko_modern_gpu PRIVATE kinoko_squirrel_cpp_vm)
+if(MSVC)
 target_compile_options(kinoko_modern_gpu PRIVATE
     $<$<COMPILE_LANGUAGE:C>:/TC>
     "$<$<COMPILE_LANGUAGE:C,CXX>:/Gy;/wd4100;/wd4244;/wd4267;/wd4706>")
@@ -390,6 +401,8 @@ endif()
 if(KINOKO_RETDEC_MAP_FILE)
     target_link_options(kinoko_modern_gpu PRIVATE "/MAP:${KINOKO_RETDEC_MAP_FILE}")
 endif()
+endif()
+
 target_link_libraries(kinoko_modern_gpu PRIVATE
     kinoko_audio_runtime
     kinoko_actor_collision
@@ -398,11 +411,26 @@ target_link_libraries(kinoko_modern_gpu PRIVATE
     kinoko_retdec_support
     kinoko_diagnostics
     kinoko_zlib
-    user32
-    gdi32
-    winmm
-    dbghelp
 )
+
+if(WIN32)
+    target_link_libraries(kinoko_modern_gpu PRIVATE user32 winmm dbghelp)
+endif()
+target_link_libraries(kinoko_native_methods PUBLIC kinoko_game_graphics)
+foreach(target kinoko_native_methods kinoko_squirrel_cpp_vm kinoko_audio_runtime)
+    target_link_libraries(${target} PUBLIC kinoko_runtime_services)
+endforeach()
+add_dependencies(kinoko_modern_gpu kinoko_gpu_shaders kinoko_font_assets)
+if(NOT WIN32)
+    # Static reconstructed modules have bidirectional references. Repeat the group
+    # on Apple (no GNU start-group); use CMake RESCAN on ELF platforms.
+    if(APPLE)
+        target_link_libraries(kinoko_modern_gpu PRIVATE kinoko_squirrel_cpp_vm kinoko_native_methods kinoko_squirrel_cpp_vm kinoko_native_methods kinoko_legacy_string kinoko_base_utilities kinoko_actor_collision)
+    else()
+        target_link_libraries(kinoko_modern_gpu PRIVATE "$<LINK_GROUP:RESCAN,kinoko_squirrel_cpp_vm,kinoko_native_methods,kinoko_audio_runtime,kinoko_upstream_bindings,kinoko_legacy_string,kinoko_base_utilities,kinoko_actor_collision>")
+    endif()
+    return() # Historical Windows-only test/tools targets below; portable contracts already exist.
+endif()
 
 add_executable(kinoko_archive_inspect
     tools/inspect_archive.cpp
@@ -554,7 +582,7 @@ add_test(NAME vorbis_decoder_contract COMMAND kinoko_vorbis_decoder_contract --s
 add_executable(kinoko_audio_runtime_contract tests/audio_runtime_contract.cpp)
 target_include_directories(kinoko_audio_runtime_contract PRIVATE include)
 target_compile_definitions(kinoko_audio_runtime_contract PRIVATE _CRT_SECURE_NO_WARNINGS)
-target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision winmm user32)
+target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision)
 add_test(NAME audio_runtime_contract COMMAND kinoko_audio_runtime_contract)
 set_tests_properties(audio_runtime_contract PROPERTIES TIMEOUT 60)
 

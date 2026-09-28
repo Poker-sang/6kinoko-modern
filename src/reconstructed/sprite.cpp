@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/angle_math.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/graphics_device.h"
@@ -46,7 +47,7 @@ int32_t submit(KinokoSprite *sprite, SpriteLayout format) {
     auto *device = kinoko_graphics.device;
     if (!device || !*reinterpret_cast<void ***>(device))
         return 0;
-    // Original ignores bind/FVF failure and returns DrawPrimitiveUP HRESULT.
+    // Original ignores bind/FVF failure and returns DrawPrimitiveUP kinoko::graphics::Result.
     kinoko_texture_bind_stage(0, sprite->texture);
     kinoko::render::GraphicsQuadSink sink(*device);
     return kinoko::render::submit_quad(sink,format,sprite->vertices);

@@ -1,3 +1,4 @@
+#include "kinoko/compiler_compat.h"
 #pragma once
 #include "kinoko/camera.h"
 #include "kinoko/actor_lifecycle.h"

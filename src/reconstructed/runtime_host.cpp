@@ -1,3 +1,6 @@
+#include <SDL3/SDL.h>
+#include "kinoko/platform.hpp"
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/owned_script_object.h"
 #include "kinoko/memory_access.hpp"
@@ -113,7 +116,7 @@ char kinoko_skip_vm_owner_reset = 0;
 void* kinoko_newest_shared_state = 0;
 
 #pragma data_seg(".g644")
-__declspec(align(4096)) struct SQVM *kinoko_primary_vm = NULL;
+alignas(4096) struct SQVM *kinoko_primary_vm = NULL;
 #pragma data_seg()
 
 void* kinoko_cached_root_slot = 0;
@@ -212,9 +215,9 @@ void kinoko_trace_squirrel_name(const char *label, int32_t name_ptr) {
     if (!kinoko_diagnostics_accepts(label)) return;
 
     if (name_ptr == 0) {
-        wsprintfA(message, "%s:ptr=0x00000000", label);
+        std::snprintf(message,sizeof(message), "%s:ptr=0x00000000", label);
     } else {
-        wsprintfA(message, "%s:ptr=0x%08lX text=%s", label,
+        std::snprintf(message,sizeof(message), "%s:ptr=0x%08lX text=%s", label,
                   (unsigned long)(uint32_t)name_ptr,
                   (const char *)(intptr_t)name_ptr);
     }
@@ -285,20 +288,20 @@ static int32_t kinoko_install_root_integer_delegate(void *object) {
 }
 
 static int32_t kinoko_script_show_message(const char* text) {
-    return MessageBoxA((HWND)kinoko_game_window_slot, text, "Message", 0);
+    return SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,"Message",text,kinoko::platform::host().window()) ? 1 : 0;
 }
 
 int32_t kinoko_host_show_message(const char* text) {
     return kinoko_script_show_message(text);
 }
 
-static int32_t kinoko_script_sleep(DWORD milliseconds) {
+static int32_t kinoko_script_sleep(uint32_t milliseconds) {
     kinoko_clock_delay(milliseconds);
     return (int32_t)(intptr_t)&kinoko_script_void_result_identity;
 }
 
 int32_t kinoko_host_sleep(int32_t dwMilliseconds) {
-    return kinoko_script_sleep((DWORD)dwMilliseconds);
+    return kinoko_script_sleep((uint32_t)dwMilliseconds);
 }
 
 static int32_t kinoko_script_milliseconds(void) {
@@ -310,7 +313,7 @@ int32_t kinoko_host_milliseconds(void) {
 }
 
 static int32_t kinoko_script_close_window(void) {
-    return (int32_t)SendMessageA((HWND)kinoko_game_window_slot, WM_CLOSE, 0, 0);
+    SDL_Event quit{};quit.type=SDL_EVENT_QUIT;SDL_PushEvent(&quit);return 0;
 }
 
 int32_t kinoko_host_close_window(void) {
@@ -364,7 +367,7 @@ static SQVM* kinoko_exchange_source_receiver(SQVM* vm) {
     return previous;
 }
 
-__declspec(noinline) struct SQVM* kinoko_stack_vm(void) {
+KINOKO_NOINLINE struct SQVM* kinoko_stack_vm(void) {
     if (kinoko_explicit_vm != 0)
         return kinoko_explicit_vm;
     static int32_t null_stack_trace_count;
@@ -391,19 +394,19 @@ __declspec(noinline) struct SQVM* kinoko_stack_vm(void) {
     return 0;
 }
 
-static volatile int32_t kinoko_map_binding_watch_value;
+static std::atomic<int32_t> kinoko_map_binding_watch_value;
 
-static volatile int32_t kinoko_map_binding_watch_initialized;
+static std::atomic<int32_t> kinoko_map_binding_watch_initialized;
 
-static volatile int32_t kinoko_map_binding_watch_busy;
+static std::atomic<int32_t> kinoko_map_binding_watch_busy;
 
-static volatile int32_t kinoko_primary_vm_watch_value;
+static std::atomic<int32_t> kinoko_primary_vm_watch_value;
 
-static volatile int32_t kinoko_primary_vm_watch_initialized;
+static std::atomic<int32_t> kinoko_primary_vm_watch_initialized;
 
-static volatile int32_t kinoko_primary_vm_watch_busy;
+static std::atomic<int32_t> kinoko_primary_vm_watch_busy;
 
-static __declspec(noinline) void kinoko_watch_map_binding(void) {
+static KINOKO_NOINLINE void kinoko_watch_map_binding(void) {
     int32_t current;
     char message[160];
 
@@ -413,7 +416,7 @@ static __declspec(noinline) void kinoko_watch_map_binding(void) {
     current = (*kinoko_native_binding_type(3));
     if (kinoko_map_binding_watch_initialized == 0 ||
         current != kinoko_map_binding_watch_value) {
-        wsprintfA(message,
+        std::snprintf(message,sizeof(message),
                   "watch:g594=0x%08lX caller=0x%08lX",
                   (unsigned long)current,
                   (unsigned long)(uintptr_t)_ReturnAddress());
@@ -424,7 +427,7 @@ static __declspec(noinline) void kinoko_watch_map_binding(void) {
     kinoko_map_binding_watch_busy = 0;
 }
 
-static __declspec(noinline) void kinoko_watch_primary_vm(void) {
+static KINOKO_NOINLINE void kinoko_watch_primary_vm(void) {
     int32_t current;
     char message[160];
 
@@ -434,7 +437,7 @@ static __declspec(noinline) void kinoko_watch_primary_vm(void) {
     current = (int32_t)(intptr_t)kinoko_primary_vm;
     if (kinoko_primary_vm_watch_initialized == 0 ||
         current != kinoko_primary_vm_watch_value) {
-        wsprintfA(message,
+        std::snprintf(message,sizeof(message),
                   "watch:g644=0x%08lX caller=0x%08lX",
                   (unsigned long)current,
                   (unsigned long)(uintptr_t)_ReturnAddress());
@@ -445,13 +448,13 @@ static __declspec(noinline) void kinoko_watch_primary_vm(void) {
     kinoko_primary_vm_watch_busy = 0;
 }
 
-__declspec(noinline) void kinoko_trace_i32(const char *label,
+KINOKO_NOINLINE void kinoko_trace_i32(const char *label,
                                                   int32_t value) {
     char message[128];
     if (!kinoko_diagnostics_accepts(label)) return;
     kinoko_watch_map_binding();
     kinoko_watch_primary_vm();
-    wsprintfA(message, "%s:0x%08lX", label, (unsigned long)value);
+    std::snprintf(message,sizeof(message), "%s:0x%08lX", label, (unsigned long)value);
     kinoko_trace(message);
 }
 

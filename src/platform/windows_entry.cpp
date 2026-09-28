@@ -8,7 +8,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous,
     kinoko_diagnostics_initialize();
     int result;
     __try {
-        result = kinoko_application_run(instance, show_command);
+        result = kinoko_application_run(show_command);
     } __except (kinoko_report_exception(GetExceptionInformation())) {
         result = -1;
     }

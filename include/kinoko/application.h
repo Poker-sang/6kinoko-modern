@@ -1,10 +1,9 @@
 #pragma once
-#include <windows.h>
 #include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
-int kinoko_application_run(HINSTANCE instance, int show_command);
+int kinoko_application_run(int show_command);
 void kinoko_application_construct(void);
 void kinoko_application_shutdown(void);
 int32_t kinoko_application_frame_count(void);

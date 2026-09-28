@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 // Diagnostic observations only; no gameplay decisions or VM writes.
 #include "sqpcheader.h"
 #include "sqvm.h"
@@ -59,7 +60,7 @@ extern "C" void kinoko_trace_star_state(const char *phase, KinokoActor* actor) {
     observed[index].hits=hits;
     ++observed[index].samples;
     sprite=actor_bits<FrameRecord*>(actor, &ActorRecord::current_frame);
-    sprintf_s(message,sizeof(message),
+    std::snprintf(message,sizeof(message),
         "actor:star frame=%d phase=%s handle=%08X xy=(%.6g,%.6g) v=(%.6g,%.6g) "
         "hits=(%d,%d,%d,%d) bounds=(%.6g,%.6g,%.6g,%.6g) "
         "active=%d visible=%d release=%d priority=%d alpha=%d texture=%d spriteY=(%.6g,%.6g) "
@@ -95,7 +96,7 @@ extern "C" void kinoko_trace_star_state(const char *phase, KinokoActor* actor) {
 }
 
 static void kinoko_trace_invalid_actor(const char *phase, KinokoActor* actor) {
-    static volatile LONG count;
+    static std::atomic<int32_t> count;
     uint32_t bits[12];
     int invalid=0;
     if(!actor) return;
@@ -105,9 +106,9 @@ static void kinoko_trace_invalid_actor(const char *phase, KinokoActor* actor) {
         memcpy(bits+i,fields[i],4);
         invalid |= (bits[i]&0x7f800000u)==0x7f800000u;
     }
-    if(invalid && InterlockedIncrement(&count)<=32) {
+    if(invalid && ++count<=32) {
         char message[512];
-        sprintf_s(message,sizeof(message),
+        std::snprintf(message,sizeof(message),
             "actor:invalid-state frame=%d phase=%s actor=%08X take=%d "
             "xy=%08X,%08X v=%08X,%08X parentDelta=%08X,%08X free=%08X,%08X "
             "bounds=%08X,%08X,%08X,%08X step=%08X,%08X",
@@ -121,9 +122,9 @@ static void kinoko_trace_invalid_actor(const char *phase, KinokoActor* actor) {
 
 extern "C" int32_t kinoko_actor_trace_step_begin(KinokoActor *receiver, int32_t callback_type) {
     KinokoActor* const actor = receiver;
-    static volatile LONG step_trace_count;
-    LONG step_trace_index;
-    step_trace_index = InterlockedIncrement(&step_trace_count);
+    static std::atomic<int32_t> step_trace_count;
+    int32_t step_trace_index;
+    step_trace_index = ++step_trace_count;
     if (step_trace_index <= 64 &&
         actor_bits<int32_t>(actor, &ActorRecord::id) >= 0x200 &&
         actor_bits<int32_t>(actor, &ActorRecord::id) <= 0x207) {
@@ -157,10 +158,10 @@ extern "C" void kinoko_actor_trace_step_end(KinokoActor *receiver, int32_t step_
         kinoko_trace_invalid_actor("after-script",actor);
         /* Original 45E180 failure retirement is handled by the C++ adapter. */
         if (step_result < 0) {
-            static volatile LONG failure_count;
-            if (InterlockedIncrement(&failure_count) <= 64) {
+            static std::atomic<int32_t> failure_count;
+            if (++failure_count <= 64) {
                 char message[384];
-                sprintf_s(message, sizeof(message),
+                std::snprintf(message, sizeof(message),
                     "actor:update-failed frame=%d actor=%08X id=%X take=%d "
                     "xy=(%.3f,%.3f) v=(%.3f,%.3f) camera=(%.3f,%.3f,%.3f,%.3f)",
                     kinoko_application_frame_count(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(actor)), actor_bits<uint32_t>(actor, &ActorRecord::id),
@@ -188,13 +189,13 @@ extern "C" void kinoko_actor_trace_step_end(KinokoActor *receiver, int32_t step_
 
 extern "C" void kinoko_actor_trace_motion(KinokoActor *receiver, int32_t phase) {
     KinokoActor* actor = receiver;
-    static volatile LONG trace_count;
-    LONG trace_index;
+    static std::atomic<int32_t> trace_count;
+    int32_t trace_index;
     if (phase == 0) {
         kinoko_trace_invalid_actor("before-motion", actor);
         kinoko_trace_star_state("before-motion", actor);
     } else if (phase == 1) {
-    trace_index = InterlockedIncrement(&trace_count);
+    trace_index = ++trace_count;
     if (trace_index <= 16) {
         int32_t before_x;
         int32_t after_x;
@@ -271,7 +272,7 @@ static void kinoko_trace_actor_window_state(int32_t phase, KinokoActor* actor,
 
 static void kinoko_trace_player_state(const char *phase, KinokoActor* actor,
                                        KinokoCamera* camera) {
-    static volatile LONG count;
+    static std::atomic<int32_t> count;
     static KinokoActor* last_actor; static int32_t last_take;
     SQClosure* closure; SQFunctionProto* proto; int32_t take, transition;
     uint32_t xy_bits[2];
@@ -286,7 +287,7 @@ static void kinoko_trace_player_state(const char *phase, KinokoActor* actor,
         return;
     source = _stringval(proto->_sourcename);
     name = _stringval(proto->_name);
-    if (_stricmp(source, "data/script/player.nut") != 0 || strcmp(name, "Update") != 0)
+    if (kinoko::compare_asset_names(source, "data/script/player.nut") != 0 || strcmp(name, "Update") != 0)
         return;
     take = actor_bits<int32_t>(actor, &ActorRecord::take);
     transition = last_actor != actor || last_take != take;
@@ -297,11 +298,11 @@ static void kinoko_trace_player_state(const char *phase, KinokoActor* actor,
         !(actor_bits<int32_t>(actor, &ActorRecord::hits, 1 * sizeof(int32_t)) && actor_bits<int32_t>(actor, &ActorRecord::hits, 3 * sizeof(int32_t))) &&
         kinoko_application_frame_count() % 60 != 0)
         return;
-    if (InterlockedIncrement(&count) > 6000 && !transition)
+    if (++count > 6000 && !transition)
         return;
     memcpy(xy_bits, actor_bytes(actor, &ActorRecord::x), sizeof(xy_bits));
     /* Observe the inputs to the unchanged script death checks without touching the VM stack. */
-    sprintf_s(message, sizeof(message),
+    std::snprintf(message, sizeof(message),
         "actor:player-state frame=%d phase=%s actor=%08X take=%d xy=(%.3f,%.3f) "
         "v=(%.3f,%.3f) free=(%.3f,%.3f) hits=(%d,%d,%d,%d) flags=%08X "
         "bounds=(%.3f,%.3f,%.3f,%.3f) camera=(%.3f,%.3f,%.3f,%.3f) xyBits=%08X,%08X",
@@ -325,8 +326,8 @@ extern "C" int32_t kinoko_actor_render_trace_begin(KinokoActor *receiver, Kinoko
     KinokoActor* actor = receiver;
     KinokoCamera* camera = camera_pointer;
     FrameRecord* frame;
-    static volatile LONG trace_count;
-    LONG trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    int32_t trace_index = ++trace_count;
     if (!actor) return trace_index;
     frame = actor_bits<FrameRecord*>(actor, &ActorRecord::current_frame);
     if (trace_index <= 16) {
@@ -380,8 +381,8 @@ extern "C" void kinoko_actor_manager_trace_actor(int32_t phase, KinokoActor *act
 }
 
 extern "C" int32_t kinoko_actor_render_layer_update(void *storage,KinokoCamera *camera) {
-    static volatile LONG trace_count;
-    const auto trace=InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace=++trace_count;
     if (!storage) return 0;
     const kinoko::native::RecordView<RenderLayerRecord> layer(storage);
     if (trace<=16) {

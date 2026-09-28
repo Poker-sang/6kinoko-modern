@@ -1,5 +1,6 @@
 #include "kinoko/game_math.h"
 #include <float.h>
+#include <cfenv>
 #ifdef KINOKO_MATH_AUDIT
 #include <windows.h>
 #include <cstdio>
@@ -23,15 +24,23 @@ extern "C" void kinoko_math_checkpoint(const char *phase,uint32_t detail) {
 #endif
 
 extern "C" uint32_t kinoko_enter_game_math() {
+#ifdef _MSC_VER
     unsigned int previous = 0, current = 0;
     _controlfp_s(&previous, 0, 0);
     _controlfp_s(&current, _RC_UP, _MCW_RC);
     return previous & _MCW_RC;
+#else
+    const auto previous=std::fegetround();std::fesetround(FE_UPWARD);return static_cast<uint32_t>(previous);
+#endif
 }
 
 extern "C" void kinoko_leave_game_math(uint32_t previous_rounding) {
+#ifdef _MSC_VER
     unsigned int current = 0;
     _controlfp_s(&current, previous_rounding, _MCW_RC);
+#else
+    std::fesetround(static_cast<int>(previous_rounding));
+#endif
 }
 
 namespace {

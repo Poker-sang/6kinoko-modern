@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "graphics_texture.hpp"
 #include "kinoko/critical_section.h"
 #include "kinoko/renderer.h"
@@ -11,7 +12,7 @@
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/com_owner.hpp"
-#include <windows.h>
+
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <set>
@@ -32,7 +33,7 @@ int32_t create(uint32_t width,uint32_t height) {
     kinoko::render::GraphicsTexture texture(kinoko_graphics.device);
     {
         GraphicsLock lock;
-        if(FAILED(texture.create({width,height,kinoko::render::PixelFormat::argb8888,
+        if(kinoko::graphics::failed(texture.create({width,height,kinoko::render::PixelFormat::argb8888,
             kinoko::render::TextureUsage::render_target}))) return 0;
     }
     const int32_t handle=kinoko_texture_register(texture.get(),width,height);
@@ -49,14 +50,14 @@ extern "C" int32_t kinoko_set_render_target(int32_t handle) {
     // 401E60 selects level zero, releases the temporary surface reference,
     // and restores the renderer's cached backbuffer for handle zero.
     auto* device=kinoko_renderer.device;
-    if(!device) return E_FAIL;
+    if(!device) return kinoko::graphics::error_failure;
     if(!handle) return device->SetRenderTarget(0,kinoko_renderer.backbuffer);
-    if(handle<0 || handle>=KINOKO_TEXTURE_CAPACITY) return E_INVALIDARG;
+    if(handle<0 || handle>=KINOKO_TEXTURE_CAPACITY) return kinoko::graphics::error_argument;
     auto* texture=static_cast<kinoko::graphics::Texture*>(kinoko_texture_slots[handle].texture);
-    if(!texture) return E_INVALIDARG;
+    if(!texture) return kinoko::graphics::error_argument;
     kinoko::ComOwner<kinoko::graphics::Surface> surface;
     const auto status=texture->GetSurfaceLevel(0,surface.put());
-    if(FAILED(status)) return status;
+    if(kinoko::graphics::failed(status)) return status;
     device->SetRenderTarget(0,surface.get());
     return surface.detach()->Release();
 }
@@ -95,15 +96,15 @@ extern "C" int32_t kinoko_renderer_before_reset(KinokoRenderer *renderer) {
 }
 extern "C" int32_t kinoko_renderer_after_reset(KinokoRenderer *renderer) {
     auto *device=renderer->device;
-    for(DWORD stage=0;stage<8;++stage) kinoko_graphics.device->SetTexture(stage,nullptr);
+    for(uint32_t stage=0;stage<8;++stage) kinoko_graphics.device->SetTexture(stage,nullptr);
     kinoko_initialize_texture_cache();
     const KinokoRenderState saved=renderer->state;
     renderer->state={};renderer->present_pending=0;
     device->GetRenderTarget(0,&renderer->backbuffer);
     device->GetDepthStencilSurface(&renderer->depth_stencil);
-    const auto state=[&](kinoko::graphics::RenderState type,DWORD value) { device->SetRenderState(type,value); };
-    const DWORD alpha=saved.alpha_flags&255u;
-    const DWORD test=(saved.alpha_flags>>8)&255u;
+    const auto state=[&](kinoko::graphics::RenderState type,uint32_t value) { device->SetRenderState(type,value); };
+    const uint32_t alpha=saved.alpha_flags&255u;
+    const uint32_t test=(saved.alpha_flags>>8)&255u;
     if(alpha) state(kinoko::graphics::state_alphablendenable,alpha);
     if(test) state(kinoko::graphics::state_alphatestenable,test);
     renderer->state.alpha_flags=alpha|(test<<8);

@@ -26,7 +26,7 @@ template<int Id> int32_t* native_type(CopyEntry copy) {
 extern "C" int32_t* kinoko_sqplus_scalar_type(int32_t category) {
     switch (category) {
     case -1: return reinterpret_cast<int32_t*>(SqPlus::ClassType<void>::Get());
-    case 0: return reinterpret_cast<int32_t*>(SqPlus::ClassType<INT>::Get());
+    case 0: return reinterpret_cast<int32_t*>(SqPlus::ClassType<int32_t>::Get());
     case 2: return reinterpret_cast<int32_t*>(SqPlus::ClassType<FLOAT>::Get());
     case 3: return reinterpret_cast<int32_t*>(SqPlus::ClassType<bool>::Get());
     default: return nullptr;

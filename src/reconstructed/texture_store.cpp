@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "graphics_texture_retirement.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/texture_store.h"
@@ -6,7 +7,7 @@
 
 #include <array>
 #include <string>
-#include <windows.h>
+
 #include "kinoko/graphics_api.hpp"
 
 extern "C" {
@@ -30,7 +31,7 @@ std::string resource_key(const char *path) {
     std::string key(path);
     for (char &character : key)
         if (character == '\\') character = '/';
-    CharLowerBuffA(key.data(), static_cast<DWORD>(key.size()));
+    kinoko::lower_asset_name(key.data(), static_cast<uint32_t>(key.size()));
     return key;
 }
 }

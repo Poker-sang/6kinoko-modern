@@ -3,7 +3,13 @@
 #include "kinoko/string_font.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/com_owner.hpp"
-#include <windows.h>
+#include "kinoko/runtime_util.hpp"
+#include <SDL3/SDL.h>
+#include <cmath>
+#include <stdexcept>
+#include <string>
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <cstdlib>
@@ -12,82 +18,70 @@
 #include <vector>
 #include <list>
 
-extern "C" {
-extern char *kinoko_game_window_slot;
-
-}
 namespace {
-inline char*& game_window_slot = kinoko_game_window_slot;
 using Renderer=kinoko::text::FontRenderer;
 struct GraphicsLock {
     GraphicsLock() { kinoko_graphics_lock.native->lock(); }
     ~GraphicsLock() { kinoko_graphics_lock.native->unlock(); }
 };
-// 40F1C0/40F2E0. Each character creates/selects a font, then restores the DC.
-struct FontSession {
-    Renderer* r;
-    explicit FontSession(Renderer* renderer):r(renderer) {
-        auto font=CreateFontA(r->font_height,0,0,0,
-            r->font_weight,r->italic,
-            0,0,128,4,0,2,49,reinterpret_cast<char*>(r->face));
-        r->font_handle = static_cast<void*>(font);
-        auto dc=GetDC(reinterpret_cast<HWND>(game_window_slot));
-        r->device_context = static_cast<void*>(dc);
-        r->previous_font = static_cast<void*>(SelectObject(dc,font));
-        TEXTMETRICA metrics{};GetTextMetricsA(dc,&metrics);
-        r->ascent = static_cast<int32_t>(metrics.tmAscent);
-        r->cursor_x = int32_t(r->edge)+r->margin_left;
-        r->cursor_y = int32_t(r->edge)+r->margin_top;
-        r->gradient = r->bitmap;
-        r->clear_pixels();
-    }
-    ~FontSession() {
-        r->clear_pixels();
-        auto dc=static_cast<HDC>(r->device_context);
-        DeleteObject(SelectObject(dc,static_cast<HGDIOBJ>(r->previous_font)));
-        ReleaseDC(reinterpret_cast<HWND>(game_window_slot),dc);
-        r->device_context = static_cast<void*>(nullptr);
-        r->font_handle = static_cast<void*>(nullptr);
-        r->previous_font = static_cast<void*>(nullptr);
+struct FontData {
+    std::vector<unsigned char> bytes;
+    stbtt_fontinfo font{};
+    FontData() {
+        const char* base=SDL_GetBasePath();
+        if(!base)throw std::runtime_error(SDL_GetError());
+        const auto path=std::string(base)+"fonts/NotoSansCJKjp-Regular.otf";
+        size_t size=0;void* loaded=SDL_LoadFile(path.c_str(),&size);
+        if(!loaded)throw std::runtime_error("Missing staged font: "+path);
+        bytes.assign(static_cast<unsigned char*>(loaded),static_cast<unsigned char*>(loaded)+size);
+        SDL_free(loaded);
+        if(!stbtt_InitFont(&font,bytes.data(),0))throw std::runtime_error("Invalid staged font: "+path);
     }
 };
-void glyph(Renderer* r,UINT character,int32_t& width,int32_t& height) {
-    MAT2 transform{};transform.eM11.value=transform.eM22.value=1;
-    GLYPHMETRICS metrics{};
-    auto dc=static_cast<HDC>(r->device_context);
-    const DWORD size=GetGlyphOutlineA(dc,character,GGO_GRAY4_BITMAP,&metrics,0,nullptr,&transform);
-    if(size==GDI_ERROR) return;
-    // 40F3C8 has no zero-height guard. Preserve the recovered operation rather
-    // than inventing space metrics; this path still awaits user validation.
-    const uint32_t pitch=(size/metrics.gmBlackBoxY)&~3u;
-    const int32_t max_x=static_cast<int32_t>(metrics.gmBlackBoxX)+metrics.gmptGlyphOrigin.x+r->cursor_x;
-    const int32_t max_y=static_cast<int32_t>(metrics.gmBlackBoxY)+r->cursor_y+r->ascent-metrics.gmptGlyphOrigin.y;
-    if(max_y>=r->bound_height) return;
-    if(max_x>r->bound_width) {
-        if(!r->wrap) return;
-        r->cursor_x = r->margin_left+r->edge;
-        r->cursor_y = r->cursor_y+
-            r->font_height+r->line_space;
+const stbtt_fontinfo& font(){static const FontData data;return data.font;}
+struct FontSession {
+    Renderer* r;
+    explicit FontSession(Renderer* value):r(value) {
+        int ascent,descent,gap;stbtt_GetFontVMetrics(&font(),&ascent,&descent,&gap);
+        r->ascent=static_cast<int32_t>(std::ceil(ascent*stbtt_ScaleForPixelHeight(&font(),float(std::max(1,r->font_height)))));
+        r->cursor_x=int32_t(r->edge)+r->margin_left;r->cursor_y=int32_t(r->edge)+r->margin_top;
+        r->gradient=r->bitmap;r->clear_pixels();
     }
-    if(size) {
-        std::vector<unsigned char> bitmap(size);
-        GetGlyphOutlineA(dc,character,GGO_GRAY4_BITMAP,&metrics,size,bitmap.data(),&transform);
-        const int32_t stride=r->stride;
-        auto* output=static_cast<uint32_t*>(r->output)+metrics.gmptGlyphOrigin.x+r->cursor_x
-            +stride*(r->cursor_y+r->ascent-metrics.gmptGlyphOrigin.y);
-        const auto* gradient=static_cast<uint32_t*>(r->gradient);
-        if(gradient) gradient+=r->ascent-metrics.gmptGlyphOrigin.y;
-        for(uint32_t y=0;y<metrics.gmBlackBoxY;++y) {
-            const uint32_t rgb=gradient?gradient[y]:r->color;
-            for(uint32_t x=0;x<metrics.gmBlackBoxX;++x)
-                output[y*stride+x]=rgb|((0x0ff00000u*bitmap[y*pitch+x])&0xff000000u);
+    ~FontSession(){r->clear_pixels();}
+};
+void glyph(Renderer* r,uint32_t character,int32_t& width,int32_t& height) {
+    const auto& f=font();const float scale=stbtt_ScaleForPixelHeight(&f,float(std::max(1,r->font_height)));
+    const int index=stbtt_FindGlyphIndex(&f,static_cast<int>(character));
+    int x0,y0,x1,y1,advance,bearing;
+    stbtt_GetGlyphBitmapBox(&f,index,scale,scale,&x0,&y0,&x1,&y1);
+    stbtt_GetGlyphHMetrics(&f,index,&advance,&bearing);
+    const int bw=x1-x0,bh=y1-y0;
+    const int bold=r->font_weight>=600?1:0;
+    const int slant=r->italic?(bh+3)/4:0;
+    int max_x=r->cursor_x+x1+bold+slant;
+    if(max_x>r->bound_width && r->wrap){r->cursor_x=r->margin_left+r->edge;r->cursor_y+=r->font_height+r->line_space;max_x=r->cursor_x+x1+bold+slant;}
+    const int max_y=r->cursor_y+r->ascent+y1;
+    if(max_y>=r->bound_height || max_x>r->bound_width)return;
+    if(bw>0 && bh>0){
+        std::vector<unsigned char> bitmap(size_t(bw)*bh);
+        stbtt_MakeGlyphBitmap(&f,bitmap.data(),bw,bh,bw,scale,scale,index);
+        for(int y=0;y<bh;++y){
+            const int dy=r->cursor_y+r->ascent+y0+y;
+            if(dy<0||dy>=r->bound_height)continue;
+            const uint32_t rgb=r->gradient?r->gradient[std::max(0,r->ascent+y0+y)]:r->color;
+            for(int x=0;x<bw;++x){
+                const int dx=r->cursor_x+x0+x+(r->italic?(bh-1-y)/4:0);
+                for(int b=0;b<=bold;++b){
+                    if(dx+b<0||dx+b>=r->bound_width)continue;
+                    auto& pixel=r->output[size_t(dy)*r->stride+dx+b];
+                    const auto alpha=std::max(pixel>>24,uint32_t(bitmap[size_t(y)*bw+x]));
+                    pixel=(rgb&0xffffffu)|(alpha<<24);
+                }
+            }
         }
     }
-    // FontSession resets accent/ruby before each single-character call, so
-    // neither branch of the generic tagged renderer is reachable here.
-    r->cursor_x = r->cursor_x+
-        metrics.gmCellIncX+r->character_space;
-    width=(std::max)(width,max_x);height=(std::max)(height,max_y);
+    r->cursor_x+=static_cast<int32_t>(std::lround(advance*scale))+r->character_space;
+    width=std::max(width,max_x);height=std::max(height,max_y);
 }
 void outline(Renderer* r,const uint32_t* source,uint32_t* destination) {
     const int32_t stride=r->stride;
@@ -118,15 +112,8 @@ extern "C" void kinoko_string_font_rasterize(Renderer* r,const char* character,i
     int32_t w=0,h=0;
     {
         FontSession session(r);
-        const auto lead=static_cast<unsigned char>(character[0]);
-        const bool double_byte=(lead>=0x81 && lead<0xa0)||(lead>=0xe0 && lead<0xff);
-        // The '<' tag prefix consumes the rest when no '>' exists (40FDC4).
-        // CStringLayout supplies exactly one character, so it never has a tag.
-        if(lead && lead!='<' && (!double_byte || character[1])) {
-            const UINT code=double_byte?(UINT(lead)<<8)|static_cast<unsigned char>(character[1])
-                :static_cast<UINT>(static_cast<signed char>(lead));
-            glyph(r,code,w,h);
-        }
+        if(character && *character && *character!='<')
+            glyph(r,kinoko::text::codepoint(character),w,h);
     }
     if(edge) outline(r,temporary.data(),
         static_cast<uint32_t*>(r->destination));
@@ -138,13 +125,13 @@ extern "C" int32_t kinoko_string_font_texture(Renderer* r) {
     kinoko::graphics::Texture* value=nullptr;
     {
         GraphicsLock lock;
-        if(FAILED(kinoko::graphics::create_texture(kinoko_graphics.device,512,512,1,0,
+        if(kinoko::graphics::failed(kinoko::graphics::create_texture(kinoko_graphics.device,512,512,1,0,
             kinoko::graphics::format_a8r8g8b8,kinoko::graphics::pool_managed,&value))) return 0;
     }
     texture.reset(value);
     {
         GraphicsLock lock;kinoko::graphics::MappedPixels rect{};
-        if(FAILED(value->LockRect(0,&rect,nullptr,0))) return 0;
+        if(kinoko::graphics::failed(value->LockRect(0,&rect,nullptr,0))) return 0;
         std::memset(rect.pBits,0,4*512*512);
         r->output = static_cast<uint32_t*>(rect.pBits);
         r->destination = static_cast<uint32_t*>(rect.pBits);
@@ -166,11 +153,11 @@ extern "C" void kinoko_string_font_upload(Renderer* r,int32_t handle,const char*
     GraphicsLock lock;
     kinoko::ComOwner<kinoko::graphics::Surface> surface;
     kinoko::graphics::Surface* value=nullptr;
-    if(FAILED(texture->GetSurfaceLevel(0,&value))) return;
+    if(kinoko::graphics::failed(texture->GetSurfaceLevel(0,&value))) return;
     surface.reset(value);kinoko::graphics::SurfaceDescription description{};value->GetDesc(&description);surface.reset();
-    kinoko::graphics::PixelRect region{x,y,static_cast<LONG>(description.Width),static_cast<LONG>(description.Height)};
+    kinoko::graphics::PixelRect region{x,y,static_cast<int32_t>(description.Width),static_cast<int32_t>(description.Height)};
     kinoko::graphics::MappedPixels rect{};
-    if(FAILED(texture->LockRect(0,&rect,&region,0))) return;
+    if(kinoko::graphics::failed(texture->LockRect(0,&rect,&region,0))) return;
     try {
         std::vector<unsigned char> pixels(size_t(description.Height-y)*rect.Pitch);
         r->output = reinterpret_cast<uint32_t*>(pixels.data());
@@ -181,7 +168,7 @@ extern "C" void kinoko_string_font_upload(Renderer* r,int32_t handle,const char*
         kinoko_string_font_rasterize(r, character, width, height);
         const uint32_t bytes_per_pixel=rect.Pitch/description.Width;
         for(int32_t row=0;row<*height;++row)
-            memcpy_s(static_cast<unsigned char*>(rect.pBits)+row*rect.Pitch,
+            kinoko::copy_bytes(static_cast<unsigned char*>(rect.pBits)+row*rect.Pitch,
                 (description.Width-x)*bytes_per_pixel,pixels.data()+row*rect.Pitch,
                 *width*bytes_per_pixel);
     } catch(...) { texture->UnlockRect(0);throw; }

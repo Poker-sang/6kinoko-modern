@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/owned_script_object.h"
 #include "kinoko/script_callbacks.h"
 #include "kinoko/actor_records.hpp"
@@ -5,7 +6,7 @@
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_vm_bootstrap.h"
 #include "kinoko/squirrel_source_runtime.h"
-#include <windows.h>
+
 extern "C" {
 extern SQVM *kinoko_primary_vm;
 extern int32_t kinoko_actor_user_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)], kinoko_actor_step_key_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)], kinoko_actor_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];

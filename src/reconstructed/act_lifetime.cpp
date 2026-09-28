@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/act_layer_lifecycle.h"
 #include "kinoko/act_layout_records.hpp"
@@ -45,7 +46,7 @@
 #include "kinoko/map_render.h"
 #include "kinoko/sprite.h"
 #include "kinoko/game_math.h"
-#include <windows.h>
+
 #include "kinoko/graphics_api.hpp"
 #include <algorithm>
 #include <cmath>

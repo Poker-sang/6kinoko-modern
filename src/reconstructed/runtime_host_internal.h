@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/owned_script_object.h"
 #pragma once
 // Private Win32 host/fixture boundary; public game ports remain in kinoko/*.h.
@@ -79,8 +80,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
-#include <intrin.h>
+
+
 #include "kinoko/graphics_c_boundary.h"
 #include <zlib.h>
 #include "kinoko/squirrel_compile_bridge.h"
@@ -712,7 +713,7 @@ extern char kinoko_skip_vm_owner_reset;
 
 extern void* kinoko_newest_shared_state;
 
-extern __declspec(align(4096)) struct SQVM *kinoko_primary_vm;
+alignas(4096) extern struct SQVM *kinoko_primary_vm;
 
 extern void* kinoko_cached_root_slot;
 
@@ -826,7 +827,7 @@ int32_t kinoko_script_bind_root_value(int32_t *object, int32_t *value, char *nam
 
 int32_t kinoko_script_bind_root_integer(int32_t *object, int32_t value, char *name);
 
-__declspec(noinline) struct SQVM* kinoko_stack_vm(void);
+KINOKO_NOINLINE struct SQVM* kinoko_stack_vm(void);
 
 
 void* kinoko_native_void_type(void);

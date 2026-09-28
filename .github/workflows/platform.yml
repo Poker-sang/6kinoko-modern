@@ -13,7 +13,10 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Linux build dependencies
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev libasound2-dev libpulse-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev libgbm-dev libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y glslang-tools libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev libasound2-dev libpulse-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev libgbm-dev libudev-dev
+      - name: Apple shader tools
+        if: runner.os == 'macOS'
+        run: brew install glslang spirv-cross
       - name: Record source
         shell: bash
         run: mkdir -p build-runs/portable && git rev-parse HEAD > build-runs/portable/source-commit.txt
@@ -52,3 +55,34 @@ jobs:
             runtime-builds/bridge/
             build-runs/bridge/gpu-shader-toolchain.txt
             build-runs/bridge/d3d9-audit.json
+
+  native-game:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y glslang-tools libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev libasound2-dev libpulse-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev libdrm-dev libgbm-dev libudev-dev
+      - name: Apple shader tools
+        if: runner.os == 'macOS'
+        run: brew install glslang spirv-cross
+      - name: Configure full game
+        run: cmake -S . -B build-runs/native -DCMAKE_BUILD_TYPE=Release -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/native
+      - name: Compile full game (no execution)
+        shell: bash
+        run: |
+          set -o pipefail
+          git rev-parse HEAD > build-runs/native/source-commit.txt
+          cmake --build build-runs/native --target kinoko_modern_gpu --parallel 4 2>&1 | tee build-runs/native/build.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: game-${{ matrix.os }}
+          path: |
+            build-runs/native/source-commit.txt
+            build-runs/native/build.log
+            runtime-builds/native/

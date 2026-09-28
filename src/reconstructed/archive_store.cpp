@@ -1,9 +1,10 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/file_io.h"
 #include "kinoko/file_service.hpp"
 #include "kinoko/compat/resource_rules.hpp"
 #include "kinoko/compat/archive_index.hpp"
 #include "kinoko/archive_random.h"
-#include <windows.h>
+
 #include <zlib.h>
 #include <cstdint>
 #include <cstring>
@@ -25,7 +26,7 @@ std::vector<std::string> archives;
 using kinoko::io::File;
 uint32_t path_hash(const std::string &path) {
     std::vector<char> lowered(path.begin(),path.end());lowered.push_back('\0');
-    CharLowerBuffA(lowered.data(),static_cast<DWORD>(lowered.size()));
+    kinoko::lower_asset_name(lowered.data(),static_cast<uint32_t>(lowered.size()));
     // 4107B0 passes strlen+1 in EAX; the terminating NUL is part of CRC32.
     return static_cast<uint32_t>(crc32(0,reinterpret_cast<const Bytef*>(lowered.data()),
                                      static_cast<uInt>(lowered.size())));
@@ -33,7 +34,7 @@ uint32_t path_hash(const std::string &path) {
 void insert(const char *path,uint32_t archive,uint32_t offset,uint32_t size) {
     auto &chain=entries[path_hash(path)];
     for(auto &entry:chain) {
-        if(_stricmp(entry.path.c_str(),path)==0) {
+        if(kinoko::compare_asset_names(entry.path.c_str(),path)==0) {
             entry.archive=archive;entry.offset=offset;entry.size=size;return;
         }
     }
@@ -80,7 +81,7 @@ extern "C" KinokoFile* kinoko_archive_open_entry(const char *path,uint32_t *offs
     for(const auto &entry:chain) {
         // Original bypasses the name comparison if there is no collision
         // successor. Keep that subtle single-entry CRC behavior.
-        if(chain.size()!=1 && _stricmp(entry.path.c_str(),normalized.c_str())!=0) continue;
+        if(chain.size()!=1 && kinoko::compare_asset_names(entry.path.c_str(),normalized.c_str())!=0) continue;
         if(entry.archive>=archives.size()) return 0;
         *offset=entry.offset;*size=entry.size;
         File file(archives[entry.archive].c_str(),KINOKO_FILE_READ);if(!file) return 0;

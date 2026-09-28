@@ -1,3 +1,4 @@
+#include "kinoko/compiler_compat.h"
 #include "kinoko/squirrel_native_types.h"
 #ifndef KINOKO_SQUIRREL_SOURCE_RUNTIME_H
 #define KINOKO_SQUIRREL_SOURCE_RUNTIME_H

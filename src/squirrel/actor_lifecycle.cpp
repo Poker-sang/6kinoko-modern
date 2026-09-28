@@ -1,10 +1,11 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/actor_lifecycle.h"
 #include "kinoko/actor_records.hpp"
 #include "kinoko/script_callbacks.h"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_object.h"
-#include <windows.h>
+
 #include <array>
 #include <cstdlib>
 #include <cstring>

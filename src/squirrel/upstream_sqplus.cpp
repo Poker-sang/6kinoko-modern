@@ -117,7 +117,7 @@ void sqplus_variable_metadata(HSQUIRRELVM vm, HSQOBJECT root,
 }
 std::array<char, 258> sqplus_variable_key(const SQChar* name) noexcept {
     std::array<char, 258> key{};
-    SqPlus::getVarNameTag(key.data(), static_cast<INT>(key.size()), name ? name : "");
+    SqPlus::getVarNameTag(key.data(), static_cast<int32_t>(key.size()), name ? name : "");
     return key;
 }
 bool sqplus_bind_function(HSQUIRRELVM vm, SQFUNCTION function, const SQChar* name,

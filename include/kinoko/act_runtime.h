@@ -1,3 +1,4 @@
+#include "kinoko/compiler_compat.h"
 #include "kinoko/act_types.h"
 #include "kinoko/file_io.h"
 struct SQVM;

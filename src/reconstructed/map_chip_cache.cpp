@@ -1,10 +1,11 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/map_chip_cache.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/map_render.h"
 #include "kinoko/act_runtime.h"
 #include "kinoko/native_buffer.h"
 #include "kinoko/texture_store.h"
-#include <windows.h>
+
 #include <algorithm>
 #include <cstring>
 #include <climits>
@@ -115,19 +116,19 @@ bool initialize_chip_quad(QuadRecord *storage,int32_t handle,const ChipDefinitio
 }
 int32_t refresh_chip_sprite(KinokoActLayout *layout,const ChipDefinition *source) {
     auto *data=kinoko_map_cached_chip_data(layout);
-    if(!data || !source) return E_FAIL;
+    if(!data || !source) return kinoko::graphics::error_failure;
     const auto chip=ChipView(const_cast<ChipDefinition *>(source)).load();
     const LayoutView map(layout);
     const auto indices=map.get(&LayoutRecord::chip_indices);
     const auto size=count(indices);
-    if(chip.chip_id>=size) return E_FAIL;
+    if(chip.chip_id>=size) return kinoko::graphics::error_failure;
     const int32_t index=indices.begin[chip.chip_id];
-    if(index<=0 || static_cast<uint32_t>(index)>=data->chip_count) return E_FAIL;
+    if(index<=0 || static_cast<uint32_t>(index)>=data->chip_count) return kinoko::graphics::error_failure;
     auto sprites=map.view(&LayoutRecord::chip_sprites);
     if(size>static_cast<uint32_t>(map.get(&LayoutRecord::chip_sprite_count))) {
-        if(size>INT32_MAX/sizeof(ChipSpriteCache)) return E_FAIL;
+        if(size>INT32_MAX/sizeof(ChipSpriteCache)) return kinoko::graphics::error_failure;
         const auto previous=count(sprites.load());
-        if(!kinoko_native_buffer_resize((void*)(sprites.data()), size*sizeof(ChipSpriteCache))) return E_FAIL;
+        if(!kinoko_native_buffer_resize((void*)(sprites.data()), size*sizeof(ChipSpriteCache))) return kinoko::graphics::error_failure;
         auto *begin=sprites.get(&ChipSpriteBuffer::begin);
         for(uint32_t i=previous;i<size;++i) {
             begin[i].quad.vtable=kinoko_act_host_symbols()->chip_quad_vtable;
@@ -137,13 +138,13 @@ int32_t refresh_chip_sprite(KinokoActLayout *layout,const ChipDefinition *source
     }
     auto &cached=sprites.get(&ChipSpriteBuffer::begin)[index];
     if(std::memcmp(&chip,&cached.definition,sizeof(chip))) cached.valid=0;
-    if(cached.valid) return S_OK;
+    if(cached.valid) return kinoko::graphics::ok;
     cached.definition=chip;
     auto *texture=kinoko_mcd_find_texture(data,chip.texture_id);
-    if(!texture) return E_FAIL;
-    if(!initialize_chip_quad(&cached.quad,texture->handle,&chip)) return E_FAIL;
+    if(!texture) return kinoko::graphics::error_failure;
+    if(!initialize_chip_quad(&cached.quad,texture->handle,&chip)) return kinoko::graphics::error_failure;
     cached.valid=1;
-    return S_OK;
+    return kinoko::graphics::ok;
 }
 const QuadRecord *find_chip_sprite(KinokoActLayout *layout,const ChipDefinition *source) {
     if(!layout || !source) return nullptr;
@@ -152,7 +153,7 @@ const QuadRecord *find_chip_sprite(KinokoActLayout *layout,const ChipDefinition 
     const auto indices=map.get(&LayoutRecord::chip_indices);
     if(id>=count(indices)) return nullptr;
     const auto index=indices.begin[id];
-    if(FAILED(refresh_chip_sprite(layout,source)) || index<=0 || index>=map.get(&LayoutRecord::chip_sprite_count)) return nullptr;
+    if(kinoko::graphics::failed(refresh_chip_sprite(layout,source)) || index<=0 || index>=map.get(&LayoutRecord::chip_sprite_count)) return nullptr;
     const auto &cached=map.get(&LayoutRecord::chip_sprites).begin[index];
     return cached.valid ? &cached.quad : nullptr;
 }

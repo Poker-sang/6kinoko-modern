@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/game_runtime.h"
 #include "kinoko/act_document.h"
 #include "kinoko/stage_runtime.h"
@@ -42,8 +43,8 @@ const char *document_name(KinokoActDocument *document) {
 // 466050: increment the clock before executing each stage's frame update.
 extern "C" int32_t kinoko_stages_update() {
     auto node = kinoko_stage_list_first();
-    static volatile LONG trace_count;
-    const auto trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace_index = ++trace_count;
     if (trace_index <= 8) {
         kinoko_trace("466050:entry");
         kinoko_trace_i32("466050:g603", stage_list_identity());
@@ -82,8 +83,8 @@ extern "C" int32_t kinoko_stages_update() {
 
 // 466090: all stages prepare their draws before the separate drawing pass.
 extern "C" int32_t kinoko_stages_prepare_draw() {
-    static volatile LONG trace_count;
-    const auto trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace_index = ++trace_count;
     if (trace_index == 1) {
         kinoko_trace_i32("render:g603", stage_list_identity());
         kinoko_trace_i32("render:g603-first", diagnostic_address(kinoko_stage_list_first()));
@@ -99,8 +100,8 @@ extern "C" int32_t kinoko_stages_prepare_draw() {
 
 // 4660C0: preserve the origin (0,0), stage ordering and null-runtime handling.
 extern "C" int32_t kinoko_stages_draw() {
-    static volatile LONG trace_count;
-    const auto trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace_index = ++trace_count;
     if (trace_index == 1) {
         kinoko_trace_i32("render:g603-float", stage_list_identity());
         kinoko_trace_i32("render:g603-float-first", diagnostic_address(kinoko_stage_list_first()));
@@ -126,8 +127,8 @@ extern "C" int32_t kinoko_stages_draw() {
 }
 
 extern "C" KinokoStageOwner *kinoko_stage_load(const char *file_name) {
-    static volatile LONG trace_count;
-    const auto trace_index = InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const auto trace_index = ++trace_count;
     if (trace_index <= 8) {
         kinoko_trace("466100:entry");
         kinoko::script::diagnostic_name("466100:file",file_name);

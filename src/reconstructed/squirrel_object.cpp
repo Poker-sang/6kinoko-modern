@@ -1,10 +1,11 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_object.h"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_source_runtime.h"
 #include <cstdio>
-#include <intrin.h>
+
 
 extern "C" {
 void kinoko_host_free_allocation(int32_t* object);

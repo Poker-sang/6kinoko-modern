@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/pat_animation.h"
 #include "kinoko/actor_records.hpp"
 #include "kinoko/animation_storage.h"
@@ -83,13 +84,13 @@ bool read_frame(const Reader &reader,KinokoActorManager *manager,KinokoAnimation
 int32_t load_texture(const char *directory,const char *name) {
     char path[260]{};
     kinoko::script::diagnostic_name("actor:pat-texture",name);
-    if (strcpy_s(path,sizeof(path),directory)) return 0;
+    if (kinoko::copy_string(path,sizeof(path),directory)) return 0;
     auto length=std::strlen(path);
     if (length && path[length-1]!='/' && path[length-1]!='\\') {
         if (length+1>=sizeof(path)) return 0;
         path[length++]='\\';path[length]=0;
     }
-    if (strcat_s(path,sizeof(path),name)) return 0;
+    if (kinoko::append_string(path,sizeof(path),name)) return 0;
     return kinoko_texture_acquire(path);
 }
 }

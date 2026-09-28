@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/resource_allocation.hpp"
 #include "kinoko/texture_store.h"
@@ -21,7 +22,7 @@ extern "C" int32_t kinoko_string_prune_atlases(KinokoStringLayout* receiver) {
 }
 
 // 4410C0 rebuilds the pending byte string and discards glyph sprites. It does
-// not rasterize text here: later update consumes stBackQueue using CharNextA.
+// not rasterize text here: later update consumes stBackQueue using kinoko::text::next.
 extern "C" int32_t kinoko_string_rebuild_queue(KinokoStringLayout* receiver) {
     auto* layout=receiver;
     auto& record=*reinterpret_cast<kinoko::text::StringLayout*>(receiver);

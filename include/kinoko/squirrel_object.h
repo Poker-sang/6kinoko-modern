@@ -1,3 +1,4 @@
+#include "kinoko/compiler_compat.h"
 #include "kinoko/squirrel_native_types.h"
 #pragma once
 #include <stdint.h>

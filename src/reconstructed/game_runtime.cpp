@@ -1,3 +1,4 @@
+#include "kinoko/runtime_util.hpp"
 #include "kinoko/game_runtime.h"
 #include "kinoko/game_host.h"
 #include "kinoko/base_utilities.h"
@@ -67,8 +68,8 @@ extern "C" int32_t kinoko_game_shutdown(void) {
 }
 extern "C" int32_t kinoko_game_update(void) {
     const auto& objects=*kinoko_game_objects();
-    static volatile LONG trace_count;
-    const LONG trace_index=InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const int32_t trace_index=++trace_count;
     if (trace_index<=16) {
         kinoko_trace("469900:entry");
         kinoko_trace_i32("469900:update-mask",kinoko_game_masks.update);
@@ -99,8 +100,8 @@ extern "C" int32_t kinoko_game_update(void) {
 extern "C" int32_t kinoko_game_draw(void) {
     const auto& objects=*kinoko_game_objects();
     const uint32_t mask=static_cast<uint32_t>(kinoko_game_masks.render);
-    static volatile LONG trace_count;
-    const LONG trace_index=InterlockedIncrement(&trace_count);
+    static std::atomic<int32_t> trace_count;
+    const int32_t trace_index=++trace_count;
     if (trace_index==1) {
         kinoko_trace_i32("render:g613",(int32_t)(intptr_t)kinoko_render_queue_identity());
         kinoko_trace_i32("render:g613-first",(int32_t)(intptr_t)kinoko_render_queue_first());
