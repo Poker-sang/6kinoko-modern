@@ -58,7 +58,6 @@ extern struct SQSharedState* kinoko_primary_shared_state;
 extern intptr_t kinoko_release_watch_data[8];
 extern int32_t kinoko_release_watch_count;
 
-int32_t _3f__3f_2_40_YAPAXI_40_Z(int32_t size);
 int32_t __fastcall kinoko_act_layer_associate_method(KinokoActLayer* receiver, void* unused_edx);
 intptr_t kinoko_sqrat_call_integer0(struct SQVM* a1);
 intptr_t kinoko_sqrat_call_integer1(struct SQVM* a1);

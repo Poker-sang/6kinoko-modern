@@ -84,6 +84,6 @@ extern "C" KinokoStringLayout* __fastcall kinoko_method_destroy_string_layout(Ki
     return kinoko_method_delete_string_layout(object,nullptr,1);
 }
 extern "C" int32_t kinoko_string_layout_type_identity;
-extern "C" int32_t __fastcall kinoko_method_string_layout_type(KinokoStringLayout*,void*) {
-    return kinoko::script::diagnostic_address(&kinoko_string_layout_type_identity);
+extern "C" const void* __fastcall kinoko_method_string_layout_type(KinokoStringLayout*,void*) {
+    return &kinoko_string_layout_type_identity;
 }

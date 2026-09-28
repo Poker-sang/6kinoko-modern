@@ -45,7 +45,7 @@ int32_t kinoko_sq_new_class(SQVM* machine, int32_t a2);
 SQObjectPtr* kinoko_sq_new_closure(SQVM* machine, SQFUNCTION callback, int32_t free_variables);
 SQObjectPtr* kinoko_sq_push_integer(SQVM* machine, int32_t a2);
 SQObjectPtr* kinoko_sq_push_new_table(SQVM* machine);
-SQObjectPtr* kinoko_sq_push_raw_object(SQVM* machine, int32_t a2, int32_t a3);
+SQObjectPtr* kinoko_sq_push_raw_object(SQVM* machine, int32_t a2, intptr_t a3);
 SQObjectPtr* kinoko_sq_push_root_table(SQVM* machine);
 SQObjectPtr* kinoko_sq_push_string(SQVM* machine, const char* text, int32_t length);
 SQObjectPtr* kinoko_sq_push_user_pointer(SQVM* machine, void* value);

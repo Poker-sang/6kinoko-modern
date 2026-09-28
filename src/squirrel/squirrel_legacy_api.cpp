@@ -101,8 +101,8 @@ extern "C" int32_t kinoko_sq_get_stack_object(SQVM* machine, int32_t index, HSQO
 }
 
 
-extern "C" SQObjectPtr* kinoko_sq_push_raw_object(SQVM* machine, int32_t a2, int32_t a3) {
-    HSQOBJECT value; value._type = static_cast<SQObjectType>(a2); std::memcpy(&value._unVal, &a3, sizeof a3); sq_pushobject(machine, value); return top_slot(machine);
+extern "C" SQObjectPtr* kinoko_sq_push_raw_object(SQVM* machine, int32_t a2, intptr_t a3) {
+    HSQOBJECT value{}; value._type = static_cast<SQObjectType>(a2); std::memcpy(&value._unVal, &a3, sizeof a3); sq_pushobject(machine, value); return top_slot(machine);
 }
 
 

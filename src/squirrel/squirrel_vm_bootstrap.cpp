@@ -17,7 +17,6 @@
 #include <list>
 
 extern "C" {
-int32_t _3f__3f_2_40_YAPAXI_40_Z(int32_t size);
 }
 namespace {
 // Host-owned slots preserve publication and release order.

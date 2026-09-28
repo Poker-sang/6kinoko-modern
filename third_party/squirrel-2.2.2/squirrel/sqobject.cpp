@@ -250,12 +250,13 @@ bool SafeRead(HSQUIRRELVM v,SQWRITEFUNC read,SQUserPointer up,SQUserPointer dest
 	return true;
 }
 
+static_assert(sizeof(SQFloat) == 4 && sizeof(SQInstruction) == 8 && sizeof(bool) == 1, "Kinoko CV4 scalar/opcode widths");
 // Kinoko CV4 uses the original little-endian 32-bit wire integers even when
 // the live VM uses native-width SQInteger/pointers. Do not serialize C++ layouts.
 template<class T> bool WriteWire32(HSQUIRRELVM v, SQWRITEFUNC write, SQUserPointer up, T value) {
     using Wire = typename std::conditional<std::is_signed<T>::value, int32_t, uint32_t>::type;
-    if (value < static_cast<T>((std::numeric_limits<Wire>::min)()) ||
-        value > static_cast<T>((std::numeric_limits<Wire>::max)())) {
+    if ((std::is_signed<T>::value && static_cast<int64_t>(value) < INT32_MIN) ||
+        (std::is_signed<T>::value ? static_cast<int64_t>(value) > INT32_MAX : static_cast<uint64_t>(value) > UINT32_MAX)) {
         v->Raise_Error(_SC("integer outside Kinoko 32-bit bytecode range")); return false;
     }
     const uint32_t bits = static_cast<uint32_t>(static_cast<Wire>(value));

@@ -82,6 +82,8 @@ extern "C" {
 
 int kinoko_valid_range(const void* address, size_t size, int writeable);
 
+// Only x86 needs the recovered cdecl-to-WINAPI adapters. On x64 use SDK imports.
+#if defined(_M_IX86)
 int32_t CoInitialize(void *reserved)
 {
     kinoko_co_initialize_fn initialize =
@@ -149,40 +151,14 @@ uint32_t timeBeginPeriod(uint32_t period)
     return begin_period == nullptr ? 0u : (uint32_t)begin_period((UINT)period);
 }
 
+#endif
+
 /* The RetDec output passes a caller-owned vararg area to this old helper. A
    normal vararg view is sufficient for the diagnostic strings used here. */
 int _vsprintf_compat(char *buffer, const char *format, va_list args)
 {
     return vsprintf_s(buffer, 0x7fffffff, format, args);
 }
-
-
-
-/* Legacy allocation spelling remains malloc-compatible with the recovered
-   callers and their free-based cleanup. This is not modern operator new. */
-int32_t _3f__3f_2_40_YAPAXI_40_Z(uint32_t size)
-{
-    return (int32_t)(uintptr_t)malloc(size);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -7,7 +7,6 @@
 
 // The remaining allocator ABI still returns an integer address. Convert here,
 // not throughout the layer/document APIs. It currently forwards to malloc.
-extern "C" int32_t _3f__3f_2_40_YAPAXI_40_Z(int32_t size);
 extern "C" void kinoko_trace_i32(const char* label, int32_t value);
 
 namespace {

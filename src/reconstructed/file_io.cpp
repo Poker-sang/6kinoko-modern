@@ -79,7 +79,7 @@ bool seek_absolute(HANDLE file, uint32_t position) {
     return SetFilePointer(file, static_cast<LONG>(position), nullptr, FILE_BEGIN) != INVALID_SET_FILE_POINTER || GetLastError() == NO_ERROR;
 }
 }
-#define METHOD(name, fn) reinterpret_cast<decltype(KinokoReaderMethods::name)>(fn)
+#define METHOD(name, fn) fn
 extern "C" const KinokoReaderMethods kinoko_file_reader_methods{
     METHOD(destroy,destroy), METHOD(open_string,open_string), METHOD(open_path,open_read),
     METHOD(transfer,read_file), METHOD(transferred,transferred), METHOD(seek,seek_file), METHOD(size,size_file)};
