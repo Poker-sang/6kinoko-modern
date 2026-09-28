@@ -49,3 +49,12 @@ the ACT draw diagnostic counter now use project types/standard atomics. The
 asset-name buffer remains 260 bytes, independent of OS path limits. The current
 CharNextA text consumer explicitly includes its Windows backend until the font
 migration rather than depending on an incidental graphics header include.
+
+## Portable CI evidence
+
+[Run 36456760951](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36456760951)
+checked source `492441a936eaaff61f5771a77d5dedca55f6200f`. Ubuntu 24.04,
+macOS 14 and Windows 2022 portable jobs all passed, compiling/linking the actual
+game graphics backend and resource contract. The separate full-game cloud job
+was still building at this snapshot; local full-game builds passed as above.
+This evidence is compilation only, not graphical or gameplay validation.
