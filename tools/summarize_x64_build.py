@@ -17,18 +17,25 @@ errors=[]
 seen=set()
 for line in log.splitlines():
     match=re.search(r'^(.*?)\((\d+)(?:,\d+)?\):\s*(?:fatal )?error\s+([A-Z]+\d+):\s*(.*)',line)
-    if not match: continue
-    file,number,code,message=match.groups()
+    if match:
+        file,number,code,message=match.groups()
+        number=int(number)
+    else:
+        # Link failures have no source line; do not report a failed link as zero errors.
+        match=re.search(r'^(.*?)\s*:\s*(?:fatal )?error\s+(LNK\d+):\s*(.*)',line)
+        if not match: continue
+        file,code,message=match.groups()
+        number=None
     message=re.sub(r'\s+\[[^\]]+\]$','',message)
     key=(file,number,code,message)
     if key in seen: continue
     seen.add(key)
-    errors.append(dict(file=file,line=int(number),code=code,message=message))
+    errors.append(dict(file=file,line=number,code=code,message=message))
 result=dict(source_commit=manifest['source_commit'],target=manifest['target'],
     full_build_succeeded=manifest['full_build_succeeded'],source_guards_enabled=True,
     executed_built_code=False,unique_diagnostics=len(errors),
     by_code=dict(collections.Counter(e['code'] for e in errors)),
     by_file=dict(collections.Counter(e['file'] for e in errors)),diagnostics=errors,
-    limitations='Compiler diagnostics from this build, not a complete pointer-flow or runtime correctness audit. Guard failures cause cascading diagnostics; counts are not independent migration tasks.')
+    limitations='Compiler/linker diagnostics from this build, not a complete pointer-flow or runtime correctness audit. Guard failures cause cascading diagnostics; counts are not independent migration tasks.')
 (args.build/'blockers.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 print(json.dumps({k:v for k,v in result.items() if k not in ('diagnostics','by_file')},ensure_ascii=False))

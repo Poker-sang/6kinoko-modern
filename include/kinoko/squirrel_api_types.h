@@ -23,3 +23,7 @@ static inline HSQOBJECT kinoko_borrowed_object(int32_t type, intptr_t bits) {
     memcpy(&value._unVal, &bits, sizeof(bits));
     return value;
 }
+
+/* C bridge callers carry addresses in native-width integers. */
+static inline void* kinoko_pointer(intptr_t address) { return (void*)(uintptr_t)address; }
+static inline HSQUIRRELVM kinoko_vm(intptr_t address) { return (HSQUIRRELVM)kinoko_pointer(address); }
