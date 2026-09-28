@@ -101,3 +101,14 @@ add_executable(kinoko_string_runtime_contract tests/string_runtime_contract.cpp
 target_include_directories(kinoko_string_runtime_contract PRIVATE include)
 target_compile_features(kinoko_string_runtime_contract PRIVATE cxx_std_17)
 add_test(NAME string_runtime_contract COMMAND kinoko_string_runtime_contract)
+
+add_executable(kinoko_method_entry_contract tests/method_entry_contract.cpp)
+target_include_directories(kinoko_method_entry_contract PRIVATE include)
+target_compile_features(kinoko_method_entry_contract PRIVATE cxx_std_17)
+add_test(NAME method_entry_contract COMMAND kinoko_method_entry_contract)
+if(WIN32)
+    add_library(kinoko_native_calls_width_compile OBJECT src/squirrel/squirrel_native_calls.cpp)
+    target_include_directories(kinoko_native_calls_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
+    target_compile_features(kinoko_native_calls_width_compile PRIVATE cxx_std_17)
+endif()

@@ -2,13 +2,8 @@
 #include <array>
 #include <cstring>
 using namespace kinoko::act;
-#if defined(_MSC_VER) && defined(_M_IX86)
-#define CALLBACK __fastcall
+#define CALLBACK KINOKO_METHOD_ENTRY
 #define RECEIVER void* self, void*
-#else
-#define CALLBACK
-#define RECEIVER void* self
-#endif
 struct Fixture { void** methods; int events=0; int width=0,height=0; };
 static std::array<void*,13> first{}, second{};
 static std::uint8_t CALLBACK query(RECEIVER, const void* descriptor, void* output) {

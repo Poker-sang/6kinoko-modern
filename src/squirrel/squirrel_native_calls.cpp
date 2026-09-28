@@ -2,7 +2,7 @@
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_source_runtime.h"
-#include "kinoko/legacy_abi.h"
+#include "kinoko/method_entry.hpp"
 #include <array>
 
 
@@ -51,7 +51,7 @@ bool pair_argument(HSQUIRRELVM vm, int64_t index, HSQOBJECT& value) {
 // the cdecl binding family deliberately accepts only untagged captures.
 SQUserPointer capture(HSQUIRRELVM vm, bool untagged) {
     if (!vm || sq_gettop(vm) < 1 || sq_gettype(vm, -1) != OT_USERDATA ||
-        sq_getsize(vm, -1) < static_cast<SQInteger>(sizeof(int32_t))) return nullptr;
+        sq_getsize(vm, -1) < static_cast<SQInteger>(sizeof(void*))) return nullptr;
     SQUserPointer payload = nullptr, tag = nullptr;
     if (SQ_FAILED(sq_getuserdata(vm, -1, &payload, &tag)) || (untagged && tag)) return nullptr;
     return payload;
@@ -125,7 +125,7 @@ int32_t kinoko_native_invoke_integer_member(HSQUIRRELVM machine) {
     const auto self = native_self(vm);
     SQInteger argument = 0;
     if (!method || !self || SQ_FAILED(sq_getinteger(vm, 2, &argument))) return 0;
-    kinoko_call_thiscall1(self, method, argument);
+    kinoko::method::invoke<void>(self, method, argument);
     return 0;
 }
 } // namespace
@@ -136,14 +136,15 @@ extern "C" int32_t kinoko_native_integer_member_callback(SQVM* id) {
 namespace {
 int32_t kinoko_native_invoke_nullary_member(HSQUIRRELVM machine) {
     auto vm=machine;
-    kinoko_trace_i32("450950:zero-wrapper-entry", address(machine));
+    // Diagnostic low word only; never used for dispatch or object identity.
+    kinoko_trace_i32("450950:zero-wrapper-entry", static_cast<int32_t>(reinterpret_cast<uintptr_t>(machine)));
     if (!vm || sq_gettop(vm) < 2) return 0;
     const auto method = word(capture(vm, false));
     const auto self = native_self(vm);
     if (!method || !self) return 0;
-    kinoko_trace_i32("450950:zero-wrapper-method", address(method));
-    kinoko_trace_i32("450950:zero-wrapper-instance", address(self));
-    kinoko_call_thiscall0(self, method);
+    kinoko_trace_i32("450950:zero-wrapper-method", static_cast<int32_t>(reinterpret_cast<uintptr_t>(method)));
+    kinoko_trace_i32("450950:zero-wrapper-instance", static_cast<int32_t>(reinterpret_cast<uintptr_t>(self)));
+    kinoko::method::invoke<void>(self, method);
     return 0;
 }
 } // namespace
@@ -167,7 +168,7 @@ int32_t kinoko_native_invoke_draw_member(HSQUIRRELVM machine) {
     sq_getinteger(vm, 7, &sx); sq_getinstanceup(vm, 6, &resource, nullptr);
     sq_getinteger(vm, 5, &height); sq_getinteger(vm, 4, &width);
     sq_getinteger(vm, 3, &y); sq_getinteger(vm, 2, &x);
-    const auto result = kinoko_call_draw_method(self, method,
+    const auto result = kinoko::method::invoke<int32_t>(self, method,
         x, y, width, height, static_cast<KinokoActResource*>(resource), sx, sy, blend, alpha);
     sq_pushinteger(vm, result);
     return 1;

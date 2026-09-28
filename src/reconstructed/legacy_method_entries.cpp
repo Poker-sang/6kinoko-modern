@@ -6,12 +6,9 @@
 #include "kinoko/game_script_host.h"
 #include "kinoko/legacy_method_entries.h"
 #include "kinoko/act_layout3d_io.h"
-#include "kinoko/legacy_memory.hpp"
-#include "kinoko/legacy_abi.h"
 #include <cstddef>
 #include <cstring>
 
-static_assert(sizeof(void*) == sizeof(int32_t), "Original Win32 object addresses");
 
 // Only the ABI is adapted here. Recovered game/loading bodies remain the
 // single source of truth; the adapters do not add ordering or fallback logic.

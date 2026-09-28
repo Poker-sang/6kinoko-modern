@@ -12,9 +12,10 @@ struct SQVM;
 // remaining parameters stay on the stack and are popped by the callee.
 // The fastcall spelling deliberately reserves EDX; it must not be omitted.
 // Legacy vtables store raw addresses with recovered C types. Invoke these
-// entries through legacy_abi.h, never through those cdecl slot types.
-#if !defined(_MSC_VER) || !defined(_M_IX86)
-#error The recovered method entries require MSVC Win32.
+// entries through method_entry.hpp, never through those cdecl slot types.
+// On x64 unused_edx remains an explicit argument; it must still be passed.
+#if !defined(_MSC_VER)
+#error The recovered method entries currently require MSVC.
 #endif
 #ifdef __cplusplus
 extern "C" {

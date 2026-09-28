@@ -51,7 +51,7 @@
 #include "kinoko/map_render.h"
 #include "kinoko/sprite.h"
 #include "kinoko/game_math.h"
-#include "kinoko/legacy_abi.h"
+#include "kinoko/method_entry.hpp"
 #include <string>
 #include <memory>
 #include <windows.h>
@@ -321,8 +321,7 @@ int32_t kinoko_act_load_layer(KinokoActLayer* layer, KinokoArchiveReader* reader
         // 41F8B9 binds every newly read layout to its containing layer before
         // the next key. Resource association may happen later during ACT load.
         auto *layout = kinoko::act::KeyView(key).get(&kinoko::act::KeyRecord::layout);
-        if (layout) kinoko_call_thiscall1_result(layout,
-            field<void*>(field<int32_t>(address(layout)) + 24), address(layer));
+        if (layout) kinoko::act::LayoutMethods(layout).set_layer(layer);
         kinoko_trace_squirrel_name(
             "act:key-script", address(kinoko_string_data(kinoko::act::KeyView(key).bytes(&kinoko::act::KeyRecord::script_name))));
         kinoko_trace_i32("act:key-layout", address(layout));

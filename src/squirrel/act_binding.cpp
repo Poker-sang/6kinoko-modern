@@ -51,7 +51,7 @@
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/sprite.h"
 #include "kinoko/game_math.h"
-#include "kinoko/legacy_abi.h"
+#include "kinoko/method_entry.hpp"
 #include "kinoko/upstream_bindings.hpp"
 #include "kinoko/squirrel_host_object.hpp"
 #include <windows.h>
@@ -2073,7 +2073,7 @@ extern "C" int32_t kinoko_sqrat_call_integer0(struct SQVM* a1) {
         sq_getinstanceup(a1, 1, (SQUserPointer*)(&instance), kinoko_pointer(0)) < 0)
         return 0;
     method = kinoko::legacy::load<void*>(method_holder);
-    result = kinoko_call_thiscall0_result(
+    result = kinoko::method::invoke<int32_t>(
         (void *)(intptr_t)instance, (void *)(intptr_t)method);
     sq_pushinteger(a1, result);
     return 1;
@@ -2121,7 +2121,7 @@ extern "C" int32_t kinoko_sqrat_call_integer1(struct SQVM* a1) {
         if (method == reinterpret_cast<void*>(kinoko_method_begin_stage))
             kinoko_trace("450950:wrapper-begin-stage");
     }
-    result = kinoko_call_thiscall1_result(
+    result = kinoko::method::invoke<int32_t>(
         (void *)(intptr_t)instance_ptr,
         (void *)(intptr_t)method,
         argument);

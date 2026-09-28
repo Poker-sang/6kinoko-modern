@@ -3,7 +3,7 @@
 #include "kinoko/squirrel_binding_detail.hpp"
 #include "kinoko/script_registration.h"
 #include "kinoko/script_callbacks.h"
-#include "kinoko/legacy_abi.h"
+#include "kinoko/method_entry.hpp"
 #include <cstring>
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
@@ -153,7 +153,7 @@ int32_t kinoko_call_camera_update(SQVM *vm) {
         kinoko_trace_i32("466890:arg2", arguments[2]);
         ++camera_native_trace_count;
     }
-    kinoko_call_thiscall3_result(target.instance, method,
+    kinoko::method::invoke<int32_t>(target.instance, method,
                                 arguments[0], arguments[1], arguments[2]);
     return 0;
 }

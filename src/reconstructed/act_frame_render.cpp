@@ -11,7 +11,7 @@
 #include "kinoko/act_layer_records.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_abi.h"
+#include "kinoko/method_entry.hpp"
 #include "kinoko/legacy_memory.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/render_target.h"
@@ -185,8 +185,8 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
                 const auto sprite = entry.bytes(&BlitSprite::sprite);
                 set_blend(blit_device, command.blend);
                 const auto draw = method(sprite, 7);
-                if (draw && kinoko_call_thiscall2_result(sprite, draw,
-                    float_bits(draw_x + command.x), float_bits(draw_y + command.y)) < 0) result = E_FAIL;
+                if (draw && kinoko::method::invoke<int32_t>(sprite, draw,
+                    draw_x + command.x, draw_y + command.y) < 0) result = E_FAIL;
             }
             kinoko_texture_bind_stage(0, 0);
         }
