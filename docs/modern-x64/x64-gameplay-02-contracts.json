@@ -1,0 +1,27 @@
+{
+  "source_commit": "1b0efa3e749e21dc176c3396d2b86603f8ea23e3",
+  "build_log": "build-runs/modern-x64-gameplay-02/contracts-build.log",
+  "contracts": [
+    {
+      "target": "kinoko_upstream_bindings_contract",
+      "path": "runtime-builds\\modern-x64-gameplay-02\\tools\\kinoko_upstream_bindings_contract.exe",
+      "sha256": "fe78a05048f1842eaba660594d2b333700d680b94dfc9b9d8a9af12291091706",
+      "compiled": true,
+      "executed": false
+    },
+    {
+      "target": "kinoko_sprite_rect_contract",
+      "path": "runtime-builds\\modern-x64-gameplay-02\\tools\\kinoko_sprite_rect_contract.exe",
+      "sha256": "c17f5da65ab03eb3315ff7b72f1ad1355e03bdb3b30a6b94abe1e2d74e33bf7f",
+      "compiled": true,
+      "executed": false
+    },
+    {
+      "target": "kinoko_script_callback_status_contract",
+      "path": "runtime-builds\\modern-x64-gameplay-02\\tools\\kinoko_script_callback_status_contract.exe",
+      "sha256": "e27d7e3339e81c55b295a28c2c7c096e354007a9d7ffbf1cd81773ea5dfd9def",
+      "compiled": true,
+      "executed": false
+    }
+  ]
+}

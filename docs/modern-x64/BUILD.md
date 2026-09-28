@@ -1,6 +1,14 @@
 # x64 build evidence
 
-## x64 startup integer fix (current)
+## Gameplay fixes (current)
+
+User confirmed all four reported gameplay regressions resolved in
+`modern-x64-gameplay-01` (54995147). Contract-only follow-up source 1b0efa3e built
+x64 gameplay-02 plus three focused contracts and Win32 gameplay-02 with 80 contracts.
+DAT/shaders staged, both static audits passed; no agent game/test execution.
+See [fixes, user acceptance and build evidence](gameplay-width-fix.md).
+
+## x64 startup integer fix (historical)
 
 User-reported callback-01 crash traced with IDA and user diagnostics to missing
 Sqrat SQInteger specialization. Source `7f1044f` builds x64 `modern-x64-integer-01`

@@ -43,6 +43,20 @@ Source 54995147 built the x64 game and staged DAT successfully. The Win32 game
 also compiled, but the all-target build exposed a macro collision in the added
 float contract: internal VM headers preceded SqPlus declarations. Reorder only
 the contract includes; game source is unchanged. Preserve the failed build logs.
-Fresh builds after this contract-only correction are pending.
+Source `1b0efa3e749e21dc176c3396d2b86603f8ea23e3`:
+- `modern-x64-gameplay-02`: full x64 game plus upstream bindings, sprite rectangle
+  and callback-status contracts compiled successfully.
+- `modern-gameplay-02`: full Win32 game plus 80 contracts compiled successfully.
+- Both builds staged/verified three original DAT; two sprite shaders are present.
+- Both static D3D9 audits passed. Vendor provenance verification passed (322
+  historical members; Squirrel changes are separately documented in its README).
+- User-accepted x64 gameplay-01 (source `54995147`) is retained; no gameplay code
+  changed for gameplay-02. User acceptance does not imply exhaustive save/level
+  compatibility, exit-crash retesting or contract execution.
+
+Accepted EXE: `runtime-builds/modern-x64-gameplay-01/kinoko_modern_gpu.exe`.
+SHA256: bb5ea1ff00c603d24f15b911d01b3755fed255bcba7cf4c16350548b324a4926.
+Follow-up EXE: `runtime-builds/modern-x64-gameplay-02/kinoko_modern_gpu.exe`.
+SHA256: d2cb3836388c519d2cee741e07299b3f79e9ddeb8fe2cfb33b7af661b283ef27.
 No game, CTest or contract execution performed by the agent.
 Existing diagnostic log/dumps and all build artifacts remain in place.

@@ -1,9 +1,11 @@
 # Full-game x64 milestone
 
-The complete Windows x64 game now compiles and links: `modern-x64-integer-01`,
-source `7f1044f0614b5b40ff5c03643760d23aa3de4968`. It remains experimental:
-no game or tests were executed, and real DAT/save compatibility is unvalidated.
-See [startup crash fix and delivery](startup-integer-fix.md) and
+The full x64 game now builds in `modern-x64-gameplay-02`, source
+`1b0efa3e749e21dc176c3396d2b86603f8ea23e3`. The user confirmed startup and the
+four reported gameplay regressions resolved in gameplay-01; gameplay-02 only
+corrects contract include order and documentation. No agent game/test execution;
+complete level/save compatibility remains experimental.
+See [gameplay fixes and delivery](gameplay-width-fix.md) and
 [build evidence and historical checkpoints](BUILD.md).
 
 ## Build the real game graph

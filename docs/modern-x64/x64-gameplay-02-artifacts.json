@@ -1,0 +1,14 @@
+﻿{
+    "source_commit":  "1b0efa3e749e21dc176c3396d2b86603f8ea23e3",
+    "configuration":  "Windows x64 Release",
+    "target":  "kinoko_modern_gpu",
+    "configure_exit":  0,
+    "build_exit":  0,
+    "full_build_succeeded":  true,
+    "dat_staging_verified":  true,
+    "game_run":  false,
+    "tests_run":  false,
+    "source_guards_enabled":  true,
+    "build_directory":  "C:\\WorkSpace\\6kinoko-modern\\build-runs\\modern-x64-gameplay-02",
+    "runtime_directory":  "C:\\WorkSpace\\6kinoko-modern\\runtime-builds\\modern-x64-gameplay-02"
+}

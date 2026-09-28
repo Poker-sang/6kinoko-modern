@@ -17,21 +17,22 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
-The previous x64 build crashed in Sqrat integer conversion, confirmed from user-captured diagnostics and IDA. The missing 64-bit scalar specialization is fixed; final runtime acceptance is still pending.
+The user confirmed startup and the four reported gameplay regressions (digits,
+stomp/kick interaction, background scrolling and road explosion effects) resolved
+in `modern-x64-gameplay-01`, source `54995147`. This is user verification.
 
-The complete x64 game compiled and linked in `modern-x64-integer-01`, source
-`7f1044f0614b5b40ff5c03643760d23aa3de4968`. Static inspection confirms AMD64 / PE32+.
-EXE: `runtime-builds/modern-x64-integer-01/kinoko_modern_gpu.exe`.
+The follow-up `modern-x64-gameplay-02`, source
+`1b0efa3e749e21dc176c3396d2b86603f8ea23e3`, changes only contract include order
+and documentation. The full x64 game and three focused contracts compiled;
+`modern-gameplay-02` compiled the Win32 game and 80 contracts.
+EXE: `runtime-builds/modern-x64-gameplay-02/kinoko_modern_gpu.exe`.
 Three original DAT files were staged and size/SHA256 verified; two sprite shaders
 are included. Keep the DAT files and `shaders` directory beside the EXE.
 
-The same source built the Win32 game and 79 contracts in `modern-integer-width-01`.
-The upstream bindings and callback-status contracts also compiled separately for x64.
-Both builds passed static D3D9 audits. No game, CTest or contract executable was
-run. Experimental x64 runtime, real DAT bytecode loading and save compatibility
-remain unvalidated; compilation does not prove all runtime pointer flows correct.
-See [full-game delivery](../docs/modern-x64/startup-integer-fix.md) and
-[build instructions/evidence](../docs/modern-x64/full-game.md).
+Both builds passed static D3D9 audits. The agent ran no game, CTest or contract
+executable. Full level/save compatibility remains experimental.
+See [gameplay fixes and evidence](../docs/modern-x64/gameplay-width-fix.md) and
+[build instructions](../docs/modern-x64/full-game.md).
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
