@@ -4,6 +4,71 @@ The scope is the cartoon font represented by `gp_menu1.cv2`, `start_wd.cv2`
 and `start_st1.cv2`, not every font in the game. No manually entered character
 labels or cutting coordinates are used. No external fonts supply missing shapes.
 
+## Latest expansion (2026-09-29)
+
+The current local delivery is `analysis/font-extraction-25/`: **259 characters
+plus space**, 106 more than the previous 153-character delivery. It contains the
+TTF, a rendered preview, per-character original RGBA crops and working masks,
+complete source textures, provenance, unresolved crops and coverage records.
+This is still an incomplete experimental subset, not a claim that all original
+glyphs have been recovered.
+
+All 1,232 original CV2 entries were decoded with zero errors and passed through
+full-image text detection in `analysis/font-resource-audit-15/`. The 447 positive
+resources include false positives; they are not 447 font textures. Previously
+missed illustrated help panels were processed using their dark text color.
+Other improvements cover tiled credits, low-resolution boundary comparisons,
+colored lettering, disconnected marks and recognition of individual cuts even
+when sentence recognition fails. Score-popup textures found outside the UI were
+also checked and failed the target-font comparison.
+
+The release retains 52 source textures accepted by the automated family checks.
+It retains 67 unresolved crop proposals and 10 unmapped character proposals from
+past sentence OCR consensus. These are **not** counts of proven missing glyphs:
+they include possible OCR errors, punctuation, fragments and repeated renditions.
+Full-image detection can still miss text. Existing inherited mappings have not
+all been re-certified, and automatic family similarity is not font provenance.
+
+Mapping uses Japanese/English PP-OCRv4 and multilingual PP-OCRv5 mobile/server
+recognizers, per-character context agreement, repeated-image evidence and
+complete-sentence agreement. A single glyph need not be recognized in isolation
+when two high-confidence full-sentence readings and safe cuts support its label.
+Punctuation additionally uses overlapping text detections on the original image.
+OCR reads temporary inputs and never redraws the exported source pixels.
+
+Four newly added outline samples (N, h, れ, セ) were replaced automatically with
+verified white glyph-face samples, avoiding hollow letter outlines from colored
+credits tiles. This is source selection, not edge smoothing. Smoothing, spacing
+and baseline refinement remain deferred.
+
+`assemble_font_release.py` reopened the final cmap, checked it against every
+provenance entry, rendered the actual TTF, and compared all 259 RGBA crops
+pixel-for-pixel against decoded original assets. No game code changed, no game
+build/play session ran, and no font was installed. All batches and logs remain.
+
+New reusable tools:
+
+- `audit_text_resources.py`: full-CV2 detection audit with pixel deduplication.
+- `expand_text_regions.py`: detected text, row and tile extraction, family checks,
+  multiple recognizers, context evidence and incremental font export.
+- `assemble_font_release.py`: provenance, source-pixel verification, glyph-face
+  selection, contextual punctuation recovery and a consolidated delivery.
+
+Example commands (fresh output paths are required):
+
+```powershell
+uv run --python 3.12 --with rapidocr --with onnxruntime --with fonttools --with opencv-python-headless --with pillow python tools/font_extraction/audit_text_resources.py --output analysis/font-resource-audit-NEW
+
+uv run --python 3.12 --with rapidocr --with onnxruntime --with fonttools --with opencv-python-headless --with pillow python tools/font_extraction/expand_text_regions.py --server-recognizer --base-font analysis/font-extraction-11/kinoko-raster-experimental.ttf --output analysis/font-extraction-NEW
+
+uv run --python 3.12 --with numpy --with opencv-python-headless --with pillow --with fonttools python tools/font_extraction/assemble_font_release.py --latest analysis/font-extraction-22 --output analysis/font-release-NEW
+```
+
+The consolidation command intentionally consumes the retained local pass chain
+16–22, baseline passes 07/10/11 and audit 15. Those resource-derived artifacts are
+local inputs, not files published with the repository. Raw assets and fonts have
+not been pushed; the scripts and this handoff are the source-code backup.
+
 ## Separation of image extraction and recognition
 
 `tools/font_extraction/export_unlabeled.py` decodes the original CV2 pixels,
