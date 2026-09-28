@@ -212,7 +212,7 @@ extern "C" int32_t kinoko_sqrat_set_offset_closure(struct SQVM * id, const int32
     return kinoko::script::upstream::sqrat_bind_function(vm, receiver, name,
         &offset, sizeof(offset), reinterpret_cast<SQFUNCTION>(function), false);
 }
-extern "C" int32_t kinoko_sqrat_no_constructor(struct SQVM * id) {
+extern "C" intptr_t kinoko_sqrat_no_constructor(struct SQVM * id) {
     return kinoko::script::upstream::sqrat_no_constructor(static_cast<SQVM *>(id));
 }
 extern "C" int32_t kinoko_sqrat_initialize_class(struct SQVM * id, const int32_t* type, const int32_t* set_table, const int32_t* get_table, void * constructor, void * setter, void * getter, void * weakref) {

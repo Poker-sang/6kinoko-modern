@@ -14,7 +14,7 @@ struct kinoko_mcd_data;
 struct kinoko_mcd_texture;
 
 namespace kinoko::map {
-// Schemas for existing Win32 storage, not objects constructed over its bytes.
+// Native host schemas, not serialized ACT records or constructed overlays.
 // Unknown bytes remain opaque. Pointers here are borrowed unless noted.
 struct Placement {
     uint32_t chip_id;
@@ -109,20 +109,10 @@ using ChipView = kinoko::native::RecordView<ChipDefinition>;
 
 #if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(ChipSpriteCache)==288 && offsetof(ChipSpriteCache,definition)==232);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(ChipSpriteCache,valid)==280);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_references)==280 && offsetof(LayoutRecord,texture_references)==296);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_sprites)==384 && offsetof(LayoutRecord,chip_sprite_count)==400);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_definitions)==404 && offsetof(LayoutRecord,changed_chips)==420);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_indices)==436 && offsetof(LayoutRecord,maximum_chip_id)==452);
 #endif
 static_assert(sizeof(Placement) == 32 && offsetof(Placement, alpha) == 28);
@@ -132,35 +122,15 @@ static_assert(offsetof(ChipDefinition, height) == 14 && offsetof(ChipDefinition,
 static_assert(offsetof(ChipDefinition, shape) == 34);
 #if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, max_chip_width) == 240);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, placements) == 264);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, owning_layer) == 312);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, cached_chip_resource) == 316);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, alpha) == 320 && offsetof(LayoutRecord, blend) == 328);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, render_quads) == 332 && offsetof(LayoutRecord, render_count) == 380);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, render_scan_cache) == 456);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, suppress_next_binding) == 460 && sizeof(LayoutRecord) == 464);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayerRecord, resource) == 100 && offsetof(LayerRecord, name) == 112);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayerRecord, visible) == 140 && offsetof(LayerRecord, position_x) == 144);
-#endif
-#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayerRecord, position_y) == 148);
 #endif
 

@@ -210,7 +210,8 @@ if(WIN32)
         src/reconstructed/actor_collision.cpp src/reconstructed/collision_manager.cpp
         src/reconstructed/collision_queries.cpp
         src/squirrel/act_binding.cpp src/squirrel/native_property_bridge.cpp
-        src/reconstructed/act_mesh.cpp tests/act_map_width_compile.cpp)
+        src/reconstructed/act_mesh.cpp src/squirrel/sqrat_object_bridge.cpp
+        tests/act_map_width_compile.cpp)
     target_include_directories(kinoko_act_map_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/squirrel")

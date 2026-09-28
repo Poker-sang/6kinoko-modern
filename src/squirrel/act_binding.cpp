@@ -738,13 +738,13 @@ template<bool string_layout> KinokoActLayer* create_layer(KinokoActRuntime* play
     LayerObjectRecord root{nullptr, vm, runtime.get(&RuntimeRecord::environment), 0, {}};
     if (!get_pair(&root, kinoko_string_data(runtime.bytes(&RuntimeRecord::name)), parent.object.value.data()) ||
         parent.object.value[0] != 0x0a000020) return 0;
-    kinoko::legacy::Allocation<unsigned char> storage(static_cast<unsigned char*>(std::calloc(1,sizeof(kinoko::act::LayerStorageRecord))));
+    kinoko::memory::Allocation<unsigned char> storage(static_cast<unsigned char*>(std::calloc(1,sizeof(kinoko::act::LayerStorageRecord))));
     if (!storage || !kinoko_act_layer_initialize(reinterpret_cast<KinokoActLayer*>(storage.get()), vm)) return 0;
     std::unique_ptr<unsigned char,DynamicLayerDelete> owned(storage.release());
     auto* layer = reinterpret_cast<KinokoActLayer*>(owned.get());
     const LayerStorageView record(layer);
     kinoko::legacy::StringView(record.bytes(&LayerStorageRecord::name)).assign(name, static_cast<uint32_t>(std::strlen(name)));
-    kinoko::legacy::Allocation<KeyRecord> key(static_cast<KeyRecord*>(std::calloc(1,sizeof(KeyRecord))));
+    kinoko::memory::Allocation<KeyRecord> key(static_cast<KeyRecord*>(std::calloc(1,sizeof(KeyRecord))));
     const auto clear_layout=[](unsigned char* value) {
         if constexpr(string_layout) kinoko_method_destroy_string_layout(reinterpret_cast<KinokoStringLayout*>(value),nullptr);
         else std::free(value);

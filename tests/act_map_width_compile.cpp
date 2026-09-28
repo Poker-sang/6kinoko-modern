@@ -1,5 +1,6 @@
 #include "kinoko/act_host.h"
 #include "kinoko/act_runtime.h"
+#include "kinoko/sqrat_object_bridge.h"
 #include "kinoko/native_property_bridge.h"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/act_layer_storage.hpp"
@@ -17,3 +18,4 @@ static_assert(std::is_same_v<decltype(&kinoko_c2dlayout_get_float),SQFUNCTION>);
 static_assert(std::is_same_v<decltype(&kinoko_map_get_chip_layout),SQFUNCTION>);
 static_assert(offsetof(KinokoCollisionRecord,index)==2*sizeof(void*));
 static_assert(offsetof(kinoko::map::LayerRecord,name)==offsetof(kinoko::act::LayerStorageRecord,name));
+static_assert(std::is_same_v<decltype(&kinoko_sqrat_no_constructor),SQFUNCTION>);
