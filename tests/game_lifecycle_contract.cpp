@@ -65,11 +65,11 @@ int32_t kinoko_graphics_end_scene() { calls.push_back(42); return 0; }
 int main() {
     CHECK(kinoko_game_masks.update==-1 && kinoko_game_masks.render==-1);
     auto* manager=kinoko::game::create_manager(); CHECK(manager);
-    CHECK(manager->methods->initialize(manager)==71); expect({30,31,32,33,1,2,3,4,5,6,7});
-    CHECK(manager->methods->create_scene(manager,1)==nullptr);
-    CHECK(manager->methods->create_scene(manager,-1)==nullptr);
-    auto* scene=manager->methods->create_scene(manager,0); CHECK(scene);
-    CHECK(scene->methods->enter(scene,0)==0 && scene->methods->leave(scene,0)==0);
+    CHECK(manager->methods->initialize(manager,nullptr)==71); expect({30,31,32,33,1,2,3,4,5,6,7});
+    CHECK(manager->methods->create_scene(manager,nullptr,1)==nullptr);
+    CHECK(manager->methods->create_scene(manager,nullptr,-1)==nullptr);
+    auto* scene=manager->methods->create_scene(manager,nullptr,0); CHECK(scene);
+    CHECK(scene->methods->enter(scene,nullptr,0)==0 && scene->methods->leave(scene,nullptr,0)==0);
     kinoko_game_masks.update=0; callback_changes_mask=camera_changes_mask=true;
     CHECK(kinoko_game_update()==25); expect({20,21,22,23,24,25});
     callback_changes_mask=camera_changes_mask=false;
@@ -77,18 +77,18 @@ int main() {
     kinoko_game_masks.update=static_cast<int32_t>(KINOKO_GAME_MAP);
     CHECK(kinoko_game_update()==24); expect({20,21,24});
     kinoko_graphics.cooperative_status=kinoko::graphics::error_devicelost;
-    CHECK(scene->methods->update(scene)==0); expect({});
+    CHECK(scene->methods->update(scene,nullptr)==0); expect({});
     kinoko_graphics.cooperative_status=kinoko::graphics::ok;
-    CHECK(scene->methods->update(scene)==0); expect({20,21,24});
+    CHECK(scene->methods->update(scene,nullptr)==0); expect({20,21,24});
     alpha_changes_mask=true;
     CHECK(kinoko_game_draw()==1); expect({30,31,32,33,34,35,36,37});
     alpha_changes_mask=false;
     CHECK(kinoko_game_draw()==1); expect({30,31,32,33,34,35});
-    begin_result=0; CHECK(scene->methods->draw(scene)==0); expect({40});
-    begin_result=1; CHECK(scene->methods->draw(scene)==1); expect({40,41,30,31,32,33,34,35,42});
+    begin_result=0; CHECK(scene->methods->draw(scene,nullptr)==0); expect({40});
+    begin_result=1; CHECK(scene->methods->draw(scene,nullptr)==1); expect({40,41,30,31,32,33,34,35,42});
     const auto* methods=scene->methods;
-    scene->methods->destroy(scene,0); CHECK(scene->methods!=methods); std::free(scene);
-    scene=manager->methods->create_scene(manager,0); CHECK(scene); scene->methods->destroy(scene,1);
-    CHECK(manager->methods->shutdown(manager)==81); expect({10,11,12,13,14,15,16,17,18});
+    scene->methods->destroy(scene,nullptr,0); CHECK(scene->methods!=methods); std::free(scene);
+    scene=manager->methods->create_scene(manager,nullptr,0); CHECK(scene); scene->methods->destroy(scene,nullptr,1);
+    CHECK(manager->methods->shutdown(manager,nullptr)==81); expect({10,11,12,13,14,15,16,17,18});
     std::free(manager);
 }

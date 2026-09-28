@@ -709,9 +709,9 @@ extern int32_t kinoko_camera_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof
 
 extern KinokoActorManager* kinoko_render_layer_owner_slot;
 
-extern int32_t kinoko_input_class_storage[3];
+extern int32_t kinoko_input_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
-extern int32_t kinoko_map_class_storage[3];
+extern int32_t kinoko_map_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
 extern int32_t kinoko_active_bgm_slot;
 

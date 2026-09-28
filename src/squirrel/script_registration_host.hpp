@@ -1,3 +1,4 @@
+#include "kinoko/owned_script_object.h"
 #include "kinoko/script_file.h"
 #include "kinoko/game_script_api.h"
 #include "kinoko/game_runtime.h"
@@ -27,6 +28,6 @@ int32_t kinoko_script_bind_root_integer(int32_t * a1, int32_t a2, char * a3);
 int32_t kinoko_compile_file_native(struct SQVM* vm);
 void kinoko_trace(const char*);
 void kinoko_trace_i32(const char*, int32_t);
-extern int32_t kinoko_input_class_storage[3];
+extern int32_t kinoko_input_class_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 extern struct SQVM* kinoko_act_vm;
 }

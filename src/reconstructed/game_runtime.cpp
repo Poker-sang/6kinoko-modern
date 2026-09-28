@@ -124,6 +124,7 @@ void* __fastcall destroy_scene(Scene* scene,void*,unsigned flags) {
     return scene;
 }
 void __fastcall scene_noop(Scene*,void*) {}
+int32_t __fastcall pure_scene(Scene*,void*) { return _purecall(); }
 int32_t __fastcall scene_transition(Scene*,void*,int32_t) { return 0; }
 int32_t __fastcall scene_update(Scene*,void*) {
     if (kinoko_graphics.cooperative_status==kinoko::graphics::ok) kinoko_game_update();
@@ -136,9 +137,9 @@ int32_t __fastcall scene_draw(Scene*,void*) {
     kinoko_graphics_end_scene();
     return 1; // 45D9E8 ignores EndScene's return
 }
-#define SCENE_METHOD(field,fn) reinterpret_cast<decltype(SceneMethods::field)>(fn)
+#define SCENE_METHOD(field,fn) fn
 const SceneMethods base_methods{
-    SCENE_METHOD(destroy,destroy_scene),SCENE_METHOD(update,_purecall),SCENE_METHOD(draw,_purecall),
+    SCENE_METHOD(destroy,destroy_scene),SCENE_METHOD(update,pure_scene),SCENE_METHOD(draw,pure_scene),
     reinterpret_cast<void*>(scene_noop),SCENE_METHOD(enter,scene_transition),SCENE_METHOD(leave,scene_transition)};
 const SceneMethods game_methods{
     SCENE_METHOD(destroy,destroy_scene),SCENE_METHOD(update,scene_update),SCENE_METHOD(draw,scene_draw),
@@ -159,7 +160,7 @@ Scene* __fastcall create(Manager*,void*,int32_t id) {
     if (scene) scene->methods=&game_methods;
     return scene;
 }
-#define MANAGER_METHOD(field,fn) reinterpret_cast<decltype(ManagerMethods::field)>(fn)
+#define MANAGER_METHOD(field,fn) fn
 const ManagerMethods manager_methods{
     MANAGER_METHOD(initialize,initialize),MANAGER_METHOD(shutdown,shutdown),
     MANAGER_METHOD(update,update),MANAGER_METHOD(draw,draw),MANAGER_METHOD(create_scene,create)};
