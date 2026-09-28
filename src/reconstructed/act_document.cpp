@@ -131,7 +131,7 @@ KinokoActLayout* kinoko_act_make_layout(KinokoArchiveReader* reader_ptr)
     auto layout = std::unique_ptr<KinokoActLayout, decltype(&std::free)>(
         static_cast<KinokoActLayout *>(std::calloc(1u, sizeof(kinoko::act::Layout2DRecord))),
         &std::free);
-    if (!layout || !(int32_t)(intptr_t)kinoko_construct_c2dlayout((KinokoActLayout*)(layout.get()))) return 0;
+    if (!layout || !kinoko_construct_c2dlayout(layout.get())) return 0;
     // 42C030 borrows the layout and the active reader pointer slot.
     if (!kinoko_act_read_layout2d_properties(layout.get(), (KinokoArchiveReader**)(uintptr_t)(&reader_ptr), 1)) return 0;
     return layout.release();

@@ -17,6 +17,10 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
+ACT 2D/3D 绘制、克隆、Blit 存储及原生生命周期/容器访问已独立通过 x64 编译
+（11 个生产文件，未执行）。ACT 脚本发布、地图/碰撞布局和网格管理器 ABI 仍待完成。
+详见 [ACT 绘制迁移范围](../docs/modern-x64/act-render-native.md)。
+
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
 Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.

@@ -17,6 +17,11 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
+ACT 2D/3D rendering, cloning, Blit storage and native lifetime/container access
+now compile in an isolated x64 target (11 production files, not executed).
+ACT script publication, map/collision layouts and the mesh-manager ABI remain
+pending. See [ACT rendering scope](../docs/modern-x64/act-render-native.md).
+
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
 
 Windows x86 game: `kinoko_modern_gpu.exe` uses SDL window/input/audio/GPU.
