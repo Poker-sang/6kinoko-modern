@@ -11,7 +11,7 @@
 namespace kinoko::script {
 
 // The game's SqPlus wrapper owns an EXTERNAL reference. SQObjectPtr instead
-// owns an internal reference; it must never be overlaid on this 12-byte record.
+// owns an internal reference; it must never be overlaid on this native-width record.
 struct ObjectStorage {
     const void* vtable;
     HSQOBJECT value;

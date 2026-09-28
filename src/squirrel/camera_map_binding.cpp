@@ -11,7 +11,7 @@ extern "C" {
 extern struct SQVM *kinoko_primary_vm;
 void kinoko_trace_i32(const char*, int32_t);
 void kinoko_trace_squirrel_table_entries(const char*, int32_t);
-int32_t kinoko_camera_update_entry(struct SQVM*);
+intptr_t kinoko_camera_update_entry(struct SQVM*);
 }
 namespace {
 inline SQVM*& camera_vm_slot = kinoko_primary_vm;
@@ -165,7 +165,7 @@ int32_t register_camera_binding_impl() {
     sq_pushstring(vm, "SetUpdateFunction", -1);
     const auto target = entry(kinoko_camera_set_update_callback);
     std::memcpy(sq_newuserdata(vm, sizeof(target)), &target, sizeof(target));
-    sq_newclosure(vm, reinterpret_cast<SQFUNCTION>(kinoko_camera_update_entry), 1);
+    sq_newclosure(vm, kinoko_camera_update_entry, 1);
     sq_newslot(vm, -3, SQFalse); sq_pop(vm, 1);
     bind_fields(reinterpret_cast<int32_t *>(&state.klass), kinoko_camera_binding_type(), camera_fields);
     const auto value = ObjectView(&state.klass).value();
@@ -197,7 +197,7 @@ int32_t register_map_binding_impl() {
     return diagnostic_address(kinoko_sqplus_object_destroy(&state.klass));
 }
 } // namespace
-extern "C" int32_t kinoko_camera_update_entry(struct SQVM* vm) {
+extern "C" intptr_t kinoko_camera_update_entry(struct SQVM* vm) {
     return kinoko_call_camera_update(vm);
 }
 extern "C" int32_t kinoko_register_camera_binding(void) { return register_camera_binding_impl(); }

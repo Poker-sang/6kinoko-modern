@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace kinoko::script::binding {
-// Recovered Win32 VarRef layout. Descriptor identities are borrowed pointers;
+// Native source VarRef layout. Descriptor identities are borrowed pointers;
 // offset is deliberately numeric: it also stores constants and byte offsets.
 struct Variable {
     intptr_t offset;

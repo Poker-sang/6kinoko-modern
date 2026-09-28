@@ -120,7 +120,7 @@ __declspec(align(4096)) struct SQVM *kinoko_primary_vm = NULL;
 
 void* kinoko_cached_root_slot = 0;
 
-int32_t kinoko_vm_thread_wrapper[3] = { 0, 0, 0 };
+int32_t kinoko_vm_thread_wrapper[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
 struct SQVM* kinoko_act_vm = 0;
 

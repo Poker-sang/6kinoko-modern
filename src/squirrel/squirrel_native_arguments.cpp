@@ -88,7 +88,7 @@ extern "C" int32_t kinoko_native_integer_arg(struct SQVM * vm, int32_t index, in
     SQInteger value = 0;
     const auto result = argument(vm, index, OT_INTEGER,
                                  output ? &value : nullptr, sq_getinteger);
-    if (result) *output=static_cast<int32_t>(value);
+    if (result) { const auto narrowed=static_cast<int32_t>(value); std::memcpy(output,&narrowed,sizeof narrowed); }
     return result;
 }
 extern "C" int32_t kinoko_native_float_arg(struct SQVM * vm, int32_t index, float* output) {

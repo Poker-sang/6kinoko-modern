@@ -6,7 +6,7 @@ struct SQVM;
 extern "C" {
 #endif
 
-/* SqPlus external-reference objects occupy 12 bytes (vtable + HSQOBJECT).
+/* SqPlus external-reference objects hold a native vtable + HSQOBJECT.
    Storage parameters are pointers to possibly unaligned host records, accessed
    via ObjectView/memcpy. Copy/assign retain before release; capture owns an
    external ref; raw setters borrow; destroy consumes the owned reference.

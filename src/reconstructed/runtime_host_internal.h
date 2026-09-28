@@ -727,7 +727,7 @@ extern __declspec(align(4096)) struct SQVM *kinoko_primary_vm;
 
 extern void* kinoko_cached_root_slot;
 
-extern int32_t kinoko_vm_thread_wrapper[3];
+extern int32_t kinoko_vm_thread_wrapper[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
 extern struct SQVM* kinoko_act_vm;
 
