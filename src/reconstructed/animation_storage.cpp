@@ -2,14 +2,13 @@
 #include "kinoko/actor_records.hpp"
 #include "kinoko/integer_map.h"
 #include "kinoko/integer_vector.h"
-#include "kinoko/legacy_memory.hpp"
+#include <cstdlib>
 #include <list>
 #include <map>
 struct KinokoAnimationLookup { std::map<int32_t, KinokoAnimation*> values; };
 #include <vector>
 #include <memory>
 namespace {
-using namespace kinoko::legacy;
 using namespace kinoko::actor;
 using kinoko::native::RecordView;
 struct Animation {

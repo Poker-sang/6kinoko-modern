@@ -3,6 +3,7 @@
 #include "kinoko/actor_records.hpp"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_host_compat.h"
+#include "kinoko/squirrel_vm_bootstrap.h"
 #include "kinoko/squirrel_source_runtime.h"
 #include <windows.h>
 extern "C" {

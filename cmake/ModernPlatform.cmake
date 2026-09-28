@@ -142,3 +142,15 @@ if(WIN32)
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
     target_compile_features(kinoko_actor_native_width_compile PRIVATE cxx_std_17)
 endif()
+
+if(WIN32)
+    add_executable(kinoko_native_ownership_width_contract
+        tests/native_ownership_width_contract.cpp src/reconstructed/native_control.cpp
+        src/reconstructed/boost_control.cpp src/reconstructed/integer_map.cpp
+        src/reconstructed/integer_vector.cpp)
+    target_include_directories(kinoko_native_ownership_width_contract PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/boost-1.44.0")
+    target_compile_features(kinoko_native_ownership_width_contract PRIVATE cxx_std_17)
+    add_test(NAME native_ownership_width_contract COMMAND kinoko_native_ownership_width_contract)
+endif()
