@@ -7,7 +7,7 @@
 #include "kinoko/act_frame.h"
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
-#include "kinoko/windows_owner.hpp"
+#include "kinoko/runtime_sync.hpp"
 #include <mmsystem.h>
 
 extern "C" {
@@ -104,7 +104,7 @@ public:
 
     int32_t end_stage() const {
         if (!storage_ || !record_.get(&RuntimeRecord::stage_active)) return E_FAIL;
-        kinoko::windows::CriticalLock lock(reinterpret_cast<CRITICAL_SECTION *>(record_.bytes(&RuntimeRecord::lock)));
+        kinoko::runtime::Lock lock(record_.get(&RuntimeRecord::lock));
         record_.set(&RuntimeRecord::stage_active, uint8_t{0});
         record_.set(&RuntimeRecord::stage_properties, kinoko::act::StagePropertyAliases{});
         // 450DE9 clears command elements. Word 44 is now a vector owner,

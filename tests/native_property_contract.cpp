@@ -1,3 +1,4 @@
+#include "kinoko/act_resource_records.hpp"
 #include "kinoko/sqrat_object_bridge.h"
 #include "kinoko/native_property_bridge.h"
 #include "kinoko/native_property_callbacks.h"
@@ -114,12 +115,12 @@ void indirect_fields(HSQUIRRELVM vm) {
 void player_and_strings(HSQUIRRELVM vm) {
     Top restore(vm); const auto base = sq_gettop(vm); Fixture f(vm);
     f.bind("staging_get", 8, kinoko_acting_player_get_property); f.bind("staging_set", 8, kinoko_acting_player_set_property);
-    f.bind("visible_get", 132, kinoko_acting_player_get_property); f.bind("visible_set", 132, kinoko_acting_player_set_property);
-    f.bind("float_get", 124, kinoko_acting_player_get_property); f.bind("float_set", 124, kinoko_acting_player_set_property);
-    f.bind("int_get", 108, kinoko_acting_player_get_property); f.bind("int_set", 108, kinoko_acting_player_set_property);
-    f.bind("name_get", 148, kinoko_acting_player_get_property); f.bind("name_set", 148, kinoko_acting_player_set_property);
-    store(f.object() + 132, f.aliased()); store(f.object() + 124, f.aliased() + 4);
-    store(f.object() + 108, f.aliased() + 8); store(f.object() + 148, f.aliased() + 16);
+    f.bind("visible_get", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,visible)), kinoko_acting_player_get_property); f.bind("visible_set", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,visible)), kinoko_acting_player_set_property);
+    f.bind("float_get", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_x)), kinoko_acting_player_get_property); f.bind("float_set", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_x)), kinoko_acting_player_set_property);
+    f.bind("int_get", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,margin_left)), kinoko_acting_player_get_property); f.bind("int_set", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,margin_left)), kinoko_acting_player_set_property);
+    f.bind("name_get", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,name)), kinoko_acting_player_get_property); f.bind("name_set", (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,name)), kinoko_acting_player_set_property);
+    store(f.object() + (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,visible)), f.aliased()); store(f.object() + (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,offset_x)), f.aliased() + 4);
+    store(f.object() + (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,margin_left)), f.aliased() + 8); store(f.object() + (offsetof(kinoko::act::RuntimeRecord,stage_properties)+offsetof(kinoko::act::StagePropertyAliases,name)), f.aliased() + 16);
     f.prepare("staging_set"); sq_pushbool(vm, SQFalse); f.call(2, false); require(!f.get_bool("staging_get"), "staging is direct byte not pointer");
     f.prepare("visible_set"); sq_pushbool(vm, SQTrue); f.call(2, false); require(f.get_bool("visible_get"), "visible is aliased byte");
     f.set_float("float_set", -7.5f); require(f.get_float("float_get") == -7.5f, "player aliased float");

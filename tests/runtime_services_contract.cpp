@@ -1,3 +1,4 @@
+#include "kinoko/critical_section.h"
 #include "kinoko/runtime_sync.hpp"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/timer_events.h"
@@ -6,6 +7,30 @@
 using namespace kinoko::runtime;
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"failed: %s\n",#x); return 1; } } while(0)
 int main() {
+    struct GuardedLock { uint32_t before; KinokoCriticalSection lock; uint32_t after; } storage{0xaabbccdd,{},0x12345678};
+    auto* owned=kinoko_critical_section_construct(&storage.lock);
+    owned->native->lock();
+    CHECK(owned->native->try_lock());
+    auto other_thread_can_acquire=[&] {
+        bool acquired=false;
+        std::thread worker([&] {
+            acquired=owned->native->try_lock();
+            if(acquired) owned->native->unlock();
+        });
+        worker.join();
+        return acquired;
+    };
+    CHECK(!other_thread_can_acquire());
+    owned->native->unlock();
+    CHECK(!other_thread_can_acquire());
+    owned->native->unlock();
+    CHECK(other_thread_can_acquire());
+    CHECK(owned->methods->destroy(owned,nullptr,0)==owned);
+    CHECK(!owned->native);
+    CHECK(storage.before==0xaabbccdd && storage.after==0x12345678);
+    kinoko_critical_section_construct(owned);
+    kinoko_critical_section_destruct(owned);
+
     auto automatic=make_event();
     CHECK(automatic);
     signal(automatic); signal(automatic);

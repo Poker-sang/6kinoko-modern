@@ -3,7 +3,7 @@
 #include "kinoko/memory_access.hpp"
 #include "kinoko/method_entry.hpp"
 #include "kinoko/actor_records.hpp"
-#include <windows.h>
+#include "kinoko/runtime_sync.hpp"
 #include <list>
 #include <vector>
 #include <memory>
@@ -13,6 +13,7 @@
 namespace {
 
 struct Pool {
+    std::recursive_mutex lock;
     std::vector<KinokoActor *> actors;
     std::vector<uint32_t> generations;
     std::list<uint32_t> free_slots;
@@ -22,22 +23,18 @@ struct PoolHost {
     const void *methods;
     Pool *state;
     std::array<unsigned char,44> unknown8;
-    CRITICAL_SECTION lock;
     uint32_t unknown76;
 };
 static_assert(offsetof(PoolHost,state)==sizeof(void*));
 #if INTPTR_MAX == INT32_MAX
-static_assert(sizeof(PoolHost)==80 && offsetof(PoolHost,lock)==52);
+static_assert(offsetof(PoolHost,state)==4);
 #endif
 using PoolView=kinoko::native::RecordView<PoolHost>;
 PoolView host(KinokoActorPool* manager) { return PoolView(manager); }
 Pool& pool(KinokoActorPool* manager) { return *host(manager).get(&PoolHost::state); }
 struct Lock {
-    CRITICAL_SECTION* section;
-    explicit Lock(KinokoActorPool* manager) : section(reinterpret_cast<CRITICAL_SECTION *>(host(manager).bytes(&PoolHost::lock))) {
-        EnterCriticalSection(section);
-    }
-    ~Lock() { LeaveCriticalSection(section); }
+    kinoko::runtime::Lock guard;
+    explicit Lock(KinokoActorPool* manager) : guard(&pool(manager).lock) {}
 };
 void destroy_actor(KinokoActor *actor, unsigned char flags) {
     auto method=kinoko::method::entry<kinoko::method::Entry<KinokoActor*,unsigned char>>(actor,0);
@@ -57,7 +54,6 @@ extern "C" KinokoActorPool *kinoko_actor_pool_construct(KinokoActorPool *receive
     if (!receiver) return nullptr;
     auto* manager = receiver;
     auto state = std::make_unique<Pool>();
-    InitializeCriticalSection(reinterpret_cast<CRITICAL_SECTION *>(host(manager).bytes(&PoolHost::lock)));
     host(manager).set(&PoolHost::methods,static_cast<const void *>(kinoko_actor_pool_methods()));
     host(manager).set(&PoolHost::state,state.release());
     return receiver;
@@ -134,7 +130,6 @@ extern "C" KinokoActorPool* __fastcall kinoko_method_actor_pool_delete(KinokoAct
     // destroying the lock, free-list, generations, and actor-pointer vector.
     for (size_t index = 0; index < state->actors.size(); ++index)
         if (const auto actor = state->actors[index]) destroy_actor(actor, 1);
-    DeleteCriticalSection(reinterpret_cast<CRITICAL_SECTION *>(host(receiver).bytes(&PoolHost::lock)));
     delete state;
     host(receiver).set(&PoolHost::state,static_cast<Pool *>(nullptr));
     return kinoko_method_actor_pool_base_delete(manager, nullptr, flags);

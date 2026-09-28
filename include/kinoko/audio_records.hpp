@@ -1,5 +1,4 @@
 #pragma once
-#include <windows.h>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -61,13 +60,9 @@ struct HandleTable {
     std::uint32_t live_count;
     std::uint32_t reserved2c;
     std::uint32_t next_generation;
-    const void* lock_vtable;
-    CRITICAL_SECTION lock;
 };
 struct alignas(8) ManagerRecord {
     std::uint8_t prefix[0x1c];
-    const void* lock_vtable;
-    CRITICAL_SECTION lock;
     HandleTable handles;
     QueueRecord active;
     QueueRecord pending;
@@ -77,10 +72,8 @@ struct alignas(8) ManagerRecord {
     std::uint8_t tail[0x140 - 0xb4];
 };
 #if INTPTR_MAX == INT32_MAX
-static_assert(sizeof(CRITICAL_SECTION) == 24);
 static_assert(sizeof(PathRecord) == 24);
 static_assert(sizeof(BufferRecord) == 0x1378);
-static_assert(sizeof(HandleTable) == 0x50 && sizeof(ManagerRecord) == 0x140);
 static_assert(std::is_standard_layout_v<BufferRecord>);
 
 #define KINOKO_AUDIO_FIELD(Type, Field, Offset) static_assert(offsetof(Type, Field) == Offset)
@@ -100,14 +93,6 @@ KINOKO_AUDIO_FIELD(BufferRecord, successor, 0x1370);
 KINOKO_AUDIO_FIELD(BufferRecord, predecessor, 0x1374);
 KINOKO_AUDIO_FIELD(HandleTable, live_handles, 0x24);
 KINOKO_AUDIO_FIELD(HandleTable, next_generation, 0x30);
-KINOKO_AUDIO_FIELD(HandleTable, lock, 0x38);
-KINOKO_AUDIO_FIELD(ManagerRecord, lock, 0x20);
-KINOKO_AUDIO_FIELD(ManagerRecord, handles, 0x38);
-KINOKO_AUDIO_FIELD(ManagerRecord, active, 0x88);
-KINOKO_AUDIO_FIELD(ManagerRecord, pending, 0x94);
-KINOKO_AUDIO_FIELD(ManagerRecord, retired, 0xa0);
-KINOKO_AUDIO_FIELD(ManagerRecord, master_gain, 0xac);
-KINOKO_AUDIO_FIELD(ManagerRecord, stream_gain, 0xb0);
 #undef KINOKO_AUDIO_FIELD
 #endif
 static_assert(std::is_standard_layout_v<BufferRecord>);

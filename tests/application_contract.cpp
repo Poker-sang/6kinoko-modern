@@ -73,7 +73,7 @@ template<class T, class U> T method(U callback) { return reinterpret_cast<T>(cal
 }
 int main() {
     using namespace kinoko::application;
-    InitializeCriticalSection(&kinoko_graphics_lock.native);
+    kinoko_graphics_lock.native = new std::recursive_mutex;
     Configuration devices;
     for (int failure=1; failure<=5; ++failure) {
         input_result=keyboard_result=controllers_result=mouse_result=audio_result=1;
@@ -129,7 +129,7 @@ int main() {
     update_frame();
     CHECK(!state.is_running() && state.requested_scene == -1 && state.frame_count == 1);
     state.scene = nullptr; state.config.manager = nullptr; state.config.transition = nullptr;
-    DeleteCriticalSection(&kinoko_graphics_lock.native);
+    delete kinoko_graphics_lock.native;
     std::puts("PASS: typed application callbacks, transition IDs, deferred destruction and scene exit");
 }
 

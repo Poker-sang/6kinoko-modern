@@ -45,8 +45,9 @@ static_assert(std::is_same_v<decltype(kinoko::act::RuntimeRecord::vm), SQVM *>);
 
 int main() {
     using namespace test;
+    using R = kinoko::act::RuntimeRecord;
     // Guarded, deliberately unaligned runtime for scalar operations.
-    std::array<unsigned char, 194> bytes;
+    std::array<unsigned char, sizeof(R)+2> bytes;
     bytes.fill(0xa5);
     auto *raw = bytes.data() + 1;
     auto *runtime = reinterpret_cast<KinokoActRuntime *>(raw);
@@ -77,7 +78,7 @@ int main() {
     CHECK(word(raw+4) == 123);
     test_clock = 0xfffffff0u;
     CHECK(kinoko_act_sleep_to(runtime, nullptr, 32) == 16);
-    CHECK(word(raw+100) == 16);
+    CHECK(word(raw+offsetof(R,wake_time)) == 16);
     CHECK(kinoko_act_sleep_to(nullptr, nullptr, -1) == static_cast<int32_t>(0xffffffefu));
     CHECK(kinoko_act_set_current_time(nullptr, nullptr, 55) == 0);
     CHECK(kinoko_act_get_current_time(nullptr, nullptr) == 0);
@@ -90,30 +91,28 @@ int main() {
     document=reinterpret_cast<KinokoActDocument*>(source);
     source_receiver=document;active_receiver=active;
     kinoko::legacy::store(raw+12,reinterpret_cast<KinokoActDocument*>(active));
-    CHECK(kinoko_act_suspend(runtime, nullptr) == 17 && raw[104]==1);
+    CHECK(kinoko_act_suspend(runtime, nullptr) == 17 && raw[offsetof(R,hidden)]==1);
     CHECK(kinoko_act_resume(runtime, nullptr) == 18);
     CHECK((callback_count==3 && callbacks==std::array<int,3>{1,2,3}));
-    CHECK(word(raw+100)==0 && raw[104]==0 && raw[105]==0xa5);
+    CHECK(word(raw+offsetof(R,wake_time))==0 && raw[offsetof(R,hidden)]==0 && raw[offsetof(R,hidden)+1]==0xa5);
     CHECK(bytes.front() == 0xa5 && bytes.back() == 0xa5);
 
-    // Real Win32 lock on aligned storage. Preserve every byte outside the
+    // Real portable recursive lock; the record owns a pointer, not an inline OS lock. Preserve every byte outside the
     // documented EndStage fields; mock the separate sprite container boundary.
-    alignas(CRITICAL_SECTION) unsigned char aligned[192];
+    unsigned char aligned[sizeof(R)];
     std::memset(aligned, 0xa5, sizeof(aligned));
     runtime = reinterpret_cast<KinokoActRuntime *>(aligned);
-    auto *lock = reinterpret_cast<CRITICAL_SECTION *>(aligned+20);
-    InitializeCriticalSection(lock);
-    aligned[8] = 1; put(aligned+44, 0x1234); put(aligned+48, 0x5678);
+    std::recursive_mutex lock;
+    kinoko::legacy::store(aligned+offsetof(R,lock), &lock);
+    aligned[8] = 1; put(aligned+offsetof(R,draw_commands), 0x1234); put(aligned+offsetof(R,draw_commands)+4, 0x5678);
     CHECK(kinoko_act_end_stage(runtime, nullptr) == 0);
     CHECK(aligned[8] == 0 && aligned[9] == 0xa5);
-    for (int i=108; i<152; ++i) CHECK(aligned[i] == 0);
+    for (size_t i=offsetof(R,stage_properties); i<offsetof(R,stage_properties)+sizeof(R::stage_properties); ++i) CHECK(aligned[i] == 0);
     CHECK(command_clears == 1 && command_runtime == kinoko::legacy::address(runtime));
-    CHECK(word(aligned+48) == 0x5678);
-    CHECK(word(aligned+52) == 0xa5a5a5a5u);
-    CHECK(clears == 1 && cleared_slot == kinoko::legacy::address(aligned+60));
-    CHECK(lock->RecursionCount == 0);
+    CHECK(word(aligned+offsetof(R,draw_commands)+4) == 0x5678);
+    CHECK(word(aligned+offsetof(R,draw_commands)+8) == 0xa5a5a5a5u);
+    CHECK(clears == 1 && cleared_slot == kinoko::legacy::address(aligned+offsetof(R,draw_sprites)));
     CHECK(kinoko_act_end_stage(runtime, nullptr) == E_FAIL && clears == 1);
     CHECK(kinoko_act_end_stage(nullptr, nullptr) == E_FAIL);
-    DeleteCriticalSection(lock);
     std::puts("PASS: typed ACT clock, DWORD wrap, source borrow, guarded records and EndStage fields");
 }

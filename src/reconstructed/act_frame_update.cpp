@@ -7,7 +7,7 @@
 #include "kinoko/stage_records.hpp"
 #include "kinoko/diagnostics.h"
 #include "kinoko/memory_access.hpp"
-#include "kinoko/windows_owner.hpp"
+#include "kinoko/runtime_sync.hpp"
 #include <mmsystem.h>
 
 extern "C" {
@@ -71,7 +71,7 @@ extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
         if (trace_index <= 48) kinoko_trace("451640:skip-suspended");
         return 0;
     }
-    kinoko::windows::CriticalLock lock(reinterpret_cast<CRITICAL_SECTION*>(resource.bytes(&RuntimeRecord::lock)));
+    kinoko::runtime::Lock lock(resource.get(&RuntimeRecord::lock));
     if (!resource.get(&RuntimeRecord::stage_active) || !resource.get(&RuntimeRecord::active_holder)) return E_FAIL;
     kinoko_act_commands_clear((KinokoActRuntime*)(intptr_t)(self));
     // 4516C4 is JNB: compare DWORDs, including uptime above 0x80000000.

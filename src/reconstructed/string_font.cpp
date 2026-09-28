@@ -20,8 +20,8 @@ namespace {
 inline char*& game_window_slot = kinoko_game_window_slot;
 using Renderer=kinoko::text::FontRenderer;
 struct GraphicsLock {
-    GraphicsLock() { EnterCriticalSection(&kinoko_graphics_lock.native); }
-    ~GraphicsLock() { LeaveCriticalSection(&kinoko_graphics_lock.native); }
+    GraphicsLock() { kinoko_graphics_lock.native->lock(); }
+    ~GraphicsLock() { kinoko_graphics_lock.native->unlock(); }
 };
 // 40F1C0/40F2E0. Each character creates/selects a font, then restores the DC.
 struct FontSession {

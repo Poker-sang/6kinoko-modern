@@ -53,24 +53,24 @@ extern "C" int32_t kinoko_graphics_toggle_window(void) {
 }
 
 extern "C" int32_t kinoko_graphics_begin_scene(void) {
-    EnterCriticalSection(&kinoko_graphics_lock.native);
+    kinoko_graphics_lock.native->lock();
     auto *device=kinoko_graphics.device;
-    if (!device) { LeaveCriticalSection(&kinoko_graphics_lock.native);return 0; }
+    if (!device) { kinoko_graphics_lock.native->unlock();return 0; }
     const auto status=device->BeginScene();
     static volatile LONG traces;
     if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("401760:beginscene-hr",status);
     // 40177D compares exactly against zero, not merely SUCCEEDED(status).
-    if (status!=kinoko::graphics::ok) { LeaveCriticalSection(&kinoko_graphics_lock.native);return 0; }
+    if (status!=kinoko::graphics::ok) { kinoko_graphics_lock.native->unlock();return 0; }
     return 1;
 }
 extern "C" int32_t kinoko_graphics_end_scene(void) {
     if (auto *device=kinoko_graphics.device)
         kinoko_trace_hresult("401790:endscene-hr",device->EndScene());
-    LeaveCriticalSection(&kinoko_graphics_lock.native);
+    kinoko_graphics_lock.native->unlock();
     return 0;
 }
 extern "C" int32_t kinoko_graphics_present(void) {
-    if (!kinoko_renderer.present_pending || !TryEnterCriticalSection(&kinoko_graphics_lock.native)) return 0;
+    if (!kinoko_renderer.present_pending || !kinoko_graphics_lock.native->try_lock()) return 0;
     auto *swap_chain=kinoko_graphics.swap_chain;
     // Retain the existing null-swap-chain startup boundary. The normal path
     // clears pending only on kinoko::graphics::ok, retaining it on WASSTILLDRAWING/failure.
@@ -79,7 +79,7 @@ extern "C" int32_t kinoko_graphics_present(void) {
     static volatile LONG traces;
     if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("4017b0:present-hr",status);
     if (status==kinoko::graphics::ok) kinoko_renderer.present_pending=0;
-    LeaveCriticalSection(&kinoko_graphics_lock.native);
+    kinoko_graphics_lock.native->unlock();
     return status==kinoko::graphics::ok;
 }
 extern "C" int32_t kinoko_graphics_clear(void) {

@@ -72,3 +72,6 @@ Next: user x64 runtime acceptance and remaining Windows service migration
 
 
 Portable application/audio worker, event and clock migration: [runtime services](../docs/modern-platform/runtime-services.md). Windows files-02 was accepted by the user; full Linux/macOS games remain blocked by host/font services.
+
+
+Internal graphics/ACT/actor synchronization now uses portable recursive mutexes; unused audio locks were removed. See [internal locks](../docs/modern-platform/internal-locks.md).

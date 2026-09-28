@@ -1,3 +1,4 @@
+#include "kinoko/act_resource_records.hpp"
 #include "kinoko/script_callbacks.h"
 #include "kinoko/script_file.h"
 #include "kinoko/squirrel_game_objects.h"
@@ -79,16 +80,17 @@ void resource_roots(HSQUIRRELVM vm) {
     Pair table(vm), weak(vm);
     sq_newtable(vm); table.capture();
     table.push(); sq_weakref(vm,-1); weak.capture(); sq_pop(vm,1);
-    std::array<unsigned char,180> storage; storage.fill(0xa7);
+    using R = kinoko::act::RuntimeRecord;
+    std::array<unsigned char,sizeof(R)+2> storage; storage.fill(0xa7);
     auto* resource=storage.data()+1; // Deliberately unaligned legacy storage.
-    store(resource+152,address(vm)); store(resource+156,empty());
+    store(resource+offsetof(R,vm),address(vm)); store(resource+offsetof(R,environment),empty());
     require(kinoko_bind_act_resource_root((void*)(uintptr_t)(address(resource)), (struct SQVM*)(uintptr_t)(address(vm)), table.data())==1,"bind resource root");
     destroy(table); // The resource is now the table's only strong owner.
-    require(kinoko_bind_act_resource_root((void*)(uintptr_t)(address(resource)), (struct SQVM*)(uintptr_t)(address(vm)), reinterpret_cast<int32_t*>(resource+156))==1,"self-rebinding retains last root");
+    require(kinoko_bind_act_resource_root((void*)(uintptr_t)(address(resource)), (struct SQVM*)(uintptr_t)(address(vm)), reinterpret_cast<int32_t*>(resource+offsetof(R,environment)))==1,"self-rebinding retains last root");
     weak.push(); require(SQ_SUCCEEDED(sq_getweakrefval(vm,-1)) && sq_gettype(vm,-1)==OT_TABLE,"self-bind does not invalidate weakref"); sq_pop(vm,2);
-    auto value=load<HSQOBJECT>(resource+156); sq_release(vm,&value); store(resource+156,empty());
+    auto value=load<HSQOBJECT>(resource+offsetof(R,environment)); sq_release(vm,&value); store(resource+offsetof(R,environment),empty());
     weak.push(); sq_getweakrefval(vm,-1); require(sq_gettype(vm,-1)==OT_NULL,"last root releases table"); sq_pop(vm,2);
-    for (size_t i=0;i<storage.size();++i) if(i<153 || i>=165) require(storage[i]==0xa7,"resource root canaries");
+    for (size_t i=0;i<storage.size();++i) if(i<1+offsetof(R,vm) || i>=1+offsetof(R,environment)+sizeof(R::environment)) require(storage[i]==0xa7,"resource root canaries");
 }
 void callbacks(HSQUIRRELVM vm) {
     Top restore(vm);

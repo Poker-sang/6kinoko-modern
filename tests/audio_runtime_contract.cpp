@@ -26,7 +26,7 @@ extern "C" {
 int32_t kinoko_active_bgm_slot = 0, kinoko_archive_count = 1;
 char kinoko_packed_assets = 0;
 const KinokoAudioHostSymbols* kinoko_audio_host_symbols(void) {
-    static const KinokoAudioHostSymbols symbols{&critical_section_identity, "test"};
+    static const KinokoAudioHostSymbols symbols{"test"};
     return &symbols;
 }
 int32_t kinoko_reader_open(KinokoArchiveReader **slot, const char*) {

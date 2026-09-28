@@ -17,7 +17,7 @@
 #include "kinoko/act_layout_records.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/render_target.h"
-#include "kinoko/windows_owner.hpp"
+#include "kinoko/runtime_sync.hpp"
 #include "kinoko/graphics_api.hpp"
 
 extern "C" {
@@ -114,7 +114,7 @@ extern "C" int32_t kinoko_act_prepare_draw(KinokoActRuntime* self) {
     if (!self) return E_FAIL;
     const RuntimeView resource(self);
     if (resource.get(&RuntimeRecord::hidden)) return 0;
-    kinoko::windows::CriticalLock lock(reinterpret_cast<CRITICAL_SECTION*>(resource.bytes(&RuntimeRecord::lock)));
+    kinoko::runtime::Lock lock(resource.get(&RuntimeRecord::lock));
     const auto act = resource.get(&RuntimeRecord::active_document);
     if (!resource.get(&RuntimeRecord::stage_active) || !act) return 0;
     const DocumentView document(act);
@@ -147,7 +147,7 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
     const auto actor_index = InterlockedIncrement(&actor_trace_count);
     const auto trace_index = InterlockedIncrement(&trace_count);
     trace_draw(self, resource, actor_index, trace_index);
-    kinoko::windows::CriticalLock lock(reinterpret_cast<CRITICAL_SECTION*>(resource.bytes(&RuntimeRecord::lock)));
+    kinoko::runtime::Lock lock(resource.get(&RuntimeRecord::lock));
     DrawTarget target(resource.get(&RuntimeRecord::render_target), device);
     if (!resource.get(&RuntimeRecord::stage_active)) return 0;
     const auto act = resource.get(&RuntimeRecord::active_document);

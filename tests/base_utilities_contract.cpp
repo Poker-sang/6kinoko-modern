@@ -61,9 +61,9 @@ void locks() {
     auto* self = kinoko_critical_section_construct(&storage.lock);
     require(self == &storage.lock && self->methods == &kinoko_critical_section_methods,
         "constructor publishes original-layout receiver and methods");
-    EnterCriticalSection(&self->native);
-    require(TryEnterCriticalSection(&self->native) != 0, "Win32 recursion is preserved");
-    LeaveCriticalSection(&self->native); LeaveCriticalSection(&self->native);
+    self->native->lock();
+    require(self->native->try_lock() != 0, "recursive locking is preserved");
+    self->native->unlock(); self->native->unlock();
     // Only bit zero releases storage. Bit one alone must leave this stack object intact.
     require(self->methods->destroy(self, nullptr, 2) == self, "nondeleting virtual destructor receiver");
     require(storage.before == 0xa7a7a7a7 && storage.after == 0xb8b8b8b8, "lock bounds canaries");

@@ -6,7 +6,6 @@
 extern "C" {
 #endif
 struct KinokoAudioHostSymbols {
-    const void* critical_section_vtable;
     const char* device_error_message;
 };
 const struct KinokoAudioHostSymbols* kinoko_audio_host_symbols(void);

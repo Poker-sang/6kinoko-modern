@@ -566,7 +566,6 @@ const struct KinokoActHostSymbols* kinoko_act_host_symbols(void)
 
 const struct KinokoAudioHostSymbols* kinoko_audio_host_symbols(void) {
     static struct KinokoAudioHostSymbols symbols;
-    symbols.critical_section_vtable = &kinoko_critical_section_methods;
     symbols.device_error_message = kinoko_audio_error_text;
     return &symbols;
 }

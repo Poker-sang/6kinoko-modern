@@ -84,6 +84,7 @@ extern "C" const char* kinoko_act_find_name(KinokoActRuntime *storage, int32_t i
 // bytes untouched and let the C++ compiler implement bad_alloc unwinding.
 extern "C" KinokoActRuntime *kinoko_act_runtime_initialize(
     KinokoActRuntime *storage, KinokoActSourceHolder *source_holder) {
+    auto owned_lock = std::make_unique<std::recursive_mutex>();
     const RecordView<RuntimeRecord> view(storage);
     view.set(&RuntimeRecord::source_holder, source_holder);
     view.set(&RuntimeRecord::active_document, static_cast<KinokoActDocument *>(nullptr));
@@ -105,7 +106,7 @@ extern "C" KinokoActRuntime *kinoko_act_runtime_initialize(
     view.set(&RuntimeRecord::wake_time, uint32_t{0});
     view.set(&RuntimeRecord::hidden, uint8_t{0});
     view.set(&RuntimeRecord::stage_properties, StagePropertyAliases{});
-    InitializeCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(view.bytes(&RuntimeRecord::lock)));
+    view.set(&RuntimeRecord::lock, owned_lock.release());
     return storage;
 }
 
@@ -128,7 +129,8 @@ extern "C" void kinoko_act_runtime_dispose(KinokoActRuntime *storage) {
     delete view.get(&RuntimeRecord::find_state);
     view.set(&RuntimeRecord::find_state, static_cast<FindState *>(nullptr));
     view.set(&RuntimeRecord::find_count, uint32_t{0});
-    DeleteCriticalSection(reinterpret_cast<CRITICAL_SECTION*>(view.bytes(&RuntimeRecord::lock)));
+    delete view.get(&RuntimeRecord::lock);
+    view.set(&RuntimeRecord::lock, static_cast<std::recursive_mutex*>(nullptr));
     name.destroy();
     // The existing recovered cleanup clears the first word, not the whole SSO buffer.
     std::memset(view.bytes(&RuntimeRecord::name), 0, sizeof(uint32_t));

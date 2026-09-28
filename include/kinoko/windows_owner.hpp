@@ -3,8 +3,8 @@
 #include <utility>
 
 namespace kinoko::windows {
-// Events/threads in the original runtime use NULL as the empty value. Thread
-// owners MUST be joined before reset(); reset only closes the kernel handle.
+// Remaining native host handles use NULL as the empty value. Worker threads
+// and events use runtime_sync.hpp; this owner only closes kernel handles.
 class HandleOwner final {
     HANDLE value_ = nullptr;
 public:
@@ -26,15 +26,5 @@ public:
         const auto old = std::exchange(value_, value);
         if (old) CloseHandle(old);
     }
-};
-class CriticalLock final {
-    CRITICAL_SECTION* section_;
-public:
-    explicit CriticalLock(CRITICAL_SECTION* section) noexcept : section_(section) {
-        if (section_) EnterCriticalSection(section_);
-    }
-    ~CriticalLock() { if (section_) LeaveCriticalSection(section_); }
-    CriticalLock(const CriticalLock&) = delete;
-    CriticalLock& operator=(const CriticalLock&) = delete;
 };
 }

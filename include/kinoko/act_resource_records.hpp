@@ -7,7 +7,7 @@
 
 #include <array>
 #include <cstdint>
-#include <windows.h>
+#include <mutex>
 
 struct SQVM;
 
@@ -30,7 +30,7 @@ struct RuntimeRecord {
     std::array<uint8_t, 3> unknown9;
     KinokoActDocument *active_document; // owned clone; destructor never consults source_holder
     KinokoActSourceHolder *active_holder; // owned wrapper; borrows active_document
-    CRITICAL_SECTION lock;
+    std::recursive_mutex* lock; // owned; raw record storage does not construct mutexes
     KinokoActCommandStorage draw_commands;
     uint32_t unknown56;
     KinokoActSpriteStorage draw_sprites;
@@ -47,25 +47,6 @@ struct RuntimeRecord {
     kinoko::legacy::StringRecord name;
     uint32_t unknown188;
 };
-#if INTPTR_MAX == INT32_MAX
-static_assert(sizeof(void*) == 4 && sizeof(CRITICAL_SECTION) == 24);
-static_assert(sizeof(RuntimeRecord) == 192);
-#define KINOKO_ACT_FIELD(T, M, O) static_assert(offsetof(T, M) == O)
-KINOKO_ACT_FIELD(RuntimeRecord, source_holder, 0);
-KINOKO_ACT_FIELD(RuntimeRecord, active_document, 12);
-KINOKO_ACT_FIELD(RuntimeRecord, active_holder, 16);
-KINOKO_ACT_FIELD(RuntimeRecord, lock, 20);
-KINOKO_ACT_FIELD(RuntimeRecord, draw_commands, 44);
-KINOKO_ACT_FIELD(RuntimeRecord, draw_sprites, 60);
-KINOKO_ACT_FIELD(RuntimeRecord, render_target, 76);
-KINOKO_ACT_FIELD(RuntimeRecord, find_state, 84);
-KINOKO_ACT_FIELD(RuntimeRecord, next_find_id, 96);
-KINOKO_ACT_FIELD(RuntimeRecord, stage_properties, 108);
-KINOKO_ACT_FIELD(RuntimeRecord, vm, 152);
-KINOKO_ACT_FIELD(RuntimeRecord, environment, 156);
-KINOKO_ACT_FIELD(RuntimeRecord, name, 164);
-static_assert(offsetof(RuntimeRecord, name) + offsetof(kinoko::legacy::StringRecord, length) == 180);
-static_assert(offsetof(RuntimeRecord, name) + offsetof(kinoko::legacy::StringRecord, capacity) == 184);
-#undef KINOKO_ACT_FIELD
-#endif
+static_assert(std::is_standard_layout_v<RuntimeRecord>);
+static_assert(sizeof(RuntimeRecord::wake_time) == 4);
 }

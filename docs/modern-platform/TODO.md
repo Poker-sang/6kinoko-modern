@@ -300,3 +300,9 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Record user acceptance of modern-x64-files-02.
 - [ ] Remove remaining Windows host/COM/IME/font and internal service dependencies.
 - Details: [runtime-services.md](runtime-services.md).
+
+
+## Internal locks checkpoint
+- [x] Migrate graphics/ACT/actor pool locks; delete idle audio locks and Windows lock helper.
+- [ ] Migrate host/COM/IME, fonts and ACT directory enumeration.
+- Details: [internal-locks.md](internal-locks.md).

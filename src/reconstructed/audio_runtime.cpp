@@ -268,8 +268,6 @@ static void kinoko_audio_manager_destroy() noexcept {
     kinoko_audio_clear_queue(state.pending.head);
     kinoko_audio_clear_queue(state.retired.head);
     kinoko_audio_clear_handle_allocations(state.handles);
-    DeleteCriticalSection(&state.handles.lock);
-    DeleteCriticalSection(&state.lock);
     state = ManagerRecord{};
     g_kinoko_audio_manager_initialized = 0;
 }
@@ -1390,7 +1388,7 @@ static void kinoko_audio_manager_construct() {
     if (g_kinoko_audio_manager_initialized) return;
     auto& state = g_kinoko_audio_manager_state;
     state = ManagerRecord{};
-    // Allocate every list before initializing either OS synchronization object.
+    // Allocate every list before publishing the initialized manager.
     // A failed construction owns nothing and can be retried without leaks.
     QueueRecord handles{};
     if (!kinoko_audio_manager_list_init(handles) ||
@@ -1404,12 +1402,7 @@ static void kinoko_audio_manager_construct() {
         state = ManagerRecord{};
         return;
     }
-    const auto* symbols = kinoko_audio_host_symbols();
     state.handles.live_handles = handles.head;
-    state.handles.lock_vtable = symbols->critical_section_vtable;
-    state.lock_vtable = symbols->critical_section_vtable;
-    InitializeCriticalSection(&state.lock);
-    InitializeCriticalSection(&state.handles.lock);
     state.master_gain = state.stream_gain = 1.0f;
     g_kinoko_audio_manager_initialized = 1;
 }
