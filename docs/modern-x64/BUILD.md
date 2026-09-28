@@ -1,5 +1,25 @@
 # x64 preparation build evidence
 
+## Native ACT rendering/lifetime priority checkpoint
+
+- Build source: `bed6033e0d13ff16ce05bc046dae3ee57b132afa`.
+- `modern-act-render-01`: full Win32 Release no-trace game and 77 contracts
+  compiled; three DAT copied beside the EXE and size/SHA256 verified.
+- EXE: `runtime-builds/modern-act-render-01/kinoko_modern_gpu.exe`.
+- EXE SHA256: `B4DC78EA21F33A6E09E7D6B8972B5701C5FC48D2211BB208A1E9BDC675711FED`.
+- D3D9 static audit passed (119 compile / 87 link dependency logs).
+- `modern-act-render-x64-02`, source `1dcadbc3`: 11 real production translation
+  units compiled; all 11 COFF objects statically identified as AMD64.
+- `modern-full-x64-13`: full game remains blocked before linking, with 125 unique
+  compiler diagnostics (previous checkpoint 133). Cascades are included; these
+  are not independent tasks or a completion percentage. Architecture guards
+  remain enabled. ACT publication/map/mesh-manager paths are not closed.
+- All attempts retained, including the declaration failure in x64-01. No game,
+  CTest or contract executable was run; no new user runtime feedback is assumed.
+- Evidence: `act-render-01-artifacts.json`, `act-render-01-d3d9-audit.json`,
+  `act-render-x64-02-artifacts.json`, `full-x64-13-artifacts.json` and
+  `full-x64-13-blockers.json`. See [scope and remaining work](act-render-native.md).
+
 ## Native script bindings and ACT document/layer ownership
 
 Build source: `f32f24c6108ee1d42be9477d1432f4457ba9a197` (documentation follows

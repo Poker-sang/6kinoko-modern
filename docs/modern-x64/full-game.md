@@ -1,5 +1,12 @@
 # Full-game x64 milestone
 
+Latest checkpoint: `modern-full-x64-13`, source `bed6033e`, remains blocked
+before linking (125 unique compiler diagnostics; cascades included). ACT drawing
+and lifetime code has an independent 11-production-file AMD64 compile check.
+This does not close ACT script publication, map/collision or the mesh-manager
+ABI. See [ACT scope](act-render-native.md) and [build evidence](BUILD.md).
+
+
 The first hard milestone is a complete Windows x64 game, then a playable Linux
 build, then macOS validation. A portable contract is not completion of that goal.
 

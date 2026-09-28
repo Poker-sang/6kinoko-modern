@@ -1,0 +1,63 @@
+{
+  "source_commit": "1dcadbc3791186a25f89c16e13b6470fe8bc621a",
+  "executed_built_code": false,
+  "full_game": false,
+  "production_translation_units": 11,
+  "artifacts": [
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_array.obj",
+      "machine": "AMD64",
+      "sha256": "5c1c7c3b6bd8cf965014c572475a97382a2cf489dae1e8a3dd8526eedcf89c30"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_clone.obj",
+      "machine": "AMD64",
+      "sha256": "5bcae8fb1365c30664bb8a13c91d59f656d0625ec825e38025efb04d5c84ecac"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_draw_storage.obj",
+      "machine": "AMD64",
+      "sha256": "e03d9a8210bf6d67431ba82a8b2cedf8a9b4c2fb02d8f1e723646e087209d607"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_frame_render.obj",
+      "machine": "AMD64",
+      "sha256": "69a00c672c1f8eaff3b9f989b8296c1f51afe70e63507f9cd43f3eec0077ab75"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_layout.obj",
+      "machine": "AMD64",
+      "sha256": "3def050a9e396c3cb69a4ab8667b0486732d0895a89c1e0547ce8d4b13941414"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_layout_3d.obj",
+      "machine": "AMD64",
+      "sha256": "4be4da78dad1cb8523e7fe40b09a1b6291175cfa42f8e0317d8c7ca45ac61b87"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_lifetime.obj",
+      "machine": "AMD64",
+      "sha256": "c625234f769a4e4b84ce7f7c99b2255f95b8e44df906ce1e99aa2c33aa9d5e63"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_list.obj",
+      "machine": "AMD64",
+      "sha256": "86f0040c510e3909827f4f7538260abbfcc54a8fae03feeda28f6b3f904a0bb1"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_resource.obj",
+      "machine": "AMD64",
+      "sha256": "d2dc5fdaf90a28c63db0a531309c910766906861dbecc1591cc2b8af5c22f4d9"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_serializable.obj",
+      "machine": "AMD64",
+      "sha256": "942334cc91fd16cf44e3ccf6a185ffaa736dd1463706685b57dab55f6c2e29a5"
+    },
+    {
+      "path": "build-runs/modern-act-render-x64-02/kinoko_act_render_width_compile.dir/Release/act_source.obj",
+      "machine": "AMD64",
+      "sha256": "3952f92c5dd834df2aa731391f474ae4271f0d44ed048363ea67c7aecade65bc"
+    }
+  ]
+}
