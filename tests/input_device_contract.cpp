@@ -1,5 +1,5 @@
 #include "kinoko/input_device.h"
-#include "kinoko/direct_input.h"
+#include "kinoko/input_service.h"
 #include <algorithm>
 #include <cstring>
 #include <cstdio>

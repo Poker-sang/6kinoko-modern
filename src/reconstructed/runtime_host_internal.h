@@ -14,7 +14,7 @@
 #include "kinoko/game_host.h"
 #include "kinoko/file_io_layout.h"
 #include "kinoko/file_io.h"
-#include "kinoko/direct_input.h"
+#include "kinoko/input_service.h"
 #include "kinoko/application.h"
 #include "kinoko/renderer.h"
 #include "kinoko/graphics_device.h"
@@ -40,7 +40,6 @@
 #include "kinoko/actor_owner_list.h"
 #include "kinoko/actor_pool.h"
 #include "kinoko/render_queue.h"
-#include "kinoko/ime_input.h"
 #include "kinoko/render_target.h"
 #include "kinoko/archive_random.h"
 #include "kinoko/scene_queue.h"
@@ -83,7 +82,6 @@
 #include <windows.h>
 #include <intrin.h>
 #include "kinoko/graphics_c_boundary.h"
-#include <dinput.h>
 #include <zlib.h>
 #include "kinoko/squirrel_compile_bridge.h"
 #include "kinoko/squirrel_vm_bootstrap.h"
@@ -674,21 +672,13 @@ extern int32_t kinoko_null_object_type;
 
 extern int32_t kinoko_null_object_value;
 
-extern HIMC kinoko_ime_context_slot;
 
-extern HWND kinoko_ime_default_window_slot;
 
-extern int32_t kinoko_ime_text_limit;
 
-extern int32_t kinoko_ime_commit_pending;
 
-extern char kinoko_ime_text_changed;
 
-extern char kinoko_ime_composition_changed;
 
-extern char kinoko_ime_enabled;
 
-extern int32_t kinoko_ime_cursor;
 
 
 

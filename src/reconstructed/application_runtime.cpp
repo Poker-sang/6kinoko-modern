@@ -2,7 +2,7 @@
 #include "kinoko/windows_owner.hpp"
 #include "kinoko/base_utilities.h"
 #include "kinoko/game_runtime.h"
-#include "kinoko/direct_input.h"
+#include "kinoko/input_service.h"
 #include "kinoko/timer_events.h"
 #include "kinoko/application.h"
 #include "kinoko/application_runtime.hpp"
@@ -12,12 +12,10 @@
 #include "kinoko/renderer.h"
 #include "kinoko/render_target.h"
 #include "kinoko/scene_queue.h"
-#include "kinoko/ime_input.h"
 #include "kinoko/archive_random.h"
 #include "kinoko/game_math.h"
 #include "../platform/resources/resource.h"
 #include "kinoko/runtime_clock.h"
-#include <objbase.h>
 #include "kinoko/platform.hpp"
 #include <SDL3/SDL.h>
 #include <cstdlib>
@@ -33,18 +31,12 @@ State state;
 namespace {
 using CriticalLock=kinoko::runtime::Lock;
 using namespace kinoko::runtime;
-struct ComScope {
-    HRESULT status = CoInitialize(nullptr);
-    ~ComScope() { if (SUCCEEDED(status)) CoUninitialize(); }
-    explicit operator bool() const { return SUCCEEDED(status); }
-};
 void join(Thread& thread) {
     if (!thread) return;
     thread.reset();
 }
 DWORD WINAPI load_scene_worker(void*) {
-    ComScope com;
-    if (com && state.config.manager) {
+    if (state.config.manager) {
         auto* next = state.config.manager->methods->create_scene(
             state.config.manager, nullptr, state.requested_scene);
         CriticalLock lock(&state.scene_lock);
@@ -79,13 +71,10 @@ DWORD WINAPI game_loop(void*) {
     return 0;
 }
 DWORD WINAPI game_worker(void*) {
-    ComScope com;
-    if (com) kinoko_run_game_math(game_loop, nullptr);
+    kinoko_run_game_math(game_loop, nullptr);
     return 0;
 }
 DWORD WINAPI display_worker(void*) {
-    ComScope com;
-    if (!com) return 0;
     while (state.is_running()) {
         if (state.config.separate_draw) {
             if (state.scene_lock.try_lock()) {
@@ -106,8 +95,6 @@ DWORD WINAPI display_worker(void*) {
     return 0;
 }
 DWORD WINAPI retire_worker(void*) {
-    ComScope com;
-    if (!com) return 0;
     while (state.is_running()) {
         if (wait(state.retire_event.get()) != 0) break;
         kinoko_destroy_retired_scenes();
@@ -119,8 +106,6 @@ bool initialize(const Configuration& configuration) {
     kinoko_application_set_archive_mode(configuration.archives != 0);
     state.timer_period = kinoko_clock_request_resolution()!=0;
     kinoko_seed_random(kinoko_clock_milliseconds());
-    state.com_initialized = SUCCEEDED(CoInitialize(nullptr));
-    if (!state.com_initialized) return false;
     kinoko_process_initialize(configuration.instance, configuration.window);
     if (!configuration.show_cursor) SDL_HideCursor();
     state.running.store(true);
@@ -131,7 +116,6 @@ bool initialize(const Configuration& configuration) {
         state.renderer_initialized = true;
     }
     if (!initialize_input_audio(configuration)) return false;
-    if (configuration.ime) { kinoko_ime_initialize(); state.ime_initialized = true; }
     state.statistics_time = kinoko_clock_milliseconds();
     if (configuration.manager) configuration.manager->methods->initialize(configuration.manager, nullptr);
     if (configuration.transition) configuration.transition->methods->initialize(configuration.transition, nullptr);
@@ -186,10 +170,8 @@ void poll_move_frame() {
     polling_move_frame=false;
 }
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM parameter) {
-    // Remaining native boundary: IME and the Windows move/size modal loop.
-    // Ordinary window/input events and Alt+Enter are handled by SDL.
-    if (state.config.ime && message >= WM_IME_STARTCOMPOSITION && message <= WM_IME_COMPOSITION
-        && static_cast<uint8_t>(kinoko_ime_dispatch(window,message,key,parameter))) return 0;
+    // Narrow native boundary: keep GPU pumping during Windows move/size.
+    // All ordinary input/window events are forwarded to SDL.
     if (message == WM_ENTERSIZEMOVE) {
         moving_window=true;
         last_move_frame=0;
@@ -210,15 +192,13 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM param
 // enabled. Mouse creation is attempted, but its return does not gate startup.
 bool initialize_input_audio(const Configuration& configuration) {
     if (configuration.input) {
-        state.input_initialized = static_cast<uint8_t>(kinoko_input_initialize(
-            configuration.window, configuration.instance)) != 0;
+        state.input_initialized = static_cast<uint8_t>(kinoko_input_initialize()) != 0;
         if (!state.input_initialized) return false;
         if (!static_cast<uint8_t>(kinoko_input_open_keyboard())) return false;
         if (!static_cast<uint8_t>(kinoko_input_open_controllers())) return false;
         kinoko_input_open_mouse();
     }
-    return !configuration.audio || static_cast<uint8_t>(kinoko_audio_initialize_device(
-        configuration.window, configuration.audio_options)) != 0;
+    return !configuration.audio || static_cast<uint8_t>(kinoko_audio_initialize_device()) != 0;
 }
 
 void update_frame() {
@@ -291,7 +271,6 @@ extern "C" void kinoko_application_shutdown() {
     if (auto* transition = state.config.transition) {
         transition->methods->shutdown(transition, nullptr); std::free(transition); state.config.transition = nullptr;
     }
-    if (state.ime_initialized) { kinoko_ime_release(state.config.window); state.ime_initialized = false; }
     kinoko_audio_shutdown_device();
     if (state.input_initialized) { kinoko_input_shutdown(); state.input_initialized = false; }
     if (state.renderer_initialized) {
@@ -300,7 +279,6 @@ extern "C" void kinoko_application_shutdown() {
         state.renderer_initialized = false;
     }
     if (state.graphics_initialized) { kinoko_graphics_release(); state.graphics_initialized = false; }
-    if (state.com_initialized) { CoUninitialize(); state.com_initialized = false; }
     if (state.timer_period) { kinoko_clock_release_resolution(); state.timer_period = false; }
 }
 extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {

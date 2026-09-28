@@ -69,21 +69,13 @@ int32_t kinoko_null_object_type = 0x01000001;
 
 int32_t kinoko_null_object_value = 0;
 
-HIMC kinoko_ime_context_slot = 0;
 
-HWND kinoko_ime_default_window_slot = 0;
 
-int32_t kinoko_ime_text_limit = 1023;
 
-int32_t kinoko_ime_commit_pending = 0;
 
-char kinoko_ime_text_changed = 0;
 
-char kinoko_ime_composition_changed = 0;
 
-char kinoko_ime_enabled = 0;
 
-int32_t kinoko_ime_cursor = 0;
 
 KinokoScriptExtension kinoko_act_script_extension{{}, 0, 15, 0};
 static_assert(sizeof(KinokoScriptExtension) == 28);

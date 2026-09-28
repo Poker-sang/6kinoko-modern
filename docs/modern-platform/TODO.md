@@ -322,3 +322,11 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Remove obsolete native style and GPU error-window caches.
 - [ ] Migrate remaining IME/COM/entrypoint, native type aliases and fonts.
 - Details: [sdl-window-controls.md](sdl-window-controls.md).
+
+
+## Input/audio host cleanup checkpoint
+- [x] Remove disabled, unread IMM path and unbuilt DirectInput backend.
+- [x] Remove unused application COM gates and recovered COM adapters.
+- [x] Portable input service and audio runtime compilation targets.
+- [ ] Migrate remaining graphics/entrypoint/font Windows boundaries.
+- Details: [native-input-audio.md](native-input-audio.md).

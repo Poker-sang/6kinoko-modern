@@ -81,3 +81,6 @@ ACT directory searches and executable-directory startup now use portable service
 
 
 Window controls now use SDL events, fullscreen/restoration, cursor APIs and queued UTF-8 titles. See [SDL window controls](../docs/modern-platform/sdl-window-controls.md) for the retained IME/drag hook and validation.
+
+
+Unused IMM/DirectInput/COM host paths are removed; game-facing input and the full audio runtime now participate in portable compilation. See [input/audio host cleanup](../docs/modern-platform/native-input-audio.md).

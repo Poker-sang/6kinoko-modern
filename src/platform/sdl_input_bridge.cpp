@@ -1,25 +1,25 @@
-// Transitional Win32 ABI adapter; SDL itself and the frame cache are portable.
-#include "kinoko/direct_input.h"
+// Portable game input service over the SDL frame cache.
+#include "kinoko/input_service.h"
 #include "kinoko/platform.hpp"
 #include <algorithm>
 #include <array>
 extern "C" { extern unsigned char kinoko_keyboard_state[256]; KinokoInputSnapshot kinoko_input_snapshot{}; }
-namespace { HWND window{}; std::array<KinokoControllerState,16> controllers{}; }
-extern "C" HWND kinoko_input_window() { return window; }
-extern "C" int32_t kinoko_input_initialize(HWND w,HINSTANCE) {
-    window=w; return kinoko::platform::host().window()!=nullptr;
+namespace { bool initialized{}; std::array<KinokoControllerState,16> controllers{}; }
+extern "C" int32_t kinoko_input_initialize() {
+    initialized=kinoko::platform::host().window()!=nullptr;
+    return initialized;
 }
 extern "C" int32_t kinoko_input_shutdown() {
-    window=nullptr; controllers={}; kinoko_input_snapshot={};
+    initialized=false; controllers={}; kinoko_input_snapshot={};
     std::fill_n(kinoko_keyboard_state,256,0); return 1;
 }
-extern "C" int32_t kinoko_input_open_keyboard() { return window!=nullptr; }
+extern "C" int32_t kinoko_input_open_keyboard() { return initialized; }
 extern "C" int32_t kinoko_input_open_controllers() {
     // Manager/script initialization enumerates controllers before the first
     // update frame. Publish the main-thread startup snapshot now, like 408C50.
-    return window ? kinoko_input_poll() : 0;
+    return initialized ? kinoko_input_poll() : 0;
 }
-extern "C" int32_t kinoko_input_open_mouse() { return window!=nullptr; }
+extern "C" int32_t kinoko_input_open_mouse() { return initialized; }
 extern "C" int32_t kinoko_input_poll() {
     const auto input=kinoko::platform::host().consume_input();
     std::copy(input.keys.begin(),input.keys.end(),kinoko_keyboard_state);

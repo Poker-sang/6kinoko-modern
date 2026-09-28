@@ -121,9 +121,9 @@ int main() {
     kinoko_se_entries_release();
     CHECK(sound.releases == 1);
 
-    // CV3 is the original packed 18-byte WAVEFORMATEX + 4-byte payload length.
-    WAVEFORMATEX format{};
-    format.wFormatTag = WAVE_FORMAT_PCM; format.nChannels = 1;
+    // CV3 is the original packed 18-byte WaveHeader + 4-byte payload length.
+    WaveHeader format{};
+    format.wFormatTag = pcm_format_tag; format.nChannels = 1;
     format.nSamplesPerSec = 22050; format.nAvgBytesPerSec = 44100;
     format.nBlockAlign = 2; format.wBitsPerSample = 16;
     fixture.resize(26);
@@ -133,8 +133,8 @@ int main() {
     std::memcpy(fixture.data() + 18, &payload, 4);
     std::memcpy(fixture.data() + 22, pcm, 4);
     unsigned char* decoded = nullptr;
-    DWORD decoded_size = 0;
-    WAVEFORMATEX parsed{};
+    uint32_t decoded_size = 0;
+    WaveHeader parsed{};
     CHECK(kinoko_se_parse_wave_asset("fixture.cv3", &parsed, &decoded, &decoded_size));
     CHECK(decoded_size == 4 && parsed.nSamplesPerSec == 22050);
     CHECK(std::memcmp(decoded, pcm, 4) == 0);

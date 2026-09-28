@@ -76,3 +76,6 @@ ACT 文件枚举和 EXE 所在目录初始化已接入跨平台服务。平台�
 
 
 窗口控制已使用 SDL 事件、全屏恢复、光标 API 和主线程 UTF-8 标题更新。保留的 IME/拖动钩子及验证见[SDL 窗口控制](../docs/modern-platform/sdl-window-controls.md)。
+
+
+已删除闲置 IMM/DirectInput/COM 宿主路径，游戏输入服务及完整音频运行时纳入跨平台编译。详见[输入音频宿主清理](../docs/modern-platform/native-input-audio.md)。

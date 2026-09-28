@@ -1,6 +1,6 @@
 #include "kinoko/input_keys.h"
 #include "kinoko/script_diagnostics.hpp"
-#include "kinoko/direct_input.h"
+#include "kinoko/input_service.h"
 #include "kinoko/input_devices.h"
 #include "kinoko/input_cluster.h"
 #include "kinoko/file_service.hpp"

@@ -16,6 +16,9 @@ if(KINOKO_PLATFORM_ONLY)
     add_executable(kinoko_vorbis_decoder_contract tests/vorbis_decoder_contract.cpp)
     target_link_libraries(kinoko_vorbis_decoder_contract PRIVATE kinoko_vorbis_decoder kinoko_vorbisenc)
     add_test(NAME vorbis_decoder_contract COMMAND kinoko_vorbis_decoder_contract --snapshot "${CMAKE_BINARY_DIR}/vorbis-snapshot.bin")
+    add_executable(kinoko_audio_runtime_contract tests/audio_runtime_contract.cpp src/platform/audio_math.cpp)
+    target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_audio_output kinoko_vorbis_decoder kinoko_runtime_services)
+    add_test(NAME audio_runtime_contract COMMAND kinoko_audio_runtime_contract)
     return()
 endif()
 if(WIN32)
@@ -72,7 +75,6 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/act_layer_clone.cpp
     src/reconstructed/actor_methods.cpp
     src/reconstructed/physical_input.cpp
-    src/platform/sdl_input_bridge.cpp
     src/reconstructed/input_aggregation.cpp
     src/reconstructed/input_keys.cpp
     src/reconstructed/input_copy.cpp
@@ -124,7 +126,7 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/map_layout_lifetime.cpp
     src/reconstructed/map_render.cpp)
 target_include_directories(kinoko_native_methods PUBLIC include)
-target_link_libraries(kinoko_native_methods PUBLIC kinoko_platform kinoko_file_service)
+target_link_libraries(kinoko_native_methods PUBLIC kinoko_platform kinoko_file_service kinoko_input_service)
 
 include(cmake/Xiph.cmake)
 add_library(kinoko_audio_runtime STATIC src/reconstructed/audio_runtime.cpp)
@@ -132,7 +134,7 @@ target_include_directories(kinoko_audio_runtime PUBLIC include)
 target_compile_definitions(kinoko_audio_runtime PRIVATE _CRT_SECURE_NO_WARNINGS
     $<TARGET_PROPERTY:kinoko_modern_gpu,COMPILE_DEFINITIONS>)
 target_compile_options(kinoko_audio_runtime PRIVATE /Gy)
-target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision ole32 winmm user32)
+target_link_libraries(kinoko_audio_runtime PUBLIC kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision winmm user32)
 
 add_library(kinoko_legacy_string STATIC
     src/reconstructed/legacy_string.cpp
@@ -155,8 +157,7 @@ target_link_libraries(kinoko_legacy_abi PUBLIC kinoko_method_entries)
 
 add_library(kinoko_retdec_support STATIC
     src/platform/legacy_memory_ops.cpp
-    src/platform/address_space.cpp
-    src/platform/windows_crt_compat.cpp)
+    src/platform/address_space.cpp)
 target_include_directories(kinoko_retdec_support PUBLIC include)
 target_compile_definitions(kinoko_retdec_support PRIVATE _CRT_SECURE_NO_WARNINGS)
 target_compile_options(kinoko_retdec_support PRIVATE /Gy)
@@ -276,7 +277,6 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     src/reconstructed/actor_owner_list.cpp
     src/reconstructed/actor_pool.cpp
     src/reconstructed/timer_events.cpp
-    src/reconstructed/ime_input.cpp
     src/reconstructed/application_runtime.cpp
     src/reconstructed/game_runtime.cpp
     src/reconstructed/runtime_bootstrap.cpp
@@ -401,8 +401,6 @@ target_link_libraries(kinoko_modern_gpu PRIVATE
     user32
     gdi32
     winmm
-    imm32
-    ole32
     dbghelp
 )
 
@@ -443,7 +441,7 @@ add_executable(kinoko_application_contract tests/application_contract.cpp
 target_include_directories(kinoko_application_contract PRIVATE include)
 target_compile_options(kinoko_application_contract PRIVATE /Gy /O2)
 target_link_options(kinoko_application_contract PRIVATE /OPT:REF /OPT:ICF)
-target_link_libraries(kinoko_application_contract PRIVATE kinoko_platform user32 gdi32 ole32 winmm imm32)
+target_link_libraries(kinoko_application_contract PRIVATE kinoko_platform user32 gdi32 winmm)
 add_test(NAME application_contract COMMAND kinoko_application_contract)
 
 add_executable(kinoko_game_lifecycle_contract tests/game_lifecycle_contract.cpp
@@ -556,7 +554,7 @@ add_test(NAME vorbis_decoder_contract COMMAND kinoko_vorbis_decoder_contract --s
 add_executable(kinoko_audio_runtime_contract tests/audio_runtime_contract.cpp)
 target_include_directories(kinoko_audio_runtime_contract PRIVATE include)
 target_compile_definitions(kinoko_audio_runtime_contract PRIVATE _CRT_SECURE_NO_WARNINGS)
-target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision ole32 winmm user32)
+target_link_libraries(kinoko_audio_runtime_contract PRIVATE kinoko_audio_output kinoko_vorbis_decoder kinoko_actor_collision winmm user32)
 add_test(NAME audio_runtime_contract COMMAND kinoko_audio_runtime_contract)
 set_tests_properties(audio_runtime_contract PROPERTIES TIMEOUT 60)
 

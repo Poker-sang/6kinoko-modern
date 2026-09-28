@@ -268,7 +268,6 @@ if(WIN32)
         src/reconstructed/application_runtime.cpp
         src/reconstructed/scene_queue.cpp
         src/reconstructed/game_runtime.cpp
-        src/reconstructed/ime_input.cpp
         tests/input_audio_width_compile.cpp)
     target_include_directories(kinoko_input_audio_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
@@ -306,3 +305,11 @@ add_test(NAME runtime_services_contract COMMAND kinoko_runtime_services_contract
 add_executable(kinoko_directory_search_contract tests/directory_search_contract.cpp)
 target_link_libraries(kinoko_directory_search_contract PRIVATE kinoko_file_service)
 add_test(NAME directory_search_contract COMMAND kinoko_directory_search_contract)
+
+# Compile the actual game-facing SDL input service on every portable CI host.
+add_library(kinoko_input_service STATIC src/platform/sdl_input_bridge.cpp)
+target_include_directories(kinoko_input_service PUBLIC include)
+target_link_libraries(kinoko_input_service PUBLIC kinoko_platform)
+add_executable(kinoko_input_service_contract tests/input_service_contract.cpp)
+target_link_libraries(kinoko_input_service_contract PRIVATE kinoko_input_service)
+add_test(NAME input_service_contract COMMAND kinoko_input_service_contract)

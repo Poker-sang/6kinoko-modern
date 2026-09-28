@@ -8,7 +8,11 @@ class AudioEnvironmentScope {
 public:
     AudioEnvironmentScope() {
         fegetenv(&previous);
-        _fpreset();
+#if defined(_MSC_VER)
+        _fpreset(); // Preserve the verified Windows decoder environment exactly.
+#else
+        fesetenv(FE_DFL_ENV);
+#endif
     }
     ~AudioEnvironmentScope() { fesetenv(&previous); }
     AudioEnvironmentScope(const AudioEnvironmentScope &) = delete;

@@ -1,6 +1,6 @@
 #include "kinoko/critical_section.h"
 #include "kinoko/game_runtime.h"
-#include "kinoko/direct_input.h"
+#include "kinoko/input_service.h"
 #include "kinoko/timer_events.h"
 #include "kinoko/application_runtime.hpp"
 #include "kinoko/renderer.h"
@@ -19,7 +19,6 @@ extern "C" {
 KinokoRenderer kinoko_renderer{};
 KinokoCriticalSection kinoko_graphics_lock{};
 KinokoGraphics kinoko_graphics{};
-HIMC kinoko_ime_context_slot = 0;
 char kinoko_packed_assets = 0;
 // Isolated host/device ports. No game startup, timer or device is invoked by
 // this contract; only the callback/state functions below are under examination.
@@ -30,7 +29,7 @@ void kinoko_application_set_archive_mode(int32_t enabled) { kinoko_packed_assets
 const char* kinoko_application_title() { return "fixture"; }
 const char* kinoko_application_error() { return "fixture"; }
 void kinoko_seed_random(uint32_t) {}
-int32_t kinoko_audio_initialize_device(HWND, int32_t) { device_calls.push_back(5); return audio_result; }
+int32_t kinoko_audio_initialize_device() { device_calls.push_back(5); return audio_result; }
 int32_t kinoko_audio_shutdown_device() { return 0; }
 int32_t kinoko_graphics_create(HWND, int32_t, int32_t) { return 0; }
 int32_t kinoko_graphics_release() { return 0; }
@@ -40,17 +39,14 @@ int32_t kinoko_graphics_present() { return 0; }
 int32_t kinoko_renderer_initialize() { return 0; }
 int32_t kinoko_renderer_before_reset(KinokoRenderer*) { return 0; }
 void kinoko_remove_device_listener(KinokoDeviceListener*) {}
-int32_t kinoko_ime_dispatch(HWND, UINT, WPARAM, LPARAM) { return 0; }
 unsigned long kinoko_run_game_math(unsigned long (__stdcall *)(void*), void*) noexcept(false) { return 0; }
 int32_t kinoko_process_initialize(HINSTANCE, HWND) { return 0; }
-int32_t kinoko_input_initialize(HWND, HINSTANCE) { device_calls.push_back(1); return input_result; }
+int32_t kinoko_input_initialize() { device_calls.push_back(1); return input_result; }
 int32_t kinoko_input_shutdown() { return 0; }
 int32_t kinoko_input_open_keyboard() { device_calls.push_back(2); return keyboard_result; }
 int32_t kinoko_input_open_controllers() { device_calls.push_back(3); return controllers_result; }
 int32_t kinoko_input_open_mouse() { device_calls.push_back(4); return mouse_result; }
 int32_t kinoko_input_poll() { return 0; }
-int32_t kinoko_ime_initialize() { return 0; }
-void kinoko_ime_release(HWND) {}
 KinokoFrameEvent* kinoko_frame_timer_register() { return nullptr; }
 void kinoko_frame_timer_wait(KinokoFrameEvent*) {}
 int32_t kinoko_frame_timer_unregister(KinokoFrameEvent*) { return 0; }

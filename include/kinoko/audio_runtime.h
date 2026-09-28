@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <windows.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,7 +11,7 @@ int32_t kinoko_audio_set_bgm_volume(float gain);
 int32_t kinoko_audio_shutdown_resources(void);
 int32_t kinoko_audio_initialize_sound_pool(void);
 int32_t kinoko_audio_set_sound_volume(float gain);
-int32_t kinoko_audio_initialize_device(HWND hwnd, int32_t options);
+int32_t kinoko_audio_initialize_device(void);
 int32_t kinoko_audio_shutdown_device(void);
 int32_t kinoko_audio_initialize_playback(void);
 int32_t kinoko_audio_play_bgm(const char* path, int32_t delay_ms, int32_t unused, int32_t looping);

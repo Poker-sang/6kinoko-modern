@@ -8,7 +8,6 @@
 #include "kinoko/runtime_sync.hpp"
 #include "kinoko/runtime_clock.h"
 #include <atomic>
-#include <mmsystem.h>
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <cmath>
@@ -33,12 +32,22 @@ static int32_t run_audio_loader_worker();
 static int32_t service_audio_tick();
 
 namespace {
-constexpr DWORD RETDEC_BGM_BUFFER_BYTES = 0x100000u;
-constexpr DWORD RETDEC_BGM_CHUNK_BYTES = 0x8000u;
+constexpr size_t asset_path_capacity=260; // Original asset-name buffer limit.
+constexpr uint16_t pcm_format_tag=1;
+#pragma pack(push,1)
+struct WaveHeader {
+    uint16_t wFormatTag, nChannels;
+    uint32_t nSamplesPerSec, nAvgBytesPerSec;
+    uint16_t nBlockAlign, wBitsPerSample, cbSize;
+};
+#pragma pack(pop)
+static_assert(offsetof(WaveHeader,nSamplesPerSec)==4 && offsetof(WaveHeader,cbSize)==16);
+constexpr uint32_t RETDEC_BGM_BUFFER_BYTES = 0x100000u;
+constexpr uint32_t RETDEC_BGM_CHUNK_BYTES = 0x8000u;
 constexpr int RETDEC_BGM_MAX_CHANNELS = 8;
-constexpr DWORD RETDEC_BGM_GUARD_BYTES = 16u;
+constexpr uint32_t RETDEC_BGM_GUARD_BYTES = 16u;
 constexpr int RETDEC_SE_MAX_ENTRIES = 128;
-static_assert(sizeof(WAVEFORMATEX) == 18); // CV3 on-disk header, not a native output object.
+static_assert(sizeof(WaveHeader) == 18); // CV3 on-disk header, not a native output object.
 
 // The track exclusively owns its secondary buffer, decoder and decoder input.
 // Moving transfers those owners; copying is impossible. Native ABI buffer
@@ -61,41 +70,41 @@ struct BgmTrack {
     kinoko::memory::Allocation<short> decode_scratch;
     std::unique_ptr<VorbisDecoder> decoder;
     OutputBufferPtr buffer;
-    DWORD buffer_bytes = 0;
-    DWORD encoded_bytes = 0;
-    DWORD decoded_bytes = 0;
-    DWORD sample_rate = 0;
-    WORD channels = 0;
+    uint32_t buffer_bytes = 0;
+    uint32_t encoded_bytes = 0;
+    uint32_t decoded_bytes = 0;
+    uint32_t sample_rate = 0;
+    uint16_t channels = 0;
     std::uint32_t handle = 0;
-    DWORD loop_start_frame = 0;
-    DWORD loop_end_frame = 0;
-    DWORD source_frame = 0;
-    DWORD write_offset = 0;
-    DWORD write_window_start = 0;
-    DWORD play_offset = 0;
-    DWORD buffered_bytes = 0;
-    DWORD start_time = 0;
+    uint32_t loop_start_frame = 0;
+    uint32_t loop_end_frame = 0;
+    uint32_t source_frame = 0;
+    uint32_t write_offset = 0;
+    uint32_t write_window_start = 0;
+    uint32_t play_offset = 0;
+    uint32_t buffered_bytes = 0;
+    uint32_t start_time = 0;
     int source_ended = 0;
     int looping = 0;
     int started = 0;
     float volume = 0;
     float fade_from = 0;
     float fade_to = 0;
-    DWORD fade_started = 0;
-    DWORD fade_duration = 0;
+    uint32_t fade_started = 0;
+    uint32_t fade_duration = 0;
     int playing = 0;
     bool retire_after_fade = false;
     bool retirement_requested = false;
 };
 struct SoundSlot {
     OutputBufferPtr buffer;
-    DWORD buffer_bytes = 0;
+    uint32_t buffer_bytes = 0;
     int in_use = 0;
 };
 struct SoundEntry {
     int id = 0;
     OutputBufferPtr buffer;
-    DWORD buffer_bytes = 0;
+    uint32_t buffer_bytes = 0;
 };
 struct SoundPool {
     SoundSlot stream_slots[32];
@@ -147,44 +156,44 @@ float g_kinoko_audio_master_volume = 1.0f;
 // track pool owns playback resources; this slot is only its active identity.
 int32_t& active_bgm_handle() { return active_bgm_slot; }
 bool packed_sound_assets() { return packed_assets_slot != 0; }
-DWORD WINAPI audio_update_worker(void*) { return run_audio_update_worker(); }
-DWORD WINAPI audio_loader_worker(void*) { return run_audio_loader_worker(); }
+uint32_t audio_update_worker(void*) { return run_audio_update_worker(); }
+uint32_t audio_loader_worker(void*) { return run_audio_loader_worker(); }
 }
 static void kinoko_trace_audio_text(const char *label, const char *value);
-static LONG kinoko_audio_volume_db(float gain);
-static int kinoko_create_secondary_buffer(const WAVEFORMATEX* format,
-                                          DWORD buffer_bytes,
+static int32_t kinoko_audio_volume_db(float gain);
+static int kinoko_create_secondary_buffer(const WaveHeader* format,
+                                          uint32_t buffer_bytes,
                                           OutputBufferPtr* result);
 static int kinoko_read_asset_bytes(const char *path,
                                    unsigned char **data,
-                                   DWORD *size);
+                                   uint32_t *size);
 static uint32_t kinoko_bgm_read_u32(const unsigned char *bytes);
 static int kinoko_bgm_read_loop_points(const char *path,
-                                       DWORD *loop_start,
-                                       DWORD *loop_end);
+                                       uint32_t *loop_start,
+                                       uint32_t *loop_end);
 static int kinoko_decode_bgm(const char *path,
                              short **samples,
-                             DWORD *sample_bytes,
-                             DWORD *sample_rate,
-                             WORD *channels);
+                             uint32_t *sample_bytes,
+                             uint32_t *sample_rate,
+                             uint16_t *channels);
 static int kinoko_fill_output_buffer(OutputBuffer *buffer,
                                      const void *samples,
-                                     DWORD sample_bytes);
+                                     uint32_t sample_bytes);
 static void kinoko_set_output_volume(OutputBuffer* buffer, float gain);
-static void kinoko_bgm_write_guard(void *memory, DWORD size);
-static int kinoko_bgm_check_guard(const void *memory, DWORD size);
+static void kinoko_bgm_write_guard(void *memory, uint32_t size);
+static int kinoko_bgm_check_guard(const void *memory, uint32_t size);
 static void kinoko_bgm_release_state(BgmTrack *track);
 static BgmTrack *kinoko_bgm_find_track(uint32_t handle);
 static void kinoko_bgm_apply_state_volume(BgmTrack *track,
                                           float gain);
 static int kinoko_bgm_write_buffer(BgmTrack *track,
-                                   const void *samples, DWORD bytes);
+                                   const void *samples, uint32_t bytes);
 static int kinoko_bgm_decode_loop_frames(BgmTrack *track,
                                          short *output,
-                                         DWORD requested_frames);
-static DWORD kinoko_bgm_decode_chunk(BgmTrack *track,
-                                     unsigned char *output, DWORD bytes);
-static int kinoko_bgm_fill_chunk(BgmTrack *track, DWORD bytes);
+                                         uint32_t requested_frames);
+static uint32_t kinoko_bgm_decode_chunk(BgmTrack *track,
+                                     unsigned char *output, uint32_t bytes);
+static int kinoko_bgm_fill_chunk(BgmTrack *track, uint32_t bytes);
 static void kinoko_bgm_release_track_locked(void);
 static void kinoko_bgm_release_track(void);
 static void kinoko_bgm_release_all_tracks_locked(void);
@@ -192,9 +201,9 @@ static void kinoko_bgm_release_all_tracks(void);
 static void kinoko_se_entries_release(void);
 static void kinoko_se_pool_release(void);
 static int kinoko_se_parse_wave_asset(const char *path,
-                                      WAVEFORMATEX *format,
+                                      WaveHeader *format,
                                       unsigned char **samples,
-                                      DWORD *sample_bytes);
+                                      uint32_t *sample_bytes);
 static int kinoko_se_replace_extension(const char *source, char *path,
                                        size_t path_size);
 static int kinoko_se_load_entry(int id, const char *source);
@@ -204,12 +213,12 @@ static void kinoko_bgm_apply_track_volume(float gain);
 static void kinoko_bgm_update_fade_locked(void);
 void kinoko_bgm_update_fade(void);
 static void kinoko_bgm_begin_fade_locked(BgmTrack *track,
-                                         DWORD duration, float target,
-                                         DWORD start_delay, bool retire_after_fade = false);
-static void kinoko_bgm_begin_fade(DWORD duration, float target);
+                                         uint32_t duration, float target,
+                                         uint32_t start_delay, bool retire_after_fade = false);
+static void kinoko_bgm_begin_fade(uint32_t duration, float target);
 static void kinoko_bgm_begin_fade_for_handle(uint32_t handle,
-                                             DWORD duration,
-                                             DWORD start_delay,
+                                             uint32_t duration,
+                                             uint32_t start_delay,
                                              float target, bool retire_after_fade = false);
 static void kinoko_bgm_stop_for_handle(uint32_t handle);
 static void kinoko_bgm_release_for_handle(uint32_t handle);
@@ -278,11 +287,11 @@ static void kinoko_trace_audio_text(const char *label, const char *value)
 
     if (label == NULL || value == NULL)
         return;
-    wsprintfA(message, "%s:%s", label, value);
+    SDL_snprintf(message, sizeof(message), "%s:%s", label, value);
     kinoko_trace(message);
 }
 
-static LONG kinoko_audio_volume_db(float gain)
+static int32_t kinoko_audio_volume_db(float gain)
 {
     double value;
 
@@ -293,17 +302,17 @@ static LONG kinoko_audio_volume_db(float gain)
         return -10000;
     if (value > 0.0)
         return 0;
-    return (LONG)value;
+    return (int32_t)value;
 }
 
 
 
 
-static int kinoko_create_secondary_buffer(const WAVEFORMATEX* format,
-                                          DWORD bytes, OutputBufferPtr* result) {
+static int kinoko_create_secondary_buffer(const WaveHeader* format,
+                                          uint32_t bytes, OutputBufferPtr* result) {
     if (!result) return 0;
     result->reset();
-    if (!g_audio_device || !format || format->wFormatTag != WAVE_FORMAT_PCM ||
+    if (!g_audio_device || !format || format->wFormatTag != pcm_format_tag ||
         format->nBlockAlign != format->nChannels * (format->wBitsPerSample / 8)) return 0;
     *result = g_audio_device->create({format->nSamplesPerSec,format->nChannels,format->wBitsPerSample},bytes);
     return *result ? 1 : 0;
@@ -312,11 +321,11 @@ static int kinoko_create_secondary_buffer(const WAVEFORMATEX* format,
 
 static int kinoko_read_asset_bytes(const char *path,
                                    unsigned char **data,
-                                   DWORD *size)
+                                   uint32_t *size)
 {
     KinokoArchiveReader *reader_slot = nullptr;
     KinokoArchiveReader *reader;
-    DWORD asset_size;
+    uint32_t asset_size;
     unsigned char *contents;
 
     if (data == NULL || size == NULL || path == NULL)
@@ -333,7 +342,7 @@ static int kinoko_read_asset_bytes(const char *path,
     }
     SetLastError(NO_ERROR);
     asset_size = kinoko_reader_size(reader);
-    if (asset_size == 0 || (asset_size == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)) {
+    if (asset_size == 0) {
         kinoko_reader_close(reader);
         return 0;
     }
@@ -360,15 +369,15 @@ static uint32_t kinoko_bgm_read_u32(const unsigned char *bytes)
 }
 
 static int kinoko_bgm_read_loop_points(const char *path,
-                                       DWORD *loop_start,
-                                       DWORD *loop_end)
+                                       uint32_t *loop_start,
+                                       uint32_t *loop_end)
 {
-    char sidecar[MAX_PATH];
+    char sidecar[asset_path_capacity];
     unsigned char *data = NULL;
-    DWORD size = 0;
-    DWORD start = 0;
-    DWORD length = 0;
-    DWORD index;
+    uint32_t size = 0;
+    uint32_t start = 0;
+    uint32_t length = 0;
+    uint32_t index;
     size_t path_length;
 
     if (path == NULL || loop_start == NULL || loop_end == NULL)
@@ -385,7 +394,7 @@ static int kinoko_bgm_read_loop_points(const char *path,
 
     for (index = 0; index + 8 <= size; ++index) {
         const unsigned char *chunk = data + index;
-        DWORD chunk_size = kinoko_bgm_read_u32(chunk + 4);
+        uint32_t chunk_size = kinoko_bgm_read_u32(chunk + 4);
 
         if (memcmp(chunk, "cue ", 4) == 0 && chunk_size >= 28 &&
             chunk_size <= size - index - 8 &&
@@ -407,12 +416,12 @@ static int kinoko_bgm_read_loop_points(const char *path,
 
 static int kinoko_decode_bgm(const char *path,
                              short **samples,
-                             DWORD *sample_bytes,
-                             DWORD *sample_rate,
-                             WORD *channels)
+                             uint32_t *sample_bytes,
+                             uint32_t *sample_rate,
+                             uint16_t *channels)
 {
     unsigned char *encoded = NULL;
-    DWORD encoded_size = 0;
+    uint32_t encoded_size = 0;
     std::unique_ptr<VorbisDecoder> decoder;
     VorbisDecoder::Format info;
     unsigned int frame_count;
@@ -478,14 +487,14 @@ static int kinoko_decode_bgm(const char *path,
     }
 
     *samples = decoded;
-    *sample_bytes = (DWORD)((size_t)frame_cursor *
+    *sample_bytes = (uint32_t)((size_t)frame_cursor *
                             (size_t)info.channels * sizeof(short));
     *sample_rate = info.sample_rate;
-    *channels = (WORD)info.channels;
+    *channels = (uint16_t)info.channels;
     return 1;
 }
 
-static int kinoko_fill_output_buffer(OutputBuffer* buffer,const void* samples,DWORD bytes) {
+static int kinoko_fill_output_buffer(OutputBuffer* buffer,const void* samples,uint32_t bytes) {
     return buffer && samples && bytes && buffer->write(0,samples,bytes);
 }
 
@@ -494,9 +503,9 @@ static void kinoko_set_output_volume(OutputBuffer* buffer, float gain) {
 }
 
 
-static void kinoko_bgm_write_guard(void *memory, DWORD size)
+static void kinoko_bgm_write_guard(void *memory, uint32_t size)
 {
-    DWORD index;
+    uint32_t index;
     unsigned char *bytes = (unsigned char *)memory;
 
     if (bytes == NULL)
@@ -505,9 +514,9 @@ static void kinoko_bgm_write_guard(void *memory, DWORD size)
         bytes[size + index] = 0xA5u;
 }
 
-static int kinoko_bgm_check_guard(const void *memory, DWORD size)
+static int kinoko_bgm_check_guard(const void *memory, uint32_t size)
 {
-    DWORD index;
+    uint32_t index;
     const unsigned char *bytes = (const unsigned char *)memory;
 
     if (bytes == NULL)
@@ -553,7 +562,7 @@ static void kinoko_bgm_apply_state_volume(BgmTrack *track,
     kinoko_set_output_volume(track->buffer.get(), effective_gain);
 }
 
-static int kinoko_bgm_write_buffer(BgmTrack* track,const void* samples,DWORD bytes) {
+static int kinoko_bgm_write_buffer(BgmTrack* track,const void* samples,uint32_t bytes) {
     if (!track || !track->buffer || !samples || !bytes || !track->buffer_bytes || bytes>track->buffer_bytes) return 0;
     if (!track->buffer->write(track->write_offset,samples,bytes)) return 0;
     track->write_offset=(track->write_offset+bytes)&(track->buffer_bytes-1);
@@ -562,10 +571,10 @@ static int kinoko_bgm_write_buffer(BgmTrack* track,const void* samples,DWORD byt
 
 static int kinoko_bgm_decode_loop_frames(BgmTrack *track,
                                          short *output,
-                                         DWORD requested_frames)
+                                         uint32_t requested_frames)
 {
-    DWORD request_frames;
-    DWORD seek_frame;
+    uint32_t request_frames;
+    uint32_t seek_frame;
     int got;
 
     if (track == NULL || track->decoder.get() == NULL || output == NULL ||
@@ -574,12 +583,12 @@ static int kinoko_bgm_decode_loop_frames(BgmTrack *track,
 
     /* 412240 reads at most 4096 PCM bytes, then seeks past the loop start
        by any overshoot.  Track delivered samples, not decoder read-ahead. */
-    request_frames = 4096u / ((DWORD)track->channels * sizeof(short));
+    request_frames = 4096u / ((uint32_t)track->channels * sizeof(short));
     if (request_frames > requested_frames)
         request_frames = requested_frames;
     got = track->decoder->read_frames(output, static_cast<int>(request_frames));
     if (got > 0) {
-        track->source_frame += (DWORD)got;
+        track->source_frame += (uint32_t)got;
         if (track->source_frame <= track->loop_end_frame)
             return got;
         seek_frame = track->source_frame - track->loop_end_frame +
@@ -594,11 +603,11 @@ static int kinoko_bgm_decode_loop_frames(BgmTrack *track,
     return got;
 }
 
-static DWORD kinoko_bgm_decode_chunk(BgmTrack *track,
-                                     unsigned char *output, DWORD bytes)
+static uint32_t kinoko_bgm_decode_chunk(BgmTrack *track,
+                                     unsigned char *output, uint32_t bytes)
 {
-    DWORD requested_frames;
-    DWORD written_frames = 0;
+    uint32_t requested_frames;
+    uint32_t written_frames = 0;
     int channels;
 
     if (track == NULL || track->decoder.get() == NULL || output == NULL ||
@@ -610,7 +619,7 @@ static DWORD kinoko_bgm_decode_chunk(BgmTrack *track,
     /* The original 412240 supplies ov_read with (little-endian, 2 bytes,
        signed) and a 4096-byte limit. Let upstream perform its own PCM
        clipping/conversion; do not duplicate the codec's floating-point path. */
-    requested_frames = bytes / ((DWORD)channels * sizeof(short));
+    requested_frames = bytes / ((uint32_t)channels * sizeof(short));
     while (written_frames < requested_frames) {
         int got;
         short *destination = (short *)output +
@@ -622,7 +631,7 @@ static DWORD kinoko_bgm_decode_chunk(BgmTrack *track,
                 track, destination, requested_frames - written_frames);
         } else {
             got = track->decoder->read_frames(destination, static_cast<int>(
-                (std::min<DWORD>)(requested_frames - written_frames, 4096u / (channels * sizeof(short)))));
+                (std::min<uint32_t>)(requested_frames - written_frames, 4096u / (channels * sizeof(short)))));
         }
         if (got <= 0) {
             if (!track->looping || track->source_ended) {
@@ -638,14 +647,14 @@ static DWORD kinoko_bgm_decode_chunk(BgmTrack *track,
             track->source_frame = 0;
             continue;
         }
-        written_frames += (DWORD)got;
+        written_frames += (uint32_t)got;
     }
-    return written_frames * (DWORD)channels * sizeof(short);
+    return written_frames * (uint32_t)channels * sizeof(short);
 }
 
-static int kinoko_bgm_fill_chunk(BgmTrack *track, DWORD bytes)
+static int kinoko_bgm_fill_chunk(BgmTrack *track, uint32_t bytes)
 {
-    DWORD decoded;
+    uint32_t decoded;
 
     if (track == NULL || track->decoded_samples.get() == NULL || bytes == 0 ||
         bytes > RETDEC_BGM_CHUNK_BYTES)
@@ -728,25 +737,25 @@ static void kinoko_se_pool_release() {
 }
 
 static int kinoko_se_parse_wave_asset(const char *path,
-                                      WAVEFORMATEX *format,
+                                      WaveHeader *format,
                                       unsigned char **samples,
-                                      DWORD *sample_bytes)
+                                      uint32_t *sample_bytes)
 {
     if (!path || !format || !samples || !sample_bytes) return 0;
     *samples = nullptr;
     *sample_bytes = 0;
     ZeroMemory(format, sizeof(*format));
     unsigned char *raw = nullptr;
-    DWORD size = 0;
+    uint32_t size = 0;
     if (!kinoko_read_asset_bytes(path, &raw, &size)) return 0;
     kinoko::memory::Allocation<unsigned char> data(raw);
 
     const size_t path_length = std::strlen(path);
-    if (path_length >= 4 && _stricmp(path + path_length - 4, ".cv3") == 0) {
-        // Packed SE: WAVEFORMATEX + DWORD byte count + PCM payload.
+    if (path_length >= 4 && SDL_strcasecmp(path + path_length - 4, ".cv3") == 0) {
+        // Packed SE: WaveHeader + uint32_t byte count + PCM payload.
         if (size < 22) return 0;
         std::memcpy(format, data.get(), sizeof(*format));
-        const DWORD payload_bytes = kinoko_bgm_read_u32(data.get() + 18);
+        const uint32_t payload_bytes = kinoko_bgm_read_u32(data.get() + 18);
         if (!payload_bytes || payload_bytes > size - 22 ||
             format->wFormatTag != 1 || !format->nChannels ||
             !format->nSamplesPerSec || !format->nBlockAlign ||
@@ -762,12 +771,12 @@ static int kinoko_se_parse_wave_asset(const char *path,
     // chunk aborts rather than looking for a later data chunk.
     if (size < 12 || std::memcmp(data.get(), "RIFF", 4) != 0 ||
         std::memcmp(data.get() + 8, "WAVE", 4) != 0) return 0;
-    DWORD offset = 12;
+    uint32_t offset = 12;
     bool have_format = false;
     while (offset <= size && size - offset >= 8) {
         const unsigned char *chunk = data.get() + offset;
-        const DWORD chunk_bytes = kinoko_bgm_read_u32(chunk + 4);
-        const DWORD available = size - offset - 8;
+        const uint32_t chunk_bytes = kinoko_bgm_read_u32(chunk + 4);
+        const uint32_t available = size - offset - 8;
         if (chunk_bytes > available) return 0;
         if (std::memcmp(chunk, "fmt ", 4) == 0 && chunk_bytes >= 16) {
             ZeroMemory(format, sizeof(*format));
@@ -799,7 +808,7 @@ static int kinoko_se_replace_extension(const char *source, char *path,
         return 0;
     memcpy(path, source, length + 1);
     if (packed_sound_assets() && length >= 4 &&
-        _stricmp(path + length - 4, ".wav") == 0) {
+        SDL_strcasecmp(path + length - 4, ".wav") == 0) {
         path[length - 3] = 'c';
         path[length - 2] = 'v';
         path[length - 1] = '3';
@@ -809,10 +818,10 @@ static int kinoko_se_replace_extension(const char *source, char *path,
 
 static int kinoko_se_load_entry(int id, const char *source)
 {
-    char path[MAX_PATH];
-    WAVEFORMATEX format;
+    char path[asset_path_capacity];
+    WaveHeader format;
     unsigned char *samples = NULL;
-    DWORD sample_bytes = 0;
+    uint32_t sample_bytes = 0;
     OutputBufferPtr buffer;
 
     int index;
@@ -859,7 +868,7 @@ static int kinoko_se_load_entry(int id, const char *source)
 
 static int kinoko_se_pool_initialize(void)
 {
-    WAVEFORMATEX format;
+    WaveHeader format;
     int index;
     int created = 0;
 
@@ -918,10 +927,10 @@ static void kinoko_bgm_apply_track_volume(float gain)
 }
 
 // 409C12..409CE6: ordinary fades never imply release, even at zero gain.
-static void update_track_fade(BgmTrack& track, DWORD now) {
+static void update_track_fade(BgmTrack& track, uint32_t now) {
     if (!track.buffer || !track.fade_duration || track.retirement_requested ||
         track.start_time || now <= track.fade_started) return;
-    const DWORD elapsed = now - track.fade_started;
+    const uint32_t elapsed = now - track.fade_started;
     if (elapsed >= track.fade_duration) {
         kinoko_bgm_apply_state_volume(&track, track.fade_to);
         track.fade_duration = 0;
@@ -933,7 +942,7 @@ static void update_track_fade(BgmTrack& track, DWORD now) {
     }
 }
 static void kinoko_bgm_update_fade_locked(void) {
-    const DWORD now = kinoko_clock_milliseconds();
+    const uint32_t now = kinoko_clock_milliseconds();
     update_track_fade(g_kinoko_bgm_track, now);
     for (auto& track : fading_tracks) update_track_fade(track, now);
 }
@@ -946,8 +955,8 @@ void kinoko_bgm_update_fade(void)
 }
 
 static void kinoko_bgm_begin_fade_locked(BgmTrack *track,
-                                         DWORD duration, float target,
-                                         DWORD start_delay, bool retire_after_fade)
+                                         uint32_t duration, float target,
+                                         uint32_t start_delay, bool retire_after_fade)
 {
     if (track == NULL || track->buffer.get() == NULL)
         return;
@@ -963,7 +972,7 @@ static void kinoko_bgm_begin_fade_locked(BgmTrack *track,
     track->fade_duration = duration;
 }
 
-static void kinoko_bgm_begin_fade(DWORD duration, float target)
+static void kinoko_bgm_begin_fade(uint32_t duration, float target)
 {
     CriticalLock lock(&audio_workers.lock);
     kinoko_bgm_update_fade_locked();
@@ -972,8 +981,8 @@ static void kinoko_bgm_begin_fade(DWORD duration, float target)
 }
 
 static void kinoko_bgm_begin_fade_for_handle(uint32_t handle,
-                                             DWORD duration,
-                                             DWORD start_delay,
+                                             uint32_t duration,
+                                             uint32_t start_delay,
                                              float target, bool retire_after_fade)
 {
     CriticalLock lock(&audio_workers.lock);
@@ -1030,7 +1039,7 @@ static int kinoko_bgm_prepare_track_default_math(uint32_t handle, const char *pa
                                     int looping, float32_t volume)
 {
     unsigned char *encoded = NULL;
-    DWORD encoded_size = 0;
+    uint32_t encoded_size = 0;
     std::unique_ptr<VorbisDecoder> decoder;
     VorbisDecoder::Format info;
     int error = 0;
@@ -1038,7 +1047,7 @@ static int kinoko_bgm_prepare_track_default_math(uint32_t handle, const char *pa
     OutputBufferPtr buffer;
     unsigned char *scratch = NULL;
     short *decoded_scratch = NULL;
-    WAVEFORMATEX format;
+    WaveHeader format;
 
     kinoko_trace_audio_text("bgm:prepare-path", path);
     kinoko_trace_i32("bgm:prepare-handle", (int32_t)handle);
@@ -1069,9 +1078,9 @@ static int kinoko_bgm_prepare_track_default_math(uint32_t handle, const char *pa
 
     ZeroMemory(&format, sizeof(format));
     format.wFormatTag = 1;
-    format.nChannels = (WORD)info.channels;
+    format.nChannels = (uint16_t)info.channels;
     format.nSamplesPerSec = info.sample_rate;
-    format.nBlockAlign = (WORD)(info.channels * sizeof(short));
+    format.nBlockAlign = (uint16_t)(info.channels * sizeof(short));
     format.nAvgBytesPerSec = info.sample_rate * format.nBlockAlign;
     format.wBitsPerSample = 16;
     if (!kinoko_create_secondary_buffer(&format, RETDEC_BGM_BUFFER_BYTES,
@@ -1111,7 +1120,7 @@ static int kinoko_bgm_prepare_track_default_math(uint32_t handle, const char *pa
     track->decoded_samples.reset(decoded_scratch);
     track->decoder = std::move(decoder);
     track->sample_rate = info.sample_rate;
-    track->channels = (WORD)info.channels;
+    track->channels = (uint16_t)info.channels;
     track->looping = looping != 0;
     /* 412203 always loads SFL markers, overriding the whole-file fallback
        selected by the PlayBgm argument, including when that argument is 0. */
@@ -1221,11 +1230,11 @@ static void kinoko_bgm_start_track(BgmTrack* track) {
 static void kinoko_bgm_service_track(BgmTrack *track)
 {
 
-    DWORD play_cursor;
-    DWORD write_cursor;
-    DWORD consumed;
-    DWORD write_boundary;
-    DWORD write_limit;
+    uint32_t play_cursor;
+    uint32_t write_cursor;
+    uint32_t consumed;
+    uint32_t write_boundary;
+    uint32_t write_limit;
     int in_write_window;
 
     if (track == NULL || track->buffer.get() == NULL)
@@ -1238,7 +1247,7 @@ static void kinoko_bgm_service_track(BgmTrack *track)
         return;
     }
     if (!track->started) {
-        const DWORD now = kinoko_clock_milliseconds();
+        const uint32_t now = kinoko_clock_milliseconds();
         if (track->start_time == 0 || now > track->start_time) {
             kinoko_bgm_start_track(track);
             track->start_time = 0;
@@ -1251,7 +1260,7 @@ static void kinoko_bgm_service_track(BgmTrack *track)
     write_cursor = 0;
     // SDL exposes the source bytes submitted to its converter. Both legacy
     // cursors use that synchronized boundary; queued PCM is already copied.
-    play_cursor = write_cursor = static_cast<DWORD>(track->buffer->position());
+    play_cursor = write_cursor = static_cast<uint32_t>(track->buffer->position());
     if (track->started && track->play_offset == 0) {
         kinoko_trace_i32("bgm:play-cursor", (int32_t)play_cursor);
         kinoko_trace_i32("bgm:write-cursor", (int32_t)write_cursor);
@@ -1500,7 +1509,7 @@ static int32_t schedule_playback_start(ManagerRecord* this_ptr,
     CriticalLock lock(&audio_workers.lock);
     BufferRecord* buffer;
     BgmTrack *track;
-    DWORD start_time;
+    uint32_t start_time;
 
     if (this_ptr == 0) {
         return 0;
@@ -1541,8 +1550,8 @@ static int32_t fade_out_playback(ManagerRecord* this_ptr,
     (void)this_ptr;
     (void)target;
     kinoko_bgm_begin_fade_for_handle((uint32_t)handle,
-                                     duration > 0 ? (DWORD)duration : 0,
-                                     static_cast<DWORD>(start_delay),
+                                     duration > 0 ? (uint32_t)duration : 0,
+                                     static_cast<uint32_t>(start_delay),
                                      0.0f, true);
     return 1;
 }
@@ -1645,8 +1654,7 @@ int32_t kinoko_audio_set_sound_volume(float gain) {
     return 1;
 }
 
-int32_t kinoko_audio_initialize_device(HWND hwnd, int32_t options) {
-    (void)hwnd; (void)options; // Former primary-buffer/3D flags have no callers requiring 3D audio.
+int32_t kinoko_audio_initialize_device(void) {
     kinoko_audio_shutdown_resources();
     g_audio_device.reset();
     g_audio_device=open_sdl_output();
@@ -1716,7 +1724,7 @@ int32_t kinoko_audio_fade_bgm(int32_t a1, int32_t a2) {
     if (active_bgm_handle() != 0) {
         float target = (float)a2 / 100.0f;
         kinoko_bgm_begin_fade_for_handle((uint32_t)active_bgm_handle(),
-                                         a1 > 0 ? (DWORD)a1 : 0, 0,
+                                         a1 > 0 ? (uint32_t)a1 : 0, 0,
                                          target);
     }
     return 0;
@@ -1748,7 +1756,7 @@ int32_t kinoko_audio_play_sound(int32_t id) {
 
 static void kinoko_loadse_blob(const char *source)
 {
-    char path[MAX_PATH];
+    char path[asset_path_capacity];
     size_t length;
     KinokoArchiveReader *reader_slot = nullptr;
     KinokoArchiveReader *reader;
@@ -1766,10 +1774,10 @@ static void kinoko_loadse_blob(const char *source)
     if (length < 4 || length + 1 > sizeof(path))
         return;
     memcpy(path, source, length + 1);
-    if (_stricmp(path + length - 4, ".csv") == 0) {
+    if (SDL_strcasecmp(path + length - 4, ".csv") == 0) {
         path[length - 2] = 'v';
         path[length - 1] = '1';
-    } else if (_stricmp(path + length - 4, ".cv1") != 0) {
+    } else if (SDL_strcasecmp(path + length - 4, ".cv1") != 0) {
         return;
     }
 
