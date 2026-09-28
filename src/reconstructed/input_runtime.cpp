@@ -1,4 +1,5 @@
 #include "kinoko/input_keys.h"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/direct_input.h"
 #include "kinoko/input_devices.h"
 #include "kinoko/input_cluster.h"
@@ -68,13 +69,13 @@ extern "C" int32_t kinoko_input_save_config(KinokoInputManager* manager, const c
         file.write(manager->keyboard.assignment);
         if (kinoko_input_devices_size(manager)) file.write(kinoko_input_devices_at(manager, 0)->assignment);
     }
-    kinoko_trace_squirrel_name("input:config-saved", diagnostic_address(path));
+    kinoko::script::diagnostic_name("input:config-saved", path);
     return 0;
 }
 extern "C" int32_t kinoko_input_load_config(KinokoInputManager* manager, const char* path) {
     kinoko_trace_i32("46b880:this", diagnostic_address(manager));
     kinoko_trace_i32("46b880:path", diagnostic_address(path));
-    kinoko_trace_squirrel_name("input:config-load", diagnostic_address(path));
+    kinoko::script::diagnostic_name("input:config-load", path);
     {
         ConfigFile file(CreateFileA(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                    nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));

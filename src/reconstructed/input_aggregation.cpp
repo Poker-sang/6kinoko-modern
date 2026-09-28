@@ -49,15 +49,24 @@ extern "C" KinokoInputCluster* __fastcall kinoko_input_cluster_delete(KinokoInpu
 }
 // 4077C0: borrowed inputs are visited in registration order. The deque owns
 // only pointers, including after assignment (no speculative rebinding).
-extern "C" int32_t __fastcall kinoko_input_cluster_update(KinokoInputCluster* cluster,void*) {
+extern "C" intptr_t __fastcall kinoko_input_cluster_update(KinokoInputCluster* cluster,void*) {
     auto& output=cluster->device.state;
     std::memset(&output,0,sizeof(output));
     const auto count=kinoko_input_cluster_size(cluster);
-    if (!count) return static_cast<int32_t>(reinterpret_cast<intptr_t>(&output));
+    if (!count) return reinterpret_cast<intptr_t>(&output);
     for (const auto* device:cluster->devices->devices) merge_device(*cluster,*device);
     return static_cast<int32_t>(count);
 }
 
-extern "C" const KinokoInputDeviceMethods kinoko_input_cluster_methods{
-    reinterpret_cast<decltype(KinokoInputDeviceMethods::destroy)>(kinoko_input_cluster_delete),
-    reinterpret_cast<decltype(KinokoInputDeviceMethods::update)>(kinoko_input_cluster_update)};
+namespace {
+KinokoInputDevice* __fastcall destroy_cluster(KinokoInputDevice* device, void*, unsigned char flags) {
+    auto* cluster = reinterpret_cast<KinokoInputCluster*>(device);
+    // The base is the initial member; retain the returned address even on delete.
+    return reinterpret_cast<KinokoInputDevice*>(kinoko_input_cluster_delete(cluster, nullptr, flags));
+}
+intptr_t __fastcall update_cluster(KinokoInputDevice* device, void*) {
+    return kinoko_input_cluster_update(reinterpret_cast<KinokoInputCluster*>(device), nullptr);
+}
+static_assert(offsetof(KinokoInputCluster, device) == 0);
+}
+extern "C" const KinokoInputDeviceMethods kinoko_input_cluster_methods{destroy_cluster, update_cluster};

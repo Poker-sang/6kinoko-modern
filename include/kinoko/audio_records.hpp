@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace kinoko::audio {
-// These records are the verified native Win32 boundary, NOT VM objects.
+// These records are the native in-memory boundary, NOT VM objects.
 // Retired vtable words are reserved layout only; no legacy objects live here.
 // Unknown regions stay opaque. The DSP/decoder state itself lives in C++ owners.
 struct PathRecord {
@@ -76,7 +76,8 @@ struct alignas(8) ManagerRecord {
     float stream_gain;
     std::uint8_t tail[0x140 - 0xb4];
 };
-static_assert(sizeof(void*) == 4 && sizeof(CRITICAL_SECTION) == 24);
+#if INTPTR_MAX == INT32_MAX
+static_assert(sizeof(CRITICAL_SECTION) == 24);
 static_assert(sizeof(PathRecord) == 24);
 static_assert(sizeof(BufferRecord) == 0x1378);
 static_assert(sizeof(HandleTable) == 0x50 && sizeof(ManagerRecord) == 0x140);
@@ -108,4 +109,10 @@ KINOKO_AUDIO_FIELD(ManagerRecord, retired, 0xa0);
 KINOKO_AUDIO_FIELD(ManagerRecord, master_gain, 0xac);
 KINOKO_AUDIO_FIELD(ManagerRecord, stream_gain, 0xb0);
 #undef KINOKO_AUDIO_FIELD
+#endif
+static_assert(std::is_standard_layout_v<BufferRecord>);
+static_assert(sizeof(BufferRecord::successor) == 4 && sizeof(BufferRecord::predecessor) == 4);
+static_assert(offsetof(BufferRecord, playback_state) == sizeof(PathRecord) + 4);
+static_assert(offsetof(ManagerRecord, pending) == offsetof(ManagerRecord, active) + sizeof(QueueRecord));
+static_assert(offsetof(ManagerRecord, retired) == offsetof(ManagerRecord, pending) + sizeof(QueueRecord));
 }

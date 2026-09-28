@@ -13,7 +13,7 @@ struct Device {
     Device& operator=(const Device& source) {
         record.assignment=source.record.assignment;record.state=source.record.state;return *this;
     }
-    ~Device() { record.methods->destroy(&record,0); }
+    ~Device() { record.methods->destroy(&record,nullptr,0); }
 };
 static_assert(sizeof(Device)==sizeof(KinokoInputDevice) && offsetof(Device,record)==0);
 }
@@ -24,8 +24,8 @@ extern "C" KinokoInputDevice* __fastcall kinoko_input_device_delete(KinokoInputD
     return receiver;
 }
 extern "C" const KinokoInputDeviceMethods kinoko_input_device_methods{
-    reinterpret_cast<decltype(KinokoInputDeviceMethods::destroy)>(kinoko_input_device_delete),
-    reinterpret_cast<decltype(KinokoInputDeviceMethods::update)>(kinoko_input_device_update)};
+    kinoko_input_device_delete,
+    kinoko_input_device_update};
 extern "C" void kinoko_input_devices_construct(KinokoInputManager* manager) { manager->devices=new KinokoInputDeviceStorage; }
 extern "C" void kinoko_input_devices_destroy(KinokoInputManager* manager) { delete manager->devices;manager->devices=nullptr; }
 extern "C" void kinoko_input_devices_resize(KinokoInputManager* manager,uint32_t count) { manager->devices->devices.resize(count); }
@@ -50,7 +50,7 @@ extern "C" KinokoInputDevice* kinoko_input_devices_end(KinokoInputManager* manag
 // and owners in original order. Cluster pointers remain borrowed from source.
 extern "C" KinokoInputManager* kinoko_input_manager_assign(KinokoInputManager* destination,const KinokoInputManager* source) {
     if (destination==source) return destination;
-    kinoko_sqplus_object_assign(destination->script_object,source->script_object);
+    kinoko_sqplus_object_assign(&destination->script_object,&source->script_object);
     destination->keyboard.assignment=source->keyboard.assignment;
     destination->keyboard.state=source->keyboard.state;
     kinoko_input_devices_assign(destination,source);

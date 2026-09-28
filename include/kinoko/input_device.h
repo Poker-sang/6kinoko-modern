@@ -22,8 +22,8 @@ typedef struct KinokoInputDevice {
 } KinokoInputDevice;
 struct KinokoInputDeviceMethods {
 #ifdef __cplusplus
-    KinokoInputDevice *(__thiscall *destroy)(KinokoInputDevice*, unsigned char flags);
-    int32_t (__thiscall *update)(KinokoInputDevice*);
+    KinokoInputDevice *(__fastcall *destroy)(KinokoInputDevice*, void*, unsigned char flags);
+    intptr_t (__fastcall *update)(KinokoInputDevice*, void*);
 #else
     /* MSVC C cannot express thiscall. C consumers only store this table. */
     void *destroy;
@@ -37,13 +37,17 @@ extern const KinokoInputDeviceMethods kinoko_input_device_methods;
 KinokoInputDevice *__fastcall kinoko_input_device_delete(KinokoInputDevice*, void*, unsigned char flags);
 /* True ECX receiver; EDX padding adapts the original thiscall virtual slot.
    Return retains original mixed EAX (device id or end pointer), not ownership. */
-int32_t __fastcall kinoko_input_device_update(KinokoInputDevice *device, void *unused);
+intptr_t __fastcall kinoko_input_device_update(KinokoInputDevice *device, void *unused);
 #ifdef __cplusplus
 }
+static_assert(offsetof(KinokoInputDevice, assignment) == sizeof(void*));
+static_assert(offsetof(KinokoInputDevice, state) == sizeof(void*) + sizeof(KinokoInputAssignment));
 static_assert(sizeof(KinokoInputAssignment)==68 && sizeof(KinokoInputState)==96);
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(KinokoInputDevice)==168);
 static_assert(offsetof(KinokoInputDevice,assignment)==4);
 static_assert(offsetof(KinokoInputDevice,state)==72);
+#endif
 static_assert(offsetof(KinokoInputState,released)==56);
 static_assert(offsetof(KinokoInputState,axes)==72);
 #endif

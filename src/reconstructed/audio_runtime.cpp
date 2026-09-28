@@ -3,7 +3,8 @@
 #include "kinoko/audio_records.hpp"
 #include "kinoko/audio_math.h"
 #include "kinoko/audio_output.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/windows_owner.hpp"
 #include <mmsystem.h>
 #include <SDL3/SDL.h>
@@ -22,8 +23,6 @@
 using float32_t = float;
 using float80_t = long double;
 using namespace kinoko::audio;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 using kinoko::windows::CriticalLock;
 
 static int32_t run_audio_update_worker();
@@ -54,9 +53,9 @@ struct BgmTrack {
         }
         return *this;
     }
-    kinoko::legacy::Allocation<unsigned char> encoded_data;
-    kinoko::legacy::Allocation<short> decoded_samples;
-    kinoko::legacy::Allocation<short> decode_scratch;
+    kinoko::memory::Allocation<unsigned char> encoded_data;
+    kinoko::memory::Allocation<short> decoded_samples;
+    kinoko::memory::Allocation<short> decode_scratch;
     std::unique_ptr<VorbisDecoder> decoder;
     OutputBufferPtr buffer;
     DWORD buffer_bytes = 0;
@@ -738,7 +737,7 @@ static int kinoko_se_parse_wave_asset(const char *path,
     unsigned char *raw = nullptr;
     DWORD size = 0;
     if (!kinoko_read_asset_bytes(path, &raw, &size)) return 0;
-    kinoko::legacy::Allocation<unsigned char> data(raw);
+    kinoko::memory::Allocation<unsigned char> data(raw);
 
     const size_t path_length = std::strlen(path);
     if (path_length >= 4 && _stricmp(path + path_length - 4, ".cv3") == 0) {
@@ -1446,7 +1445,7 @@ static int32_t prepare_playback_request(ManagerRecord* this_ptr,
     buffer = kinoko_audio_handle_lookup(&this_ptr->handles,
                                         (uint32_t)handle);
     kinoko_trace_i32("470220:handle", handle);
-    kinoko_trace_i32("470220:buffer", address(buffer));
+    kinoko_trace_i32("470220:buffer", kinoko::script::diagnostic_address(buffer));
     if (buffer == 0) {
         return 1;
     }

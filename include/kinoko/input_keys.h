@@ -24,9 +24,11 @@ int32_t kinoko_input_key_pressed(const KinokoKeyTracker *tracker,
     int32_t scan, int32_t shift, int32_t alt, int32_t control);
 #ifdef __cplusplus
 }
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(KinokoKeyTracker)==1044);
 static_assert(offsetof(KinokoKeyTracker,keys)==1024);
 static_assert(offsetof(KinokoKeyTracker,shift)==1040);
 static_assert(offsetof(KinokoKeyTracker,alt)==1041);
 static_assert(offsetof(KinokoKeyTracker,control)==1042);
+#endif
 #endif

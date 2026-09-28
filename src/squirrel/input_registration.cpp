@@ -4,7 +4,7 @@
 #include "script_registration_host.hpp"
 #include "kinoko/input_devices.h"
 #include "kinoko/direct_input.h"
-#include <array>
+#include "kinoko/script_diagnostics.hpp"
 
 namespace {
 using namespace kinoko::script;
@@ -119,38 +119,35 @@ extern "C" int32_t kinoko_register_input_class(void) {
     kinoko_sqplus_object_destroy(&state.methods);
     kinoko_sqplus_object_destroy(&state.members);
     kinoko_sqplus_object_destroy(&state.klass);
-    return address(kinoko_sqplus_object_destroy(&root));
+    return diagnostic_address(kinoko_sqplus_object_destroy(&root));
 }
 
 // Original 46E6F0 receives the 0x513CC0 CInputManager in ECX. The host
-// retains the 0x600-byte allocation; these symbols borrow its SqPlus globals.
+// owns native-sized storage; these symbols borrow its SqPlus globals.
 extern "C" int32_t kinoko_input_initialize_script_instance(KinokoInputManager* manager) {
     if (!manager) return 0;
     static bool devices_constructed = false;
     const auto& host = *kinoko_input_script_symbols();
     if (!devices_constructed) {
         std::memset(manager, 0, host.manager_storage_bytes);
-        const std::array<int32_t, 3> empty = {
-            static_cast<int32_t>(reinterpret_cast<uintptr_t>(host.object_vtable)),
-            host.null_type, host.null_data};
-        std::memcpy(manager->script_object, empty.data(), sizeof(empty));
+        manager->script_object = {host.object_vtable, host.null_type, host.null_data};
         kinoko_input_manager_construct_devices(manager, static_cast<uint32_t>(kinoko_input_snapshot.controller_count));
         devices_constructed = true;
     }
     kinoko_trace("46e6f0:begin");
     kinoko_trace_i32("46e6f0:this", static_cast<int32_t>(reinterpret_cast<uintptr_t>(manager)));
     kinoko_trace_i32("46e6f0:g644", static_cast<int32_t>(reinterpret_cast<uintptr_t>(host.vm)));
-    const auto* input_class = static_cast<const int32_t*>(host.input_class);
-    kinoko_trace_i32("46e6f0:g629-type", input_class[0]);
-    kinoko_trace_i32("46e6f0:g629-data", input_class[1]);
-    std::array<int32_t, 3> instance{};
-    kinoko_sqplus_object_new_instance(instance.data(), host.input_class);
-    kinoko_trace_i32("46e6f0:instance-type", instance[1]);
-    kinoko_trace_i32("46e6f0:instance-data", instance[2]);
-    kinoko_sqplus_object_assign(manager->script_object, instance.data());
-    kinoko_sqplus_object_destroy(instance.data());
-    kinoko_sqplus_object_set_instance(manager->script_object, manager);
-    kinoko_sqplus_object_raw_set_name(host.root, "input", manager->script_object);
+    const auto input_class = pair::read(host.input_class);
+    kinoko_trace_i32("46e6f0:g629-type", static_cast<int32_t>(input_class._type));
+    kinoko_trace_i32("46e6f0:g629-data", static_cast<int32_t>(data_bits(input_class)));
+    ObjectStorage instance{};
+    kinoko_sqplus_object_new_instance(&instance, host.input_class);
+    kinoko_trace_i32("46e6f0:instance-type", static_cast<int32_t>(instance.value._type));
+    kinoko_trace_i32("46e6f0:instance-data", static_cast<int32_t>(data_bits(instance.value)));
+    kinoko_sqplus_object_assign(&manager->script_object, &instance);
+    kinoko_sqplus_object_destroy(&instance);
+    kinoko_sqplus_object_set_instance(&manager->script_object, manager);
+    kinoko_sqplus_object_raw_set_name(host.root, "input", &manager->script_object);
     kinoko_trace("46e6f0:done");
     return 1;
 }

@@ -29,7 +29,7 @@ void button(KinokoInputState& state, int index, bool pressed) {
 }
 
 // 407500: physical input update, with the original 168-byte object layout.
-extern "C" int32_t __fastcall kinoko_input_device_update(KinokoInputDevice* self, void*) {
+extern "C" intptr_t __fastcall kinoko_input_device_update(KinokoInputDevice* self, void*) {
     auto& assignment = self->assignment;
     auto& output = self->state;
     const auto id = static_cast<int8_t>(assignment.id);
@@ -58,7 +58,7 @@ extern "C" int32_t __fastcall kinoko_input_device_update(KinokoInputDevice* self
         for (int axis = 2; axis < 6; ++axis) output.axes[axis] = 0;
     } else {
         std::memset(&output, 0, sizeof(output));
-        return static_cast<int32_t>(reinterpret_cast<intptr_t>(&output));
+        return reinterpret_cast<intptr_t>(&output);
     }
-    return static_cast<int32_t>(reinterpret_cast<intptr_t>(output.released));
+    return reinterpret_cast<intptr_t>(output.released);
 }

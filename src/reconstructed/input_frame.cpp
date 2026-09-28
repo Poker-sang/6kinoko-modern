@@ -23,7 +23,7 @@ extern "C" void kinoko_input_manager_construct_devices(KinokoInputManager* manag
 }
 namespace {
 void update(KinokoInputDevice& device) {
-    if (device.methods && device.methods->update) device.methods->update(&device);
+    if (device.methods && device.methods->update) device.methods->update(&device,nullptr);
 }
 }
 // 46B9A0: controllers, keyboard, virtual cluster update, then key tracker.

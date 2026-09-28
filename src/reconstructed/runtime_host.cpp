@@ -27,7 +27,11 @@ HostStorage<KinokoInputManager, 0x600> input_state{};
 HostStorage<kinoko::collision::StateRecord, 120> collision_state{};
 KinokoScriptCallback global_callback{};
 static_assert(sizeof(actor_state) == 0x200 && sizeof(map_state) == 0x200);
-static_assert(sizeof(camera_state) == 0x200 && sizeof(input_state) == 0x600);
+static_assert(sizeof(camera_state) == 0x200);
+static_assert(sizeof(input_state) >= sizeof(KinokoInputManager));
+#if INTPTR_MAX == INT32_MAX
+static_assert(sizeof(input_state) == 0x600);
+#endif
 static_assert(sizeof(collision_state) >= sizeof(kinoko::collision::StateRecord));
 static_assert(sizeof(global_callback)==sizeof(void*)+2*sizeof(KinokoOwnedObjectWords));
 }

@@ -9,7 +9,7 @@ unsigned char kinoko_keyboard_state[256]{};
 void* kinoko_sqplus_object_assign(void* destination, const void* source) {
     std::memcpy(destination, source, 12); return destination;
 }
-int32_t __fastcall kinoko_input_device_update(KinokoInputDevice* device, void*) {
+intptr_t __fastcall kinoko_input_device_update(KinokoInputDevice* device, void*) {
     order[calls++] = device->assignment.id;
     return 0;
 }
@@ -24,9 +24,9 @@ static int32_t __fastcall cluster_update(KinokoInputDevice* device, void*) {
 }
 int main() {
     KinokoInputManager manager{};
-    manager.script_object[0] = 0x42;
+    manager.script_object.type = 0x42;
     kinoko_input_manager_construct_devices(&manager, 2);
-    CHECK(manager.script_object[0] == 0x42);
+    CHECK(manager.script_object.type == 0x42);
     CHECK(kinoko_input_devices_size(&manager) == 2);
     CHECK(kinoko_input_cluster_size(&manager.cluster) == 3);
     CHECK(kinoko_input_cluster_at(&manager.cluster, 0) == kinoko_input_devices_at(&manager, 0));

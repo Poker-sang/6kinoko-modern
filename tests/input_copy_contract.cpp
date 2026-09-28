@@ -6,9 +6,9 @@ static unsigned script_assigns, virtual_destroys;
 extern "C" {
 unsigned char kinoko_keyboard_state[256]{};
 void* kinoko_sqplus_object_assign(void* destination,const void* source) {
-    ++script_assigns;std::memcpy(destination,source,12);return destination;
+    ++script_assigns;std::memcpy(destination,source,sizeof(KinokoOwnedObjectWords));return destination;
 }
-int32_t __fastcall kinoko_input_device_update(KinokoInputDevice*,void*) { return 0; }
+intptr_t __fastcall kinoko_input_device_update(KinokoInputDevice*,void*) { return 0; }
 }
 static KinokoInputDevice* __fastcall destroy(KinokoInputDevice* device,void*,unsigned char flags) {
     ++virtual_destroys;return kinoko_input_device_delete(device,nullptr,flags);
@@ -27,7 +27,7 @@ int main() {
     source.keyboard.assignment.id=255;source.keyboard.state.counts[2]=7;
     source.cluster.device.state.counts[13]=8;source.cluster.active_device=31;
     source.published.buttons[5]=9;source.published.digits[9]=10;
-    source.script_object[4]=11;
+    source.script_object.type=11;
     auto* source_device=kinoko_input_devices_at(&source,0);
     source_device->assignment.buttons[0]=17;
     kinoko_input_cluster_append(&source.cluster,source_device);

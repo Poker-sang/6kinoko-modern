@@ -19,10 +19,12 @@ void kinoko_input_cluster_assign(KinokoInputCluster *destination, const KinokoIn
 uint32_t kinoko_input_cluster_size(const KinokoInputCluster *cluster);
 KinokoInputDevice *kinoko_input_cluster_at(const KinokoInputCluster *cluster, uint32_t index);
 KinokoInputCluster *__fastcall kinoko_input_cluster_delete(KinokoInputCluster *cluster, void *unused, unsigned char flags);
-int32_t __fastcall kinoko_input_cluster_update(KinokoInputCluster *cluster, void *unused);
+intptr_t __fastcall kinoko_input_cluster_update(KinokoInputCluster *cluster, void *unused);
 #ifdef __cplusplus
 }
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(KinokoInputCluster)==196);
 static_assert(offsetof(KinokoInputCluster,devices)==172);
 static_assert(offsetof(KinokoInputCluster,active_device)==192);
+#endif
 #endif

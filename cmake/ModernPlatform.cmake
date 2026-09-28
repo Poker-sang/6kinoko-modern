@@ -248,3 +248,23 @@ if(WIN32)
         WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
     target_compile_features(kinoko_act_map_width_compile PRIVATE cxx_std_17)
 endif()
+
+if(WIN32)
+    # Compile real input publication and audio ownership, with native pointers.
+    add_library(kinoko_input_audio_width_compile OBJECT
+        src/reconstructed/audio_runtime.cpp
+        src/reconstructed/physical_input.cpp
+        src/reconstructed/input_aggregation.cpp
+        src/reconstructed/input_copy.cpp
+        src/reconstructed/input_frame.cpp
+        src/reconstructed/input_keys.cpp
+        src/reconstructed/input_runtime.cpp
+        src/squirrel/input_registration.cpp
+        tests/input_audio_width_compile.cpp)
+    target_include_directories(kinoko_input_audio_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/SDL3-3.4.16/include")
+    target_compile_definitions(kinoko_input_audio_width_compile PRIVATE
+        WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS KINOKO_RETDEC_DISABLE_TRACE=1)
+    target_compile_features(kinoko_input_audio_width_compile PRIVATE cxx_std_17)
+endif()
