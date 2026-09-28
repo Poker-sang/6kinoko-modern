@@ -58,6 +58,14 @@ The native ownership contract compiles separately at Windows x64 (not executed).
 The user reports `modern-mesh-native-01` normal; this is user runtime feedback.
 See [string migration scope](../docs/modern-x64/string-native.md).
 
+The next milestone is a complete Windows x64 game. An experimental full-game
+compiler probe now records actual blockers without disabling source layout or
+address guards. ACT/generic script calls pass explicit receiver/reserved slots
+and typed floats at both widths. Serialized type hashes keep original 32-bit
+results; crash diagnostics and locks compile with native Windows x64 layouts.
+The complete x64 game is still blocked; isolated compile success is not gameplay.
+The user reports `modern-string-native-01` normal. See the [full-game milestone](../docs/modern-x64/full-game.md).
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).

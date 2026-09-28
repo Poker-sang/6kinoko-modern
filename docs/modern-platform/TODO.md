@@ -1,6 +1,19 @@
 # Modern 迁移与后续功能 TODO
 
-## 当前批次：SDL 平台基础
+## 当前主线：完整 Windows x64 游戏
+- [x] 建立完整游戏 x64 构建诊断入口；保留源代码布局/地址保护，不将失败当成可运行版本。
+- [x] 公共 ACT/脚本调用显式保留 EDX 占位参数；浮点参数不再借用整数位模式传递。
+- [x] 历史真实 thiscall 测试库从游戏依赖中分离；捕获的函数地址按指针宽度检查。
+- [x] 序列化哈希固定为原版 32 位算法，独立编译原版类型 ID 与有符号字符样例。
+- [x] 崩溃日志使用对应架构寄存器；临界区使用本机布局，实际源文件通过 x64 编译。
+- [ ] 按完整编译诊断迁移基础容器/引用计数边界，再迁移角色、相机和 ACT/地图布局及分配尺寸。
+- [ ] 将三整数 SqPlus 对象参数、注册键与嵌入式 VM 对象迁移为完整指针宽度；清除剩余直接调用 ABI。
+- [ ] 完整 x64 游戏链接、DAT 校验，随后由用户确认基本运行。
+- [ ] 迁移 GDI 字体及剩余 Windows 服务，交付 Linux 可玩版本。
+- [ ] 完成 macOS 构建、打包及用户运行验证。
+- 构建入口、实际阻塞和兼容约束：`../modern-x64/full-game.md`。
+
+## 已完成检查点：SDL 平台基础
 - [x] 新建独立的 6kinoko-modern 私有仓库，保留 rebuild 原版基线。
 - [x] SDL3 窗口、事件与物理输入接口；原编号兼容适配。
 - [x] 更新并固定 SDL/libogg/libvorbis 源码版本与来源。
@@ -26,7 +39,7 @@
 具体默认新键位在实现时选择并记录，当前不硬编码未经用户确认的布局。
 
 ## 完整跨平台后续
-- [ ] 替换 D3D9/D3DX 渲染，覆盖混合、纹理、网格和设备生命周期。
+- [x] 替换 D3D9/D3DX 渲染，覆盖混合、纹理、网格和设备生命周期。
 - [x] 实现 DirectSound -> SDL 输出迁移并完成 Win32 构建/DAT 校验（modern-audio-03）。
 - [ ] 用户验证 SDL 音频的 BGM/音效/暂停/淡出与听感。
 - [ ] 迁移 Win32 线程/事件、文件、路径、IME、诊断边界。
@@ -51,7 +64,7 @@
 - [ ] SDL 窗口/输入验证：焦点切换、热插拔、键位保存、Alt+Enter。
 - [ ] 明确逐帧更新与渲染的边界；按原版证据恢复时间步长，不假定 60Hz。
 - [ ] 主线程窗口/事件生命周期与工作线程移交；避免跨线程调用 SDL 限定 API。
-- [ ] 迁移 D3D9/D3DX：纹理格式、混合、坐标、裁剪、网格、状态缓存、设备重建。
+- [x] 迁移 D3D9/D3DX：纹理格式、混合、坐标、裁剪、网格、状态缓存、设备重建。
 - [x] Rendering capability audit selects SDL GPU; see `../modern-render/README.md`.
 - [x] Portable central/ACT blend commands now feed the production D3D9 adapter.
 - [ ] Isolate textures, quad submission, scoped state, meshes and device lifecycle; implement SDL GPU.

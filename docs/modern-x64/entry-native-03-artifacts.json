@@ -1,0 +1,45 @@
+{
+  "source_commit": "7bb7f95bd59cac9f982ee569bb6932468fecbec8",
+  "configuration": "Windows x64 Release",
+  "compiled": true,
+  "executed": false,
+  "full_game": false,
+  "files": [
+    {
+      "path": "runtime-builds\\modern-x64-entry-native-03\\kinoko_act_method_dispatch_contract.exe",
+      "size": 11264,
+      "machine": "0x8664",
+      "sha256": "177ac71cd4626de03bbba052b100771de0eada5bfc50ce0c489818eaeaa08263"
+    },
+    {
+      "path": "runtime-builds\\modern-x64-entry-native-03\\kinoko_method_entry_contract.exe",
+      "size": 10240,
+      "machine": "0x8664",
+      "sha256": "4f1cb22d516c90bc4748768806ac164f49c2f0b617a03c0f276a427319362c04"
+    },
+    {
+      "path": "runtime-builds\\modern-x64-entry-native-03\\kinoko_serialized_hash_contract.exe",
+      "size": 10240,
+      "machine": "0x8664",
+      "sha256": "f28fcceec885bb27f62af1bd7e9696031d2c8d2f4e98e03e7ce96cffbf8e10ae"
+    },
+    {
+      "path": "build-runs\\modern-x64-entry-native-03\\kinoko_native_calls_width_compile.dir\\Release\\squirrel_native_calls.obj",
+      "size": 67321,
+      "machine": "0x8664",
+      "sha256": "54531b7d0afd9d5513cd005f817410f8311eaead9750c921f1ca42aed7b2026a"
+    },
+    {
+      "path": "build-runs\\modern-x64-entry-native-03\\kinoko_windows_services_width_compile.dir\\Release\\critical_section.obj",
+      "size": 2225,
+      "machine": "0x8664",
+      "sha256": "a7a7562149e2a2c5f012be62916e3479309950d0d5dd54d8ed1818cbe1810999"
+    },
+    {
+      "path": "build-runs\\modern-x64-entry-native-03\\kinoko_windows_services_width_compile.dir\\Release\\diagnostics.obj",
+      "size": 60425,
+      "machine": "0x8664",
+      "sha256": "10294e275e4b5f38f93fae1fe0c4f11c29ddab7ea876065a0ad291b1dc966acb"
+    }
+  ]
+}

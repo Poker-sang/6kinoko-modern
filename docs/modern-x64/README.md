@@ -1,8 +1,12 @@
-# x64 preparation: runtime graphics records
+# Full-game x64 migration and earlier preparation checkpoints
 
-This batch prepares selected graphics runtime objects; the complete game remains
-Windows x86. The user reports modern-width-01 currently normal. That is user
-feedback, not agent-run validation.
+The active milestone is a complete Windows x64 game, followed by Linux gameplay
+and macOS validation. The full target can now be compiled experimentally with all
+source guards enabled; it is still blocked and is not a delivered x64 game.
+[Current build entry and migration scope](full-game.md). User reports
+modern-string-native-01 normal; that is user feedback, not agent-run validation.
+
+The sections below retain earlier graphics preparation evidence.
 
 ## Completed boundary
 
@@ -42,19 +46,19 @@ layout assertions also protect valid on-disk/scalar formats.
 | Renderer / texture registry | Native pointer storage; renderer prefix dispatch and fixed extent removed in this batch. Keep handles and dimensions fixed-width. |
 | Graphics device / SDL GPU resources | Device pointers, shared ownership and numeric GPU texture IDs already use native/explicit types; Windows HWND/HRESULT boundary remains. |
 | `legacy_memory.hpp` | Enforces 4-byte pointers and converts addresses through int32_t. Retain the guard until callers and object storage migrate; simply widening the helper would corrupt fixed records. |
-| `legacy_abi.cpp`, `legacy_method_entries.cpp` | Win32 method ABI and x86 entry adapters still block the full game. Replace at typed caller boundaries. |
-| ACT texture/font/layout records | `TextureResourcePrefix` includes a native vtable pointer plus original offsets. `FontRenderer` and `FontAtlas` now use native storage; their former 404/436-byte layouts are historical evidence. Outer ACT string/glyph and resource-prefix records remain to migrate. |
+| Method ABI | Production ACT/generic script calls use explicit receiver and reserved argument at both widths. `legacy_abi.cpp` remains in historical contracts only. Direct callbacks outside these adapters and VM by-value records still require migration. |
+| ACT/font/layout records | Texture, chip, mesh, string, glyph and atlas ownership is native. Remaining layer/document/actor/camera/map records and their allocators still assume x86. |
 | Squirrel host wrappers / registrations | `squirrel_host_object.hpp` assumes 8-byte HSQOBJECT and 12-byte wrapper storage and exposes integer addresses. Registration and diagnostic callers also narrow pointers. Audit with the pinned VM/bytecode ABI; do not blindly redefine all VM integers. |
 | Diagnostics | Some pointer casts are only logged or discarded, while others drive branches. Classify separately; logging width alone is not the game ABI migration. |
-| Full-game build gate | CMake still requires MSVC Win32. The x64 result here covers the runtime type/listener contract only, not a complete game or GPU execution. |
+| Full-game build | `build_x64_probe.ps1` reaches the actual MSVC x64 game graph. Unmigrated source layout/address guards still fail. Normal supported builds remain Win32. |
 
 ## Next scope
 
-Separate remaining ACT resource ownership from original byte-layout records, then
-migrate remaining typed host/VM boundaries and x86 entry adapters. Keep file and
-save formats explicitly fixed-width. Full x64 game compilation and user runtime
-validation are separate milestones. Retired COM fixture assertions remain a
-known coverage gap recorded in `../legacy-render-contracts/README.md`.
+Use actual full-game compiler diagnostics to migrate container/control and
+actor/camera/ACT record dependencies together with their allocation and binding
+consumers. Do not disable assertions or merely widen integer-address helpers.
+Keep DAT/save formats fixed-width. Full-game compilation and user runtime
+validation remain separate milestones. See [full-game plan](full-game.md).
 
 Build evidence is recorded in BUILD.md. No game or local test was executed.
 

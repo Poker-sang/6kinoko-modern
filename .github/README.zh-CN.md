@@ -50,6 +50,12 @@ ACT 调用统一为具名类型接口，旧方法表保留在明确的适配边�
 用户反馈 `modern-mesh-native-01` 正常，这是用户运行反馈。
 详见[字符串迁移范围](../docs/modern-x64/string-native.md)。
 
+下一里程碑是完整 Windows x64 游戏。新增完整目标编译诊断入口，记录实际阻塞，
+不绕过源代码布局与地址保护。ACT/通用脚本调用在两种位宽下显式传递接收者、保留参数
+和真实浮点值；序列化类型哈希保持原版 32 位结果，崩溃诊断与临界区已通过 Windows x64 编译。
+完整 x64 游戏仍被阻塞，独立编译成功不代表游戏可运行。
+用户反馈 `modern-string-native-01` 正常。详见[完整游戏里程碑](../docs/modern-x64/full-game.md)。
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).

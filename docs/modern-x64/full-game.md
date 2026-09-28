@@ -45,3 +45,31 @@ layouts remain migration work. Their guards must not simply be removed. Native
 aggregate support in the common dispatcher does not migrate those VM records.
 GDI/Windows services follow the full x64 milestone; save/DAT scalar formats stay
 fixed-width. Prior user feedback: modern-string-native-01 normal (user report).
+
+## Windows services and serialized hashes
+
+The full compiler exposed Win32-only register names, fixed lock-size assertions
+and a host-size_t Boost hash dependency. Diagnostics now emit Rip/Rsp/Rbp and
+64-bit fault addresses on x64 while preserving the x86 output branch. Critical
+sections use native field layout, as all live consumers already do.
+
+Serialized ACT hashes now explicitly reproduce Boost 1.44's Win32 unsigned
+32-bit seed arithmetic and signed-char values on every host. Merely casting a
+64-bit boost::hash_range result would change type IDs, so that is not used.
+Compile-time assertions preserve existing original-layout/timeline/string IDs,
+embedded zero and high-bit character samples. Actual hash adapter, diagnostics
+and critical-section sources compile at x64. This is not runtime validation.
+
+## Compiler checkpoint and next dependency groups
+
+`modern-full-x64-03` configures the real game graph but fails compilation with
+fixed-layout/address guards intact. It produces no x64 game. Diagnostics and
+hash source errors from the preceding attempt are gone; progressing farther in
+the graph exposes more guarded records (268 unique messages, including cascades).
+See `full-x64-03-blockers.json` and BUILD.md; these are not 268 separate tasks.
+
+Next, migrate the shared reference/container substrate and actor/camera/quad
+allocation consumers as coherent groups, followed by ACT/document/layer/script
+storage and map/input/collision dependencies. Complete the remaining by-value VM
+and direct callback boundaries before claiming a full-game x64 link. Keep build
+probes tied to source commits and preserve each failing attempt for comparison.

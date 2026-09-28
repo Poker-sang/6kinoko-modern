@@ -1,6 +1,42 @@
 # x64 preparation build evidence
 
 
+## Full-game x64 compiler baseline and native method ABI
+
+Source: `7bb7f95bd59cac9f982ee569bb6932468fecbec8`.
+
+- `modern-x64-entry-03`: full Win32 Release no-trace game and 76
+  contract executables compiled. Three DAT staged beside the EXE and verified by
+  size/SHA256. Keep the adjacent shaders directory.
+- Game: `runtime-builds/modern-x64-entry-03/kinoko_modern_gpu.exe` (still x86).
+- EXE SHA256: `DD2874647B0C47A375C8EEF53490A3EB3F94AB65EBCF2BC291405DEB1745F73B`.
+- D3D9 static audit passed: 115 compiler / 86 linker input logs, no violations.
+- `modern-x64-entry-native-03`: method-call, ACT dispatch and serialized-hash
+  contracts linked at x64. Actual script-call, crash-diagnostics and critical-section
+  translation units compiled at x64. Static PE/COFF inspection identifies all
+  three EXEs and three objects as AMD64.
+- Five serialized-hash compile-time assertions passed against original type-ID,
+  empty-range and high-bit/embedded-zero samples. Runtime contract assertions
+  were only compiled, not executed.
+- `modern-full-x64-03`: actual full-game target configured successfully but did
+  NOT compile/link. Source layout/address guards remain enabled. The report has
+  268 unique compiler diagnostics; these include cascades and are NOT that many
+  independent tasks. Removing earlier service blockers exposed additional
+  translation units, so diagnostic totals need not decrease monotonically.
+- Remaining clusters: shared container/control storage, actor/camera/quad,
+  ACT/document/layer/script records, map/input/collision records and integer-address
+  helpers. Full report: `full-x64-03-blockers.json`.
+- No game, preview, CTest or contract executable was run. User reports the previous
+  `modern-string-native-01` normal (user feedback).
+- Retained earlier attempts: entry-01/native-01 failed on a missing resource type
+  declaration; full-x64-01 stopped when PowerShell treated a CMake warning as an
+  exception. Entry-02/native-02 succeeded; full-x64-02 exposed guards and service
+  errors. All old directories/logs/products remain intact.
+- Evidence: `entry-03-artifacts.json`, `entry-03-d3d9-audit.json`,
+  `entry-native-03-artifacts.json`, `full-x64-03-artifacts.json`;
+  [full-game milestone and commands](full-game.md).
+
+
 ## Native string layout, glyph queue and shared atlas ownership
 
 Source: `cde7471da6dda604c4d0e935a3aae2dafdb97963`.
