@@ -272,3 +272,15 @@ if(WIN32)
         WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS KINOKO_RETDEC_DISABLE_TRACE=1)
     target_compile_features(kinoko_input_audio_width_compile PRIVATE cxx_std_17)
 endif()
+
+# OS files stay behind a native-width, Windows-header-free interface.
+add_library(kinoko_file_service STATIC src/platform/file_service.cpp)
+target_include_directories(kinoko_file_service PUBLIC include)
+target_compile_features(kinoko_file_service PUBLIC cxx_std_17)
+add_executable(kinoko_file_service_contract tests/file_service_contract.cpp)
+target_link_libraries(kinoko_file_service_contract PRIVATE kinoko_file_service)
+add_test(NAME file_service_contract COMMAND kinoko_file_service_contract)
+# Compile the actual native reader/package consumer on every portable CI host.
+add_library(kinoko_file_reader_compile OBJECT src/reconstructed/file_io.cpp)
+target_include_directories(kinoko_file_reader_compile PRIVATE include)
+target_compile_features(kinoko_file_reader_compile PRIVATE cxx_std_17)

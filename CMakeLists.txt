@@ -124,7 +124,7 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/map_layout_lifetime.cpp
     src/reconstructed/map_render.cpp)
 target_include_directories(kinoko_native_methods PUBLIC include)
-target_link_libraries(kinoko_native_methods PUBLIC kinoko_platform)
+target_link_libraries(kinoko_native_methods PUBLIC kinoko_platform kinoko_file_service)
 
 include(cmake/Xiph.cmake)
 add_library(kinoko_audio_runtime STATIC src/reconstructed/audio_runtime.cpp)
@@ -360,7 +360,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     "${KINOKO_SQUIRREL2_ROOT}/squirrel/sqtable.cpp"
     "${KINOKO_SQUIRREL2_ROOT}/squirrel/sqvm.cpp"
 )
-target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_native_control kinoko_zlib kinoko_platform kinoko_audio_output)
+target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_native_control kinoko_zlib kinoko_platform kinoko_audio_output kinoko_file_service)
 target_include_directories(kinoko_squirrel_cpp_vm PRIVATE
     "${KINOKO_SQUIRREL2_ROOT}/include"
     "${KINOKO_SQUIRREL2_ROOT}/squirrel"
@@ -773,7 +773,7 @@ add_executable(kinoko_file_archive_contract tests/file_archive_contract.cpp
     src/reconstructed/file_io.cpp src/reconstructed/archive_store.cpp
     src/reconstructed/archive_random.cpp)
 target_include_directories(kinoko_file_archive_contract PRIVATE include)
-target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_zlib user32)
+target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_zlib user32 kinoko_file_service)
 add_test(NAME file_archive_contract COMMAND kinoko_file_archive_contract)
 
 add_executable(kinoko_map_loading_contract tests/map_loading_contract.cpp

@@ -1,7 +1,7 @@
 #include "kinoko/act_types.h"
 #include "kinoko/angle_math.h"
 #include "kinoko/script_file.h"
-#include "kinoko/file_io_legacy.h"
+#include "kinoko/file_io.h"
 #include "kinoko/graphics_device.h"
 #pragma once
 #include "kinoko/legacy_string.h"

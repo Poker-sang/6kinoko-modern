@@ -1,4 +1,5 @@
 #include "kinoko/file_io_layout.h"
+#include <windows.h>
 #include "kinoko/archive_random.h"
 #include "kinoko/legacy_string.hpp"
 #include <array>
@@ -11,7 +12,7 @@ namespace {
 struct TempFile {
     char path[MAX_PATH]{};
     TempFile() { char dir[MAX_PATH]{}; GetTempPathA(MAX_PATH,dir); GetTempFileNameA(dir,"kio",0,path); }
-    ~TempFile() { DeleteFileA(path); }
+    ~TempFile() { std::printf("Retained archive fixture: %s\n",path); }
 };
 void word(std::vector<uint8_t>& bytes,uint32_t value) {
     for (int i=0;i<4;++i) bytes.push_back(static_cast<uint8_t>(value>>(8*i)));
@@ -88,9 +89,9 @@ int main() {
     // Explicitly pin the original virtual seek quirk; guarded loader skips above
     // remain absolute. FILE_END subtracts distance instead of adding it.
     CHECK(kinoko_reader_seek(reader,1,FILE_END)==4 && package->read_position==4);
-    CHECK(SetFilePointer(reader->handle,0,nullptr,FILE_CURRENT)==offset+4);
+    CHECK(kinoko_file_seek(reader->handle,0,KINOKO_FILE_CURRENT)==offset+4);
     CHECK(kinoko_reader_seek(reader,2,FILE_BEGIN)==2);
-    CHECK(SetFilePointer(reader->handle,0,nullptr,FILE_CURRENT)==offset+2);
+    CHECK(kinoko_file_seek(reader->handle,0,KINOKO_FILE_CURRENT)==offset+2);
     CHECK(kinoko_reader_seek(reader,1,FILE_CURRENT)==3);
     CHECK(package->read_position==3);
     kinoko_archive_count=1;

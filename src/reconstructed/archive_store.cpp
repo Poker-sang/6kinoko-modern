@@ -1,4 +1,5 @@
 #include "kinoko/file_io.h"
+#include "kinoko/file_service.hpp"
 #include "kinoko/compat/resource_rules.hpp"
 #include "kinoko/compat/archive_index.hpp"
 #include "kinoko/archive_random.h"
@@ -21,23 +22,7 @@ struct Entry {
 // chain. Path spelling stays unchanged; only the hash copy is lowercased.
 std::map<uint32_t,std::list<Entry>> entries;
 std::vector<std::string> archives;
-class File {
-    HANDLE value_;
-public:
-    explicit File(const char *path):value_(CreateFileA(path,GENERIC_READ,FILE_SHARE_READ,
-        nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr)) {}
-    ~File() { if(valid()) CloseHandle(value_); }
-    File(const File&)=delete;
-    File& operator=(const File&)=delete;
-    bool valid() const { return value_!=INVALID_HANDLE_VALUE; }
-    HANDLE get() const { return value_; }
-    void close() { if(valid()) CloseHandle(detach()); }
-    HANDLE detach() { return std::exchange(value_,INVALID_HANDLE_VALUE); }
-    bool read(void *data,DWORD size) {
-        DWORD read=0;
-        return ReadFile(value_,data,size,&read,nullptr) && read==size;
-    }
-};
+using kinoko::io::File;
 uint32_t path_hash(const std::string &path) {
     std::vector<char> lowered(path.begin(),path.end());lowered.push_back('\0');
     CharLowerBuffA(lowered.data(),static_cast<DWORD>(lowered.size()));
@@ -62,7 +47,7 @@ extern "C" int32_t kinoko_archive_insert(const char *path,uint32_t archive,uint3
 }
 extern "C" int32_t kinoko_archive_mount(const char *path) {
     if(!path) return 0;
-    File file(path);if(!file.valid()) return 0;
+    File file(path,KINOKO_FILE_READ);if(!file) return 0;
     // 410500 publishes the archive path before reading its header or index.
     const auto archive=static_cast<uint32_t>(archives.size());
     archives.emplace_back(path);kinoko_archive_count=static_cast<int32_t>(archives.size());
@@ -85,7 +70,7 @@ extern "C" int32_t kinoko_archive_mount(const char *path) {
     }
     return 1;
 }
-extern "C" HANDLE kinoko_archive_open_entry(const char *path,uint32_t *offset,uint32_t *size) {
+extern "C" KinokoFile* kinoko_archive_open_entry(const char *path,uint32_t *offset,uint32_t *size) {
     if(!path || !offset || !size) return 0;
     *offset=*size=0;
     const auto normalized=kinoko::compat::runtime_archive_lookup_path(path);
@@ -98,8 +83,8 @@ extern "C" HANDLE kinoko_archive_open_entry(const char *path,uint32_t *offset,ui
         if(chain.size()!=1 && _stricmp(entry.path.c_str(),normalized.c_str())!=0) continue;
         if(entry.archive>=archives.size()) return 0;
         *offset=entry.offset;*size=entry.size;
-        File file(archives[entry.archive].c_str());if(!file.valid()) return 0;
-        SetFilePointer(file.get(),static_cast<LONG>(entry.offset),nullptr,FILE_BEGIN);
+        File file(archives[entry.archive].c_str(),KINOKO_FILE_READ);if(!file) return 0;
+        kinoko_file_seek(file.get(),static_cast<int32_t>(entry.offset),KINOKO_FILE_BEGIN);
         return file.detach();
     }
     return 0;

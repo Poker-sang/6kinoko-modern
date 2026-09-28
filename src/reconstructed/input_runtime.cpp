@@ -3,7 +3,7 @@
 #include "kinoko/direct_input.h"
 #include "kinoko/input_devices.h"
 #include "kinoko/input_cluster.h"
-#include <windows.h>
+#include "kinoko/file_service.hpp"
 #include <cstdint>
 #include <cstring>
 
@@ -37,24 +37,7 @@ KinokoInputDevice* assignment_target(KinokoInputManager* manager, int32_t device
         return kinoko_input_devices_at(manager, 0);
     return nullptr;
 }
-class ConfigFile {
-public:
-    explicit ConfigFile(HANDLE handle): handle_(handle) {}
-    ~ConfigFile() { if (valid()) CloseHandle(handle_); }
-    ConfigFile(const ConfigFile&) = delete;
-    ConfigFile& operator=(const ConfigFile&) = delete;
-    bool valid() const { return handle_ != INVALID_HANDLE_VALUE; }
-    bool read(KinokoInputAssignment& record) {
-        DWORD count = 0;
-        return ReadFile(handle_, &record, sizeof(record), &count, nullptr) && count == sizeof(record);
-    }
-    void write(const KinokoInputAssignment& record) {
-        DWORD count = 0;
-        WriteFile(handle_, &record, sizeof(record), &count, nullptr);
-    }
-private:
-    HANDLE handle_;
-};
+using ConfigFile = kinoko::io::File;
 int32_t diagnostic_address(const void* pointer) {
     return static_cast<int32_t>(reinterpret_cast<intptr_t>(pointer));
 }
@@ -63,11 +46,10 @@ extern "C" int32_t kinoko_input_save_config(KinokoInputManager* manager, const c
     kinoko_trace_i32("46b7c0:this", diagnostic_address(manager));
     kinoko_trace_i32("46b7c0:path", diagnostic_address(path));
     {
-        ConfigFile file(CreateFileA(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
-                                   FILE_ATTRIBUTE_NORMAL, nullptr));
-        if (!file.valid()) return 0;
-        file.write(manager->keyboard.assignment);
-        if (kinoko_input_devices_size(manager)) file.write(kinoko_input_devices_at(manager, 0)->assignment);
+        ConfigFile file(path, KINOKO_FILE_WRITE);
+        if (!file) return 0;
+        file.write(&manager->keyboard.assignment, sizeof(KinokoInputAssignment));
+        if (kinoko_input_devices_size(manager)) file.write(&kinoko_input_devices_at(manager, 0)->assignment, sizeof(KinokoInputAssignment));
     }
     kinoko::script::diagnostic_name("input:config-saved", path);
     return 0;
@@ -77,15 +59,14 @@ extern "C" int32_t kinoko_input_load_config(KinokoInputManager* manager, const c
     kinoko_trace_i32("46b880:path", diagnostic_address(path));
     kinoko::script::diagnostic_name("input:config-load", path);
     {
-        ConfigFile file(CreateFileA(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                   nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
-        if (!file.valid()) return 0;
+        ConfigFile file(path, KINOKO_FILE_READ_SHARED);
+        if (!file) return 0;
         KinokoInputAssignment record;
-        if (file.read(record)) {
+        if (file.read(&record, sizeof(record))) {
             apply_assignment(manager->keyboard, record);
             kinoko_trace("input:config-keyboard-loaded");
             // One saved controller record is broadcast to all registered devices.
-            if (file.read(record))
+            if (file.read(&record, sizeof(record)))
                 for (uint32_t i = 0; i < kinoko_input_devices_size(manager); ++i)
                     apply_assignment(*kinoko_input_devices_at(manager, i), record);
         }

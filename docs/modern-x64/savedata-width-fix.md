@@ -1,7 +1,7 @@
 # x64 savedata load/save fix (2026-09-28)
 
 User reports: old saves crash during startup, and saving in the new game also
-crashes. This batch targets both paths; runtime confirmation remains pending.
+crashes. This batch targets both paths; the user subsequently confirmed the new version works.
 
 ## Cause and fix
 
@@ -46,5 +46,5 @@ Source `150308d9833a6dcf12be512c39b100980e4ae13f`:
 - Both static D3D9 audits passed. Optional diagnostic launcher is beside x64 EXE.
 
 No game, CTest or contract executable run by the agent. All previous artifacts
-retained. Save/load runtime acceptance is pending; prior gameplay-01 acceptance
+retained. Save/load was confirmed working by the user in modern-x64-savedata-01; prior gameplay-01 acceptance
 covers the earlier four gameplay reports, not this newly reported savedata defect.

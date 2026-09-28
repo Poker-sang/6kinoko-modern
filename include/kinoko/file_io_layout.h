@@ -1,15 +1,16 @@
 #pragma once
 #include "kinoko/file_io.h"
-/* Recovered x86 layouts shared only by legacy virtual users and fixtures. */
+/* Native-width runtime readers; file records use explicit fixed-width fields. */
 #ifdef __cplusplus
+#include "kinoko/method_entry.hpp"
 typedef struct KinokoReaderMethods {
-    KinokoArchiveReader *(__fastcall *destroy)(KinokoArchiveReader *, void*, uint8_t);
-    int32_t (__fastcall *open_string)(KinokoArchiveReader *, void*, const void *);
-    int32_t (__fastcall *open_path)(KinokoArchiveReader *, void*, const char *);
-    int32_t (__fastcall *transfer)(KinokoArchiveReader *, void*, void *, uint32_t);
-    uint32_t (__fastcall *transferred)(KinokoArchiveReader *, void*);
-    uint32_t (__fastcall *seek)(KinokoArchiveReader *, void*, int32_t, uint32_t);
-    uint32_t (__fastcall *size)(KinokoArchiveReader *, void*);
+    KinokoArchiveReader *(KINOKO_METHOD_ENTRY *destroy)(KinokoArchiveReader *, void*, uint8_t);
+    int32_t (KINOKO_METHOD_ENTRY *open_string)(KinokoArchiveReader *, void*, const void *);
+    int32_t (KINOKO_METHOD_ENTRY *open_path)(KinokoArchiveReader *, void*, const char *);
+    int32_t (KINOKO_METHOD_ENTRY *transfer)(KinokoArchiveReader *, void*, void *, uint32_t);
+    uint32_t (KINOKO_METHOD_ENTRY *transferred)(KinokoArchiveReader *, void*);
+    uint32_t (KINOKO_METHOD_ENTRY *seek)(KinokoArchiveReader *, void*, int32_t, uint32_t);
+    uint32_t (KINOKO_METHOD_ENTRY *size)(KinokoArchiveReader *, void*);
 } KinokoReaderMethods;
 #else
 /* MSVC C cannot express thiscall. C consumers borrow table identities only;
@@ -18,8 +19,8 @@ typedef struct KinokoReaderMethods KinokoReaderMethods;
 #endif
 struct KinokoArchiveReader {
     const KinokoReaderMethods *methods;
-    HANDLE handle;
-    DWORD transferred;
+    KinokoFile* handle;
+    uint32_t transferred;
 };
 typedef struct KinokoPackageReader {
     KinokoArchiveReader base;

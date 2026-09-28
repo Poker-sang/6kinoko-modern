@@ -1,4 +1,4 @@
-#include "kinoko/file_io_legacy.h"
+#include "kinoko/file_io.h"
 #pragma once
 #include "kinoko/legacy_string.h"
 #include <stdint.h>

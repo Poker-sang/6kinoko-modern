@@ -4,7 +4,7 @@
 #include "kinoko/squirrel_game_objects.h"
 #include "kinoko/squirrel_host_compat.h"
 #include <squirrel.h>
-#include <windows.h>
+#include "kinoko/file_service.hpp"
 #include <array>
 #include <cstdint>
 #include <cstdlib>
@@ -216,14 +216,7 @@ bool write_table(TableStream &stream, Object input) {
     return ok;
 }
 
-struct File {
-    HANDLE handle;
-    explicit File(const char *path, DWORD access, DWORD share, DWORD disposition)
-        : handle(CreateFileA(path, access, share, nullptr, disposition,
-                             FILE_ATTRIBUTE_NORMAL, nullptr)) {}
-    ~File() { if (handle != INVALID_HANDLE_VALUE) CloseHandle(handle); }
-    explicit operator bool() const noexcept { return handle != INVALID_HANDLE_VALUE; }
-};
+using kinoko::io::File;
 using Bytes = std::unique_ptr<unsigned char, decltype(&std::free)>;
 Bytes allocate_buffer() {
     return Bytes(static_cast<unsigned char *>(std::malloc(kFileBufferSize)), &std::free);
@@ -234,16 +227,14 @@ int32_t load_file(const char *path, Object input) {
     kinoko_trace(path);
     int32_t result = 0;
     {
-        File file(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, OPEN_EXISTING);
+        File file(path, KINOKO_FILE_READ_SHARED);
         if (file) {
             auto encoded = allocate_buffer();
             auto decoded = allocate_buffer();
-            DWORD encoded_size = 0, bytes_read = 0;
+            uint32_t encoded_size = 0;
             if (encoded && decoded &&
-                ReadFile(file.handle, &encoded_size, sizeof(encoded_size), &bytes_read, nullptr) &&
-                bytes_read == sizeof(encoded_size) && encoded_size <= kFileBufferSize &&
-                ReadFile(file.handle, encoded.get(), encoded_size, &bytes_read, nullptr) &&
-                bytes_read == encoded_size) {
+                file.read(&encoded_size, sizeof(encoded_size)) && encoded_size <= kFileBufferSize &&
+                file.read(encoded.get(), encoded_size)) {
                 const int32_t decoded_size = kinoko_decompress_buffer(
                     encoded.get(), static_cast<int32_t>(encoded_size),
                     decoded.get(), kFileBufferSize);
@@ -277,17 +268,14 @@ int32_t save_file(const char *path, Object input) {
         Object table;
         if (table.assign(input.type(), input.data()) && write_table(stream, table)) {
             kinoko_trace_i32("savedata:raw-size", stream.position);
-            const DWORD encoded_size = static_cast<DWORD>(kinoko_compress_buffer(
+            const uint32_t encoded_size = static_cast<uint32_t>(kinoko_compress_buffer(
                 raw.get(), stream.position, encoded.get(), kFileBufferSize));
             kinoko_trace_i32("savedata:encoded-size", static_cast<int32_t>(encoded_size));
             if (encoded_size && encoded_size <= kFileBufferSize) {
-                File file(path, GENERIC_WRITE, 0, CREATE_ALWAYS);
-                DWORD bytes_written = 0;
+                File file(path, KINOKO_FILE_WRITE);
                 if (file &&
-                    WriteFile(file.handle, &encoded_size, sizeof(encoded_size), &bytes_written, nullptr) &&
-                    bytes_written == sizeof(encoded_size) &&
-                    WriteFile(file.handle, encoded.get(), encoded_size, &bytes_written, nullptr) &&
-                    bytes_written == encoded_size) result = 1;
+                    file.write(&encoded_size, sizeof(encoded_size)) &&
+                    file.write(encoded.get(), encoded_size)) result = 1;
             }
         }
     }

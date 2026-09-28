@@ -1,5 +1,5 @@
 #pragma once
-#include <windows.h>
+#include "kinoko/file_service.h"
 #include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
@@ -10,7 +10,7 @@ extern int32_t kinoko_archive_count;
 void kinoko_archive_initialize(void);
 int32_t kinoko_archive_mount(const char *path);
 int32_t kinoko_archive_insert(const char *path, uint32_t archive, uint32_t offset, uint32_t size);
-HANDLE kinoko_archive_open_entry(const char *path, uint32_t *offset, uint32_t *size);
+KinokoFile* kinoko_archive_open_entry(const char *path, uint32_t *offset, uint32_t *size);
 int32_t kinoko_reader_open(KinokoArchiveReader **slot, const char *path);
 int32_t kinoko_writer_open(KinokoArchiveReader **slot, const char *path);
 void kinoko_reader_close(KinokoArchiveReader *reader);

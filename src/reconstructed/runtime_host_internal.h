@@ -13,7 +13,7 @@
 #include "kinoko/game_runtime.h"
 #include "kinoko/game_host.h"
 #include "kinoko/file_io_layout.h"
-#include "kinoko/file_io_legacy.h"
+#include "kinoko/file_io.h"
 #include "kinoko/direct_input.h"
 #include "kinoko/application.h"
 #include "kinoko/renderer.h"
