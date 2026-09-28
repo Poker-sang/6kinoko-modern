@@ -153,8 +153,7 @@ int32_t kinoko_call_camera_update(SQVM *vm) {
         kinoko_trace_i32("466890:arg2", static_cast<int32_t>(argument.value));
         ++camera_native_trace_count;
     }
-    kinoko::method::invoke<int32_t>(target.instance, method,
-                                arguments[0], arguments[1], static_cast<int32_t>(argument.value));
+    kinoko::method::invoke<int32_t>(target.instance, method, argument);
     return 0;
 }
 int32_t register_camera_binding_impl() {
