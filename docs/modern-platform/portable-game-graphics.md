@@ -30,3 +30,22 @@ for future localization. Keep layout, glyph caching and rendering interfaces;
 do not delete text functionality based on that observation. GDI and CharNextA
 remain explicit font-backend migration work, including checking actual callers
 and choosing a distributable font/metrics policy before switching rasterizers.
+
+## Local delivery evidence
+
+Source: `492441a936eaaff61f5771a77d5dedca55f6200f`.
+- `modern-x64-graphics-02`: Release game built; GPU resource, graphics runtime
+  and application contracts compiled separately (contracts-build.log).
+- `modern-graphics-02`: Win32 Release game and all 84 contracts compiled.
+- Both builds staged and SHA256-verified all three original DAT; shaders staged.
+- Both static D3D9 dependency audits passed; x64 build summary has zero error
+  diagnostics. No game or test executable was run.
+- EXE: `runtime-builds/modern-x64-graphics-02/kinoko_modern_gpu.exe`.
+- x64 EXE SHA256: `1c559c4a4ce92a219905ba77e36ffca736fefc2142eab83a183c021fac579c3a`.
+
+The failed graphics-01 attempts are retained. Their compile errors exposed
+callers relying on indirect Windows headers; graphics statuses/state types and
+the ACT draw diagnostic counter now use project types/standard atomics. The
+asset-name buffer remains 260 bytes, independent of OS path limits. The current
+CharNextA text consumer explicitly includes its Windows backend until the font
+migration rather than depending on an incidental graphics header include.
