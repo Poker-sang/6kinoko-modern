@@ -1,4 +1,6 @@
 #include "kinoko/savedata.h"
+#include "kinoko/squirrel_game_objects.h"
+#include <type_traits>
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_source_runtime.h"
 #include <windows.h>
@@ -23,6 +25,8 @@ void kinoko_trace_i32(const char*, int32_t) {}
 void kinoko_trace_squirrel_name(const char*, int32_t) {}
 void kinoko_host_free_allocation(int32_t* p) { std::free(p); }
 }
+static_assert(std::is_same_v<decltype(&kinoko_squirrel_object_from_pair),
+    int32_t (*)(int32_t*, int32_t, intptr_t)>, "savedata object payload retains native pointer width");
 namespace {
 using Bytes = std::vector<unsigned char>;
 void require(bool ok, const char* message) {
@@ -49,7 +53,7 @@ public:
     std::string path(const char* name) {
         paths.push_back(directory+"\\"+name); return paths.back();
     }
-    ~Files() { for(const auto& p:paths) DeleteFileA(p.c_str()); RemoveDirectoryA(directory.c_str()); }
+    ~Files() { std::printf("Retained savedata fixtures: %s\n", directory.c_str()); }
 };
 void evaluate(HSQUIRRELVM vm, const char* source) {
     const auto top=sq_gettop(vm);
@@ -130,6 +134,9 @@ int main() {
         Bytes raw;
         field(raw,OT_BOOL,"flag"); raw.push_back(1);
         field(raw,OT_FLOAT,"real"); word(raw,0x3fa00000); // IEEE 1.25
+        field(raw,OT_FLOAT,"negative_real"); word(raw,0xbfa00000); // IEEE -1.25
+        field(raw,OT_INTEGER,"minimum"); word(raw,0x80000000);
+        word(raw,OT_INTEGER); word(raw,OT_INTEGER); word(raw,uint32_t(-3)); word(raw,uint32_t(-17));
         field(raw,OT_STRING,"text"); text(raw,"fixture");
         field(raw,OT_TABLE,"nested"); field(raw,OT_INTEGER,"n"); word(raw,42); word(raw,OT_NULL);
         field(raw,OT_ARRAY,"array"); word(raw,3);
@@ -138,7 +145,12 @@ int main() {
         word(raw,OT_NULL); word(raw,OT_NULL);
         encoded_fixture(golden,raw);
         require(file_call(vm,golden,"golden",false),"load independent wire fixture");
-        evaluate(vm,"assert(golden.flag && golden.real==1.25 && golden.text==\"fixture\"); assert(golden.nested.n==42); assert(golden.array.len()==3 && golden.array[0]==-9 && golden.array[1]==null && golden.array[2]==false);");
+        evaluate(vm,"assert(golden[-3]==-17 && golden.minimum==-2147483647-1 && golden.negative_real==-1.25); assert(golden.flag && golden.real==1.25 && golden.text==\"fixture\"); assert(golden.nested.n==42); assert(golden.array.len()==3 && golden.array[0]==-9 && golden.array[1]==null && golden.array[2]==false);");
+        // Buffer exhaustion must leave the prior save intact.
+        const auto previous_save = read_bytes(saved);
+        evaluate(vm,"too_large <- { text = \"x\" }; for(local i=0;i<18;++i) too_large.text += too_large.text;");
+        require(!file_call(vm,saved,"too_large",true),"oversized table save fails");
+        require(read_bytes(saved)==previous_save,"serialization failure preserves existing save");
         require(!file_call(vm,missing,"blank",false),"missing file fails");
         require(!file_call(vm,missing+"\\child.dat","source",true),"invalid parent save fails");
         write_bytes(bad,{1,2,3}); require(!file_call(vm,bad,"blank",false),"short file header fails");

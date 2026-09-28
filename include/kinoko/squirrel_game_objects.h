@@ -21,7 +21,7 @@ int32_t kinoko_bind_act_resource_root(void* resource, struct SQVM* vm, const int
 int32_t kinoko_execute_act_file_bytecode(struct SQVM* vm, void* script, const int32_t* environment);
 int32_t kinoko_execute_embedded_act_script(struct SQVM* vm, void* script, const int32_t* environment_pair);
 
-int32_t kinoko_squirrel_object_from_pair(int32_t* object, int32_t type, int32_t data);
+int32_t kinoko_squirrel_object_from_pair(int32_t* object, int32_t type, intptr_t data);
 int32_t kinoko_squirrel_object_string(int32_t* object, const char** value);
 int32_t kinoko_squirrel_object_copy(int32_t* destination, const int32_t* source);
 int32_t kinoko_squirrel_object_from_string(int32_t* object, const char* data, uint32_t length);

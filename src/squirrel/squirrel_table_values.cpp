@@ -9,7 +9,7 @@ inline SQVM*& current_vm_storage = kinoko_primary_vm;
 HSQUIRRELVM current_vm() { return reinterpret_cast<HSQUIRRELVM>(current_vm_storage); }
 void initialize(int32_t* object) { ObjectView(object).initialize(kinoko_squirrel_object_vtable()); }
 }
-extern "C" int32_t kinoko_squirrel_object_from_pair(int32_t* object, int32_t type, int32_t data) {
+extern "C" int32_t kinoko_squirrel_object_from_pair(int32_t* object, int32_t type, intptr_t data) {
     auto vm = current_vm();
     if (!object || !vm) return 0;
     initialize(object);

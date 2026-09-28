@@ -116,7 +116,7 @@ bool read_table(TableStream &stream, Object parent) {
         if ((value_type & 0x7eu) == 0) break; // OT_NULL terminates each container.
         if (!stream.read(key_type)) { ok = false; break; }
         if (key_type == OT_INTEGER) {
-            uint32_t raw_key = 0;
+            int32_t raw_key = 0;
             if (!stream.read(raw_key) || !key.assign(key_type, raw_key)) {
                 ok = false; break;
             }
@@ -124,7 +124,12 @@ bool read_table(TableStream &stream, Object parent) {
             if (!read_string(stream, key)) { ok = false; break; }
         } else { ok = false; break; }
 
-        if (value_type == OT_INTEGER || value_type == OT_FLOAT) {
+        if (value_type == OT_INTEGER) {
+            // Wire integers are signed 32-bit, even when VM integers are wider.
+            int32_t raw_value = 0;
+            ok = stream.read(raw_value) && value.assign(value_type, raw_value);
+        } else if (value_type == OT_FLOAT) {
+            // Float payloads are raw IEEE bits; keep unused native high bytes zero.
             uint32_t raw_value = 0;
             ok = stream.read(raw_value) && value.assign(value_type, raw_value);
         } else if (value_type == OT_BOOL) {
@@ -263,26 +268,26 @@ int32_t save_file(const char *path, Object input) {
     kinoko_trace("savedata:save-begin");
     kinoko_trace(path);
     int32_t result = 0;
-    {
-        File file(path, GENERIC_WRITE, 0, CREATE_ALWAYS);
-        if (file) {
-            auto raw = allocate_buffer();
-            auto encoded = allocate_buffer();
-            if (raw && encoded) {
-                TableStream stream(raw.get(), kFileBufferSize);
-                Object table;
-                if (table.assign(input.type(), input.data()) && write_table(stream, table)) {
-                    kinoko_trace_i32("savedata:raw-size", stream.position);
-                    const DWORD encoded_size = static_cast<DWORD>(kinoko_compress_buffer(
-                        raw.get(), stream.position, encoded.get(), kFileBufferSize));
-                    kinoko_trace_i32("savedata:encoded-size", static_cast<int32_t>(encoded_size));
-                    DWORD bytes_written = 0;
-                    if (encoded_size && encoded_size <= kFileBufferSize &&
-                        WriteFile(file.handle, &encoded_size, sizeof(encoded_size), &bytes_written, nullptr) &&
-                        bytes_written == sizeof(encoded_size) &&
-                        WriteFile(file.handle, encoded.get(), encoded_size, &bytes_written, nullptr) &&
-                        bytes_written == encoded_size) result = 1;
-                }
+    // Finish serialization before opening with CREATE_ALWAYS. A conversion or
+    // compression failure must not erase the previously saved file.
+    auto raw = allocate_buffer();
+    auto encoded = allocate_buffer();
+    if (raw && encoded) {
+        TableStream stream(raw.get(), kFileBufferSize);
+        Object table;
+        if (table.assign(input.type(), input.data()) && write_table(stream, table)) {
+            kinoko_trace_i32("savedata:raw-size", stream.position);
+            const DWORD encoded_size = static_cast<DWORD>(kinoko_compress_buffer(
+                raw.get(), stream.position, encoded.get(), kFileBufferSize));
+            kinoko_trace_i32("savedata:encoded-size", static_cast<int32_t>(encoded_size));
+            if (encoded_size && encoded_size <= kFileBufferSize) {
+                File file(path, GENERIC_WRITE, 0, CREATE_ALWAYS);
+                DWORD bytes_written = 0;
+                if (file &&
+                    WriteFile(file.handle, &encoded_size, sizeof(encoded_size), &bytes_written, nullptr) &&
+                    bytes_written == sizeof(encoded_size) &&
+                    WriteFile(file.handle, encoded.get(), encoded_size, &bytes_written, nullptr) &&
+                    bytes_written == encoded_size) result = 1;
             }
         }
     }
