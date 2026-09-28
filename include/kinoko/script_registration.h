@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "kinoko/input_manager.h"
+typedef struct KinokoInputManager KinokoInputManager;
 #ifdef __cplusplus
 extern "C" {
 #endif
