@@ -340,7 +340,6 @@ static int kinoko_read_asset_bytes(const char *path,
         kinoko_reader_close(reader);
         return 0;
     }
-    SetLastError(NO_ERROR);
     asset_size = kinoko_reader_size(reader);
     if (asset_size == 0) {
         kinoko_reader_close(reader);
@@ -744,7 +743,7 @@ static int kinoko_se_parse_wave_asset(const char *path,
     if (!path || !format || !samples || !sample_bytes) return 0;
     *samples = nullptr;
     *sample_bytes = 0;
-    ZeroMemory(format, sizeof(*format));
+    std::memset(format, 0, sizeof(*format));
     unsigned char *raw = nullptr;
     uint32_t size = 0;
     if (!kinoko_read_asset_bytes(path, &raw, &size)) return 0;
@@ -779,7 +778,7 @@ static int kinoko_se_parse_wave_asset(const char *path,
         const uint32_t available = size - offset - 8;
         if (chunk_bytes > available) return 0;
         if (std::memcmp(chunk, "fmt ", 4) == 0 && chunk_bytes >= 16) {
-            ZeroMemory(format, sizeof(*format));
+            std::memset(format, 0, sizeof(*format));
             std::memcpy(format, chunk + 8,
                         chunk_bytes >= sizeof(*format) ? sizeof(*format) : chunk_bytes);
             have_format = format->wFormatTag == 1 && format->nChannels &&
@@ -875,7 +874,7 @@ static int kinoko_se_pool_initialize(void)
     if (g_kinoko_se_pool.initialized)
         return 1;
     g_kinoko_se_pool = SoundPool{};
-    ZeroMemory(&format, sizeof(format));
+    std::memset(&format, 0, sizeof(format));
     format.wFormatTag = 1;
     format.nChannels = 1;
     format.nSamplesPerSec = 44100;
@@ -1076,7 +1075,7 @@ static int kinoko_bgm_prepare_track_default_math(uint32_t handle, const char *pa
         return 0;
     }
 
-    ZeroMemory(&format, sizeof(format));
+    std::memset(&format, 0, sizeof(format));
     format.wFormatTag = 1;
     format.nChannels = (uint16_t)info.channels;
     format.nSamplesPerSec = info.sample_rate;
