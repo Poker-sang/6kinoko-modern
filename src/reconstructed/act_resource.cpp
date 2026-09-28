@@ -1,3 +1,4 @@
+#include <atomic>
 #include "kinoko/runtime_clock.h"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource.h"
@@ -72,8 +73,8 @@ public:
 
     int32_t increment_frame() const {
         if (!storage_) return 0;
-        static volatile LONG trace_count;
-        const LONG index = InterlockedIncrement(&trace_count);
+        static std::atomic<int32_t> trace_count{0};
+        const int32_t index = ++trace_count;
         auto *holder = record_.get(&RuntimeRecord::source_holder);
         auto *source = holder ? RecordView<SourceHolderRecord>(holder).get(&SourceHolderRecord::document) : nullptr;
         const int32_t step = source ? RecordView<DocumentRecord>(source).get(&DocumentRecord::resolution_ms) : 0;
