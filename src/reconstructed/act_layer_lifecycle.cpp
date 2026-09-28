@@ -1,3 +1,4 @@
+#include "kinoko/memory_access.hpp"
 #include "kinoko/act_layer_lifecycle.h"
 #include "kinoko/act_layer_lifecycle.h"
 #include "kinoko/act_layer_storage.hpp"
@@ -11,8 +12,6 @@
 #include <cstring>
 #include <memory>
 
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 
 extern "C" KinokoActLayer* kinoko_act_layer_initialize(KinokoActLayer* layer, SQVM* vm) {
     using namespace kinoko::act;

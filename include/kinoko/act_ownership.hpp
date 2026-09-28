@@ -1,6 +1,5 @@
 #pragma once
 #include "kinoko/act_types.h"
-#include "kinoko/legacy_memory.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include <cstddef>
 

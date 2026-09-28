@@ -11,7 +11,7 @@ extern "C" {
    change the original host API, even though sq_getinteger permits coercion. */
 void* kinoko_native_target_from_userdata(struct SQVM * vm);
 void* kinoko_native_callback_from_stack(struct SQVM * vm);
-int32_t kinoko_native_string_arg(struct SQVM * vm, int32_t index, int32_t* value);
+int32_t kinoko_native_string_arg(struct SQVM * vm, int32_t index, const char** value);
 int32_t kinoko_native_integer_arg(struct SQVM * vm, int32_t index, int32_t* value);
 int32_t kinoko_native_float_arg(struct SQVM * vm, int32_t index, float* value);
 /* Borrowed pair: no reference-count change. Positive argument indices only. */

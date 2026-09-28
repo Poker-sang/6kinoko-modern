@@ -15,8 +15,6 @@ extern "C" {
 int32_t _3f__3f_2_40_YAPAXI_40_Z(int32_t size);
 }
 namespace {
-using kinoko::script::address;
-using kinoko::script::pointer;
 // Host-owned slots preserve publication and release order.
 const KinokoSqplusVmSlots& host_slots() { return *kinoko_sqplus_vm_slots(); }
 HSQUIRRELVM current_vm() noexcept { return reinterpret_cast<HSQUIRRELVM>(*host_slots().current_vm); }
@@ -59,7 +57,7 @@ extern "C" void * kinoko_sqplus_root_object(void) {
     auto* vm = current_vm();
     if (!vm) return 0;
     sq_pushroottable(vm);
-    auto* storage = pointer<void>(_3f__3f_2_40_YAPAXI_40_Z(sizeof(kinoko::script::ObjectStorage)));
+    auto* storage = std::malloc(sizeof(kinoko::script::ObjectStorage));
     if (storage != 0) (int32_t)(intptr_t)(kinoko_sqplus_object_initialize(storage));
     *host_slots().cached_root = storage;
     kinoko_sqplus_object_capture(storage, -1);

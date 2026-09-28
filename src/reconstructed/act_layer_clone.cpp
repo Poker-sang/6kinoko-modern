@@ -1,3 +1,4 @@
+#include "kinoko/memory_access.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_array.h"
 #include "kinoko/act_key_records.hpp"
@@ -6,7 +7,7 @@
 #include "kinoko/act_layer_storage.hpp"
 #include "kinoko/act_layer_lifecycle.h"
 #include "kinoko/legacy_abi.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_method_entries.h"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/upstream_bindings.hpp"
@@ -16,10 +17,7 @@
 extern "C" struct SQVM* kinoko_act_vm;
 
 namespace {
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 inline SQVM*& act_layer_vm_slot = kinoko_act_vm;
-using kinoko::legacy::field;
 namespace sqrat = kinoko::script::upstream;
 
 struct LayerDelete {
@@ -35,7 +33,7 @@ struct KeyDelete {
 void assign_object(kinoko::act::LayerObjectView destination, kinoko::act::LayerObjectView source) {
     using kinoko::act::LayerObjectRecord;
     const auto old_vm = destination.get(&LayerObjectRecord::vm);
-    const auto old_value = kinoko::legacy::load<HSQOBJECT>(destination.bytes(&LayerObjectRecord::value));
+    const auto old_value = kinoko::memory::load<HSQOBJECT>(destination.bytes(&LayerObjectRecord::value));
     if (old_vm) sqrat::sqrat_destroy_object(old_vm, old_value,
         destination.get(&LayerObjectRecord::owns_reference) != 0);
     // 41ECA0 copies exactly VM, pair and ownership (13 bytes); neither
@@ -44,7 +42,7 @@ void assign_object(kinoko::act::LayerObjectView destination, kinoko::act::LayerO
     destination.set(&LayerObjectRecord::value, source.get(&LayerObjectRecord::value));
     destination.set(&LayerObjectRecord::owns_reference, source.get(&LayerObjectRecord::owns_reference));
     if (auto* vm = destination.get(&LayerObjectRecord::vm))
-        sqrat::sqrat_retain(vm, kinoko::legacy::load<HSQOBJECT>(destination.bytes(&LayerObjectRecord::value)));
+        sqrat::sqrat_retain(vm, kinoko::memory::load<HSQOBJECT>(destination.bytes(&LayerObjectRecord::value)));
 }
 
 void clone_list(kinoko::act::LayerStorageView destination, kinoko::act::LayerStorageView source,
@@ -79,7 +77,7 @@ void clone_list(kinoko::act::LayerStorageView destination, kinoko::act::LayerSto
 extern "C" KinokoActLayer* __fastcall kinoko_method_clone_act_layer(KinokoActLayer* source, void*) {
     if (!source) return 0;
     try {
-        kinoko::legacy::Allocation<unsigned char> storage(static_cast<unsigned char*>(std::calloc(1,sizeof(kinoko::act::LayerStorageRecord))));
+        kinoko::memory::Allocation<unsigned char> storage(static_cast<unsigned char*>(std::calloc(1,sizeof(kinoko::act::LayerStorageRecord))));
         if (!storage || !kinoko_act_layer_initialize(reinterpret_cast<KinokoActLayer*>(storage.get()),act_layer_vm_slot)) return 0;
         std::unique_ptr<unsigned char,LayerDelete> owned(storage.release());
         

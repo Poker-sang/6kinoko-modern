@@ -3,15 +3,13 @@
 #include "kinoko/act_document_records.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/act_runtime.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <cstdlib>
 #include <memory>
 
 namespace {
 using kinoko::act::DocumentRecord;
 using kinoko::act::DocumentView;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 using kinoko::legacy::StringRecord;
 using kinoko::legacy::StringView;
 
@@ -63,7 +61,7 @@ extern "C" KinokoActDocument *kinoko_act_document_initialize(KinokoActDocument *
 extern "C" KinokoActDocument *kinoko_act_document_create() {
     auto *document = static_cast<KinokoActDocument *>(std::malloc(sizeof(DocumentRecord)));
     // 46615E/46F716 and their unwind entries free the raw constructor storage.
-    kinoko::legacy::Allocation<KinokoActDocument> allocation(document);
+    kinoko::memory::Allocation<KinokoActDocument> allocation(document);
     auto *result = kinoko_act_document_initialize(document);
     allocation.release();
     return result;

@@ -1,3 +1,5 @@
+#include "kinoko/act_layer_storage.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/sqrat_object_bridge.h"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_source_runtime.h"
@@ -16,8 +18,7 @@ void kinoko_trace_squirrel_name(const char*, int32_t);
 
 namespace {
 inline char& native_trace_slot = kinoko_sqrat_trace_enabled;
-using kinoko::script::address;
-using kinoko::script::pointer;
+using kinoko::script::diagnostic_address;
 using kinoko::script::data_bits;
 
 // Sqrat != SqPlus: the former stores its VM before the externally-owned pair.
@@ -28,12 +29,12 @@ struct SqratStorage {
     HSQOBJECT value;
     uint8_t owns;
 };
-static_assert(sizeof(SqratStorage) == 20);
-static_assert(offsetof(SqratStorage, vm) == 4);
-static_assert(offsetof(SqratStorage, value) == 8);
-static_assert(offsetof(SqratStorage, owns) == 16);
+static_assert(sizeof(SqratStorage)==sizeof(kinoko::act::LayerObjectRecord));
+static_assert(offsetof(SqratStorage,value)==offsetof(kinoko::act::LayerObjectRecord,value));
+static_assert(offsetof(SqratStorage,owns)==offsetof(kinoko::act::LayerObjectRecord,owns_reference));
 struct CallbackStorage { HSQUIRRELVM vm; HSQOBJECT environment, closure; };
-static_assert(sizeof(CallbackStorage) == 20);
+static_assert(sizeof(CallbackStorage)==sizeof(kinoko::act::ActCallbackRecord));
+static_assert(sizeof(HSQOBJECT)==sizeof(kinoko::act::ScriptValueStorage));
 
 template<class T> T read(const void* bytes) {
     T value;
@@ -88,7 +89,7 @@ int32_t set_pair(SQVM* id, const int32_t* object, const char* name,
     if (!raw) {
         static std::atomic<unsigned> traces{0};
         if (traces.fetch_add(1, std::memory_order_relaxed) < 96) {
-            kinoko_trace_squirrel_name("sqrat:set-name", address(name));
+            kinoko_trace_squirrel_name("sqrat:set-name", diagnostic_address(name));
             trace_pair("sqrat:set-object-type", "sqrat:set-object-data", receiver);
             trace_pair("sqrat:set-value-type", "sqrat:set-value-data", incoming);
         }
@@ -106,7 +107,7 @@ int32_t set_string(SQVM* id, const int32_t* object, const char* name,
 }
 int32_t set_value(SQVM* vm, const int32_t* object, const char* name,
                   const HSQOBJECT& value, bool raw) {
-    int32_t pair[2]; write(pair, value);
+    int32_t pair[sizeof(HSQOBJECT)/sizeof(int32_t)]; write(pair, value);
     return set_pair(vm, object, name, pair, raw);
 }
 HSQOBJECT integer(SQInteger value) { HSQOBJECT o; o._type = OT_INTEGER; o._unVal.nInteger = value; return o; }
@@ -123,8 +124,8 @@ extern "C" void * kinoko_sqrat_root_construct(void * storage, struct SQVM * id) 
     if (!storage || !id) return 0;
     auto vm = static_cast<SQVM *>(id);
     ObjectView object(storage);
-    kinoko_trace_i32("450e30:construct-object", address(storage));
-    kinoko_trace_i32("450e30:construct-pair", address(object.payload_data()));
+    kinoko_trace_i32("450e30:construct-object", diagnostic_address(storage));
+    kinoko_trace_i32("450e30:construct-pair", diagnostic_address(object.payload_data()));
     object.vtable(kinoko_sqrat_object_vtable());
     object.vm(vm); object.owns(true); object.reset();
     object.vtable(kinoko_sqrat_root_vtable());
@@ -259,9 +260,9 @@ extern "C" struct SQVM * kinoko_sqrat_bind_object_function(void * storage, const
     ObjectView object(storage);
     auto vm = object.vm();
     if (!vm || !function || size < 0 || (size && !source)) return nullptr;
-    kinoko_trace_squirrel_name("415550:name", address(name));
+    kinoko_trace_squirrel_name("415550:name", diagnostic_address(name));
     kinoko_trace_i32("415550:size", size);
-    kinoko_trace_i32("415550:native", address(function));
+    kinoko_trace_i32("415550:native", diagnostic_address(function));
     // Execute Sqrat's actual BindFunc body, including userdata copy, closure,
     // publication and pop. The legacy entry returns VM, not BindFunc's void.
     kinoko::script::upstream::sqrat_bind_function(vm, object.value(),
@@ -293,7 +294,7 @@ extern "C" int32_t kinoko_sqrat_invoke_callback(const void * storage) {
     if (!callback.vm) return -1;
     static std::atomic<unsigned> traces{0};
     if (traces.fetch_add(1, std::memory_order_relaxed) < 96) {
-        kinoko_trace_i32("415810:self", address(storage));
+        kinoko_trace_i32("415810:self", diagnostic_address(storage));
         trace_pair("415810:env-type", "415810:env-data", callback.environment);
         trace_pair("415810:closure-type", "415810:closure-data", callback.closure);
     }
@@ -302,5 +303,5 @@ extern "C" int32_t kinoko_sqrat_invoke_callback(const void * storage) {
         [](HSQUIRRELVM vm, SQInteger count, SQBool result, SQBool errors) -> SQRESULT {
             return kinoko_sq_call(vm, count, result, errors);
         });
-    return address(callback.vm);
+    return diagnostic_address(callback.vm);
 }

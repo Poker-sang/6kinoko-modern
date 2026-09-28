@@ -6,8 +6,6 @@
 #include <cstdlib>
 #include <cstring>
 
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
 
 void* kinoko_construct_cact_script(void* this_ptr)
 {
@@ -33,7 +31,7 @@ void* kinoko_construct_cact_script(void* this_ptr)
     script.set(&ScriptStorageRecord::size, uint32_t{1});
     script.set(&ScriptStorageRecord::loaded, uint8_t{0});
     script.set(&ScriptStorageRecord::compiled, uint8_t{0});
-    auto* buffer = pointer<unsigned char>(_3f__3f_2_40_YAPAXI_40_Z(1));
+    auto* buffer = static_cast<unsigned char*>(std::malloc(1));
     script.set(&ScriptStorageRecord::bytes, static_cast<void*>(buffer));
     if (buffer) *buffer = 0;
     return this_ptr;

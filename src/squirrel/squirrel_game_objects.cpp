@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_game_objects.h"
 #include "kinoko/act_layer_storage.hpp"
 #include "kinoko/act_resource_records.hpp"
@@ -19,8 +20,9 @@ using namespace kinoko::script;
 using MemoryReader = KinokoScriptMemoryReader;
 struct ActCallback { SQVM* vm; HSQOBJECT environment; HSQOBJECT closure; };
 struct ResourceRoot { SQVM* vm; HSQOBJECT root; };
-static_assert(sizeof(MemoryReader) == 12 && sizeof(ActCallback) == 20);
-static_assert(offsetof(ActCallback, closure) == 12 && sizeof(ResourceRoot) == 12);
+static_assert(sizeof(ActCallback)==sizeof(kinoko::act::ActCallbackRecord));
+static_assert(offsetof(ActCallback,closure)==3*sizeof(void*));
+static_assert(sizeof(ResourceRoot)==3*sizeof(void*));
 constexpr size_t resource_root_offset = offsetof(kinoko::act::RuntimeRecord, vm);
 constexpr size_t script_data_offset = offsetof(kinoko::act::ScriptStorageRecord, bytes);
 constexpr size_t script_size_offset = offsetof(kinoko::act::ScriptStorageRecord, size);
@@ -67,7 +69,7 @@ extern "C" void* kinoko_push_script_object(SQVM* machine, void* object) {
     if (!machine || !object) return 0;
     ObjectView(object).push(machine);
     // Return the pushed stack slot address, as in the original VM ABI.
-    return pointer<void>(((int32_t)(uintptr_t)kinoko_sq_get_up(machine, -1)));
+    return kinoko_sq_get_up(machine,-1);
 }
 
 extern "C" int32_t kinoko_script_read_memory(void* stream, void* destination, int32_t requested) {
@@ -132,14 +134,14 @@ extern "C" void kinoko_copy_act_callback(struct SQVM* id, void* script, int32_t 
     auto* destination = bytes(script) + offset;
     kinoko_release_act_callback(destination);
     auto callback = read<ActCallback>(destination);
-    int32_t pair[2]; write(pair, empty());
+    int32_t pair[sizeof(HSQOBJECT)/sizeof(int32_t)]; write(pair, empty());
     const auto found = kinoko_sqrat_get((void *)(intptr_t)(global), name, (void *)(pair));
     // Only metadata diagnostics: no additional scripted lookup or path dereference.
-    kinoko_trace_i32("act:copy-update-script", address(script));
+    kinoko_trace_i32("act:copy-update-script", diagnostic_address(script));
     kinoko_trace_i32("act:copy-update-result", found);
     if (found) {
         callback.vm = id;
-        callback.environment = read<HSQOBJECT>(bytes(global) + 8);
+        callback.environment = read<HSQOBJECT>(bytes(global) + offsetof(kinoko::act::LayerObjectRecord,value));
         callback.closure = read<HSQOBJECT>(pair);
         upstream::sqrat_retain_function(vm, callback.environment, callback.closure);
         write(destination, callback);
@@ -159,8 +161,8 @@ extern "C" int32_t kinoko_bind_act_resource_root(void* resource, struct SQVM* id
     if ((previous.root._type & SQOBJECT_REF_COUNTED) && data_bits(previous.root))
         sq_release(vm, &previous.root);
     write(storage, ResourceRoot{id, incoming});
-    kinoko_trace_i32("450e30:root-resource", address(resource));
-    kinoko_trace_i32("450e30:root-vm", address(id));
+    kinoko_trace_i32("450e30:root-resource", diagnostic_address(resource));
+    kinoko_trace_i32("450e30:root-vm", diagnostic_address(id));
     return 1;
 }
 static int32_t execute_embedded_act_script(struct SQVM* id, void* script, const int32_t* environment, int runs) {

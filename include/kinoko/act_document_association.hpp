@@ -13,7 +13,7 @@ struct LayerPropertyAliases {
     float *alpha;
     int32_t *blend, *red, *green, *blue;
 };
-static_assert(sizeof(LayerPropertyAliases) == 68);
+static_assert(sizeof(LayerPropertyAliases) == 17*sizeof(void*));
 struct LayerAssociationRecord {
     const void *vtable;
     LayerPropertyAliases property_aliases;
@@ -26,6 +26,7 @@ struct LayerAssociationRecord {
     int32_t layer_id, parent_id;
 };
 struct ResourceIdentityRecord { const void *vtable; int32_t id; };
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(LayerAssociationRecord) == 112);
 static_assert(offsetof(LayerAssociationRecord, children) == 72);
 static_assert(offsetof(LayerAssociationRecord, parent) == 88);
@@ -35,6 +36,7 @@ static_assert(offsetof(LayerAssociationRecord, layer_id) == 104);
 static_assert(offsetof(LayerAssociationRecord, parent_id) == 108);
 static_assert(offsetof(ResourceIdentityRecord, id) == 4);
 
+#endif
 // 428150 owns these borrowed indices only during deserialization. Insertion
 // keeps the first duplicate ID (42A310); the document owns every parsed object.
 class DocumentLoadAssociations {

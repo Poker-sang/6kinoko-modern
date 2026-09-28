@@ -1,6 +1,7 @@
 #pragma once
 #include "kinoko/act_types.h"
 #include "kinoko/act_array.hpp"
+#include "kinoko/act_script_storage.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/native_record_view.hpp"
 #include <array>
@@ -32,7 +33,7 @@ struct DocumentRecord {
     std::array<uint8_t, 3> padding97;
     // CActScript owns its callbacks, string and buffer. Keep using its existing
     // source-backed constructor/destructor rather than resetting VM objects.
-    std::array<uint8_t, 104> script;
+    alignas(void*) std::array<uint8_t, sizeof(ScriptStorageRecord)> script;
     uint8_t resources_suspended; // 428AF0/428BD0
     std::array<uint8_t, 3> padding205;
     DocumentPointerSpan<KinokoActLayer> layers;
@@ -41,7 +42,8 @@ struct DocumentRecord {
     uint32_t unknown236;
 };
 using DocumentView = kinoko::native::RecordView<DocumentRecord>;
-static_assert(sizeof(void *) == 4, "CAct is a Win32 record");
+static_assert(sizeof(DocumentPointerSpan<KinokoActLayer>)==3*sizeof(void*));
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(DocumentRecord) == 240);
 static_assert(sizeof(DocumentPointerSpan<KinokoActLayer>) == 12);
 static_assert(offsetof(DocumentPointerSpan<KinokoActLayer>, storage) == 8);
@@ -68,4 +70,5 @@ KINOKO_DOCUMENT_FIELD(unknown220, 220);
 KINOKO_DOCUMENT_FIELD(resources, 224);
 KINOKO_DOCUMENT_FIELD(unknown236, 236);
 #undef KINOKO_DOCUMENT_FIELD
+#endif
 }

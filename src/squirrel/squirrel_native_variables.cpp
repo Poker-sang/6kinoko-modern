@@ -12,7 +12,7 @@ using namespace kinoko::script::binding;
 // The two recovered words are a stack count and a borrowed VM, not two
 // integers. memcpy access also supports existing unaligned C fixtures.
 struct VariableContext { int32_t count; SQVM* vm; };
-static_assert(sizeof(VariableContext)==8);
+static_assert(offsetof(VariableContext,vm)%alignof(void*)==0);
 VariableContext context_value(const void* storage) { return load<VariableContext>(storage); }
 bool context_has(const void* context, SQInteger count) {
     if (!context) return false;
@@ -37,10 +37,10 @@ int32_t instance_access(SQVM* vm, bool write) {
     if (!vm) return -1;
     kinoko_sqplus_select_vm(vm);
     VariableContext context{static_cast<int32_t>(sq_gettop(vm)),vm};
-    void* metadata = nullptr; int32_t source = 0;
+    void* metadata = nullptr; void* source = nullptr;
     if (!kinoko_sqplus_resolve_instance_variable(vm, context.count, &metadata, &source)) return -1;
     return write ? kinoko_sqplus_write_variable(&context, metadata, (void*)(uintptr_t)(source)) :
-        kinoko_sqplus_read_variable(&context, metadata, source);
+        kinoko_sqplus_read_variable(&context, metadata, reinterpret_cast<intptr_t>(source));
 }
 } // namespace
 
@@ -75,7 +75,7 @@ extern "C" int32_t  kinoko_sqplus_find_table_variable(void** output, const void*
     return 0;
 }
 
-extern "C" int32_t  kinoko_sqplus_read_variable(const void* context, const void* metadata, int32_t source) {
+extern "C" int32_t  kinoko_sqplus_read_variable(const void* context, const void* metadata, intptr_t source) {
     if (!context || !context_value(context).vm || !metadata) return -1;
     auto* vm = context_value(context).vm;
     const auto info = load<Variable>(metadata);
@@ -83,18 +83,18 @@ extern "C" int32_t  kinoko_sqplus_read_variable(const void* context, const void*
     switch (info.category) {
     case 0: case 1: case 2: case 3:
         return static_cast<int32_t>(upstream::sqplus_read_scalar(vm, info,
-            pointer<const void>(source), source));
+            reinterpret_cast<const void*>(source), static_cast<int32_t>(source)));
     case 4:
         if (!source) return -1;
-        return upstream::sqplus_read_text(vm, pointer<const char>(immediate ? source : load<int32_t>(source)));
+        return upstream::sqplus_read_text(vm, immediate ? reinterpret_cast<const char*>(source) : load<const char*>(reinterpret_cast<const void*>(source)));
     case 5:
         if (!source) return -1;
-        return upstream::sqplus_read_text(vm, pointer<const char>(add_address(source, 1)));
+        return upstream::sqplus_read_text(vm, reinterpret_cast<const char*>(source)+1);
     case 8:
         if (!source) return -1;
         // This is the original 24-byte MSVC string record, NOT std::string
         // from the current toolchain. Preserve its inline/heap discriminator.
-        return upstream::sqplus_read_text(vm, kinoko::legacy::StringView(pointer<void>(source)).data());
+        return upstream::sqplus_read_text(vm, kinoko::legacy::StringView(reinterpret_cast<void*>(source)).data());
     default: return -1;
     }
 }
@@ -108,7 +108,7 @@ extern "C" int32_t  kinoko_sqplus_write_variable(const void* context, const void
         destination));
 }
 
-extern "C" int32_t  kinoko_sqplus_resolve_instance_variable(struct SQVM* vm_address, int32_t top, void** output_metadata, int32_t* output_source) {
+extern "C" int32_t  kinoko_sqplus_resolve_instance_variable(struct SQVM* vm_address, int32_t top, void** output_metadata, void** output_source) {
     if (output_metadata) *output_metadata = 0;
     if (output_source) *output_source = 0;
     auto* vm = vm_address;
@@ -122,7 +122,7 @@ extern "C" int32_t  kinoko_sqplus_resolve_instance_variable(struct SQVM* vm_addr
     sq_getstackobj(vm, 1, &instance);
     SQUserPointer storage = nullptr;
     if (!upstream::sqplus_instance_storage(vm, instance, info, storage)) return 0;
-    *output_source = address(storage);
+    *output_source = storage;
     *output_metadata = metadata;
     return 1;
 }

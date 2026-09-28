@@ -1,3 +1,5 @@
+#include "kinoko/script_diagnostics.hpp"
+#include "kinoko/squirrel_type_key.hpp"
 #include "kinoko/map_manager_records.hpp"
 #include "kinoko/camera_records.hpp"
 #include "kinoko/squirrel_binding_detail.hpp"
@@ -15,7 +17,7 @@ namespace {
 inline SQVM*& camera_vm_slot = kinoko_primary_vm;
 using namespace kinoko::script;
 using namespace kinoko::script::binding;
-template<class T> int32_t entry(T target) { return static_cast<int32_t>(reinterpret_cast<intptr_t>(target)); }
+template<class T> void* entry(T target) { return reinterpret_cast<void*>(target); }
 struct Field { const char* name; int32_t offset; bool integer; };
 constexpr Field camera_fields[] = {
     {"x", offsetof(kinoko::camera::Record, x), false},
@@ -49,12 +51,9 @@ struct ClassState {
     int32_t unused20;
     ObjectStorage first_table, second_table;
 };
-static_assert(sizeof(ClassState) == 48);
-static_assert(offsetof(ClassState, klass) == 8);
-static_assert(offsetof(ClassState, first_table) == 24);
-static_assert(offsetof(ClassState, second_table) == 36);
+static_assert(offsetof(ClassState,klass)==2*sizeof(void*));
 
-int32_t create_class(ObjectStorage *output, SQVM *vm, const char *name,
+void* create_class(ObjectStorage *output, SQVM *vm, const char *name,
                      const char *parent, int32_t *descriptor) {
     const auto top = sq_gettop(vm);
     kinoko_sqplus_object_initialize(output);
@@ -67,7 +66,7 @@ int32_t create_class(ObjectStorage *output, SQVM *vm, const char *name,
         kinoko_sqplus_setup_hierarchy(reinterpret_cast<int32_t *>(&temporary)); // Consumes the by-value object.
     }
     sq_settop(vm, top);
-    return address(output);
+    return output;
 }
 void construct(ClassState &state, const char *name, int32_t *descriptor) {
     state.vm = reinterpret_cast<SQVM *>(camera_vm_slot);
@@ -88,7 +87,7 @@ template<size_t N> void bind_fields(int32_t* object, int32_t* descriptor, const 
     }
 }
 struct CameraTarget { void *instance; void *method_slot; };
-static_assert(sizeof(CameraTarget) == 8);
+static_assert(sizeof(CameraTarget) == 2*sizeof(void*));
 CameraTarget camera_receiver(SQVM *vm) {
     const auto top = sq_gettop(vm);
     SQUserPointer receiver = nullptr, payload = nullptr, tag = nullptr;
@@ -96,32 +95,31 @@ CameraTarget camera_receiver(SQVM *vm) {
         SQ_SUCCEEDED(sq_getinstanceup(vm, 1, &receiver, nullptr)) ? receiver : nullptr,
         nullptr};
     const auto status = top >= 1 ? sq_getuserdata(vm, top, &payload, &tag) : 0;
-    if (top >= 1 && SQ_SUCCEEDED(status) && !tag) result.method_slot = payload;
+    if (top >= 1 && SQ_SUCCEEDED(status) && !tag && payload && sq_getsize(vm,top)>=sizeof(void*)) result.method_slot = payload;
     // 466669..46668E uses the complete eight-byte SQObject.
     HSQOBJECT instance; sq_resetobject(&instance);
     if (top >= 1) sq_getstackobj(vm, 1, &instance);
     static int traces;
     if (traces < 16) {
         ++traces;
-        kinoko_trace_i32("4665e0:vm", address(vm));
-        kinoko_trace_i32("4665e0:result", address(&result));
+        kinoko_trace_i32("4665e0:vm", diagnostic_address(vm));
+        kinoko_trace_i32("4665e0:result", diagnostic_address(&result));
         kinoko_trace_i32("4665e0:stack-count", top);
-        kinoko_trace_i32("4665e0:instance-up", address(result.instance));
+        kinoko_trace_i32("4665e0:instance-up", diagnostic_address(result.instance));
         kinoko_trace_i32("4665e0:userdata-status", status);
-        kinoko_trace_i32("4665e0:userdata-payload", address(payload));
-        kinoko_trace_i32("4665e0:userdata-tag", address(tag));
+        kinoko_trace_i32("4665e0:userdata-payload", diagnostic_address(payload));
+        kinoko_trace_i32("4665e0:userdata-tag", diagnostic_address(tag));
         kinoko_trace_i32("4665e0:instance-type", instance._type);
         kinoko_trace_i32("4665e0:instance-data", data_bits(instance));
     }
     ObjectStorage object{};
     kinoko_sqplus_object_construct_value(&object, instance._type, data_bits(instance));
-    int32_t type = 0;
+    void* type = nullptr;
     kinoko_sqplus_object_typetag(&object, &type);
-    if (type != address(kinoko_camera_binding_type())) {
+    if (type != kinoko_camera_binding_type()) {
         ObjectStorage inherited{};
         kinoko_sqplus_object_get_value(&object, &inherited, "__ot");
-        result.instance = kinoko_sqplus_object_get_index_userpointer(
-            &inherited, address(kinoko_camera_binding_type()));
+        result.instance = kinoko::script::type_pointer(vm,ObjectView(&inherited).value(),kinoko_camera_binding_type());
         kinoko_sqplus_object_destroy(&inherited);
     }
     kinoko_sqplus_object_destroy(&object);
@@ -144,11 +142,11 @@ int32_t kinoko_call_camera_update(SQVM *vm) {
     KinokoOwnedObjectWords argument{};
     kinoko_sqplus_argument_object(reinterpret_cast<int32_t*>(&argument), 0, vm);
     if (camera_native_trace_count < 16) {
-        kinoko_trace_i32("466890:vm", address(vm));
-        kinoko_trace_i32("466890:native-instance", address(target.instance));
-        kinoko_trace_i32("466890:type-info", address(target.method_slot));
-        kinoko_trace_i32("466890:method", address(method));
-        kinoko_trace_i32("466890:arg0", address(argument.vtable));
+        kinoko_trace_i32("466890:vm", diagnostic_address(vm));
+        kinoko_trace_i32("466890:native-instance", diagnostic_address(target.instance));
+        kinoko_trace_i32("466890:type-info", diagnostic_address(target.method_slot));
+        kinoko_trace_i32("466890:method", diagnostic_address(method));
+        kinoko_trace_i32("466890:arg0", diagnostic_address(argument.vtable));
         kinoko_trace_i32("466890:arg1", argument.type);
         kinoko_trace_i32("466890:arg2", static_cast<int32_t>(argument.value));
         ++camera_native_trace_count;
@@ -174,7 +172,9 @@ int32_t register_camera_binding_impl() {
     if (data_bits(value)) {
         kinoko_trace_i32("camera-class:type", value._type);
         kinoko_trace_i32("camera-class:data", data_bits(value));
+#if INTPTR_MAX == INT32_MAX
         kinoko_trace_squirrel_table_entries("camera-class-members", load<int32_t>(data_bits(value)+24));
+#endif
     }
     kinoko_sqplus_object_destroy(&state.second_table);
     kinoko_sqplus_object_destroy(&state.first_table);
@@ -194,7 +194,7 @@ int32_t register_map_binding_impl() {
     kinoko_sqplus_object_destroy(&layer);
     kinoko_sqplus_object_destroy(&state.second_table);
     kinoko_sqplus_object_destroy(&state.first_table);
-    return address(kinoko_sqplus_object_destroy(&state.klass));
+    return diagnostic_address(kinoko_sqplus_object_destroy(&state.klass));
 }
 } // namespace
 extern "C" int32_t kinoko_camera_update_entry(struct SQVM* vm) {

@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.h"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/native_property_bridge.h"
@@ -12,8 +13,8 @@ void kinoko_trace_i32(const char*, int32_t);
 }
 
 namespace {
-using kinoko::script::pointer;
-using kinoko::script::address;
+
+using kinoko::script::diagnostic_address;
 namespace upstream = kinoko::script::upstream;
 template<class T> T read(const void* storage) {
     T value; std::memcpy(&value, storage, sizeof(value)); return value;
@@ -22,9 +23,7 @@ template<class T> void write(void* storage, const T& value) {
     std::memcpy(storage, &value, sizeof(value));
 }
 unsigned char* field(void* object, int32_t offset) {
-    // Native layout addresses and offsets have the original 32-bit wrap rules.
-    return pointer<unsigned char>(static_cast<int32_t>(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(object)) +
-                                                       static_cast<uint32_t>(offset)));
+    return static_cast<unsigned char*>(object)+offset;
 }
 void* descriptor(SQVM* id, int32_t* offset, bool trace) {
     if (!id || !offset) return 0;
@@ -41,7 +40,7 @@ void* descriptor(SQVM* id, int32_t* offset, bool trace) {
     if (trace && (value == 0x8c || (value >= 0x34 && value <= 0x44))) {
         static std::atomic<unsigned> count{0};
         if (count.fetch_add(1, std::memory_order_relaxed) < 256) {
-            kinoko_trace_i32("cact:property-target", address(target));
+            kinoko_trace_i32("cact:property-target", diagnostic_address(target));
             kinoko_trace_i32("cact:property-offset", value);
             kinoko_trace_i32("cact:property-vtable", read<int32_t>(target));
         }
@@ -99,7 +98,7 @@ int32_t set_bool(SQVM* id, bool trace) {
     if (trace && (field.offset() == 0x8c || field.offset() == 0x8d)) {
         static std::atomic<unsigned> count{0};
         if (count.fetch_add(1, std::memory_order_relaxed) < 128) {
-            kinoko_trace_i32("cact:set-bool-target", address(field.target()));
+            kinoko_trace_i32("cact:set-bool-target", diagnostic_address(field.target()));
             kinoko_trace_i32("cact:set-bool-offset", field.offset());
             kinoko_trace_i32("cact:set-bool-value", value != 0);
         }

@@ -31,18 +31,19 @@ inline int32_t address(const void* pointer) noexcept {
 template<class T = void> T* pointer(int32_t value) noexcept {
     return reinterpret_cast<T*>(static_cast<uintptr_t>(static_cast<uint32_t>(value)));
 }
-inline int32_t data_bits(const HSQOBJECT& value) noexcept {
-    int32_t bits;
+
+#endif
+inline intptr_t data_bits(const HSQOBJECT& value) noexcept {
+    intptr_t bits{};
     std::memcpy(&bits, &value._unVal, sizeof(bits));
     return bits;
 }
-inline HSQOBJECT borrowed_value(int32_t type, int32_t data) noexcept {
-    HSQOBJECT result;
+inline HSQOBJECT borrowed_value(int32_t type, intptr_t data) noexcept {
+    HSQOBJECT result{};
     result._type = static_cast<SQObjectType>(type);
     std::memcpy(&result._unVal, &data, sizeof(data));
     return result;
 }
-#endif
 
 // Views also accept the legacy int32_t[3] temporaries, without type-punning
 // them as live C++ objects or assuming stronger alignment than their storage.

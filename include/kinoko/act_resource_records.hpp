@@ -2,6 +2,7 @@
 #include "kinoko/native_record_view.hpp"
 #include "kinoko/act_types.h"
 #include "kinoko/act_frame.h"
+#include "kinoko/act_script_storage.hpp"
 #include "kinoko/legacy_string.hpp"
 
 #include <array>
@@ -13,7 +14,7 @@ struct SQVM;
 namespace kinoko::act {
 struct FindState; // owned native implementation, defined in act_runtime_lifecycle.cpp
 // Representation only: the actual Squirrel API owns the external reference.
-using ObjectStorage = std::array<int32_t, 2>;
+using ObjectStorage = ScriptValueStorage;
 struct StagePropertyAliases {
     int32_t *margin_left, *margin_right, *margin_top, *margin_bottom;
     float *offset_x, *offset_y;
@@ -21,7 +22,7 @@ struct StagePropertyAliases {
     int32_t *resolution_ms, *screen_width, *screen_height;
     legacy::StringRecord *name;
 };
-static_assert(sizeof(StagePropertyAliases) == 44);
+static_assert(sizeof(StagePropertyAliases) == 11*sizeof(void*));
 struct RuntimeRecord {
     KinokoActSourceHolder *source_holder; // borrowed; never owns the holder or source ACT
     int32_t current_time;
@@ -42,10 +43,11 @@ struct RuntimeRecord {
     std::array<uint8_t, 3> unknown105;
     StagePropertyAliases stage_properties;
     SQVM *vm; // borrowed VM, owns environment through an external reference
-    ObjectStorage environment;
+    alignas(void*) ObjectStorage environment;
     kinoko::legacy::StringRecord name;
     uint32_t unknown188;
 };
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(void*) == 4 && sizeof(CRITICAL_SECTION) == 24);
 static_assert(sizeof(RuntimeRecord) == 192);
 #define KINOKO_ACT_FIELD(T, M, O) static_assert(offsetof(T, M) == O)
@@ -65,4 +67,5 @@ KINOKO_ACT_FIELD(RuntimeRecord, name, 164);
 static_assert(offsetof(RuntimeRecord, name) + offsetof(kinoko::legacy::StringRecord, length) == 180);
 static_assert(offsetof(RuntimeRecord, name) + offsetof(kinoko::legacy::StringRecord, capacity) == 184);
 #undef KINOKO_ACT_FIELD
+#endif
 }

@@ -6,7 +6,7 @@ namespace kinoko::script::binding {
 // Recovered Win32 VarRef layout. Descriptor identities are borrowed pointers;
 // offset is deliberately numeric: it also stores constants and byte offsets.
 struct Variable {
-    int32_t offset;
+    intptr_t offset;
     int32_t category;
     void* instance_type;
     void* value_type;

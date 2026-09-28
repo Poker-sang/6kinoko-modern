@@ -40,10 +40,11 @@ extern "C" int32_t kinoko_act_layer_update(KinokoActLayer *object) {
         kinoko_trace_i32("41efb0:layer", address(object));
         const char* labels[] = {"41efb0:callback-vm", "41efb0:callback-env-type",
             "41efb0:callback-env-data", "41efb0:callback-type", "41efb0:callback-data"};
-        for (int i = 0; i < 5; ++i) kinoko_trace_i32(labels[i], callback[i]);
+        const int32_t words[] = {static_cast<int32_t>(reinterpret_cast<uintptr_t>(callback.vm)), callback.environment[0], callback.environment[sizeof(void*)/4], callback.closure[0], callback.closure[sizeof(void*)/4]};
+        for (int i = 0; i < 5; ++i) kinoko_trace_i32(labels[i], words[i]);
     }
     layer.set(&LayerKeys::previous_position, layer.get(&LayerKeys::position));
-    return layer.get(&LayerKeys::update_callback)[3] != 0x1000001
+    return layer.get(&LayerKeys::update_callback).closure[0] != 0x1000001
         ? kinoko_sqrat_invoke_callback((const void *)(layer.bytes(&LayerKeys::update_callback))) : 0;
 }
 
@@ -82,7 +83,7 @@ extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
     }
     const auto script = DocumentView(document).view(&DocumentRecord::script);
     const RecordView<ScriptUpdatePrefix> source(script.data());
-    const auto callback_type = source.get(&ScriptUpdatePrefix::update_callback)[3];
+    const auto callback_type = source.get(&ScriptUpdatePrefix::update_callback).closure[0];
     if (trace_index <= 48) kinoko_trace_i32("451640:root-update-type", callback_type);
     if (callback_type != 0x1000001) {
         const auto result = kinoko_sqrat_invoke_callback((const void *)(source.bytes(&ScriptUpdatePrefix::update_callback)));

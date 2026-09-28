@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_native_arguments.h"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_host_object.hpp"
@@ -11,8 +12,8 @@ bool valid_index(HSQUIRRELVM vm, SQInteger index) noexcept {
     const auto top = sq_gettop(vm);
     return index > 0 ? index <= top : index >= -top;
 }
-int32_t payload_word(const void* payload) noexcept {
-    int32_t result;
+void* payload_word(const void* payload) noexcept {
+    void* result;
     std::memcpy(&result, payload, sizeof(result));
     return result;
 }
@@ -45,15 +46,15 @@ extern "C" void* kinoko_native_target_from_userdata(struct SQVM * vm_address) {
     SQUserPointer payload = nullptr;
     const auto status = sq_getuserdata(vm, -1, &payload, nullptr);
     const bool readable = SQ_SUCCEEDED(status) && payload &&
-        sq_getsize(vm, -1) >= static_cast<SQInteger>(sizeof(int32_t));
+        sq_getsize(vm, -1) >= static_cast<SQInteger>(sizeof(void*));
     if (trace_count < 96) {
-        kinoko_trace_i32("native-userdata:vm", address(vm_address));
+        kinoko_trace_i32("native-userdata:vm", diagnostic_address(vm_address));
         kinoko_trace_i32("native-userdata:top", top);
         kinoko_trace_i32("native-userdata:lookup", status);
-        kinoko_trace_i32("native-userdata:payload", address(payload));
-        const auto bits = static_cast<uint32_t>(address(payload));
+        kinoko_trace_i32("native-userdata:payload", diagnostic_address(payload));
+        const auto bits = static_cast<uint32_t>(diagnostic_address(payload));
         if (readable && bits >= 0x10000u && bits < 0x7f000000u)
-            kinoko_trace_i32("native-userdata:value", payload_word(payload));
+            kinoko_trace_i32("native-userdata:value", diagnostic_address(payload_word(payload)));
         ++trace_count;
     }
     return (void*)(intptr_t)(readable ? payload_word(payload) : 0);
@@ -63,15 +64,15 @@ extern "C" void* kinoko_native_callback_from_stack(struct SQVM * vm_address) {
     if (!vm || sq_gettop(vm) <= 0) return (void*)(intptr_t)(0);
     SQUserPointer payload = nullptr, tag = nullptr;
     if (SQ_FAILED(sq_getuserdata(vm, sq_gettop(vm), &payload, &tag)) || tag || !payload ||
-        sq_getsize(vm, -1) < static_cast<SQInteger>(sizeof(int32_t)))
+        sq_getsize(vm, -1) < static_cast<SQInteger>(sizeof(void*)))
         return (void*)(intptr_t)(0);
     return (void*)(intptr_t)(payload_word(payload));
 }
-extern "C" int32_t kinoko_native_string_arg(struct SQVM * vm_address, int32_t index, int32_t* output) {
+extern "C" int32_t kinoko_native_string_arg(struct SQVM * vm_address, int32_t index, const char** output) {
     static int trace_count;
     auto* vm = vm_address;
     if (trace_count < 64) {
-        kinoko_trace_i32("native-string-arg:vm", address(vm_address));
+        kinoko_trace_i32("native-string-arg:vm", diagnostic_address(vm_address));
         kinoko_trace_i32("native-string-arg:index", index);
         kinoko_trace_i32("native-string-arg:type", valid_index(vm, index) ? sq_gettype(vm, index) : OT_NULL);
         ++trace_count;
@@ -79,8 +80,7 @@ extern "C" int32_t kinoko_native_string_arg(struct SQVM * vm_address, int32_t in
     const SQChar* text = nullptr;
     const auto result = argument(vm, index, OT_STRING, output ? &text : nullptr, sq_getstring);
     if (result) {
-        const int32_t bits = address(text);
-        std::memcpy(output, &bits, sizeof(bits));
+        std::memcpy(output, &text, sizeof(text));
     }
     return result;
 }

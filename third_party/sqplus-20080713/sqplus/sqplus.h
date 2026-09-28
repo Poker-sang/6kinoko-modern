@@ -1,3 +1,4 @@
+#include "kinoko/squirrel_type_key.hpp"
 // SqPlus.h
 // Created by John Schultz 9/05/05, major update 10/05/05.
 // Template function call design from LuaPlusCD by Joshua C. Jensen,
@@ -526,7 +527,7 @@ struct VarRef {
       typeTable = SquirrelVM::CreateTable();
       root.SetValue(SQ_PLUS_TYPE_TABLE,typeTable);
     }
-    typeTable.SetValue(INT((size_t)varType),varType->GetTypeName());
+    kinoko::script::set_type_name(SquirrelVM::GetVMPtr(),typeTable.GetObjectHandle(),varType,varType->GetTypeName());
 #endif
   }
 };
@@ -1432,7 +1433,7 @@ struct DirectCallInstanceFuncPicker {
       SquirrelObject typeTable = so.GetValue(SQ_CLASS_OBJECT_TABLE_NAME);
       instance = static_cast<Callee*>(
           // <TODO> 64-bit compatible version.
-          typeTable.GetUserPointer(INT((size_t)ClassType<Callee>::type()))
+          kinoko::script::type_pointer(SquirrelVM::GetVMPtr(),typeTable.GetObjectHandle(),ClassType<Callee>::type())
         );
     }
 #elif defined(SQ_USE_CLASS_INHERITANCE_SIMPLE)
@@ -1915,7 +1916,7 @@ inline void PopulateAncestryWithType(HSQUIRRELVM v,
   // 11/2/05: Create a new table for this instance.
   SquirrelObject newObjectTable = SquirrelVM::CreateTable();
   // <TODO> 64-bit compatible version.
-  newObjectTable.SetUserPointer(INT((size_t)nativeType), newClass);
+  kinoko::script::set_type_pointer(v,newObjectTable.GetObjectHandle(),nativeType,newClass);
   instance.SetValue(SQ_CLASS_OBJECT_TABLE_NAME, newObjectTable);
 
   SquirrelObject classHierArray = instance.GetValue(SQ_CLASS_HIER_ARRAY);
@@ -1930,7 +1931,7 @@ inline void PopulateAncestryWithType(HSQUIRRELVM v,
       sq_pushobject(v,so.GetObjectHandle());
       SQUserPointer typeTag;
       sq_gettypetag(v,-1,&typeTag);
-      newObjectTable.SetUserPointer(INT(size_t(typeTag)),newClass);
+      kinoko::script::set_type_pointer(v,newObjectTable.GetObjectHandle(),typeTag,newClass);
       sq_poptop(v);
     }
   }

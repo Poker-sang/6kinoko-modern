@@ -338,7 +338,7 @@ if(propertyActor.value != 123 || propertyActor.x != 7.25 || propertyActor.enable
     info.flags = 0; store(metadata, info);
     instance.view().push(vm); sq_pushstring(vm, "value", -1);
     void* resolved = reinterpret_cast<void*>(4); int32_t source = 4;
-    require(kinoko_sqplus_resolve_instance_variable((struct SQVM*)(uintptr_t)(address(vm)), 2, &resolved, &source) == 0 && !resolved && !source, "instance field rejects null native pointer");
+    require(kinoko_sqplus_resolve_instance_variable((struct SQVM*)(uintptr_t)(address(vm)), 2, &resolved, reinterpret_cast<void**>(&source)) == 0 && !resolved && !source, "instance field rejects null native pointer");
 }
 
 int native_release_count = 0;
@@ -494,7 +494,7 @@ void mapped_property_contract(HSQUIRRELVM vm) {
     require(SQ_SUCCEEDED(sq_rawset(vm, -3)), "install declaring base pointer"); sq_pop(vm, 1);
     instance.view().push(vm); sq_pushstring(vm, "value", -1);
     void* metadata = nullptr; int32_t source = 0;
-    require(kinoko_sqplus_resolve_instance_variable((struct SQVM*)(uintptr_t)(address(vm)), 2, &metadata, &source) == 1 &&
+    require(kinoko_sqplus_resolve_instance_variable((struct SQVM*)(uintptr_t)(address(vm)), 2, &metadata, reinterpret_cast<void**>(&source)) == 1 &&
         source == address(mapped + 1), "original property resolver uses declaring base from __ot");
     require(sq_gettop(vm) == 2 && metadata != 0, "mapped resolution preserves caller stack");
     require(kinoko_sqplus_instance_get((struct SQVM *)(vm)) == 1 && integer(vm) == 78, "mapped property getter");
@@ -511,7 +511,7 @@ void mapped_property_contract(HSQUIRRELVM vm) {
     require(SQ_SUCCEEDED(sq_deleteslot(vm, -2, SQFalse)), "remove declaring base pointer"); sq_pop(vm, 1);
     instance.view().push(vm); sq_pushstring(vm, "value", -1);
     metadata = reinterpret_cast<void*>(99); source = 99;
-    require(!kinoko_sqplus_resolve_instance_variable((struct SQVM*)(uintptr_t)(address(vm)), 2, &metadata, &source) && !metadata && !source,
+    require(!kinoko_sqplus_resolve_instance_variable((struct SQVM*)(uintptr_t)(address(vm)), 2, &metadata, reinterpret_cast<void**>(&source)) && !metadata && !source,
         "missing base mapping cannot fall back to primary pointer");
     require(sq_gettop(vm) == 2, "failed base resolution preserves stack");
     sq_getlasterror(vm); require(text(vm) == "Invalid Instance Type", "source type error retained");
@@ -555,10 +555,10 @@ void argument_guards(HSQUIRRELVM vm) {
     int32_t output = 99; float f = 7;
     for (int index : {0, 1, -1, INT32_MIN, INT32_MAX}) {
         require(!kinoko_native_integer_arg(vm, index, &output) && output == 99, "invalid integer argument leaves output");
-        require(!kinoko_native_string_arg(vm, index, &output) && output == 99, "invalid string argument leaves output");
+        require(!kinoko_native_string_arg(vm, index, reinterpret_cast<const char**>(&output)) && output == 99, "invalid string argument leaves output");
         require(!kinoko_native_float_arg(vm, index, &f) && f == 7, "invalid float argument leaves output");
     }
-    require(!kinoko_native_string_arg((struct SQVM *)(intptr_t)(0), 1, &output), "null VM string argument");
+    require(!kinoko_native_string_arg((struct SQVM *)(intptr_t)(0), 1, reinterpret_cast<const char**>(&output)), "null VM string argument");
     for (int size = 0; size < 4; ++size) {
         sq_newuserdata(vm, size);
         require((int32_t)(intptr_t)(kinoko_native_target_from_userdata(vm)) == 0, "undersized native target rejected");

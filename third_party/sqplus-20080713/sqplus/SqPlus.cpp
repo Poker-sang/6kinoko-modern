@@ -22,7 +22,7 @@ static char * instanceVarPointer(SquirrelObject & instance,const VarRef * vr) {
 #if defined(SQ_USE_CLASS_INHERITANCE) 
     if (typetag != vr->instanceType) {
       SquirrelObject typeTable = instance.GetValue(SQ_CLASS_OBJECT_TABLE_NAME);
-      up = (char *)typeTable.GetUserPointer(INT((size_t)vr->instanceType)); // <TODO> 64-bit compatible version.
+      up = (char *)kinoko::script::type_pointer(SquirrelVM::GetVMPtr(),typeTable.GetObjectHandle(),vr->instanceType); // <TODO> 64-bit compatible version.
       if (!up) {
         throw SquirrelError(_SC("Invalid Instance Type"));
       }

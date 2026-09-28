@@ -1,10 +1,11 @@
+#include "kinoko/memory_access.hpp"
 #include "kinoko/act_runtime.h"
 #include "kinoko/act_layer_storage.hpp"
 #include "kinoko/file_io_layout.h"
 #include "kinoko/act_host.h"
 #include "kinoko/act_script_payload.hpp"
 #include "kinoko/legacy_abi.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/legacy_method_entries.h"
 #include "kinoko/upstream_bindings.hpp"
@@ -17,9 +18,6 @@
 #include <vector>
 
 namespace {
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
-using kinoko::legacy::field;
 // 415E20 registers these native members. 4175F0 updates the read schema;
 // omitted properties keep their native values, unknown/mismatched ones consume
 // their serialized values without assigning them. std::map supplies key order.

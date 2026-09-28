@@ -1,3 +1,4 @@
+#include "kinoko/squirrel_type_key.hpp"
 #include "kinoko/squirrel_binding_detail.hpp"
 #include "kinoko/squirrel_native_arguments.h"
 #include "kinoko/method_entry.hpp"
@@ -23,7 +24,7 @@ int32_t argument_error(HSQUIRRELVM vm) {
     return vm ? sq_throwerror(vm, "Incorrect function argument") : -1;
 }
 struct MethodTarget { void* receiver; const Method* payload; };
-static_assert(sizeof(MethodTarget)==8);
+static_assert(sizeof(MethodTarget)==2*sizeof(void*));
 struct ResolvedMethod { void* receiver = nullptr; void* function = nullptr; int32_t offset = 0; };
 bool resolve(SQVM* vm, ResolvedMethod& output) {
     MethodTarget result{};
@@ -122,7 +123,7 @@ extern "C" void * kinoko_sqplus_resolve_method(void * output_address, struct SQV
         sq_pushstring(vm, "__ot", -1);
         result.receiver = nullptr;
         if (SQ_SUCCEEDED(sq_get(vm, -2))) {
-            sq_pushinteger(vm, address(expected_type));
+            kinoko::script::push_type_key(vm,expected_type);
             if (SQ_SUCCEEDED(sq_get(vm, -2))) {
                 SQUserPointer mapped = nullptr;
                 if (SQ_SUCCEEDED(sq_getuserpointer(vm, -1, &mapped))) result.receiver = mapped;

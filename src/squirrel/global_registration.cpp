@@ -60,10 +60,10 @@ extern "C" void kinoko_register_global_methods(void* root_table) {
     // explicit throwing C-linkage function type under /EHsc.
     void* target = entry(reinterpret_cast<int32_t (__cdecl *)(void)>(
         &kinoko_script_show_call_stack));
-    kinoko_sqrat_bind_object_function(root_table, "ShowCallStack", &target, 4,
+    kinoko_sqrat_bind_object_function(root_table, "ShowCallStack", &target, sizeof(target),
         entry(show_call_stack_entry), 0);
     target = entry(&kinoko_script_compile_file_argument);
-    kinoko_sqrat_bind_object_function(root_table, "CompileFile", &target, 4,
+    kinoko_sqrat_bind_object_function(root_table, "CompileFile", &target, sizeof(target),
         entry(kinoko_compile_file_native), 0);
     for (const auto& method : methods) {
         auto* vm = current_vm();
@@ -85,9 +85,9 @@ struct RootTableStorage {
     HSQOBJECT value;
     int32_t owns_value;
 };
-static_assert(sizeof(RootTableStorage) == 20);
-static_assert(offsetof(RootTableStorage, value) == 8);
-static_assert(offsetof(RootTableStorage, owns_value) == 16);
+static_assert(sizeof(RootTableStorage) == 5*sizeof(void*));
+static_assert(offsetof(RootTableStorage, value) == 2*sizeof(void*));
+static_assert(offsetof(RootTableStorage, owns_value) == 4*sizeof(void*));
 
 void bind_root_mask(ObjectStorage &object, int32_t *storage, const char *name,
                     const char *result_label, const char *storage_label,
@@ -120,7 +120,7 @@ int32_t kinoko_register_root_bindings() {
     sq_getstackobj(current_vm(), -1, &root.value);
     sq_addref(root.vm, &root.value);
     sq_pop(current_vm(), 1);
-    kinoko_register_global_methods((void*)(uintptr_t)(address(&root)));
+    kinoko_register_global_methods(&root);
 
     ObjectStorage object{};
     bind_root_mask(object, &kinoko_game_masks.update, "updateMask",

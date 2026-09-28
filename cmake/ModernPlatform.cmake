@@ -154,3 +154,26 @@ if(WIN32)
     target_compile_features(kinoko_native_ownership_width_contract PRIVATE cxx_std_17)
     add_test(NAME native_ownership_width_contract COMMAND kinoko_native_ownership_width_contract)
 endif()
+
+if(WIN32)
+    add_library(kinoko_binding_act_width_compile OBJECT
+        src/squirrel/squirrel_class_binding.cpp src/squirrel/squirrel_native_variables.cpp
+        src/squirrel/squirrel_native_arguments.cpp src/squirrel/squirrel_method_dispatch.cpp
+        src/squirrel/squirrel_host_compat.cpp src/squirrel/squirrel_vm_bootstrap.cpp
+        src/squirrel/sqrat_object_bridge.cpp src/squirrel/squirrel_game_objects.cpp
+        src/squirrel/native_property_bridge.cpp src/squirrel/actor_registration.cpp
+        src/squirrel/upstream_sqplus.cpp src/squirrel/upstream_sqplus_scalars.cpp
+        src/squirrel/squirrel_type_registry.cpp
+        third_party/sqplus-20080713/sqplus/SqPlus.cpp
+        third_party/sqplus-20080713/sqplus/SquirrelObject.cpp
+        src/reconstructed/act_script_lifecycle.cpp src/reconstructed/act_script_io.cpp
+        src/reconstructed/act_layer_lifecycle.cpp src/reconstructed/act_layer_clone.cpp
+        src/reconstructed/act_document_io.cpp src/reconstructed/act_document_clone.cpp)
+    target_include_directories(kinoko_binding_act_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/squirrel"
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqplus-20080713/sqplus")
+    target_compile_definitions(kinoko_binding_act_width_compile PRIVATE
+        SQPLUS_HOST_OBJECT_ONLY WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
+    target_compile_features(kinoko_binding_act_width_compile PRIVATE cxx_std_17)
+endif()

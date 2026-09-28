@@ -3,6 +3,7 @@
 #include "kinoko/act_layer_records.hpp"
 #include "kinoko/act_script_text.hpp"
 #include "kinoko/act_script_payload.hpp"
+#include "kinoko/act_script_storage.hpp"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -11,26 +12,12 @@ struct SQVM;
 namespace kinoko::act {
 // Host schemas, NOT on-disk ACT/CV4 structs. A callback contains two bare
 // Sqrat pairs, not the three-word externally owned SqPlus argument record.
-struct ActCallbackRecord {
-    SQVM* vm;
-    std::array<int32_t, 2> environment, closure;
-};
-struct ScriptStorageRecord {
-    const void* methods;
-    ActCallbackRecord initialize, update, release;
-    legacy::StringRecord file_name;
-    uint32_t unknown88;
-    void* bytes;
-    uint32_t size;
-    uint8_t loaded, compiled;
-    std::array<uint8_t, 2> padding102;
-};
 // Table/Instance owns an external reference only when owns_reference is set.
 // Never copy its vtable or padding as part of reference assignment.
 struct LayerObjectRecord {
     const void* methods;
     SQVM* vm;
-    std::array<int32_t, 2> value;
+    alignas(void*) ScriptValueStorage value;
     uint8_t owns_reference;
     std::array<uint8_t, 3> padding17;
 };
@@ -55,11 +42,10 @@ struct LayerStorageRecord {
     LayerObjectRecord script_object, layout_object;
 };
 using LayerStorageView = native::RecordView<LayerStorageRecord>;
-using ScriptStorageView = native::RecordView<ScriptStorageRecord>;
 using LayerObjectView = native::RecordView<LayerObjectRecord>;
 using LayerListView = native::RecordView<LayerListRecord>;
 
-static_assert(sizeof(void*) == 4, "Recovered ACT host storage is still Win32");
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(ActCallbackRecord) == 20);
 static_assert(offsetof(ActCallbackRecord, environment) == 4);
 static_assert(offsetof(ActCallbackRecord, closure) == 12);
@@ -92,6 +78,7 @@ KINOKO_LAYER_STORAGE_FIELD(script, 204);
 KINOKO_LAYER_STORAGE_FIELD(script_object, 308);
 KINOKO_LAYER_STORAGE_FIELD(layout_object, 328);
 #undef KINOKO_LAYER_STORAGE_FIELD
+#endif
 // Tie lifecycle storage to the older query prefixes; neither is a C++ object
 // overlaid on the allocation. Allocation size must come from the full schema.
 static_assert(offsetof(LayerStorageRecord, name) == offsetof(LayerKeys, name));

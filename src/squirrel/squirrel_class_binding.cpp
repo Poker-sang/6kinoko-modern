@@ -10,9 +10,9 @@ using namespace kinoko::script::binding;
 
 
 
-int32_t bind_variable(int32_t* object, int32_t* instance_type, int32_t offset,
+int32_t bind_variable(int32_t* object, int32_t* instance_type, intptr_t offset,
                       const char* name, int32_t flags, int32_t category, int32_t size) {
-    const auto payload = (int32_t)(intptr_t)(kinoko_sqplus_create_variable(object, name));
+    auto* payload = kinoko_sqplus_create_variable(object, name);
     // Existing slots are never overwritten with replacement userdata. A wrong
     // type/short payload is an invalid binding, not permission to corrupt it.
     if (!payload) return 0;
@@ -85,24 +85,24 @@ extern "C" void * kinoko_sqplus_create_variable(void * object, const char * name
     return upstream::sqplus_create_variable(current_vm(), ObjectView(object).value(), name_address);
 }
 
-extern "C" void* kinoko_sqplus_initialize_variable(void* output, int32_t offset, int32_t category, void* instance_type, void* value_type, int32_t size, int32_t flags) {
+extern "C" void* kinoko_sqplus_initialize_variable(void* output, intptr_t offset, int32_t category, void* instance_type, void* value_type, int32_t size, int32_t flags) {
     const Variable info{offset, category, instance_type, value_type,
         static_cast<uint16_t>(size), static_cast<uint16_t>(flags)};
     upstream::sqplus_variable_metadata(current_vm(),
-        ObjectView((int32_t)(intptr_t)(kinoko_sqplus_root_object())).value(), info, output);
+        ObjectView(kinoko_sqplus_root_object()).value(), info, output);
     return output;
 }
 
 extern "C" int32_t kinoko_sqplus_bind_integer(int32_t* object, int32_t* type,
-                                    int32_t offset, char* name, int32_t flags) {
+                                    intptr_t offset, char* name, int32_t flags) {
     return bind_variable(object, type, offset, name, flags, 0, 4);
 }
 extern "C" int32_t kinoko_sqplus_bind_float(int32_t* object, int32_t* type,
-                                    int32_t offset, char* name, int32_t flags) {
+                                    intptr_t offset, char* name, int32_t flags) {
     return bind_variable(object, type, offset, name, flags, 2, 4);
 }
 extern "C" int32_t kinoko_sqplus_bind_boolean(int32_t* object, int32_t* type,
-                                    int32_t offset, char* name, int32_t flags) {
+                                    intptr_t offset, char* name, int32_t flags) {
     return bind_variable(object, type, offset, name, flags, 3, 1);
 }
 

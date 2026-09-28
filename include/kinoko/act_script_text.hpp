@@ -1,6 +1,7 @@
 #pragma once
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_string.hpp"
+#include "kinoko/act_script_storage.hpp"
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -10,7 +11,7 @@ namespace kinoko::act {
 // 415B80/415EA0/415F60: callbacks and unknown words stay constructor-owned.
 struct ScriptTextRecord {
     const void *vtable;
-    std::array<unsigned char, 60> callbacks;
+    std::array<ActCallbackRecord, 3> callbacks;
     kinoko::legacy::StringRecord file_name;
     uint32_t unknown88;
     char *buffer;
@@ -19,12 +20,17 @@ struct ScriptTextRecord {
     std::array<unsigned char, 2> padding;
 };
 using ScriptTextView = kinoko::native::RecordView<ScriptTextRecord>;
+static_assert(sizeof(ScriptTextRecord)==sizeof(ScriptStorageRecord));
+static_assert(offsetof(ScriptTextRecord,buffer)==offsetof(ScriptStorageRecord,bytes));
+static_assert(offsetof(ScriptTextRecord,compiled)==offsetof(ScriptStorageRecord,compiled));
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(ScriptTextRecord) == 104);
 static_assert(offsetof(ScriptTextRecord, file_name) == 64);
 static_assert(offsetof(ScriptTextRecord, buffer) == 92);
 static_assert(offsetof(ScriptTextRecord, size) == 96);
 static_assert(offsetof(ScriptTextRecord, compiled) == 101);
 
+#endif
 // 416700 assignment used by 41ECA0. Never copies live callback records.
 inline void assign_script_payload(ScriptTextView destination, ScriptTextView source) {
     const kinoko::legacy::StringView input(source.bytes(&ScriptTextRecord::file_name));
@@ -34,7 +40,7 @@ inline void assign_script_payload(ScriptTextView destination, ScriptTextView sou
     destination.set(&ScriptTextRecord::dirty, uint8_t{1});
     destination.set(&ScriptTextRecord::compiled, source.get(&ScriptTextRecord::compiled));
     if (size < 0) return;
-    kinoko::legacy::Allocation<char> buffer(static_cast<char *>(std::calloc(size ? size : 1, 1)));
+    kinoko::memory::Allocation<char> buffer(static_cast<char *>(std::calloc(size ? size : 1, 1)));
     if (!buffer) throw std::bad_alloc();
     if (auto *bytes = source.get(&ScriptTextRecord::buffer))
         std::memcpy(buffer.get(), bytes, static_cast<size_t>(size));
@@ -49,7 +55,7 @@ inline void copy_script_text(ScriptTextView destination, ScriptTextView source) 
         ? "/* This script is compiled. Can't read this. Don't edit this.*/"
         : source.get(&ScriptTextRecord::buffer);
     kinoko::legacy::StringView(destination.bytes(&ScriptTextRecord::file_name)).assign("", 0);
-    kinoko::legacy::Allocation<char> buffer(static_cast<char *>(std::malloc(text.size() + 1)));
+    kinoko::memory::Allocation<char> buffer(static_cast<char *>(std::malloc(text.size() + 1)));
     if (!buffer) throw std::bad_alloc();
     std::memcpy(buffer.get(), text.c_str(), text.size() + 1);
     std::free(destination.get(&ScriptTextRecord::buffer));

@@ -18,27 +18,32 @@ struct ClassBindingStorage {
     ObjectStorage members;
     ObjectStorage methods;
 };
-static_assert(sizeof(ClassBindingStorage) == 48);
-static_assert(offsetof(ClassBindingStorage, klass) == 8);
-static_assert(offsetof(ClassBindingStorage, members) == 24);
-static_assert(offsetof(ClassBindingStorage, methods) == 36);
+static_assert(offsetof(ClassBindingStorage,klass)==2*sizeof(void*));
+static_assert(offsetof(ClassBindingStorage,members)==3*sizeof(void*)+sizeof(ObjectStorage));
+static_assert(offsetof(ClassBindingStorage,methods)==3*sizeof(void*)+2*sizeof(ObjectStorage));
+#if INTPTR_MAX == INT32_MAX
+static_assert(sizeof(ClassBindingStorage)==48);
+#endif
 
 // Read/write all recovered records through memcpy; callers can be unaligned.
 struct Method { void* function; int32_t receiver_offset; };
-static_assert(sizeof(Method) == 8);
+static_assert(offsetof(Method,receiver_offset)==sizeof(void*));
 
 template<class T> T load(const void* data) noexcept {
     T result;
     std::memcpy(&result, data, sizeof(result));
     return result;
 }
+#if INTPTR_MAX == INT32_MAX
 template<class T> T load(int32_t data) noexcept { return load<T>(pointer(data)); }
+#endif
 template<class T> void store(void* data, const T& value) noexcept {
     std::memcpy(data, &value, sizeof(value));
 }
 template<class T> void store(int32_t data, const T& value) noexcept {
     store(pointer(data), value);
 }
+#endif
 inline HSQUIRRELVM current_vm() noexcept { return reinterpret_cast<HSQUIRRELVM>(kinoko_primary_vm); }
 inline int32_t add_address(int32_t base, int32_t offset) noexcept {
     return static_cast<int32_t>(static_cast<uint32_t>(base) + static_cast<uint32_t>(offset));
@@ -65,7 +70,7 @@ public:
     Object& operator=(const Object&) = delete;
     ObjectView view() noexcept { return ObjectView(&storage_); }
     void *data() noexcept { return &storage_; }
-    int32_t location() noexcept { return address(data()); }
+    void* location() noexcept { return data(); }
 private:
     HSQUIRRELVM vm_;
     ObjectStorage storage_{};

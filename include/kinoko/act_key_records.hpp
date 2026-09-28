@@ -21,10 +21,15 @@ struct TimelineRecord {
     TimelineBuffer pairs;
     uint32_t reserved24;
 };
-static_assert(sizeof(TimelinePair) == 8 && sizeof(TimelineRecord) == 28);
+static_assert(sizeof(TimelinePair)==8);
+#if INTPTR_MAX == INT32_MAX
+static_assert(sizeof(TimelineRecord)==28);
 static_assert(offsetof(TimelineRecord, pairs) == 12);
+ #endif
 using KeyView = kinoko::native::RecordView<KeyRecord>;
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(KeyRecord) == 36);
 static_assert(offsetof(KeyRecord, layout) == 4);
 static_assert(offsetof(KeyRecord, script_name) == 8);
+#endif
 }

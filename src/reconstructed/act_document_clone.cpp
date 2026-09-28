@@ -1,3 +1,4 @@
+#include "kinoko/memory_access.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/act_clone.h"
 #include "kinoko/act_document.h"
@@ -9,8 +10,7 @@
 
 namespace {
 using namespace kinoko::act;
-using kinoko::legacy::address;
-using kinoko::legacy::load;
+using kinoko::memory::load;
 
 using DeleteDocument = DocumentDeleter;
 using DeleteResource = OwnedDeleter<KinokoActResource>;

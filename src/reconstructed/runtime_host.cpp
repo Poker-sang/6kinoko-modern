@@ -321,7 +321,7 @@ int32_t kinoko_host_close_window(void) {
 }
 
 int32_t kinoko_compile_file_native(struct SQVM* vm) {
-    int32_t path;
+    const char* path;
     int32_t result;
     HSQOBJECT environment = kinoko::script::borrowed_value(
         kinoko_compile_environment_type, kinoko_compile_environment_slot);
@@ -337,7 +337,7 @@ int32_t kinoko_compile_file_native(struct SQVM* vm) {
     return 1;
 }
 
-static int32_t kinoko_bind_root_integer(int32_t *object, int32_t value,
+static int32_t kinoko_bind_root_integer(int32_t *object, intptr_t value,
                                         const char *name, int32_t flags) {
     void *slot = kinoko_sqplus_create_variable(object, name);
     kinoko::script::binding::Variable metadata;
@@ -351,7 +351,7 @@ static int32_t kinoko_bind_root_integer(int32_t *object, int32_t value,
 }
 
 int32_t kinoko_script_bind_root_value(int32_t *object, int32_t *value, char *name, int32_t flags) {
-    return kinoko_bind_root_integer(object, (int32_t)(intptr_t)value, name, flags);
+    return kinoko_bind_root_integer(object, reinterpret_cast<intptr_t>(value), name, flags);
 }
 
 int32_t kinoko_script_bind_root_integer(int32_t *object, int32_t value, char *name) {

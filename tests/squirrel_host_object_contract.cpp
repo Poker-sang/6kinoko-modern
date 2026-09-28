@@ -193,8 +193,8 @@ void userdata_delegates_and_types(HSQUIRRELVM vm) {
     require(out != 0 && out_tag == address(&tag), "userdata and tag outputs");
     require(kinoko_sqplus_object_set_delegate((void *)(intptr_t)(table.id()), (const void *)(intptr_t)(delegate.id())) == 1, "set delegate");
     require(kinoko_sqplus_object_get_userdata((void *)(intptr_t)(table.id()), (const char *)("payload"), (void *)(&out), (void *)(intptr_t)(0)) == 1, "normal lookup follows delegate");
-    require(kinoko_sqplus_object_raw_get_userdata((void *)(intptr_t)(table.id()), "payload", &out, (void *)(intptr_t)(0)) == 0, "raw lookup does not follow delegate");
-    require(kinoko_sqplus_object_raw_get_userdata((void *)(intptr_t)(delegate.id()), "payload", &out, (void *)(intptr_t)(0)) == 1, "raw userdata lookup");
+    require(kinoko_sqplus_object_raw_get_userdata((void *)(intptr_t)(table.id()), "payload", reinterpret_cast<void**>(&out), (void *)(intptr_t)(0)) == 0, "raw lookup does not follow delegate");
+    require(kinoko_sqplus_object_raw_get_userdata((void *)(intptr_t)(delegate.id()), "payload", reinterpret_cast<void**>(&out), (void *)(intptr_t)(0)) == 1, "raw userdata lookup");
     require((int32_t*)(intptr_t)(kinoko_sqplus_object_get_delegate((void *)(intptr_t)(table.id()), (void *)(intptr_t)(captured_delegate.id()))) == captured_delegate.words.data(), "delegate result address");
     require(captured_delegate.words[1] == OT_TABLE && captured_delegate.words[2] == delegate.words[2], "delegate external reference");
     scalar.integer(vm, 5);
@@ -218,10 +218,10 @@ void userdata_delegates_and_types(HSQUIRRELVM vm) {
     sq_getlasterror(vm);
     require(sq_gettype(vm, -1) == OT_NULL, "wrong instance tag clears error as before");
     sq_pop(vm, 1);
-    require(kinoko_sqplus_object_typetag((void *)(intptr_t)(instance.id()), &out_tag) == 1 && out_tag == address(&tag), "instance type tag");
-    require(kinoko_sqplus_object_typetag((void *)(intptr_t)(klass.id()), &out_tag) == 1 && out_tag == address(&tag), "class type tag");
+    require(kinoko_sqplus_object_typetag((void *)(intptr_t)(instance.id()), reinterpret_cast<void**>(&out_tag)) == 1 && out_tag == address(&tag), "instance type tag");
+    require(kinoko_sqplus_object_typetag((void *)(intptr_t)(klass.id()), reinterpret_cast<void**>(&out_tag)) == 1 && out_tag == address(&tag), "class type tag");
     out_tag = 88;
-    require(kinoko_sqplus_object_typetag((void *)(intptr_t)(scalar.id()), &out_tag) == 0 && out_tag == 88, "failed object tag leaves output");
+    require(kinoko_sqplus_object_typetag((void *)(intptr_t)(scalar.id()), reinterpret_cast<void**>(&out_tag)) == 0 && out_tag == 88, "failed object tag leaves output");
     kinoko_sqplus_object_reset((void *)(intptr_t)(instance.id()));
     kinoko_sqplus_object_new_instance((void *)(intptr_t)(instance.id()), (const void *)(intptr_t)(scalar.id()));
     require(instance.words[1] == OT_NULL, "invalid class produces null wrapper");
@@ -285,7 +285,7 @@ SQInteger argument_callback(HSQUIRRELVM vm) {
         (int32_t)(intptr_t)(kinoko_native_callback_from_stack((struct SQVM *)(intptr_t)(id))) != callback_identity ||
         !kinoko_native_integer_arg((struct SQVM *)(intptr_t)(id), 2, &integer) || integer != 19 ||
         !kinoko_native_float_arg((struct SQVM *)(intptr_t)(id), 3, &number) || number != 2.5f ||
-        !kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), 4, &text) || std::string(pointer<const char>(text)) != "ok" ||
+        !kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), 4, reinterpret_cast<const char**>(&text)) || std::string(pointer<const char>(text)) != "ok" ||
         !kinoko_native_value_pair((struct SQVM *)(intptr_t)(id), 2, borrowed) || borrowed[0] != OT_INTEGER || borrowed[1] != 19)
         return sq_throwerror(vm, "native argument contract");
     HostObject owned;
@@ -303,7 +303,7 @@ void native_arguments(HSQUIRRELVM vm) {
     float number = 9.5f;
     sq_pushfloat(vm, 2.5f);
     require(!kinoko_native_integer_arg((struct SQVM *)(intptr_t)(id), -1, &integer) && integer == 91, "do not coerce float to native integer");
-    require(!kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), -1, &text) && text == 92, "wrong string argument unchanged");
+    require(!kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), -1, reinterpret_cast<const char**>(&text)) && text == 92, "wrong string argument unchanged");
     require(kinoko_native_float_arg((struct SQVM *)(intptr_t)(id), -1, &number) && number == 2.5f, "float argument");
     require(!kinoko_native_float_arg((struct SQVM *)(intptr_t)(id), -1, nullptr), "null float output rejected");
     // The old first-call diagnostic used an uninitialized userdata pointer here.
@@ -323,7 +323,7 @@ void native_arguments(HSQUIRRELVM vm) {
     require(SQ_SUCCEEDED(sq_getstring(vm, -1, &message)) && std::string(message) == "Incorrect function argument", "original native error text");
     sq_pop(vm, 2);
     sq_pushstring(vm, "native-text", -1);
-    require(kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), -1, &text) && std::string(pointer<const char>(text)) == "native-text", "strict string argument");
+    require(kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), -1, reinterpret_cast<const char**>(&text)) && std::string(pointer<const char>(text)) == "native-text", "strict string argument");
     require(!kinoko_native_string_arg((struct SQVM *)(intptr_t)(id), -1, nullptr), "null string output rejected");
     sq_pop(vm, 1);
     void* payload = sq_newuserdata(vm, sizeof(int32_t));

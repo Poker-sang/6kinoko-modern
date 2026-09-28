@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_object.h"
@@ -36,15 +37,15 @@ void trace_value(const char* type_label, const char* data_label, ObjectView obje
 // A real Squirrel userdata payload is never null; failed conversions leave it
 // null and must leave both caller outputs untouched.
 bool get_userdata(HSQUIRRELVM vm, HSQOBJECT receiver, const char* key,
-                  int32_t* output, void* tag_output, bool raw) {
+                  void* output, void* tag_output, bool raw) {
     SQUserPointer data = nullptr, tag = nullptr;
     const bool found = upstream::sqplus_get_userdata(vm, receiver, key, &data,
         tag_output ? &tag : nullptr, raw);
     if (data) {
-        const auto bits = address(data);
+        const auto bits = data;
         std::memcpy(output, &bits, sizeof(bits));
         if (tag_output) {
-            const auto tag_bits = address(tag);
+            const auto tag_bits = tag;
             std::memcpy(tag_output, &tag_bits, sizeof(tag_bits));
         }
     }
@@ -58,8 +59,8 @@ extern "C" void * kinoko_sqplus_object_initialize(void * object) {
 }
 extern "C" void * kinoko_sqplus_object_copy_construct(void * object, const void * source) {
     kinoko_trace("4a9500:this-begin");
-    kinoko_trace_i32("4a9500:this", address(object));
-    kinoko_trace_i32("4a9500:source", address(source));
+    kinoko_trace_i32("4a9500:this", diagnostic_address(object));
+    kinoko_trace_i32("4a9500:source", diagnostic_address(source));
     if (source) trace_value("4a9500:source-type", "4a9500:source-data", ObjectView(source));
     ObjectView destination(object);
     destination.set_vtable(kinoko_squirrel_object_vtable());
@@ -67,11 +68,11 @@ extern "C" void * kinoko_sqplus_object_copy_construct(void * object, const void 
     destination.retain(current_vm());
     return object;
 }
-extern "C" void * kinoko_sqplus_object_construct_value(void * object, int32_t type, int32_t data) {
+extern "C" void * kinoko_sqplus_object_construct_value(void * object, int32_t type, intptr_t data) {
     static int trace_count;
     if (!object) return 0;
     if (trace_count < 32) {
-        kinoko_trace_i32("4a9540:this", address(object));
+        kinoko_trace_i32("4a9540:this", diagnostic_address(object));
         kinoko_trace_i32("4a9540:arg0", type);
         kinoko_trace_i32("4a9540:arg1", data);
     }
@@ -101,8 +102,8 @@ extern "C" void * kinoko_sqplus_object_reset(void * object) {
 }
 extern "C" void * kinoko_sqplus_object_assign(void * object, const void * source) {
     kinoko_trace("4a95c0:begin");
-    kinoko_trace_i32("4a95c0:this", address(object));
-    kinoko_trace_i32("4a95c0:source", address(source));
+    kinoko_trace_i32("4a95c0:this", diagnostic_address(object));
+    kinoko_trace_i32("4a95c0:source", diagnostic_address(source));
     // Snapshot before releasing the old destination, including self-assignment.
     auto incoming = ObjectView(source).value();
     upstream::sqplus_retain(current_vm(), incoming);
@@ -115,7 +116,7 @@ extern "C" void * kinoko_sqplus_object_assign(void * object, const void * source
 }
 extern "C" int32_t kinoko_sqplus_object_capture(void * object, int32_t index) {
     kinoko_trace("4a9660:this-begin");
-    kinoko_trace_i32("4a9660:this", address(object));
+    kinoko_trace_i32("4a9660:this", diagnostic_address(object));
     kinoko_trace_i32("4a9660:this-index", index);
     return object ? ObjectView(object).capture(current_vm(), index) : 0;
 }
@@ -147,9 +148,9 @@ extern "C" int32_t kinoko_sqplus_object_reverse(void * object) {
 }
 extern "C" int32_t kinoko_sqplus_object_set_index_string(void * object, int32_t key, const char * text) {
     kinoko_trace("4a9730:begin");
-    kinoko_trace_i32("4a9730:this", address(object));
+    kinoko_trace_i32("4a9730:this", diagnostic_address(object));
     kinoko_trace_i32("4a9730:a2", key);
-    kinoko_trace_i32("4a9730:source", address(text));
+    kinoko_trace_i32("4a9730:source", diagnostic_address(text));
     // key is an SQInteger, not a pointer. The old diagnostic dereferenced it
     // even in quiet builds, making valid small integer keys crash.
     if (object) trace_value("4a9730:this-type", "4a9730:this-data", ObjectView(object));
@@ -175,10 +176,10 @@ extern "C" int32_t kinoko_sqplus_object_new_userdata(void * object, const char *
     auto* vm = current_vm();
     const auto top = sq_gettop(vm);
     kinoko_trace("4a9950:begin");
-    kinoko_trace_i32("4a9950:this", address(object));
-    kinoko_trace_i32("4a9950:name", address(key));
+    kinoko_trace_i32("4a9950:this", diagnostic_address(object));
+    kinoko_trace_i32("4a9950:name", diagnostic_address(key));
     kinoko_trace_i32("4a9950:size", size);
-    kinoko_trace_i32("4a9950:aux", address(tag));
+    kinoko_trace_i32("4a9950:aux", diagnostic_address(tag));
     kinoko_trace_i32("4a9950:stack-before", top);
     if (object) trace_value("4a9950:this-type", "4a9950:this-data", ObjectView(object));
     const int32_t result = upstream::sqplus_new_userdata(vm, ObjectView(object).value(),
@@ -228,25 +229,25 @@ extern "C" int32_t kinoko_sqplus_object_next(int32_t* key, int32_t* value) {
     return 1;
 }
 extern "C" int32_t kinoko_sqplus_object_end_iteration(void) { return pop(current_vm(), 2); }
-extern "C" int32_t kinoko_sqplus_object_typetag(void * object, int32_t* tag) {
+extern "C" int32_t kinoko_sqplus_object_typetag(void * object, void** tag) {
     static int trace_count;
     if (!object || !tag) return 0;
     auto value = ObjectView(object).value();
     const bool trace = trace_count < 128 || value._type == OT_CLASS;
     if (trace) {
-        kinoko_trace_i32("4a9d30:this", address(object));
+        kinoko_trace_i32("4a9d30:this", diagnostic_address(object));
         trace_value("4a9d30:type", "4a9d30:data", ObjectView(object));
-        kinoko_trace_i32("4a9d30:out", address(tag));
+        kinoko_trace_i32("4a9d30:out", diagnostic_address(tag));
     }
     SQUserPointer native_tag = nullptr;
     const int32_t result = upstream::sqplus_get_typetag(current_vm(), value, &native_tag);
     if (result) {
-        const auto bits = address(native_tag);
+        const auto bits = native_tag;
         std::memcpy(tag, &bits, sizeof(bits));
     }
     if (trace) {
         kinoko_trace_i32("4a9d30:result", result);
-        kinoko_trace_i32("4a9d30:value", result ? address(native_tag) : 0);
+        kinoko_trace_i32("4a9d30:value", result ? diagnostic_address(native_tag) : 0);
         ++trace_count;
     }
     return result;
@@ -256,9 +257,9 @@ extern "C" void* kinoko_sqplus_object_destroy(void * object) {
 }
 extern "C" void * kinoko_sqplus_object_assign_thread(void * object, struct SQVM * thread_address) {
     kinoko_trace("4a9e30:begin");
-    kinoko_trace_i32("4a9e30:this", address(object));
-    kinoko_trace_i32("4a9e30:source", address(thread_address));
-    kinoko_trace_i32("4a9e30:gvm-before", address(current_vm()));
+    kinoko_trace_i32("4a9e30:this", diagnostic_address(object));
+    kinoko_trace_i32("4a9e30:source", diagnostic_address(thread_address));
+    kinoko_trace_i32("4a9e30:gvm-before", diagnostic_address(current_vm()));
     if (!object) return 0;
     auto* vm = current_vm();
     ObjectView destination(object);
@@ -278,7 +279,7 @@ extern "C" void * kinoko_sqplus_object_assign_thread(void * object, struct SQVM 
             if (static_cast<SQUnsignedInteger>(vm->_top) >= vm->_stack.size()) sq_reservestack(vm, 1);
             vm->Push(pushed);
         }
-        kinoko_trace_i32("4a9e30:gvm-after-push", address(current_vm()));
+        kinoko_trace_i32("4a9e30:gvm-after-push", diagnostic_address(current_vm()));
     }
     kinoko_trace_i32("4a9e30:source-ref-after", thread->_uiRef);
     HSQOBJECT result;
@@ -288,10 +289,10 @@ extern "C" void * kinoko_sqplus_object_assign_thread(void * object, struct SQVM 
     kinoko_trace_i32("4a9e30:result-data", data_bits(result));
     sq_addref(current_vm(), &result);
     destination.release(current_vm());
-    kinoko_trace_i32("4a9e30:gvm-after-release", address(current_vm()));
+    kinoko_trace_i32("4a9e30:gvm-after-release", diagnostic_address(current_vm()));
     destination.write(result);
     pop(current_vm());
-    kinoko_trace_i32("4a9e30:gvm-after-pop", address(current_vm()));
+    kinoko_trace_i32("4a9e30:gvm-after-pop", diagnostic_address(current_vm()));
     return object;
 }
 extern "C" int32_t kinoko_sqplus_object_set_delegate(void * object, const void * delegate) {
@@ -308,10 +309,10 @@ extern "C" int32_t kinoko_sqplus_object_set_delegate(void * object, const void *
 }
 extern "C" int32_t kinoko_sqplus_object_get_userdata(void * object, const char * key, void * output, void * tag_output) {
     kinoko_trace("4aa080:begin");
-    kinoko_trace_i32("4aa080:this", address(object));
-    kinoko_trace_squirrel_name("4aa080:name", address(key));
-    kinoko_trace_i32("4aa080:out", address(output));
-    kinoko_trace_i32("4aa080:aux", address(tag_output));
+    kinoko_trace_i32("4aa080:this", diagnostic_address(object));
+    kinoko_trace_squirrel_name("4aa080:name", diagnostic_address(key));
+    kinoko_trace_i32("4aa080:out", diagnostic_address(output));
+    kinoko_trace_i32("4aa080:aux", diagnostic_address(tag_output));
     if (object) trace_value("4aa080:this-type", "4aa080:this-data", ObjectView(object));
     auto* vm = current_vm();
     kinoko_trace_i32("4aa080:stack-before", sq_gettop(vm));
@@ -321,7 +322,7 @@ extern "C" int32_t kinoko_sqplus_object_get_userdata(void * object, const char *
     kinoko_trace_i32("4aa080:stack-after", sq_gettop(vm));
     return result;
 }
-extern "C" int32_t kinoko_sqplus_object_raw_get_userdata(void * object, const char* key, int32_t* output, void * tag_output) {
+extern "C" int32_t kinoko_sqplus_object_raw_get_userdata(void * object, const char* key, void** output, void * tag_output) {
     auto* vm = current_vm();
     if (!object || !vm) return 0;
     return get_userdata(vm, ObjectView(object).value(), key, output, tag_output, true);
@@ -348,7 +349,7 @@ extern "C" void * kinoko_sqplus_object_new_instance(void * object, const void * 
     auto* vm = current_vm();
     if (!klass || !vm) return object;
     trace_value("4a90c0:source-type", "4a90c0:source-data", ObjectView(klass));
-    kinoko_trace_i32("4a90c0:vm", address(vm));
+    kinoko_trace_i32("4a90c0:vm", diagnostic_address(vm));
     const auto top = sq_gettop(vm);
     kinoko_trace_i32("4a90c0:stack-before", top);
     HSQOBJECT result;
