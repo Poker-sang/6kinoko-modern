@@ -49,3 +49,13 @@ Source `c9d29ba893f346589dd7075932b116ed531b0258`:
 
 All old binaries, logs and source commits are retained; source and this evidence
 are backed up to the modern repository branch, never rebuild.
+
+## Portable CI evidence
+
+GitHub Actions run [36450637729](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36450637729)
+checked commit `b2ee199d8a45bc0231ebcfca318d59539e9ada11`.
+The portable compile jobs on Ubuntu 24.04, macOS 14 and Windows 2022 all
+completed successfully, including the input service and full audio-runtime
+contract targets. This is compilation evidence, not game or contract execution.
+The separate full-game CI job was still running at this snapshot; local Win32
+and x64 game builds had already succeeded as recorded above.
