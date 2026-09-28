@@ -13,7 +13,7 @@
 #include "kinoko/act_layer_access.h"
 #include "kinoko/act_resource_records.hpp"
 #include "kinoko/stage_records.hpp"
-#include "kinoko/windows_owner.hpp"
+#include "kinoko/runtime_sync.hpp"
 #include "kinoko/map_chip_cache.hpp"
 #include "kinoko/act_mesh.hpp"
 #include "kinoko/act_array.hpp"
@@ -592,11 +592,11 @@ struct DynamicLayerDelete {
     }
 };
 struct DynamicLayerLock {
-    CRITICAL_SECTION* section;
-    explicit DynamicLayerLock(KinokoActRuntime* player) : section(reinterpret_cast<CRITICAL_SECTION*>(kinoko::native::RecordView<kinoko::act::RuntimeRecord>(player).bytes(&kinoko::act::RuntimeRecord::lock))) {
-        EnterCriticalSection(section);
+    std::recursive_mutex* section;
+    explicit DynamicLayerLock(KinokoActRuntime* player) : section(kinoko::native::RecordView<kinoko::act::RuntimeRecord>(player).get(&kinoko::act::RuntimeRecord::lock)) {
+        section->lock();
     }
-    ~DynamicLayerLock() { LeaveCriticalSection(section); }
+    ~DynamicLayerLock() { section->unlock(); }
 };
 struct DynamicLayerParent {
     kinoko::act::LayerObjectRecord object;
@@ -621,7 +621,7 @@ int32_t get_layer_order(KinokoActRuntime* player, KinokoActLayer* layer) {
 // roots in preorder; exchanging only the two slots breaks hierarchy ordering.
 bool swap_layers(KinokoActRuntime* player, int32_t first, int32_t second) {
     if (!player) return false;
-    kinoko::windows::CriticalLock lock(reinterpret_cast<CRITICAL_SECTION*>(kinoko::native::RecordView<kinoko::act::RuntimeRecord>(player).bytes(&kinoko::act::RuntimeRecord::lock)));
+    kinoko::runtime::Lock lock(kinoko::native::RecordView<kinoko::act::RuntimeRecord>(player).get(&kinoko::act::RuntimeRecord::lock));
     if (!kinoko::native::RecordView<kinoko::act::RuntimeRecord>(player).get(&kinoko::act::RuntimeRecord::stage_active)) return false;
     const auto holder = kinoko::native::RecordView<kinoko::act::RuntimeRecord>(player).get(&kinoko::act::RuntimeRecord::active_holder);
     auto* act = holder ? holder->document : nullptr;
@@ -1846,7 +1846,7 @@ int32_t kinoko_begin_stage_this(KinokoActRuntime* resource_ptr, int32_t stage) {
     if (!resource_ptr) return result;
     const kinoko::native::RecordView<RuntimeRecord> runtime(resource_ptr);
     {
-        kinoko::windows::CriticalLock lock(reinterpret_cast<CRITICAL_SECTION*>(runtime.bytes(&RuntimeRecord::lock)));
+        kinoko::runtime::Lock lock(runtime.get(&RuntimeRecord::lock));
         auto* holder = runtime.get(&RuntimeRecord::source_holder);
         if (holder && holder->document) {
             auto* source = holder->document;

@@ -1,3 +1,4 @@
+#include <windows.h> // Remaining FindFirst/Next/Close host boundary.
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/act_frame.h"

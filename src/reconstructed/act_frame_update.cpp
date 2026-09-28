@@ -8,7 +8,6 @@
 #include "kinoko/diagnostics.h"
 #include "kinoko/memory_access.hpp"
 #include "kinoko/runtime_sync.hpp"
-#include <mmsystem.h>
 
 extern "C" {
 void kinoko_trace_i32(const char*, int32_t);
@@ -72,7 +71,7 @@ extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
         return 0;
     }
     kinoko::runtime::Lock lock(resource.get(&RuntimeRecord::lock));
-    if (!resource.get(&RuntimeRecord::stage_active) || !resource.get(&RuntimeRecord::active_holder)) return E_FAIL;
+    if (!resource.get(&RuntimeRecord::stage_active) || !resource.get(&RuntimeRecord::active_holder)) return static_cast<int32_t>(0x80004005u);
     kinoko_act_commands_clear((KinokoActRuntime*)(intptr_t)(self));
     // 4516C4 is JNB: compare DWORDs, including uptime above 0x80000000.
     if (resource.get(&RuntimeRecord::wake_time) >= kinoko_clock_milliseconds()) {
@@ -101,7 +100,7 @@ extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
             kinoko_act_layer_holder(resource.get(&RuntimeRecord::active_holder), index, &temporary);
             Allocation<KinokoActLayerHolder> holder(temporary);
             if (!holder) return 0;
-            if (kinoko_act_layer_update(load<KinokoActLayerHolder>(holder.get()).layer) < 0) return E_FAIL;
+            if (kinoko_act_layer_update(load<KinokoActLayerHolder>(holder.get()).layer) < 0) return static_cast<int32_t>(0x80004005u);
         }
         // 451746 reloads **this and its end after every callback, including
         // source replacement. Do not cache the initial number of layers.

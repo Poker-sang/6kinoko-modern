@@ -8,7 +8,6 @@
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/runtime_sync.hpp"
-#include <mmsystem.h>
 
 extern "C" {
 void kinoko_trace_i32(const char *label, int32_t value);
@@ -103,7 +102,7 @@ public:
     }
 
     int32_t end_stage() const {
-        if (!storage_ || !record_.get(&RuntimeRecord::stage_active)) return E_FAIL;
+        if (!storage_ || !record_.get(&RuntimeRecord::stage_active)) return static_cast<int32_t>(0x80004005u);
         kinoko::runtime::Lock lock(record_.get(&RuntimeRecord::lock));
         record_.set(&RuntimeRecord::stage_active, uint8_t{0});
         record_.set(&RuntimeRecord::stage_properties, kinoko::act::StagePropertyAliases{});
@@ -137,7 +136,7 @@ extern "C" int32_t __fastcall kinoko_act_end_stage(KinokoActRuntime *resource, v
 
 // 451590/4515A0: blocking sleep and deferred wake time stay distinct.
 extern "C" int32_t __fastcall kinoko_act_sleep(KinokoActRuntime *, void *, int32_t milliseconds) {
-    kinoko_clock_delay(static_cast<DWORD>(milliseconds));
+    kinoko_clock_delay(static_cast<uint32_t>(milliseconds));
     return 0;
 }
 extern "C" int32_t __fastcall kinoko_act_sleep_to(KinokoActRuntime *resource, void *, int32_t milliseconds) {
