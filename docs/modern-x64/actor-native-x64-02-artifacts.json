@@ -1,0 +1,97 @@
+{
+  "source_commit": "bdc03ba995117eb18e695ff6bf1b437fdc6e5bb6",
+  "executed_built_code": false,
+  "full_game": false,
+  "artifacts": [
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_animation.obj",
+      "machine": "AMD64",
+      "sha256": "d8758419b4941fa67911b243787fa13512c88aa05233da9cbf0c2f834c454ef7"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_initialization.obj",
+      "machine": "AMD64",
+      "sha256": "729a90c345cf8462e3fdfa80ad461ab5267dd24df63295b8980e7c00718ab2d8"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "ebe5bb2f017a5fc5e136f201dc819fa57e77510bad763de1ee77c3ba15b84ae8"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_manager.obj",
+      "machine": "AMD64",
+      "sha256": "704cfce0c40fbedd107c2311bc17b01c582224966655142d424c37f7c6c4f88b"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_owner_list.obj",
+      "machine": "AMD64",
+      "sha256": "36324844491980b5fc6d3b6d12bb3724df3da88ee41c032f649be5ac9d411b86"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_pool.obj",
+      "machine": "AMD64",
+      "sha256": "ffc45f05fcdc55ae1cc41f806f1dba22e704b5250a07b68fd6d91ac0f13119c9"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_priority.obj",
+      "machine": "AMD64",
+      "sha256": "043800c56df3afeaf0574238c1e0727e09256d88d5345b855b56e6924c54f242"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_render.obj",
+      "machine": "AMD64",
+      "sha256": "cb5d77e406820873f35936cd24a17466f6c687bacecde3e3663f8997b9bfabda"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/actor_state.obj",
+      "machine": "AMD64",
+      "sha256": "b9fb32b507c15dc2de28d37adf90cab7adf4cb10145f1b5cac09437880ee6333"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/animation_storage.obj",
+      "machine": "AMD64",
+      "sha256": "092e0b5084ce32d71a8ebe41f2afcf0b05ecf0ba5026331e9461fd96e7f8bdb7"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/camera_projection.obj",
+      "machine": "AMD64",
+      "sha256": "d38f2861080a992aa640e2bbc3c3c82049163751fc495cba55149ae766f3aab9"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/camera_runtime.obj",
+      "machine": "AMD64",
+      "sha256": "cfc763c2fe1e14c2765b16709e9523fc94fe1273a02d9fcd76454611b5ff9987"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/integer_map.obj",
+      "machine": "AMD64",
+      "sha256": "c86cead3504fcccd0fc1da7de8992460384a3105f07df1b5ece69aae6b380597"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/integer_vector.obj",
+      "machine": "AMD64",
+      "sha256": "4681889b0cca89b64156635a38a80b434f43c9b50aca88d574ea1615b9a74a0b"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/native_buffer.obj",
+      "machine": "AMD64",
+      "sha256": "605e8675ba59f6e75ee02915508a2568de87d85b922b11b2e6226b23f7d8cdb7"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/native_control.obj",
+      "machine": "AMD64",
+      "sha256": "871d2573ee571e9050544d623634574529bef028158c426d8f25ab3df0e47867"
+    },
+    {
+      "path": "build-runs/modern-actor-native-x64-02/kinoko_actor_native_width_compile.dir/Release/script_callbacks.obj",
+      "machine": "AMD64",
+      "sha256": "0fa59834460818361308efd342fd6549b9a843ef043bee992929f8814f075d4d"
+    },
+    {
+      "path": "runtime-builds/modern-actor-native-x64-02/kinoko_native_ownership_width_contract.exe",
+      "machine": "AMD64",
+      "sha256": "1f815f18e55e4432202747d50a710f87d17ef3e63c10c5a153529ec9cae14282"
+    }
+  ]
+}

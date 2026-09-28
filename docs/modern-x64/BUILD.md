@@ -1,5 +1,37 @@
 # x64 preparation build evidence
 
+## Native actor/camera ownership and foundational containers
+
+Source: `91fd8d7c4325b2fa4c0b3d3149ac0e99f6d230cb`.
+
+- `modern-actor-native-03`: complete Win32 Release no-trace game and 77 contract
+  executables compiled. Three DAT copied beside the EXE and size/SHA256 verified.
+- Game: `runtime-builds/modern-actor-native-03/kinoko_modern_gpu.exe` (x86).
+  Keep the adjacent shaders and DAT files.
+- EXE SHA256: `5A60E01A3C3CC9314BE8D94F86C3E2799FDDFA7B02286282B04EBD824ADD30D7`.
+- Static D3D9 audit passed: 117 compiler / 87 linker dependency logs, no violations.
+- `modern-actor-native-x64-02`, source `bdc03ba995117eb18e695ff6bf1b437fdc6e5bb6`:
+  17 actual actor/camera/container/lifecycle sources compiled; native ownership
+  contract linked. Static inspection confirms AMD64 for all 17 objects and the
+  contract EXE. The subsequent source fix affects the full camera binding, outside
+  this isolated target. Neither target is a complete x64 game.
+- `modern-full-x64-05`: actual game graph configured but compilation/linking
+  remains blocked. Guards intact; 438 unique diagnostics, including cascades.
+  Actor/camera native record assertions are no longer the blocking cluster.
+  Remaining major groups: Squirrel object/registration/property bridges, ACT
+  document/layer/resource records, map/collision/input/application records.
+  More source files are reached than in the prior probe; totals are not task counts.
+- Retained failed attempts: native-01/x64-01 (missing bootstrap declaration and
+  obsolete animation-storage include), native-02 (camera binding call-site typo),
+  full-x64-04 (pre-fix full compiler probe). Nothing was deleted or overwritten.
+- No game, preview, CTest or contract executable was run. Runtime assertions are
+  compiled only. User reports modern-x64-entry-03 normal, not agent validation.
+- Evidence: `actor-native-03-artifacts.json`, `actor-native-03-d3d9-audit.json`,
+  `actor-native-x64-02-artifacts.json`, `full-x64-05-artifacts.json`,
+  `full-x64-05-blockers.json`. See [migration scope](full-game.md).
+
+
+
 
 ## Full-game x64 compiler baseline and native method ABI
 

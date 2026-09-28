@@ -56,6 +56,11 @@ ACT 调用统一为具名类型接口，旧方法表保留在明确的适配边�
 完整 x64 游戏仍被阻塞，独立编译成功不代表游戏可运行。
 用户反馈 `modern-string-native-01` 正常。详见[完整游戏里程碑](../docs/modern-x64/full-game.md)。
 
+角色/相机脚本槽、回调所有权、对象池分配、动画寻址和基础容器/引用记录已使用原生指针宽度。
+17 个实际实现文件及新增所有权契约已通过 Windows x64 编译，运行时断言未执行。
+VM 注册/属性桥接及 ACT/地图/应用布局仍阻塞完整 x64 游戏。
+用户反馈 `modern-x64-entry-03` 正常。
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).

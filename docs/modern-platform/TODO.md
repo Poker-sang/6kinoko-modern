@@ -226,3 +226,14 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Record user feedback: modern-mesh-native-01 normal (not agent-run validation).
 - [ ] Replace remaining integer-address Squirrel bindings and x86 fastcall/thiscall adapters; then attempt a full x64 game link.
 - Audit scope and remaining blockers: `../modern-x64/README.md`.
+
+
+## Native actor/camera ownership checkpoint
+- [x] Widen actor/camera owned script slots and transferred callback arguments together.
+- [x] Allocate the actor pool by native host size; preserve native animation pointers and method dispatch.
+- [x] Migrate reference, integer-container and buffer record widths while retaining scalar/file formats.
+- [x] Compile 17 real actor/camera/container sources and a linked ownership contract as AMD64 (not executed).
+- [x] Preserve original x86 actor layout assertions and unmigrated integer-address guards.
+- [x] Record user feedback: modern-x64-entry-03 normal; not agent validation.
+- [ ] Migrate Squirrel registration/property bridges and ACT document/layer storage.
+- [ ] Migrate map/collision/input/application records, then complete and validate the full x64 game.

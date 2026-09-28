@@ -39,10 +39,11 @@ No contract or game execution is performed by the agent.
 
 ## Remaining boundaries
 
-Three-word SqPlus actor/camera arguments, class-binding storage, integer-address
-registration, direct method calls outside these adapters and embedded ACT/actor
-layouts remain migration work. Their guards must not simply be removed. Native
-aggregate support in the common dispatcher does not migrate those VM records.
+Actor/camera SqPlus arguments and embedded slots now use native-width owned
+objects. Class-binding storage, integer-address registration, direct method calls
+outside the migrated adapters and embedded ACT/map layouts remain migration
+work. Their guards must not simply be removed. Native actor storage does not
+migrate the remaining VM registration/property bridges.
 GDI/Windows services follow the full x64 milestone; save/DAT scalar formats stay
 fixed-width. Prior user feedback: modern-string-native-01 normal (user report).
 
@@ -68,8 +69,37 @@ hash source errors from the preceding attempt are gone; progressing farther in
 the graph exposes more guarded records (268 unique messages, including cascades).
 See `full-x64-03-blockers.json` and BUILD.md; these are not 268 separate tasks.
 
-Next, migrate the shared reference/container substrate and actor/camera/quad
-allocation consumers as coherent groups, followed by ACT/document/layer/script
+That baseline led to the shared reference/container and actor/camera migration
+below. The latest probe is modern-full-x64-05 (438 unique diagnostics, including
+cascades; see full-x64-05-blockers.json). Next migrate ACT/document/layer/script
 storage and map/input/collision dependencies. Complete the remaining by-value VM
 and direct callback boundaries before claiming a full-game x64 link. Keep build
 probes tied to source commits and preserve each failing attempt for comparison.
+
+
+## Native actor/camera and ownership checkpoint
+
+Actor and camera script slots now match the native Squirrel external-reference
+object (12 bytes on x86, 24 on Windows x64). Callback arguments transfer that
+object by value through the explicit receiver/reserved-argument method adapter.
+They retain the existing consume-once and callback destruction order. Actor copy
+keeps retain-before-release, pool reuse does not zero unrelated actor state, and
+animation selection keeps its existing upper-only index clamp.
+
+Pool allocation uses sizeof its real host, animation frame addressing and
+SetTake results preserve pointer width, and map/vector/reference/buffer storage
+uses native pointers. Original scalar/file layouts and packed actor handles stay
+fixed-width. All historical actor x86 field assertions remain enabled on x86.
+The integer-address legacy-memory guard remains enabled for unmigrated callers.
+
+Seventeen actual actor/camera/container/lifecycle translation units compile as
+AMD64 in modern-actor-native-x64-02. The new ownership contract links actual
+Boost control and integer containers, covering reference locking/expiration,
+alias clearing, stable map nodes, vector growth and native script payload bits.
+Its runtime assertions were compiled, NOT executed. This is not a linked x64 game.
+
+Next work follows the full compiler: migrate Squirrel class registration and
+property/object bridges together with ACT document/layer storage, then map,
+collision, input and application records. Actor collision/method registration
+and the complete VM are not covered by the isolated actor compile target.
+User reports modern-x64-entry-03 normal; this is user feedback only.

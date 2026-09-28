@@ -1,0 +1,17 @@
+{
+  "source_commit": "91fd8d7c4325b2fa4c0b3d3149ac0e99f6d230cb",
+  "executable": "runtime-builds\\modern-actor-native-03\\kinoko_modern_gpu.exe",
+  "sha256": "5a60e01a3c3cc9314be8d94f86c3e2799fddfa7b02286282b04ebd824add30d7",
+  "compile_dependency_logs": 117,
+  "link_dependency_logs": 87,
+  "checked_executable_markers": [
+    "d3d9.dll",
+    "d3dx9_33.dll",
+    "Direct3DCreate9",
+    "Direct3DCreate9Ex"
+  ],
+  "violations": [],
+  "passed": true,
+  "executed_built_code": false,
+  "scope": "Fresh modern-only MSVC dependency records and static executable markers; not runtime validation"
+}

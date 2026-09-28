@@ -66,6 +66,13 @@ results; crash diagnostics and locks compile with native Windows x64 layouts.
 The complete x64 game is still blocked; isolated compile success is not gameplay.
 The user reports `modern-string-native-01` normal. See the [full-game milestone](../docs/modern-x64/full-game.md).
 
+Actor/camera script slots, callback ownership, pool allocation, animation addressing
+and core container/reference records now use native pointer width. Seventeen real
+implementation files and the new ownership contract compile at Windows x64;
+runtime assertions were not executed. VM registration/property bridges and
+ACT/map/application layouts still block the complete x64 game. The user reports
+`modern-x64-entry-03` normal.
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).
