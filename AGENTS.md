@@ -151,3 +151,11 @@ Remove unused 32-bit-only adapters/logic when migrating their callers; retaining
 obsolete code for comparison is not required. Preserve original DAT/save wire
 widths and active Win32 support. User confirmed modern-x64-savedata-01 works;
 record this as user feedback, not agent-executed tests.
+
+## User update: portable APIs first (2026-09-29)
+
+Prefer SDL3 or the standard C++ library for platform services. Check their APIs
+before introducing per-platform implementations. Keep OS-specific adapters only
+where a concrete compatibility requirement cannot be met by shared APIs, and
+document the reason. Continue committing each batch before builds and pushing
+source plus delivery records to the modern repository; retain all artifacts.

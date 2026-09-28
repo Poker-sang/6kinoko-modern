@@ -3,10 +3,10 @@
 extern "C" {
 #endif
 typedef struct KinokoDirectorySearch KinokoDirectorySearch;
-/* A search owns its current name until next/close. Windows preserves ANSI
-   FindFirstFile behavior; POSIX uses UTF-8, native case sensitivity and order.
-   Patterns accept slash/backslash separators; *.* also matches extensionless
-   names. Wildcards are supported in the final component, not parent paths. */
+/* SDL-backed snapshot; names remain valid until close. Matching is uniformly
+   case-insensitive. Paths/names use the existing native narrow-string boundary,
+   converted to/from SDL UTF-8 through std::filesystem. *.* includes extensionless
+   names; wildcards apply only to the final component. Dot entries are omitted. */
 KinokoDirectorySearch* kinoko_directory_first(const char* pattern);
 int kinoko_directory_next(KinokoDirectorySearch* search);
 const char* kinoko_directory_name(const KinokoDirectorySearch* search);

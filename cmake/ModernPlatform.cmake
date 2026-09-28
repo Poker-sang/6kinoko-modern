@@ -276,6 +276,7 @@ endif()
 # OS files stay behind a native-width, Windows-header-free interface.
 add_library(kinoko_file_service STATIC src/platform/file_service.cpp src/platform/directory_search.cpp)
 target_include_directories(kinoko_file_service PUBLIC include)
+target_link_libraries(kinoko_file_service PUBLIC SDL3::SDL3-static)
 target_compile_features(kinoko_file_service PUBLIC cxx_std_17)
 add_executable(kinoko_file_service_contract tests/file_service_contract.cpp)
 target_link_libraries(kinoko_file_service_contract PRIVATE kinoko_file_service)

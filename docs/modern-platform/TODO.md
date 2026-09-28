@@ -313,3 +313,5 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Record user acceptance of modern-x64-locks-03.
 - [ ] Migrate remaining window/COM/IME/font host boundaries.
 - Details: [directory-services.md](directory-services.md).
+
+- User preference: prioritize SDL3/standard-library APIs over per-OS implementations; recorded in AGENTS.md.

@@ -1,106 +1,60 @@
 #include "kinoko/directory_search.h"
+#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_stdinc.h>
+#include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <string>
-#include <algorithm>
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
+#include <vector>
 struct KinokoDirectorySearch {
-    HANDLE handle=INVALID_HANDLE_VALUE;
-    WIN32_FIND_DATAA current{};
-    ~KinokoDirectorySearch() { if(handle!=INVALID_HANDLE_VALUE) FindClose(handle); }
-};
-#else
-#include <dirent.h>
-struct KinokoDirectorySearch {
-    DIR* directory=nullptr;
-    std::string pattern, current;
-    ~KinokoDirectorySearch() { if(directory) closedir(directory); }
+    std::vector<std::string> names;
+    size_t index=0;
 };
 namespace {
-const char* next_character(const char* text) {
-    if(!*text) return text;
-    ++text;
-    while((static_cast<unsigned char>(*text)&0xc0)==0x80) ++text;
-    return text;
-}
-bool wildcard(const char* pattern,const char* name) {
-    const char* star=nullptr;
-    const char* retry=nullptr;
-    while(*name) {
-        if(*pattern=='*') { star=pattern++; retry=name; }
-        else if(*pattern=='?') { ++pattern; name=next_character(name); }
-        else if(*pattern && *pattern==*name) { ++pattern; ++name; }
-        else if(star) { pattern=star+1; name=retry=next_character(retry); }
-        else return false;
+struct GlobDeleter { void operator()(char** names) const { SDL_free(names); } };
+bool append_matches(KinokoDirectorySearch& search,const std::string& directory,const std::string& pattern) {
+    int count=0;
+    std::unique_ptr<char*,GlobDeleter> names(SDL_GlobDirectory(directory.c_str(),pattern.c_str(),SDL_GLOB_CASEINSENSITIVE,&count));
+    if(!names) return false;
+    for(int i=0;i<count;++i) {
+        // SDL uses UTF-8; keep the existing native narrow-string boundary for
+        // script/file APIs through the standard filesystem conversion.
+        auto name=std::filesystem::u8path(names.get()[i]).string();
+        if(std::find(search.names.begin(),search.names.end(),name)==search.names.end())
+            search.names.push_back(std::move(name));
     }
-    while(*pattern=='*') ++pattern;
-    return !*pattern;
-}
-bool matches(const std::string& pattern,const char* name) {
-    // Only * and ? are special, as in the original API; [] stays literal.
-    // *.* includes extensionless entries, and foo.* also includes foo.
-    if(pattern=="*.*" || wildcard(pattern.c_str(),name)) return true;
-    if(pattern.size()>=2 && pattern.compare(pattern.size()-2,2,".*")==0)
-        return wildcard(pattern.substr(0,pattern.size()-2).c_str(),name);
-    return false;
+    return true;
 }
 }
-#endif
 extern "C" KinokoDirectorySearch* kinoko_directory_first(const char* pattern) {
     if(!pattern || !*pattern) return nullptr;
     try {
         auto search=std::make_unique<KinokoDirectorySearch>();
-#if defined(_WIN32)
-        search->handle=FindFirstFileA(pattern,&search->current);
-        if(search->handle==INVALID_HANDLE_VALUE) return nullptr;
-#else
-        std::string path(pattern);
-        std::replace(path.begin(),path.end(),'\\','/');
-        const auto separator=path.find_last_of('/');
-        const std::string directory=separator==std::string::npos?".":separator==0?"/":path.substr(0,separator);
-        search->pattern=path.substr(separator==std::string::npos?0:separator+1);
-        if(search->pattern.empty()) return nullptr;
-        search->directory=opendir(directory.c_str());
-        if(!search->directory || !kinoko_directory_next(search.get())) return nullptr;
-#endif
-        return search.release();
+        auto utf8=std::filesystem::path(pattern).generic_u8string();
+        std::replace(utf8.begin(),utf8.end(),'\\','/');
+        const auto path=std::filesystem::u8path(utf8);
+        auto directory=path.parent_path().generic_u8string();
+        if(directory.empty()) directory=".";
+        auto filter=path.filename().u8string();
+        if(filter.empty() || directory.find_first_of("*?")!=std::string::npos) return nullptr;
+        // Compatibility is pattern normalization, not another OS backend.
+        if(filter=="*.*") filter="*";
+        if(!append_matches(*search,directory,filter)) return nullptr;
+        if(filter.size()>=2 && filter.compare(filter.size()-2,2,".*")==0)
+            if(!append_matches(*search,directory,filter.substr(0,filter.size()-2))) return nullptr;
+        return search->names.empty()?nullptr:search.release();
     } catch(...) { return nullptr; }
 }
 extern "C" int kinoko_directory_next(KinokoDirectorySearch* search) {
-    if(!search) return 0;
-#if defined(_WIN32)
-    WIN32_FIND_DATAA next{};
-    if(!FindNextFileA(search->handle,&next)) return 0;
-    search->current=next;
+    if(!search || search->index+1>=search->names.size()) return 0;
+    ++search->index;
     return 1;
-#else
-    try {
-        while(const auto* entry=readdir(search->directory)) {
-            if(matches(search->pattern,entry->d_name)) { search->current=entry->d_name; return 1; }
-        }
-    } catch(...) {}
-    return 0;
-#endif
 }
 extern "C" const char* kinoko_directory_name(const KinokoDirectorySearch* search) {
-    if(!search) return nullptr;
-#if defined(_WIN32)
-    return search->current.cFileName;
-#else
-    return search->current.c_str();
-#endif
+    return search?search->names[search->index].c_str():nullptr;
 }
 extern "C" int kinoko_directory_close(KinokoDirectorySearch* search) {
     if(!search) return 0;
-#if defined(_WIN32)
-    const bool ok=FindClose(search->handle)!=0;
-    search->handle=INVALID_HANDLE_VALUE;
-#else
-    const bool ok=closedir(search->directory)==0;
-    search->directory=nullptr;
-#endif
     delete search;
-    return ok;
+    return 1;
 }

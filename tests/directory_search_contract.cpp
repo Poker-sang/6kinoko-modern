@@ -31,15 +31,24 @@ int main() {
     CHECK(names(pattern("absent*")).empty());
     CHECK(names((root/"missing"/"*").string()).empty());
     CHECK(names(pattern("*.dat"))==std::set<std::string>({"alpha.dat","beta.dat","literal[1].dat"}));
-    CHECK(names(pattern("alpha.da?"))==std::set<std::string>({"alpha.dat"}));
+    CHECK(names(pattern("ALPHA.DA?"))==std::set<std::string>({"alpha.dat"}));
     CHECK(names(pattern("literal[1].dat"))==std::set<std::string>({"literal[1].dat"}));
     const auto all=names(pattern("*.*"));
+    CHECK(!all.count(".") && !all.count(".."));
     CHECK(all.count("plain") && all.count("subdir") && all.count("alpha.dat"));
     CHECK(names(pattern("plain.*")).count("plain"));
     CHECK(names(root.string()+"\\*.dat").count("beta.dat"));
     Search first(kinoko_directory_first(pattern("alpha.dat").c_str()),kinoko_directory_close);
     Search second(kinoko_directory_first(pattern("beta.dat").c_str()),kinoko_directory_close);
     CHECK(first && second);
+    // A search is a snapshot: later directory writes do not alter its entries.
+    Search snapshot(kinoko_directory_first(pattern("*.dat").c_str()),kinoko_directory_close);
+    CHECK(snapshot);
+    { std::ofstream added(root/"later.dat"); added << "later"; CHECK(added.good()); }
+    std::set<std::string> original;
+    do { original.insert(kinoko_directory_name(snapshot.get())); } while(kinoko_directory_next(snapshot.get()));
+    CHECK(!original.count("later.dat"));
+    CHECK(names(pattern("*.dat")).count("later.dat"));
     CHECK(std::string(kinoko_directory_name(first.get()))=="alpha.dat");
     CHECK(!kinoko_directory_next(first.get()));
     CHECK(std::string(kinoko_directory_name(first.get()))=="alpha.dat");
