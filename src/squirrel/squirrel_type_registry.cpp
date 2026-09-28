@@ -19,8 +19,8 @@ private:
     }
 };
 template<int Id> int32_t* native_type(CopyEntry copy) {
-    static NativeDescriptor<Id> sq_type(copy);
-    return reinterpret_cast<int32_t*>(&type);
+    static NativeDescriptor<Id> descriptor(copy);
+    return reinterpret_cast<int32_t*>(&descriptor);
 }
 }
 extern "C" int32_t* kinoko_sqplus_scalar_type(int32_t category) {

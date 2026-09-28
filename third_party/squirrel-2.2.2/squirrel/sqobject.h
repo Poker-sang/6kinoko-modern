@@ -96,7 +96,7 @@ struct SQObjectPtr;
 	(obj)->_uiRef++; \
 }
 
-#define sq_type(obj) ((obj)._type)
+// Use the public sq_type macro; avoid generic names colliding with libc++.
 #define is_delegable(t) (sq_type(t)&SQOBJECT_DELEGABLE)
 #define raw_type(obj) _RAW_TYPE((obj)._type)
 

@@ -294,6 +294,13 @@ extern "C" int kinoko_application_run(int show_command) {
             "Cannot access the executable directory.", nullptr);
         return 1;
     }
+    for(const char* archive : {"6kinoko_a.dat","6kinoko_b.dat","6kinoko_c.dat"}) {
+        SDL_PathInfo info{};
+        if(!SDL_GetPathInfo(archive,&info) || info.type!=SDL_PATHTYPE_FILE || info.size==0) {
+            char message[256];std::snprintf(message,sizeof(message),"Place the original %s beside the game executable.",archive);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Missing game data",message,nullptr);return 1;
+        }
+    }
     // SDL expects UTF-8; the inherited title accessor contains CP932 bytes.
     auto& platform = kinoko::platform::host();
     if (!platform.open(u8"魔理沙と６つのキノコ",640,480)) {

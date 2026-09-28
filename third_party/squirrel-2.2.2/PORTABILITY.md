@@ -1,0 +1,1 @@
+Modern fork portability changes: internal generic type(obj) uses the public sq_type(obj) macro to avoid libc++/libstdc++ macro collisions. squtils.h declares allocator functions before templates for standard two-phase lookup. Existing host/wire/ownership patches are retained.
