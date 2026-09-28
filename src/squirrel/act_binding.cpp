@@ -1735,13 +1735,13 @@ int publish_stage_objects(KinokoActDocument* act, KinokoActRuntime* runtime, Sta
     // the ranges after callbacks, rather than imposing a factory/rollback path.
     for (int32_t index = 0;; ++index) {
         const auto range = document.get(&DocumentRecord::resources);
-        if (index >= (reinterpret_cast<uintptr_t>(range.end)-reinterpret_cast<uintptr_t>(range.begin))/sizeof(*range.begin)) break;
+        if (index >= static_cast<intptr_t>(reinterpret_cast<uintptr_t>(range.end)-reinterpret_cast<uintptr_t>(range.begin))/static_cast<intptr_t>(sizeof(*range.begin))) break;
         auto *resource = kinoko::memory::load<KinokoActResource *>(range.begin + index);
         ResourceMethods(resource).bind_object(&tables.resources, nullptr);
     }
     for (int32_t index = 0;; ++index) {
         const auto range = document.get(&DocumentRecord::layers);
-        if (index >= (reinterpret_cast<uintptr_t>(range.end)-reinterpret_cast<uintptr_t>(range.begin))/sizeof(*range.begin)) break;
+        if (index >= static_cast<intptr_t>(reinterpret_cast<uintptr_t>(range.end)-reinterpret_cast<uintptr_t>(range.begin))/static_cast<intptr_t>(sizeof(*range.begin))) break;
         auto *layer = kinoko::memory::load<KinokoActLayer *>(range.begin + index);
         const auto status = LayerMethods(layer).bind(&tables.act, &tables.global);
         kinoko_trace_i32("act:layer-script-result", status >= 0);

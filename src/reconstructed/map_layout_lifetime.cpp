@@ -23,7 +23,7 @@ constexpr std::array<Spec,10> vectors={{{offsetof(Layout, placements),32,32},
     {offsetof(Layout, chip_references),sizeof(Chip*),sizeof(Chip*)},
     {offsetof(Layout, texture_references),sizeof(void*),sizeof(void*)},
     {offsetof(Layout, render_quads),sizeof(Quad),sizeof(Quad),true},
-    // Unused legacy scalar render streams retain their 4/12-byte elements;
+    // Dormant opaque legacy render streams retain their 4/12-byte elements;
     // only the enclosing begin/end/owner records contain host pointers.
     {offsetof(Layout, render_reference_buffers),4,4},
     {offsetof(Layout, render_reference_buffers)+sizeof(Layout::ReservedRenderBuffer),12,12},

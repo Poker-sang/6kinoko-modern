@@ -2,6 +2,8 @@
 #include "kinoko/file_io.h"
 struct SQVM;
 #pragma once
+// Bare VM object buffers at these bridges require 2*sizeof(void*) bytes.
+// They are byte-backed HSQOBJECT storage, not two fixed 32-bit payload words.
 #include <stdint.h>
 #include <stddef.h>
 
@@ -65,7 +67,7 @@ int32_t kinoko_execute_act_callback(void* script_ptr,
                                             const char *trace_label);
 int32_t kinoko_execute_act_source_script(
     struct SQVM* vm, void* script_ptr, const int32_t *environment_pair);
-int32_t kinoko_get_act_resource_class(struct SQVM* vm, KinokoActResource* resource, int32_t out[2]);
+int32_t kinoko_get_act_resource_class(struct SQVM* vm, KinokoActResource* resource, int32_t* out);
 intptr_t kinoko_map_chip_count(struct SQVM* vm);
 int kinoko_map_compare_records(const void *a, const void *b);
 intptr_t kinoko_map_get_chip_by_position(struct SQVM* vm);
@@ -83,30 +85,30 @@ void kinoko_mcd_free(struct kinoko_mcd_data *data);
 int16_t kinoko_mcd_i16(const unsigned char *bytes);
 uint32_t kinoko_mcd_u32(const unsigned char *bytes);
 int32_t kinoko_prepare_cact_layer_objects(struct SQVM* vm, KinokoActLayer* layer,
-                                                 int32_t script_pair[2]);
+                                                 int32_t* script_pair);
 int32_t kinoko_publish_act_layers(struct SQVM* vm, KinokoActDocument* act,
                                           KinokoActRuntime* resource_ptr,
                                           int32_t *active_count);
 int32_t kinoko_publish_act_resource_pairs(
-    struct SQVM* vm, const int32_t layer_pair[2],
-    const int32_t script_pair[2], KinokoActResource* resource);
+    struct SQVM* vm, const int32_t* layer_pair,
+    const int32_t* script_pair, KinokoActResource* resource);
 
 int32_t kinoko_publish_act_script_constants(struct SQVM* vm, const int32_t *environment);
 int32_t kinoko_publish_acting_player(struct SQVM* vm,
                                              const int32_t *act_pair,
                                              const char *name,
                                              KinokoActRuntime* player_ptr,
-                                             int32_t out_pair[2]);
+                                             int32_t* out_pair);
 int32_t kinoko_publish_acting_player_class(struct SQVM* vm,
                                                    void* root_object);
 int32_t kinoko_publish_acting_player_properties(struct SQVM* vm,
-                                                        const int32_t class_pair[2]);
+                                                        const int32_t* class_pair);
 int32_t kinoko_publish_c2dlayout_class(struct SQVM* vm, void* root_object);
 int32_t kinoko_publish_c2dlayout_properties(
-    struct SQVM* vm, const int32_t class_pair[2]);
+    struct SQVM* vm, const int32_t* class_pair);
 
 int32_t kinoko_publish_c2dmaplayout_class(struct SQVM* vm, void* root,
-                                                int32_t out[2]);
+                                                int32_t* out);
 int32_t kinoko_publish_cact_layer_class(struct SQVM* vm, void* root_object);
 int32_t kinoko_publish_cact_layer_members(
     struct SQVM* vm, const int32_t *class_pair);
@@ -117,7 +119,7 @@ int32_t kinoko_publish_cact_resource2d_class(struct SQVM* vm,
                                                      void* root_object);
 int32_t kinoko_publish_map_view_class(struct SQVM* vm, void* root,
     const char *name, const struct kinoko_native_view_property *properties,
-    int32_t property_count, int32_t is_map, int32_t out[2]);
+    int32_t property_count, int32_t is_map, int32_t* out);
 int32_t kinoko_register_runtime_act_script(struct SQVM* vm, KinokoActRuntime* resource_ptr,
                                                  KinokoActDocument* act);
 intptr_t kinoko_resource_get_chip_info(struct SQVM* vm);
