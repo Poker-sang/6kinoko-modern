@@ -21,3 +21,20 @@ No contract or game is executed by the agent.
 Remaining full Linux/macOS blockers include Windows window/COM/IME hosting, GDI
 font rasterization, ACT file enumeration and other native API/type dependencies.
 This batch does not claim a full non-Windows playable build.
+
+## Build evidence
+
+Source commit: `a044dd231f1c9b6067b2dc0d6ffed9c891d80142`.
+- `modern-x64-locks-03`: x64 Release game compiled; runtime-services (including
+  real critical_section.cpp), audio and application contracts compiled separately.
+- `modern-locks-03`: Win32 Release game and 82 contracts compiled.
+- Both staged/hash-verified the three original DAT alongside EXE; shaders staged.
+- Static D3D9 dependency audits passed. No game or contract executed.
+- Source scan found no Windows critical-section types/calls in include,
+  src/reconstructed, src/platform or src/squirrel (vendor sources excluded).
+- Attempts locks-01/02 are retained: dynamic-layer calls and indirect Windows
+  header/diagnostic dependencies were fixed before the successful locks-03 build.
+- EXE: `runtime-builds/modern-x64-locks-03/kinoko_modern_gpu.exe`.
+
+Every source correction was committed before its fresh build. All logs and prior
+artifacts remain in build-runs/runtime-builds; this batch is pushed to modern only.
