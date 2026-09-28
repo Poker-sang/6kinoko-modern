@@ -6,7 +6,6 @@ struct KinokoBlitCommand {
     int32_t blend;
     float alpha, x, y;
     int32_t source_x, source_y, width, height, texture;
-#endif
 };
 struct KinokoBlitSprite { KinokoBlitCommand command; KinokoSprite sprite; };
 namespace kinoko::act {

@@ -190,7 +190,8 @@ if(WIN32)
         src/reconstructed/act_frame_render.cpp src/reconstructed/act_draw_storage.cpp
         src/reconstructed/act_clone.cpp src/reconstructed/act_array.cpp
         src/reconstructed/act_list.cpp src/reconstructed/act_resource.cpp
-        src/reconstructed/act_serializable.cpp src/reconstructed/act_source.cpp)
+        src/reconstructed/act_serializable.cpp src/reconstructed/act_source.cpp
+        src/reconstructed/act_lifetime.cpp)
     target_include_directories(kinoko_act_render_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
     target_compile_definitions(kinoko_act_render_width_compile PRIVATE

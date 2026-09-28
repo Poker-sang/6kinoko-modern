@@ -512,7 +512,7 @@ uint32_t type_hash(const char* name,size_t length) {
 }
 uint32_t type_hash(const char* name) { return type_hash(name,std::strlen(name)); }
 struct TypeName {
-    unsigned char bytes[28]{};
+    alignas(kinoko::legacy::StringRecord) unsigned char bytes[sizeof(kinoko::legacy::StringRecord)]{};
     TypeName() { kinoko::native::RecordView<kinoko::legacy::StringRecord>(bytes).set(&kinoko::legacy::StringRecord::capacity, uint32_t{15}); }
     ~TypeName() {
         const kinoko::legacy::StringView text(bytes);
