@@ -4,6 +4,8 @@
 #include <limits>
 #include <mutex>
 #include <vector>
+#include <string>
+#include <utility>
 namespace kinoko::platform {
 int legacy_scan(int scan) noexcept {
     switch (scan) {
@@ -133,6 +135,9 @@ std::int32_t legacy_axis(std::int16_t value) noexcept {
 struct Platform::State {
     SDL_Window* window{};
     bool initialized{};
+    bool fullscreen_request{};
+    std::string pending_title;
+    bool title_pending{};
     std::mutex mutex;
     Input input;
     struct Joystick { SDL_JoystickID id; SDL_Joystick* handle; };
@@ -165,7 +170,11 @@ bool Platform::pump() {
     SDL_Event event;
     float wheel = 0;
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_EVENT_QUIT || event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) running = false;
+        if (event.type == SDL_EVENT_QUIT ||
+            (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED && event.window.windowID == SDL_GetWindowID(state_->window))) running = false;
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.windowID == SDL_GetWindowID(state_->window)
+            && event.key.scancode == SDL_SCANCODE_RETURN && (event.key.mod & SDL_KMOD_ALT) && !event.key.repeat)
+            state_->fullscreen_request = !state_->fullscreen_request;
         if (event.type == SDL_EVENT_JOYSTICK_ADDED) state_->add(event.jdevice.which);
         if (event.type == SDL_EVENT_JOYSTICK_REMOVED) {
             // Preserve assignment indices; a disconnected slot becomes neutral.
@@ -176,6 +185,14 @@ bool Platform::pump() {
         if (event.type == SDL_EVENT_MOUSE_WHEEL) wheel += event.wheel.y *
             (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1.0f : 1.0f);
     }
+    std::string title;
+    bool update_title=false;
+    {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        update_title=std::exchange(state_->title_pending,false);
+        if(update_title) title=std::move(state_->pending_title);
+    }
+    if(update_title) SDL_SetWindowTitle(state_->window,title.c_str());
     Input next;
     const bool focused = (SDL_GetWindowFlags(state_->window) & SDL_WINDOW_INPUT_FOCUS) != 0;
     int count = 0;
@@ -231,6 +248,12 @@ bool Platform::pump() {
     state_->input=next;
     return running;
 }
+bool Platform::take_fullscreen_request() noexcept { return std::exchange(state_->fullscreen_request,false); }
+void Platform::request_title(const char* title) {
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    state_->pending_title=title?title:"";
+    state_->title_pending=true;
+}
 Input Platform::consume_input() {
     std::lock_guard<std::mutex> lock(state_->mutex);
     auto result=state_->input;
@@ -247,6 +270,8 @@ void Platform::close() {
     state_->initialized=false;
     std::lock_guard<std::mutex> lock(state_->mutex);
     state_->input={};
+    state_->fullscreen_request=false;
+    state_->pending_title.clear(); state_->title_pending=false;
 }
 Platform& host() { static Platform instance; return instance; }
 }

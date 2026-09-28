@@ -1651,7 +1651,7 @@ int32_t kinoko_audio_initialize_device(HWND hwnd, int32_t options) {
     g_audio_device.reset();
     g_audio_device=open_sdl_output();
     if (!g_audio_device) {
-        MessageBoxA(nullptr,SDL_GetError(),"SDL audio initialization failed",MB_OK);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"SDL audio initialization failed",SDL_GetError(),nullptr);
         return 0;
     }
     return 1;

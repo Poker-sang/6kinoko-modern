@@ -58,8 +58,8 @@ void update_statistics() {
     state.statistics_time += 1000;
     char title[256];
     std::snprintf(title, sizeof(title), "%s    Game:%uFPS    Draw:%u+%uFPS",
-        kinoko_application_title(), state.frame_count, state.draw_count, state.present_count);
-    SetWindowTextA(state.config.window, title);
+        u8"魔理沙と６つのキノコ", state.frame_count, state.draw_count, state.present_count);
+    kinoko::platform::host().request_title(title);
     state.frame_count = state.draw_count = state.present_count = 0;
 }
 DWORD WINAPI game_loop(void*) {
@@ -122,7 +122,7 @@ bool initialize(const Configuration& configuration) {
     state.com_initialized = SUCCEEDED(CoInitialize(nullptr));
     if (!state.com_initialized) return false;
     kinoko_process_initialize(configuration.instance, configuration.window);
-    if (!configuration.show_cursor) ShowCursor(FALSE);
+    if (!configuration.show_cursor) SDL_HideCursor();
     state.running.store(true);
     if (configuration.graphics) {
         if (!kinoko_graphics_create(configuration.window, configuration.width, configuration.height)) return false;
@@ -153,6 +153,13 @@ bool initialize(const Configuration& configuration) {
 }
 void message_loop() {
     while (state.is_running() && kinoko::platform::host().pump()) {
+        if (kinoko::platform::host().take_fullscreen_request()) {
+            const bool was_windowed=kinoko_graphics.present.Windowed!=0;
+            { CriticalLock lock(&state.scene_lock); kinoko_graphics_toggle_window(); }
+            if (state.config.show_cursor && was_windowed != (kinoko_graphics.present.Windowed!=0)) {
+                if(kinoko_graphics.present.Windowed) SDL_ShowCursor(); else SDL_HideCursor();
+            }
+        }
         kinoko_graphics_poll();
         SDL_Delay(1);
     }
@@ -160,7 +167,7 @@ void message_loop() {
 WNDPROC sdl_window_proc{};
 constexpr UINT_PTR move_frame_timer_id=0x6b696e6f;
 UINT_PTR move_frame_timer{};
-ULONGLONG last_move_frame{};
+uint64_t last_move_frame{};
 bool moving_window{};
 bool polling_move_frame{};
 
@@ -171,7 +178,7 @@ void stop_move_frames(HWND window) {
 }
 void poll_move_frame() {
     if (!moving_window || polling_move_frame || !state.graphics_initialized || !state.is_running()) return;
-    const auto now=GetTickCount64();
+    const auto now=SDL_GetTicks();
     if (now-last_move_frame<16) return;
     last_move_frame=now;
     polling_move_frame=true;
@@ -179,11 +186,10 @@ void poll_move_frame() {
     polling_move_frame=false;
 }
 LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM key, LPARAM parameter) {
-    // Keep the legacy fullscreen and IME boundary. Forward window/input events
-    // to SDL, but service GPU frames while Win32 owns the move/size modal loop.
-    if ((message == WM_SYSKEYDOWN && key == VK_RETURN) ||
-        (state.config.ime && message >= WM_IME_STARTCOMPOSITION && message <= WM_IME_COMPOSITION))
-        return dispatch_message(window,message,key,parameter);
+    // Remaining native boundary: IME and the Windows move/size modal loop.
+    // Ordinary window/input events and Alt+Enter are handled by SDL.
+    if (state.config.ime && message >= WM_IME_STARTCOMPOSITION && message <= WM_IME_COMPOSITION
+        && static_cast<uint8_t>(kinoko_ime_dispatch(window,message,key,parameter))) return 0;
     if (message == WM_ENTERSIZEMOVE) {
         moving_window=true;
         last_move_frame=0;
@@ -249,27 +255,7 @@ bool draw_frame() {
     }
     return ready != 0;
 }
-LRESULT dispatch_message(HWND window, UINT message, WPARAM key, LPARAM parameter) {
-    if (state.config.ime && static_cast<uint8_t>(kinoko_ime_dispatch(window, message, key, parameter))) return 0;
-    switch (message) {
-    case WM_SYSKEYDOWN:
-        if (key == VK_RETURN) {
-            const bool was_fullscreen = !kinoko_graphics.present.Windowed;
-            { CriticalLock lock(&state.scene_lock); kinoko_graphics_toggle_window(); }
-            if (state.config.show_cursor && was_fullscreen != !kinoko_graphics.present.Windowed)
-                ShowCursor(kinoko_graphics.present.Windowed != 0);
-            return 0;
-        }
-        if (key != VK_F4) return 0;
-        break;
-    case WM_DESTROY: PostQuitMessage(0); return 0;
-    case WM_CREATE: case WM_QUIT: case WM_SYSKEYUP: case WM_IME_NOTIFY: return 0;
-    case WM_SYSCOMMAND:
-        if (key == SC_MONITORPOWER || key == SC_SCREENSAVE) return 1;
-        break;
-    }
-    return DefWindowProcA(window, message, key, parameter);
-}
+
 }
 
 extern "C" void kinoko_application_construct() {
@@ -330,7 +316,7 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     // SDL expects UTF-8; the inherited title accessor contains CP932 bytes.
     auto& platform = kinoko::platform::host();
     if (!platform.open(u8"魔理沙と６つのキノコ",640,480)) {
-        MessageBoxA(nullptr,SDL_GetError(),"SDL initialization failed",MB_OK); return 1;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"SDL initialization failed",SDL_GetError(),nullptr); return 1;
     }
     HWND window=static_cast<HWND>(SDL_GetPointerProperty(SDL_GetWindowProperties(platform.window()),
         SDL_PROP_WINDOW_WIN32_HWND_POINTER,nullptr));
@@ -338,12 +324,20 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     sdl_window_proc=reinterpret_cast<WNDPROC>(SetWindowLongPtrW(window,GWLP_WNDPROC,
         reinterpret_cast<LONG_PTR>(window_proc)));
     if (!sdl_window_proc) { platform.close(); return 1; }
-    ShowWindow(window, show_command);
+    // The entrypoint still receives Windows launch hints; window operations
+    // themselves are SDL calls on the main thread.
+    if(show_command==SW_HIDE) SDL_HideWindow(platform.window());
+    else {
+        SDL_ShowWindow(platform.window());
+        if(show_command==SW_SHOWMINIMIZED || show_command==SW_MINIMIZE || show_command==SW_SHOWMINNOACTIVE)
+            SDL_MinimizeWindow(platform.window());
+        else if(show_command==SW_SHOWMAXIMIZED) SDL_MaximizeWindow(platform.window());
+    }
     Configuration config;
     config.window = window; config.instance = instance;
     config.manager = kinoko::game::create_manager();
     kinoko_application_open_archives();
-    if (!config.manager || !initialize(config)) MessageBoxA(window, kinoko_application_error(), "Error", MB_OK);
+    if (!config.manager || !initialize(config)) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error",u8"初期化失敗",platform.window());
     else message_loop();
     stop_move_frames(window);
     kinoko_application_shutdown();

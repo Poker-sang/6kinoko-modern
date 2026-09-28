@@ -14,7 +14,6 @@ typedef struct KinokoGraphics {
     KinokoGraphicsCapabilities capabilities;
     KinokoGraphicsPresentation present;
     KinokoGraphicsDisplayMode display;
-    LONG original_window_style;
     HRESULT cooperative_status;
     int32_t unknown_state;
 } KinokoGraphics;

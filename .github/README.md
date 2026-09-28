@@ -78,3 +78,6 @@ Internal graphics/ACT/actor synchronization now uses portable recursive mutexes;
 
 
 ACT directory searches and executable-directory startup now use portable services. See [directory services](../docs/modern-platform/directory-services.md) for platform semantics and remaining full-game blockers.
+
+
+Window controls now use SDL events, fullscreen/restoration, cursor APIs and queued UTF-8 titles. See [SDL window controls](../docs/modern-platform/sdl-window-controls.md) for the retained IME/drag hook and validation.

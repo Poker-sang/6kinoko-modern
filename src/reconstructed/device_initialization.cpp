@@ -1,3 +1,5 @@
+#include "kinoko/platform.hpp"
+#include <SDL3/SDL.h>
 #include "kinoko/critical_section.h"
 #include "kinoko/render_target.h"
 #include "kinoko/graphics_device.h"
@@ -10,23 +12,21 @@ extern "C" void kinoko_trace_i32(const char *,int32_t);
 extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t height) {
     if (!window) return 0; // inherited invalid-window boundary
     auto &state=kinoko_graphics;
-    state.original_window_style=GetWindowLongA(window,GWL_STYLE);
     kinoko_trace("4011b0:pre-d3d-create");
     state.factory=kinoko::graphics::create_factory(kinoko::graphics::sdk_version);
     if (!state.factory) {
-        MessageBoxA(window,"kinoko::graphics::create_factory failed","DirectX-Error",MB_OK);return 0;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Graphics error","Graphics initialization failed",kinoko::platform::host().window());return 0;
     }
     state.display={};
     if (FAILED(state.factory->GetAdapterDisplayMode(kinoko::graphics::adapter_default,&state.display))) {
         // Retain the inherited startup-failure cleanup boundary.
         state.factory->Release();state.factory=nullptr;
-        MessageBoxA(window,"GetAdapterDisplayMode failed","DirectX-Error",MB_OK);return 0;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Graphics error","Cannot query the display mode",kinoko::platform::host().window());return 0;
     }
     if (width<=0 || height<=0) {
-        WINDOWINFO info{};info.cbSize=sizeof(info);
-        GetWindowInfo(window,&info);
-        width=info.rcClient.right-info.rcClient.left;
-        height=info.rcClient.bottom-info.rcClient.top;
+        if (!SDL_GetWindowSize(kinoko::platform::host().window(),&width,&height)) {
+            state.factory->Release(); state.factory=nullptr; return 0;
+        }
     }
     state.present={};
     auto &parameters=state.present;
@@ -59,7 +59,7 @@ extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t heig
     }
     if (FAILED(status) || !state.device) {
         state.factory->Release();state.factory=nullptr;state.device=nullptr;
-        MessageBoxA(window,"CreateDevice failed","DirectX-Error",MB_OK);return 0;
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Graphics error","Cannot create the graphics device",kinoko::platform::host().window());return 0;
     }
     state.capabilities={};
     state.device->GetDeviceCaps(&state.capabilities);

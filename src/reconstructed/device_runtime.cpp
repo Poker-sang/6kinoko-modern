@@ -4,7 +4,7 @@
 #include "kinoko/graphics_lock.hpp"
 #include "kinoko/render_target.h"
 #include "kinoko/diagnostics.h"
-#include <initializer_list>
+#include <atomic>
 
 // 4013D0. A failed Reset skips after-reset notifications and retains the
 // failure state; the message-loop cooperative-level poll decides the next try.
@@ -33,23 +33,8 @@ extern "C" int32_t kinoko_graphics_toggle_window(void) {
     parameters.Windowed=!parameters.Windowed;
     const auto result=kinoko_graphics_reset();
     if (!result) { parameters.Windowed=!parameters.Windowed;return result; }
-    if (parameters.Windowed) {
-        const int width=GetSystemMetrics(SM_CXEDGE)+GetSystemMetrics(SM_CXDLGFRAME)+
-            GetSystemMetrics(SM_CXBORDER)+static_cast<int>(parameters.BackBufferWidth);
-        const int height=GetSystemMetrics(SM_CYEDGE)+GetSystemMetrics(SM_CYDLGFRAME)+
-            GetSystemMetrics(SM_CYBORDER)+GetSystemMetrics(SM_CYCAPTION)+static_cast<int>(parameters.BackBufferHeight);
-        return SetWindowPos(parameters.hDeviceWindow,HWND_NOTOPMOST,
-            (GetSystemMetrics(SM_CXSCREEN)-width)/2,(GetSystemMetrics(SM_CYSCREEN)-height)/2,
-            width,height,SWP_FRAMECHANGED);
-    }
-    // The original makes these first metric reads even though their values
-    // are discarded, then computes the border displacement a second time.
-    for(int metric:{SM_CXEDGE,SM_CXDLGFRAME,SM_CXBORDER,SM_CYEDGE,SM_CYDLGFRAME,SM_CYBORDER,SM_CYCAPTION})
-        GetSystemMetrics(metric);
-    const int border_x=GetSystemMetrics(SM_CXEDGE)+GetSystemMetrics(SM_CXDLGFRAME)+GetSystemMetrics(SM_CXBORDER);
-    const int border_y=GetSystemMetrics(SM_CYEDGE)+GetSystemMetrics(SM_CYDLGFRAME)+GetSystemMetrics(SM_CYBORDER);
-    return SetWindowPos(parameters.hDeviceWindow,nullptr,-border_x/2,
-        -(border_y/2+GetSystemMetrics(SM_CYCAPTION)),0,0,SWP_FRAMECHANGED|SWP_NOSIZE);
+    // SDL owns desktop fullscreen and restoration; no native border metrics.
+    return result;
 }
 
 extern "C" int32_t kinoko_graphics_begin_scene(void) {
@@ -57,8 +42,8 @@ extern "C" int32_t kinoko_graphics_begin_scene(void) {
     auto *device=kinoko_graphics.device;
     if (!device) { kinoko_graphics_lock.native->unlock();return 0; }
     const auto status=device->BeginScene();
-    static volatile LONG traces;
-    if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("401760:beginscene-hr",status);
+    static std::atomic<int32_t> traces{0};
+    if (++traces<=5) kinoko_trace_hresult("401760:beginscene-hr",status);
     // 40177D compares exactly against zero, not merely SUCCEEDED(status).
     if (status!=kinoko::graphics::ok) { kinoko_graphics_lock.native->unlock();return 0; }
     return 1;
@@ -76,8 +61,8 @@ extern "C" int32_t kinoko_graphics_present(void) {
     // clears pending only on kinoko::graphics::ok, retaining it on WASSTILLDRAWING/failure.
     HRESULT status=kinoko::graphics::ok;
     if (swap_chain) status=swap_chain->Present(nullptr,nullptr,nullptr,nullptr,kinoko::graphics::presentation_donotwait);
-    static volatile LONG traces;
-    if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("4017b0:present-hr",status);
+    static std::atomic<int32_t> traces{0};
+    if (++traces<=5) kinoko_trace_hresult("4017b0:present-hr",status);
     if (status==kinoko::graphics::ok) kinoko_renderer.present_pending=0;
     kinoko_graphics_lock.native->unlock();
     return status==kinoko::graphics::ok;
@@ -86,7 +71,7 @@ extern "C" int32_t kinoko_graphics_clear(void) {
     auto *device=kinoko_graphics.device;
     if (!device) return kinoko::graphics::error_invalidcall;
     const auto status=device->Clear(0,nullptr,kinoko::graphics::clear_target|kinoko::graphics::clear_zbuffer,kinoko_renderer.clear_color,1.0f,0);
-    static volatile LONG traces;
-    if (InterlockedIncrement(&traces)<=5) kinoko_trace_hresult("401820:clear-hr",status);
+    static std::atomic<int32_t> traces{0};
+    if (++traces<=5) kinoko_trace_hresult("401820:clear-hr",status);
     return status;
 }

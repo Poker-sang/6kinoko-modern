@@ -73,3 +73,6 @@ ACT/资源、角色/相机、地图/碰撞、输入/音频/应用与 VM 桥接�
 
 
 ACT 文件枚举和 EXE 所在目录初始化已接入跨平台服务。平台语义与完整游戏剩余阻塞见[目录服务](../docs/modern-platform/directory-services.md)。
+
+
+窗口控制已使用 SDL 事件、全屏恢复、光标 API 和主线程 UTF-8 标题更新。保留的 IME/拖动钩子及验证见[SDL 窗口控制](../docs/modern-platform/sdl-window-controls.md)。

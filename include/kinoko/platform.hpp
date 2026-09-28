@@ -30,6 +30,10 @@ public:
     // synchronized handoff to the simulation thread. Relative motion is consumed once.
     bool open(const char* title, int width, int height, bool hidden = false);
     bool pump();
+    // Main-thread event request, consumed once. Repeated keydown is ignored.
+    bool take_fullscreen_request() noexcept;
+    // Safe from the game thread; pump applies the latest UTF-8 title on main.
+    void request_title(const char* title);
     Input consume_input();
     SDL_Window* window() const noexcept;
     void close();

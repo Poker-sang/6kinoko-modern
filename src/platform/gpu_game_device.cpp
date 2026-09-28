@@ -51,7 +51,7 @@ struct Snapshot {std::shared_ptr<Image> image;std::shared_ptr<const Pixels> pixe
 struct RecordedPass {std::shared_ptr<Image> target;gpu::Pass pass;std::vector<Snapshot> textures;};
 struct Device::State {
     std::recursive_mutex cpu_mutex;
-    HWND window;UINT width,height;bool scene=false,closed=false,reported=false,mesh_decl=false;
+    UINT width,height;bool scene=false,closed=false,reported=false,mesh_decl=false;
     std::unique_ptr<gpu::Renderer> renderer;
     Surface *back=nullptr,*depth=nullptr,*target=nullptr;
     std::array<DWORD,256> states{};std::array<std::array<DWORD,16>,8> samplers{};
@@ -62,7 +62,7 @@ struct Device::State {
     std::vector<RecordedPass> recording;std::mutex queue_mutex;std::deque<std::vector<RecordedPass>> queue;
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
-    State(HWND w,UINT x,UINT y):window(w),width(x),height(y) {
+    State(UINT x,UINT y):width(x),height(y) {
         const auto vs=shader("sprite.vert.dxbc"),fs=shader("sprite.frag.dxbc");
         renderer=std::make_unique<gpu::Renderer>(platform::host().window(),gpu::ShaderEncoding::dxbc,gpu::ShaderCode{vs.data(),vs.size()},gpu::ShaderCode{fs.data(),fs.size()});
         auto screen=std::make_shared<Image>(x,y,kinoko::graphics::format_a8r8g8b8,true);screen->id=0;
@@ -143,7 +143,7 @@ struct Device::State {
         }
     }
 };
-Device::Device(HWND w,UINT x,UINT y):state(std::make_unique<State>(w,x,y)){active=this;}
+Device::Device(HWND,UINT x,UINT y):state(std::make_unique<State>(x,y)){active=this;}
 Device::~Device(){if(active==this)active=nullptr;}
 void stop(){if(active){std::lock_guard<std::mutex> lock(active->state->queue_mutex);active->state->closed=true;}}
 HRESULT Device::GetDeviceCaps(kinoko::graphics::Capabilities* out){
@@ -154,11 +154,13 @@ HRESULT Device::TestCooperativeLevel(){
     try{state->poll();}catch(const std::exception& e){bad(e.what());}
     std::string message;{std::lock_guard<std::mutex> lock(errors_mutex);message=error;}
     if(!message.empty()){
-        if(!state->reported){state->reported=true;MessageBoxA(state->window,message.c_str(),"SDL GPU renderer error",MB_OK|MB_ICONERROR);SDL_Event quit{};quit.type=SDL_EVENT_QUIT;SDL_PushEvent(&quit);}return kinoko::graphics::error_devicelost;
+        if(!state->reported){state->reported=true;SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"SDL GPU renderer error",message.c_str(),platform::host().window());SDL_Event quit{};quit.type=SDL_EVENT_QUIT;SDL_PushEvent(&quit);}return kinoko::graphics::error_devicelost;
     }return kinoko::graphics::ok;
 }
 HRESULT Device::Reset(kinoko::graphics::Presentation* p){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!p)return E_POINTER;return SDL_SetWindowFullscreen(platform::host().window(),p->Windowed==FALSE)?S_OK:bad(SDL_GetError());}
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!p)return E_POINTER;auto* window=platform::host().window();
+    if(!SDL_SetWindowFullscreen(window,p->Windowed==FALSE)) return bad(SDL_GetError());
+    return S_OK;}
 HRESULT Device::BeginScene(){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return S_OK;}
 HRESULT Device::EndScene(){

@@ -315,3 +315,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - Details: [directory-services.md](directory-services.md).
 
 - User preference: prioritize SDL3/standard-library APIs over per-OS implementations; recorded in AGENTS.md.
+
+
+## SDL window controls checkpoint
+- [x] SDL Alt+Enter, fullscreen restoration, cursor, client size, title handoff and startup/error UI.
+- [x] Remove obsolete native style and GPU error-window caches.
+- [ ] Migrate remaining IME/COM/entrypoint, native type aliases and fonts.
+- Details: [sdl-window-controls.md](sdl-window-controls.md).
