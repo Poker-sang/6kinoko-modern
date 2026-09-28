@@ -34,3 +34,18 @@ CV3/fade contracts now compile in portable CI, not merely the SDL output module.
 Window entrypoint/modal-drag hook, native graphics aliases and GDI font rendering
 still block full non-Windows game builds. No game or contract is executed by the
 agent; all source/batches are committed before fresh builds and pushed to modern.
+
+## Delivery evidence
+
+Source `c9d29ba893f346589dd7075932b116ed531b0258`:
+- `modern-x64-host-02`: full x64 Release game; input-service, audio-runtime and
+  application contracts compiled separately (contracts-build.log).
+- `modern-host-02`: Win32 Release game and 84 contracts compiled.
+- Three original DAT staged and SHA256-verified for both runs; shaders staged.
+- Both static D3D9 dependency audits passed. No game or contract execution.
+- EXE: `runtime-builds/modern-x64-host-02/kinoko_modern_gpu.exe`.
+- host-01 failures retained: final audio ZeroMemory/SetLastError dependencies
+  were removed before the successful host-02 source commit/build.
+
+All old binaries, logs and source commits are retained; source and this evidence
+are backed up to the modern repository branch, never rebuild.
