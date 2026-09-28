@@ -40,7 +40,6 @@ int32_t kinoko_renderer_initialize() { return 0; }
 int32_t kinoko_renderer_before_reset(KinokoRenderer*) { return 0; }
 void kinoko_remove_device_listener(KinokoDeviceListener*) {}
 unsigned long kinoko_run_game_math(unsigned long (__stdcall *)(void*), void*) noexcept(false) { return 0; }
-int32_t kinoko_process_initialize(HINSTANCE, HWND) { return 0; }
 int32_t kinoko_input_initialize() { device_calls.push_back(1); return input_result; }
 int32_t kinoko_input_shutdown() { return 0; }
 int32_t kinoko_input_open_keyboard() { device_calls.push_back(2); return keyboard_result; }

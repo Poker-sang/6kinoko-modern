@@ -4,7 +4,7 @@
 using kinoko::text::FontRenderer;
 using kinoko::text::FontAtlas;
 static_assert(std::is_same_v<decltype(FontRenderer::output), std::uint32_t*>);
-static_assert(std::is_same_v<decltype(FontRenderer::device_context), void*>);
+static_assert(std::is_same_v<decltype(FontRenderer::font_height), std::int32_t>);
 static_assert(std::is_same_v<decltype(FontAtlas::texture), std::int32_t>);
 static_assert(!std::is_trivially_copyable_v<FontRenderer>);
 static_assert(alignof(FontAtlas) >= alignof(void*));
