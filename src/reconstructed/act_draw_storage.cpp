@@ -2,14 +2,14 @@
 #include "kinoko/act_draw_records.hpp"
 #include "kinoko/act_texture_bridge.hpp"
 #include "kinoko/act_host.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <vector>
 #include <type_traits>
 #include <new>
 extern "C" void kinoko_trace_i32(const char*, int32_t);
 namespace {
 using namespace kinoko::act;
-using namespace kinoko::legacy;
+using namespace kinoko::memory;
 using kinoko::native::RecordView;
 struct Sprite {
     BlitSprite value{};
@@ -48,7 +48,7 @@ extern "C" int32_t kinoko_act_append_blit(KinokoActRuntime* self, int32_t x, int
     int32_t blend, float alpha) {
     if (!self || !texture_resource) return E_FAIL;
     const auto* symbols=kinoko_act_host_symbols();
-    const auto type=kinoko::legacy::load<const void*>(texture_resource);
+    const auto type=kinoko::memory::load<const void*>(texture_resource);
     if(type!=symbols->texture_resource_vtable &&
        type!=symbols->render_target_vtable) return E_FAIL;
     const auto texture=texture_runtime_state(texture_resource);

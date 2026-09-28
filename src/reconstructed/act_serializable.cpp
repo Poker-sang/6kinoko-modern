@@ -3,20 +3,17 @@
 #include "kinoko/act_mesh.hpp"
 #include "kinoko/act_runtime.h"
 #include "kinoko/legacy_abi.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_method_entries.h"
 #include <cstring>
 
-using kinoko::legacy::address;
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
 
 
 #include "kinoko/string_layout.h"
 
 extern "C" const char* kinoko_act_serialized_type_name(const void* object) {
     if (!object) return nullptr;
-    const auto table=kinoko::legacy::load<const void*>(object);
+    const auto table=kinoko::memory::load<const void*>(object);
     const auto* host=kinoko_act_host_symbols();
     if(table==kinoko::mesh::resource_methods()) return ".?AVCActResourceMesh@@";
     if(table==kinoko::mesh::layout_methods()) return ".?AVC3DLayout@@";
@@ -45,7 +42,7 @@ extern "C" int32_t __fastcall kinoko_method_query_serializable(
     // Original type_info::operator== at 4AB2E2 compares descriptor+9,
     // intentionally ignoring the leading byte of the raw decorated name.
     const bool match=type && name && std::strcmp(name+1,static_cast<const char*>(type)+2*sizeof(void*)+1)==0;
-    kinoko::legacy::store(output, match ? object : nullptr);
+    kinoko::memory::store(output, match ? object : nullptr);
     return match;
 }
 

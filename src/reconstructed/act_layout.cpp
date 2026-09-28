@@ -4,7 +4,7 @@
 #include "kinoko/act_layout_render.hpp"
 #include "kinoko/act_draw_records.hpp"
 #include "kinoko/act_texture_bridge.hpp"
-#include "kinoko/map_layout_records.hpp"
+#include "kinoko/act_layer_storage.hpp"
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
 #include "kinoko/act_runtime.h"
@@ -14,18 +14,15 @@
 #include "kinoko/game_math.h"
 #include <algorithm>
 #include <cstring>
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
 extern "C" void kinoko_trace_i32(const char *,int32_t);
 namespace kinoko::act {
 namespace {
 using native::RecordView;
 using View=RecordView<Layout2DRecord>;
-using LayerView=kinoko::map::LayerView;
-using Layer=kinoko::map::LayerRecord;
+using LayerView=LayerStorageView;
+using Layer=LayerStorageRecord;
 KinokoActResource *texture_resource(KinokoActLayer *layer) {
-    auto *resource=LayerView(layer).get(&Layer::resource);
+    auto *resource=LayerView(layer).view(&Layer::association).get(&LayerAssociationRecord::resource);
     if(!resource) return nullptr;
     return ResourceMethods(resource).query(ResourceKind::texture);
 }
@@ -68,7 +65,7 @@ int32_t update_layout_2d(KinokoActLayout *layout) {
     const View view(layout);
     auto *layer=view.get(&Layout2DRecord::layer);
     if(!layer) return E_FAIL;
-    if(!LayerView(layer).get(&Layer::visible)) return 0;
+    if(!(LayerView(layer).get(&Layer::visibility_flags) & 0xff)) return 0;
     auto *resource=texture_resource(layer);
     if(!resource) return E_FAIL;
     const auto texture=texture_runtime_state(resource);
@@ -111,7 +108,7 @@ int32_t draw_layout_2d(KinokoActLayout *layout,float x,float y) {
     const View view(layout);
     auto *layer=view.get(&Layout2DRecord::layer);
     if(!layer) return E_FAIL;
-    if(!LayerView(layer).get(&Layer::visible)) return 0;
+    if(!(LayerView(layer).get(&Layer::visibility_flags) & 0xff)) return 0;
     if(!texture_resource(layer)) return E_FAIL;
     auto *device=kinoko_graphics.device;
     if(!device) return E_FAIL; // inherited absent-device boundary

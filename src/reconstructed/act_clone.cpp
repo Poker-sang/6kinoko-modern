@@ -1,7 +1,7 @@
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource_records_io.hpp"
 #include "kinoko/act_clone.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/act_key_records.hpp"
 #include "kinoko/act_layout_records.hpp"
 #include "kinoko/texture_store.h"
@@ -18,7 +18,6 @@
 
 namespace {
 using namespace kinoko::act;
-int32_t legacy_address(const void* p) { return static_cast<int32_t>(reinterpret_cast<uintptr_t>(p)); }
 
 }
 
@@ -29,7 +28,7 @@ extern "C" KinokoActLayout* __fastcall kinoko_method_clone_c2d_layout(KinokoActL
     if (!source) return nullptr;
     auto* result=static_cast<unsigned char*>(std::calloc(1,sizeof(Layout2DRecord)));
     if (!result) return nullptr;
-    (int32_t)(intptr_t)kinoko_construct_c2dlayout((KinokoActLayout*)(uintptr_t)(legacy_address(result)));
+    kinoko_construct_c2dlayout(reinterpret_cast<KinokoActLayout*>(result));
     constexpr auto begin=offsetof(Layout2DRecord,quad)+sizeof(void*);
     constexpr auto end=offsetof(Layout2DRecord,pivots_initialized)+sizeof(uint8_t);
     std::memcpy(result+begin,reinterpret_cast<const unsigned char*>(source)+begin,end-begin);

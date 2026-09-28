@@ -12,7 +12,9 @@
 #include "kinoko/act_host.h"
 #include "kinoko/diagnostics.h"
 #include "kinoko/method_entry.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
+#include "kinoko/act_layout_records.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/render_target.h"
 #include "kinoko/windows_owner.hpp"
@@ -26,16 +28,12 @@ void kinoko_trace_squirrel_name(const char*, int32_t);
 
 namespace {
 using namespace kinoko::act;
-using namespace kinoko::legacy;
+using namespace kinoko::memory;
+using kinoko::script::diagnostic_address;
+using kinoko::script::diagnostic_name;
 using kinoko::native::RecordView;
 using RuntimeView = RecordView<RuntimeRecord>;
 
-struct DrawLayoutPrefix {
-    const void* vtable;
-    std::array<uint8_t, 304> unknown4;
-    int32_t texture;
-};
-static_assert(offsetof(DrawLayoutPrefix, texture) == 308);
 int32_t float_bits(float value) { return load<int32_t>(&value); }
 void* method(const void* object, unsigned index) {
     const auto table = load<const unsigned char*>(object);
@@ -93,21 +91,21 @@ void trace_draw(KinokoActRuntime* self, const RuntimeView& resource, LONG actor_
         kinoko_trace_i32("4525d0:actor-index", actor_index);
         kinoko_trace_i32("4525d0:flag-68", load<int32_t>(resource.bytes(&RuntimeRecord::hidden)));
         kinoko_trace_i32("4525d0:flag-8", load<int32_t>(resource.bytes(&RuntimeRecord::stage_active)));
-        kinoko_trace_i32("4525d0:field-10", address(resource.get(&RuntimeRecord::active_holder)));
-        kinoko_trace_i32("4525d0:act", address(act));
+        kinoko_trace_i32("4525d0:field-10", diagnostic_address(resource.get(&RuntimeRecord::active_holder)));
+        kinoko_trace_i32("4525d0:act", diagnostic_address(act));
         if (act) {
-            kinoko_trace_squirrel_name("4525d0:actor-name", address(kinoko_string_data((const void*)(document.bytes(&DocumentRecord::name)))));
+            diagnostic_name("4525d0:actor-name", kinoko_string_data((const void*)(document.bytes(&DocumentRecord::name))));
             kinoko_trace_i32("4525d0:act-60", load<int32_t>(document.bytes(&DocumentRecord::visible)));
-            kinoko_trace_i32("4525d0:act-begin", address(document.get(&DocumentRecord::layers).begin));
-            kinoko_trace_i32("4525d0:act-end", address(document.get(&DocumentRecord::layers).end));
+            kinoko_trace_i32("4525d0:act-begin", diagnostic_address(document.get(&DocumentRecord::layers).begin));
+            kinoko_trace_i32("4525d0:act-end", diagnostic_address(document.get(&DocumentRecord::layers).end));
         }
     }
     if (trace_index <= 8) {
         kinoko_trace("4525d0:live-entry");
-        kinoko_trace_i32("4525d0:live-resource", address(self));
-        kinoko_trace_i32("4525d0:live-act", address(act));
-        if (act) kinoko_trace_squirrel_name("4525d0:live-act-name", address(kinoko_string_data((const void*)(document.bytes(&DocumentRecord::name)))));
-        kinoko_trace_squirrel_name("4525d0:live-resource-name", address(kinoko_string_data((const void*)(resource.bytes(&RuntimeRecord::name)))));
+        kinoko_trace_i32("4525d0:live-resource", diagnostic_address(self));
+        kinoko_trace_i32("4525d0:live-act", diagnostic_address(act));
+        if (act) diagnostic_name("4525d0:live-act-name", kinoko_string_data((const void*)(document.bytes(&DocumentRecord::name))));
+        diagnostic_name("4525d0:live-resource-name", kinoko_string_data((const void*)(resource.bytes(&RuntimeRecord::name))));
     }
 }
 }
@@ -169,8 +167,8 @@ extern "C" int32_t kinoko_act_draw(KinokoActRuntime* self, float x, float y) {
         if (trace_index <= 8) {
             kinoko_trace_i32("4525d0:live-x", float_bits(draw_x));
             kinoko_trace_i32("4525d0:live-y", float_bits(draw_y));
-            kinoko_trace_i32("4525d0:live-layout", address(layout));
-            kinoko_trace_i32("4525d0:live-texture", load<const void*>(layout)==kinoko_string_layout_methods()?0:RecordView<DrawLayoutPrefix>(layout).get(&DrawLayoutPrefix::texture));
+            kinoko_trace_i32("4525d0:live-layout", diagnostic_address(layout));
+            kinoko_trace_i32("4525d0:live-texture", load<const void*>(layout)==kinoko_string_layout_methods()?0:RecordView<Layout2DRecord>(layout).get(&Layout2DRecord::texture));
             kinoko_trace_i32("4525d0:live-draw-result", status);
         }
         if (status < 0) result = status;

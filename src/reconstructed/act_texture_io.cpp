@@ -11,7 +11,7 @@
 #include "kinoko/map_chip_cache.hpp"
 #include "kinoko/native_buffer.h"
 #include "kinoko/legacy_abi.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_method_entries.h"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/act_runtime.h"
@@ -35,9 +35,6 @@
 #include "kinoko/string_layout.h"
 
 namespace {
-using kinoko::legacy::address;
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
 struct Property {
     uint32_t type;
     uint32_t read_type;
@@ -174,11 +171,11 @@ bool read(void* resource, KinokoArchiveReader* reader, Schema& schema, bool text
         } else if (type == 2) {
             uint8_t value;
             if (!transfer(reader, value)) return false;
-            if (assign) kinoko::legacy::store(bytes + property.offset, value);
+            if (assign) kinoko::memory::store(bytes + property.offset, value);
         } else {
             uint32_t bits;
             if (!transfer(reader, bits)) return false;
-            if (assign) kinoko::legacy::store(bytes + property.offset, bits);
+            if (assign) kinoko::memory::store(bytes + property.offset, bits);
         }
     }
     // 446A84: serialized crop rectangles disable constructor auto-size.
@@ -366,7 +363,7 @@ extern "C" int32_t __fastcall kinoko_method_map_set_layer(
             // Original one-shot suppression is distinct from an invalid type.
             map.set(&LayoutRecord::suppress_next_binding, uint8_t{0});
         } else {
-            if (kinoko::legacy::load<const unsigned char*>(resource) != kinoko_act_host_symbols()->chip_resource_vtable)
+            if (kinoko::memory::load<const unsigned char*>(resource) != kinoko_act_host_symbols()->chip_resource_vtable)
                 return fail;
             map.set(&LayoutRecord::cached_chip_resource, resource);
             // Source MCD loading already loads each texture once. The original
@@ -391,7 +388,7 @@ extern "C" int32_t __fastcall kinoko_method_map_set_layer(
         if (end != begin) texture_refs.assign(textures.begin, textures.end);
         for (uint32_t i=0; i<count; ++i) {
             auto chip = kinoko_mcd_find_chip(data, static_cast<uint32_t>(records[i].chip_id));
-            auto texture = chip ? kinoko_mcd_find_texture(data, kinoko::legacy::load<uint32_t>(chip->bytes+4)) : nullptr;
+            auto texture = chip ? kinoko_mcd_find_texture(data, kinoko::memory::load<uint32_t>(chip->bytes+4)) : nullptr;
             chip_refs.push_back(chip ? reinterpret_cast<const ChipDefinition*>(chip->bytes) : nullptr);
             texture_refs.push_back(texture);
         }
@@ -451,7 +448,7 @@ int32_t __fastcall query_timeline(KinokoActTimeline* timeline,void*,const void* 
     if (!output) return 0;
     // Original MSVC type descriptor prefix and leading '.' are skipped.
     const bool match=type && std::strcmp(static_cast<const char*>(type)+9,"?AVCActTimeLine@@")==0;
-    kinoko::legacy::store(output,match?timeline:nullptr);
+    kinoko::memory::store(output,match?timeline:nullptr);
     return match;
 }
 void clear_timeline(KinokoActTimeline* timeline) {
@@ -464,7 +461,7 @@ void* __fastcall delete_timeline(KinokoActTimeline* timeline,void*,int32_t flags
     auto* bytes=reinterpret_cast<unsigned char*>(timeline);
     if (flags&2) {
         auto* allocation=bytes-sizeof(uint32_t);
-        const auto count=kinoko::legacy::load<uint32_t>(allocation);
+        const auto count=kinoko::memory::load<uint32_t>(allocation);
         for (auto i=count;i>0;--i) clear_timeline(reinterpret_cast<KinokoActTimeline*>(bytes+(i-1)*sizeof(TimelineRecord)));
         if (flags&1) std::free(allocation);
         return allocation;
@@ -480,7 +477,7 @@ KinokoActTimeline* __fastcall clone_timeline(KinokoActTimeline* timeline,void*) 
     if (!timeline) return nullptr;
     try {
         const auto pairs=timeline_pairs(timeline);
-        kinoko::legacy::Allocation<KinokoActTimeline> owner(kinoko_act_new_timeline());
+        kinoko::memory::Allocation<KinokoActTimeline> owner(kinoko_act_new_timeline());
         if (!owner) return nullptr;
         const TimelineView result(owner.get()),source(timeline);
         result.set(&TimelineRecord::begin_time,source.get(&TimelineRecord::begin_time));
@@ -511,7 +508,7 @@ extern "C" int32_t kinoko_act_load_timeline(KinokoActTimeline* timeline,KinokoAr
 
 namespace {
 uint32_t type_hash(const char* name,size_t length) {
-    return static_cast<uint32_t>(kinoko_boost_hash_range((const char*)(uintptr_t)(address(name)), (const char*)(uintptr_t)(address(name+length))));
+    return static_cast<uint32_t>(kinoko_boost_hash_range(name, name+length));
 }
 uint32_t type_hash(const char* name) { return type_hash(name,std::strlen(name)); }
 struct TypeName {
@@ -636,7 +633,7 @@ extern "C" int32_t __fastcall kinoko_method_read_act(KinokoActDocument* act,void
 namespace {
 std::vector<void*> object_vector(const void* slot) {
     struct Span { void** begin; void** end; };
-    const auto range = kinoko::legacy::load<Span>(slot);
+    const auto range = kinoko::memory::load<Span>(slot);
     const auto begin = reinterpret_cast<uintptr_t>(range.begin), end = reinterpret_cast<uintptr_t>(range.end);
     if (end < begin || (end-begin)%sizeof(void*) || (!begin && end) || (end-begin)/sizeof(void*) > 0x10000)
         throw std::bad_alloc();

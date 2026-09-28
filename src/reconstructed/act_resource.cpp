@@ -4,7 +4,8 @@
 #include "kinoko/act_document_records.hpp"
 #include "kinoko/stage_records.hpp"
 #include "kinoko/act_frame.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/windows_owner.hpp"
 #include <mmsystem.h>
 
@@ -17,7 +18,6 @@ using kinoko::act::RuntimeRecord;
 using kinoko::act::DocumentRecord;
 using kinoko::native::RecordView;
 using kinoko::stage::SourceHolderRecord;
-using kinoko::legacy::address;
 // This view borrows the existing record; it does not construct a new object or
 // change the lifetime of the source holder, clone, VM, or critical section.
 class ActResourceView {
@@ -78,17 +78,17 @@ public:
         auto *source = holder ? RecordView<SourceHolderRecord>(holder).get(&SourceHolderRecord::document) : nullptr;
         const int32_t step = source ? RecordView<DocumentRecord>(source).get(&DocumentRecord::resolution_ms) : 0;
         if (index <= 64) {
-            kinoko_trace_i32("451620:resource", address(storage_));
+            kinoko_trace_i32("451620:resource", kinoko::script::diagnostic_address(storage_));
             kinoko_trace_i32("451620:before", time());
-            kinoko_trace_i32("451620:holder", address(holder));
-            kinoko_trace_i32("451620:act", address(source));
+            kinoko_trace_i32("451620:holder", kinoko::script::diagnostic_address(holder));
+            kinoko_trace_i32("451620:act", kinoko::script::diagnostic_address(source));
             kinoko_trace_i32("451620:resolution", step);
         }
         // Original 451620 uses a DWORD ADD. Compute modulo 2^32, then copy the
         // result bits to the signed clock; no signed-overflow expression.
         if (source) {
             const uint32_t next = static_cast<uint32_t>(time()) + static_cast<uint32_t>(step);
-            record_.set(&RuntimeRecord::current_time, kinoko::legacy::load<int32_t>(&next));
+            record_.set(&RuntimeRecord::current_time, kinoko::memory::load<int32_t>(&next));
         }
         if (index <= 64) kinoko_trace_i32("451620:after", time());
         return 0;
@@ -98,7 +98,7 @@ public:
         // The OS clock is sampled even for a null receiver, as in the baseline.
         const uint32_t deadline = timeGetTime() + static_cast<uint32_t>(milliseconds);
         if (storage_) record_.set(&RuntimeRecord::wake_time, deadline);
-        return kinoko::legacy::load<int32_t>(&deadline);
+        return kinoko::memory::load<int32_t>(&deadline);
     }
 
     int32_t end_stage() const {

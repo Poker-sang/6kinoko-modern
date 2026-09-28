@@ -1,9 +1,8 @@
 #include "kinoko/mesh_resource.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_layout_3d.hpp"
-#include "kinoko/map_layout_records.hpp"
+#include "kinoko/act_layer_storage.hpp"
 #include "kinoko/graphics_device.h"
-#include "kinoko/legacy_memory.hpp"
 #include <cstdlib>
 #include <cstring>
 
@@ -27,9 +26,9 @@ int32_t bind_layout_3d(Layout3DRecord *layout, KinokoActLayer *layer) {
 
 int32_t update_layout_3d(Layout3DRecord *layout) {
     if (!layout->layer) return E_FAIL;
-    const map::LayerView owner(layout->layer);
-    if (!owner.get(&map::LayerRecord::visible)) return S_OK;
-    if (!owner.get(&map::LayerRecord::resource)) return E_FAIL;
+    const LayerStorageView owner(layout->layer);
+    if (!(owner.get(&LayerStorageRecord::visibility_flags) & 0xff)) return S_OK;
+    if (!owner.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource)) return E_FAIL;
     kinoko::graphics::Matrix world{}, operation{};
     world.m[0][0]=world.m[1][1]=world.m[2][2]=world.m[3][3]=1.0f;
     // 43C920: yaw/pitch/roll in radians, then translation, then scaling.
@@ -46,9 +45,9 @@ int32_t update_layout_3d(Layout3DRecord *layout) {
 
 int32_t draw_layout_3d(Layout3DRecord *layout) {
     if (!layout->layer) return E_FAIL;
-    const map::LayerView owner(layout->layer);
-    if (!owner.get(&map::LayerRecord::visible)) return S_OK;
-    auto *resource=owner.get(&map::LayerRecord::resource);
+    const LayerStorageView owner(layout->layer);
+    if (!(owner.get(&LayerStorageRecord::visibility_flags) & 0xff)) return S_OK;
+    auto *resource=owner.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource);
     if (!resource) return E_FAIL;
     auto *device=kinoko_graphics.device;
     DWORD depth{},write_depth{},alpha{};

@@ -21,7 +21,7 @@
 #include "kinoko/act_mesh.hpp"
 #include "kinoko/act_host.h"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/sqrat_object_bridge.h"
 #include "kinoko/native_property_bridge.h"
 #include "kinoko/squirrel_binding.h"
@@ -53,9 +53,6 @@
 #include <cstring>
 #include <cstdlib>
 
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
-using kinoko::legacy::field;
 
 
 extern "C" int32_t __fastcall kinoko_method_delete_act_script(void* script, void *) {
@@ -69,8 +66,8 @@ extern "C" int32_t __fastcall kinoko_method_delete_act_script(void* script, void
 namespace {
 void clear_layout(KinokoActLayout* layout) {
     if (!layout) return;
-    const auto methods = kinoko::legacy::load<const void*>(layout);
-    if (methods == kinoko_act_host_symbols()->map_layout_vtable) kinoko_clear_map_layout((KinokoActLayout*)(uintptr_t)(address(layout)));
+    const auto methods = kinoko::memory::load<const void*>(layout);
+    if (methods == kinoko_act_host_symbols()->map_layout_vtable) kinoko_clear_map_layout(layout);
 }
 void clear_key(KinokoActKey* value) {
     if (!value) return;
@@ -89,13 +86,13 @@ void clear_key(KinokoActKey* value) {
 void kinoko_destroy_cact_key(void* value) {
     if (!value) return;
     // The layer's second list owns CActTimeLine, not a key with a layout.
-    if (kinoko::legacy::load<const void*>(value)==kinoko_act_timeline_vtable())
+    if (kinoko::memory::load<const void*>(value)==kinoko_act_timeline_vtable())
         kinoko_native_buffer_destroy(kinoko::native::RecordView<kinoko::act::TimelineRecord>(value).bytes(&kinoko::act::TimelineRecord::pairs));
     else clear_key(static_cast<KinokoActKey*>(value));
     std::free(value);
 }
 extern "C" void* __fastcall kinoko_method_destroy_layout(KinokoActLayout* layout,void*) {
-    if(layout && kinoko::legacy::load<const void*>(layout)==kinoko_string_layout_methods())
+    if(layout && kinoko::memory::load<const void*>(layout)==kinoko_string_layout_methods())
         return kinoko_method_destroy_string_layout(reinterpret_cast<KinokoStringLayout*>(layout),nullptr);
     clear_layout(layout);
     std::free(layout);
@@ -104,29 +101,29 @@ extern "C" void* __fastcall kinoko_method_destroy_layout(KinokoActLayout* layout
 
 void kinoko_destroy_cact_list(void* list_slot) {
     if (!list_slot) return;
-    auto* head = kinoko::legacy::load<void*>(list_slot);
+    auto* head = kinoko::memory::load<void*>(list_slot);
     if (!head) return;
     kinoko_act_list_dispose_payloads(head);
     kinoko_act_list_drop_storage(head);
-    kinoko::legacy::store(list_slot, static_cast<void*>(nullptr));
+    kinoko::memory::store(list_slot, static_cast<void*>(nullptr));
 }
 
 static void clear_resource(KinokoActResource* resource)
 {
     if (resource == 0)
         return;
-    if(kinoko::legacy::load<const void*>(resource)==kinoko::mesh::resource_methods()) {
+    if(kinoko::memory::load<const void*>(resource)==kinoko::mesh::resource_methods()) {
         kinoko::mesh::clear_resource(reinterpret_cast<kinoko::mesh::Resource*>(resource));return;
     }
     using namespace kinoko::act;
-    if (kinoko::legacy::load<const void*>(resource) == kinoko_act_host_symbols()->chip_resource_vtable) {
+    if (kinoko::memory::load<const void*>(resource) == kinoko_act_host_symbols()->chip_resource_vtable) {
         kinoko::act::chip_resource(resource).clear();
     } else {
         auto& texture = kinoko::act::texture_resource(resource);
         const auto handle = texture.texture;
         const bool borrowed = texture.borrows_texture != 0;
         // 449360 resets the device target before releasing an owned target.
-        if (!borrowed && handle && kinoko::legacy::load<const void*>(resource) == kinoko_act_host_symbols()->render_target_vtable)
+        if (!borrowed && handle && kinoko::memory::load<const void*>(resource) == kinoko_act_host_symbols()->render_target_vtable)
             kinoko_set_render_target(0);
         // Native clones retain a store reference separately from the original
         // borrowed bit. A borrowed handle without that reference is not ours.
@@ -139,7 +136,7 @@ namespace {
 void* delete_resource(KinokoActResource* resource, unsigned char flags) {
     if (!resource) return nullptr;
     using namespace kinoko::act;
-    const auto* methods = kinoko::legacy::load<const void*>(resource);
+    const auto* methods = kinoko::memory::load<const void*>(resource);
     if (methods == kinoko::mesh::resource_methods()) {
         return kinoko::mesh::release_resource(reinterpret_cast<kinoko::mesh::Resource*>(resource), flags);
     }
@@ -165,12 +162,12 @@ void kinoko_destroy_cact_object(KinokoActDocument* object_ptr)
     // precede vector destruction; resources' vector is destroyed first.
     auto *layer = document.get(&DocumentRecord::layers).begin;
     while (layer != document.get(&DocumentRecord::layers).end) {
-        dispose_owned(kinoko::legacy::load<KinokoActLayer *>(layer));
+        dispose_owned(kinoko::memory::load<KinokoActLayer *>(layer));
         ++layer;
     }
     auto *resource = document.get(&DocumentRecord::resources).begin;
     while (resource != document.get(&DocumentRecord::resources).end) {
-        dispose_owned(kinoko::legacy::load<KinokoActResource *>(resource));
+        dispose_owned(kinoko::memory::load<KinokoActResource *>(resource));
         ++resource;
     }
     kinoko_act_array_destroy((void*)(document.bytes(&DocumentRecord::resources)));
@@ -195,7 +192,7 @@ void* delete_with_flags(T* object, size_t size, unsigned char flags) {
     auto* bytes = reinterpret_cast<unsigned char*>(object);
     if (flags & 2) {
         auto* allocation = bytes - sizeof(uint32_t);
-        const auto count = kinoko::legacy::load<uint32_t>(allocation);
+        const auto count = kinoko::memory::load<uint32_t>(allocation);
         for (auto i = count; i > 0; --i) Clear(reinterpret_cast<T*>(bytes + (i - 1) * size));
         if (flags & 1) std::free(allocation);
         return allocation;

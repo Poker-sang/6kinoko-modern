@@ -1,10 +1,10 @@
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/act_list.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <list>
 #include <new>
 namespace {
-using namespace kinoko::legacy;
+using namespace kinoko::memory;
 // Native list owns its link records; external readers borrow the same prefix.
 struct Link { Link *next, *previous; void* value; };
 struct List {
@@ -12,7 +12,7 @@ struct List {
     std::list<Link> values;
     List() : head{&head, &head, nullptr} {}
 };
-static_assert(offsetof(List,head)==0 && sizeof(Link)==12);
+static_assert(offsetof(List,head)==0 && sizeof(Link)==3*sizeof(void*));
 }
 extern "C" int32_t kinoko_act_make_list(void* slot) {
     if (!slot) return 0;

@@ -2,7 +2,7 @@
 #include "kinoko/stage_records.hpp"
 #include "kinoko/act_layer_records.hpp"
 #include "kinoko/act_resource.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <cstdlib>
 
 namespace {
@@ -10,8 +10,6 @@ using kinoko::stage::SourceHolderRecord;
 using kinoko::native::RecordView;
 using kinoko::act::DocumentRecord;
 using kinoko::act::RuntimeRecord;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 }
 
 // 455880: explicit receiver, one borrowed document pointer.
@@ -25,7 +23,7 @@ extern "C" KinokoActSourceHolder *kinoko_act_source_initialize(
 extern "C" int32_t kinoko_act_source_layer_count(const KinokoActSourceHolder *holder) {
     if (!holder) return 0;
     // memcpy reads tolerate legacy records that were not C++-constructed.
-    const auto document = kinoko::legacy::load<SourceHolderRecord>(holder).document;
+    const auto document = kinoko::memory::load<SourceHolderRecord>(holder).document;
     if (!document) return 0;
     const auto layers = RecordView<DocumentRecord>(document).get(&DocumentRecord::layers);
     // Keep the inherited signed-range guard; no new acceptance/rejection policy.
@@ -35,7 +33,7 @@ extern "C" int32_t kinoko_act_source_layer_count(const KinokoActSourceHolder *ho
 // 455E40: the recovered second stack argument is unused. Both callers took
 // the single runtime pointer out of the temporary result; return it directly.
 extern "C" KinokoActRuntime *kinoko_act_source_create_runtime(KinokoActSourceHolder *holder) {
-    kinoko::legacy::Allocation<KinokoActRuntime> storage(
+    kinoko::memory::Allocation<KinokoActRuntime> storage(
         static_cast<KinokoActRuntime *>(std::malloc(sizeof(RuntimeRecord))));
     if (!storage) return nullptr;
     // Original unwind state 1 at 4D1220 deletes constructor storage.

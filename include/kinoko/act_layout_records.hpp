@@ -21,7 +21,13 @@ struct Layout3DRecord {
     KinokoActLayer *layer;
     float world[16];
 };
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(Layout2DRecord)==316 && offsetof(Layout2DRecord,layer)==304);
 static_assert(offsetof(Layout2DRecord,rotation)==236 && offsetof(Layout2DRecord,texture)==308);
 static_assert(sizeof(Layout3DRecord)==108 && offsetof(Layout3DRecord,world)==44);
+#endif
+static_assert(offsetof(Layout2DRecord,quad)==sizeof(void*));
+static_assert(offsetof(Layout2DRecord,blend)==offsetof(Layout2DRecord,rotation)+13*sizeof(float));
+static_assert(offsetof(Layout2DRecord,blue)==offsetof(Layout2DRecord,rotation)+16*sizeof(float));
+static_assert(offsetof(Layout3DRecord,world)==offsetof(Layout3DRecord,layer)+sizeof(void*));
 }

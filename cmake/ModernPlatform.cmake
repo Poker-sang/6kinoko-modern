@@ -183,3 +183,17 @@ if(WIN32)
         SQPLUS_HOST_OBJECT_ONLY WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
     target_compile_features(kinoko_binding_act_width_compile PRIVATE cxx_std_17)
 endif()
+
+if(WIN32)
+    add_library(kinoko_act_render_width_compile OBJECT
+        src/reconstructed/act_layout.cpp src/reconstructed/act_layout_3d.cpp
+        src/reconstructed/act_frame_render.cpp src/reconstructed/act_draw_storage.cpp
+        src/reconstructed/act_clone.cpp src/reconstructed/act_array.cpp
+        src/reconstructed/act_list.cpp src/reconstructed/act_resource.cpp
+        src/reconstructed/act_serializable.cpp src/reconstructed/act_source.cpp)
+    target_include_directories(kinoko_act_render_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
+    target_compile_definitions(kinoko_act_render_width_compile PRIVATE
+        WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
+    target_compile_features(kinoko_act_render_width_compile PRIVATE cxx_std_17)
+endif()

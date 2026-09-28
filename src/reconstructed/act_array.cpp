@@ -6,7 +6,7 @@ namespace {
 using kinoko::ActArray;
 struct ArrayRecord { void **begin, **end; ActArray* owner; };
 using View = kinoko::native::RecordView<ArrayRecord>;
-static_assert(sizeof(ArrayRecord) == 12);
+static_assert(sizeof(ArrayRecord) == 3*sizeof(void*));
 void publish(void* slot, ActArray* values) noexcept {
     auto* begin = values && !values->empty() ? values->data() : nullptr;
     const View view(slot);
