@@ -41,3 +41,9 @@ Source `02c316c74494b488d9a9dd0fd74413521c1572db`:
 
 All code changes were committed before fresh builds, with logs and older artifacts
 retained. Source and delivery records are pushed to the modern branch only.
+
+CI [36448125169](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36448125169)
+checked `d8d7878e8fff0158d15b6dc185df5e07059f6d2b`: portable compilation passed on
+Linux, macOS and Windows, including the updated platform contract. Cloud Win32
+full-game compilation was still running at this snapshot; local Win32 full-game
+and all-contract compilation passed above. No runtime execution claimed.
