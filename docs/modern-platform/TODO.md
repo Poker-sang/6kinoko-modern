@@ -235,5 +235,18 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Compile 17 real actor/camera/container sources and a linked ownership contract as AMD64 (not executed).
 - [x] Preserve original x86 actor layout assertions and unmigrated integer-address guards.
 - [x] Record user feedback: modern-x64-entry-03 normal; not agent validation.
-- [ ] Migrate Squirrel registration/property bridges and ACT document/layer storage.
+- [x] Migrate common SqPlus registration/property bridges and ACT document/layer ownership storage.
+- [ ] Finish downstream ACT publication slots and remaining script thread/generator/array bridges.
 - [ ] Migrate map/collision/input/application records, then complete and validate the full x64 game.
+
+
+## Native bindings and ACT ownership checkpoint
+- [x] Preserve full pointers in class/property metadata, native targets, string/userdata/tag outputs and root bindings.
+- [x] Match registered native closures to SQFUNCTION and keep game-property writes 32-bit.
+- [x] Migrate internal type identity lookup/publication together; preserve original x86 keys.
+- [x] Share native ACT script/callback storage across document, layer, lifecycle and payload IO.
+- [x] Compile actual ACT association/frame/runtime and source-backed VM value/GC implementations at x64.
+- [x] Record user feedback: modern-actor-native-03 normal (not agent testing).
+- [ ] Migrate remaining ACT publication slots, map/draw/layout and script bridge dependencies.
+- [ ] Verify original VM bytecode/save numeric formats before claiming x64 DAT compatibility.
+- Scope: `../modern-x64/binding-act-native.md`.

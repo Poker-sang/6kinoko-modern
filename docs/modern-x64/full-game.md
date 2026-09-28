@@ -40,9 +40,9 @@ No contract or game execution is performed by the agent.
 ## Remaining boundaries
 
 Actor/camera SqPlus arguments and embedded slots now use native-width owned
-objects. Class-binding storage, integer-address registration, direct method calls
-outside the migrated adapters and embedded ACT/map layouts remain migration
-work. Their guards must not simply be removed. Native actor storage does not
+objects. Common class/property storage and global closure returns now use native widths.
+Remaining game-specific publication slots, direct method calls outside the migrated
+adapters and embedded map/input/application layouts remain migration work. Their guards must not simply be removed. Native actor storage does not
 migrate the remaining VM registration/property bridges.
 GDI/Windows services follow the full x64 milestone; save/DAT scalar formats stay
 fixed-width. Prior user feedback: modern-string-native-01 normal (user report).
@@ -103,3 +103,14 @@ property/object bridges together with ACT document/layer storage, then map,
 collision, input and application records. Actor collision/method registration
 and the complete VM are not covered by the isolated actor compile target.
 User reports modern-x64-entry-03 normal; this is user feedback only.
+
+
+## Common binding and ACT ownership checkpoint
+
+See [binding/ACT scope](binding-act-native.md). Common SqPlus metadata and
+pointer outputs, internal type identity keys, native closure return signatures,
+ACT document/layer/script/callback/runtime records and their ownership consumers
+now compile independently at native width. The remaining full compiler errors
+are tracked in the latest BUILD.md checkpoint. The complete x64 game is still
+blocked, and source VM bytecode/save widths require explicit original-format
+verification before a playable DAT-compatible release.

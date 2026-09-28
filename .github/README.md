@@ -73,6 +73,14 @@ runtime assertions were not executed. VM registration/property bridges and
 ACT/map/application layouts still block the complete x64 game. The user reports
 `modern-x64-entry-03` normal.
 
+Common SqPlus class/property bindings, global closure signatures and ACT
+document/layer/script/runtime ownership now use native widths. Actual binding,
+ACT lifecycle and source VM value/GC implementations compile independently at
+Windows x64; no runtime tests were executed. Remaining ACT publication slots,
+map/input/application dependencies and bytecode-format compatibility still need
+work before a complete playable x64 game. The user reports `modern-actor-native-03`
+normal. See [binding/ACT scope](../docs/modern-x64/binding-act-native.md).
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).

@@ -61,6 +61,11 @@ ACT 调用统一为具名类型接口，旧方法表保留在明确的适配边�
 VM 注册/属性桥接及 ACT/地图/应用布局仍阻塞完整 x64 游戏。
 用户反馈 `modern-x64-entry-03` 正常。
 
+通用 SqPlus 类/属性绑定、全局脚本回调签名及 ACT 文档/图层/脚本/运行时所有权已使用原生位宽。
+实际绑定、ACT 生命周期和源码 VM 值/GC 实现已通过独立 Windows x64 编译，未执行运行时测试。
+剩余 ACT 发布对象槽、地图/输入/应用依赖及字节码格式兼容仍需处理，尚未得到完整可玩的 x64 游戏。
+用户反馈 `modern-actor-native-03` 正常。详见[绑定/ACT 范围](../docs/modern-x64/binding-act-native.md)。
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).
