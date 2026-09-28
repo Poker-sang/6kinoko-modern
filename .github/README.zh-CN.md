@@ -20,17 +20,18 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 用户已确认 `modern-x64-gameplay-01`（源码 `54995147`）能够启动，数字、
 踩踏/踢走毛玉、背景滚动及地图道路爆炸特效这四项问题均已恢复。这是用户验证。
 
-后续 `modern-x64-gameplay-02` 的源码为
-`1b0efa3e749e21dc176c3396d2b86603f8ea23e3`，只调整合约头文件顺序和文档。
-完整 x64 游戏及三个针对性合约已编译成功；`modern-gameplay-02` 完成
-Win32 游戏及 80 个合约的编译。
-EXE：`runtime-builds/modern-x64-gameplay-02/kinoko_modern_gpu.exe`。
+最新交付为 `modern-x64-savedata-01`，源码
+`150308d9833a6dcf12be512c39b100980e4ae13f`。修复读写存档共用的表指针截断、
+32 位存档整数的符号扩展，以及序列化完成前提前清空文件的问题。
+存档读写运行验收仍待确认。x64 游戏及存档合约已编译；`modern-savedata-01`
+完成 Win32 游戏及全部 80 个合约的编译。
+EXE：`runtime-builds/modern-x64-savedata-01/kinoko_modern_gpu.exe`。
 三个原版 DAT 已复制并校验大小和 SHA256，两个精灵着色器已部署。
 请保留 EXE 同目录的 DAT 文件和 `shaders` 目录。
 
 两架构 D3D9 静态审计通过。代理未运行游戏、CTest 或任何合约程序。
 完整关卡及存档兼容仍属实验性验证范围。
-详见[游戏行为修复与证据](../docs/modern-x64/gameplay-width-fix.md)及
+详见[存档修复与证据](../docs/modern-x64/savedata-width-fix.md)及
 [构建说明](../docs/modern-x64/full-game.md)。
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.

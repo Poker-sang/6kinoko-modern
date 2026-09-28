@@ -1,11 +1,10 @@
 # Full-game x64 milestone
 
-The full x64 game now builds in `modern-x64-gameplay-02`, source
-`1b0efa3e749e21dc176c3396d2b86603f8ea23e3`. The user confirmed startup and the
-four reported gameplay regressions resolved in gameplay-01; gameplay-02 only
-corrects contract include order and documentation. No agent game/test execution;
-complete level/save compatibility remains experimental.
-See [gameplay fixes and delivery](gameplay-width-fix.md) and
+Latest full x64 build: `modern-x64-savedata-01`, source
+`150308d9833a6dcf12be512c39b100980e4ae13f`. It repairs shared save/load pointer
+truncation; save/load runtime acceptance is pending. The user previously confirmed
+the four gameplay regressions resolved in gameplay-01. No agent game/test execution.
+See [savedata fixes and delivery](savedata-width-fix.md) and
 [build evidence and historical checkpoints](BUILD.md).
 
 ## Build the real game graph

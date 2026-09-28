@@ -21,17 +21,19 @@ The user confirmed startup and the four reported gameplay regressions (digits,
 stomp/kick interaction, background scrolling and road explosion effects) resolved
 in `modern-x64-gameplay-01`, source `54995147`. This is user verification.
 
-The follow-up `modern-x64-gameplay-02`, source
-`1b0efa3e749e21dc176c3396d2b86603f8ea23e3`, changes only contract include order
-and documentation. The full x64 game and three focused contracts compiled;
-`modern-gameplay-02` compiled the Win32 game and 80 contracts.
-EXE: `runtime-builds/modern-x64-gameplay-02/kinoko_modern_gpu.exe`.
+Latest delivery: `modern-x64-savedata-01`, source
+`150308d9833a6dcf12be512c39b100980e4ae13f`. It fixes a truncated table pointer shared
+by save/load, signed 32-bit save integers, and premature file truncation before
+serialization. Save/load runtime acceptance is pending.
+The x64 game and savedata contract compiled; `modern-savedata-01` compiled the
+Win32 game and all 80 contracts.
+EXE: `runtime-builds/modern-x64-savedata-01/kinoko_modern_gpu.exe`.
 Three original DAT files were staged and size/SHA256 verified; two sprite shaders
 are included. Keep the DAT files and `shaders` directory beside the EXE.
 
 Both builds passed static D3D9 audits. The agent ran no game, CTest or contract
 executable. Full level/save compatibility remains experimental.
-See [gameplay fixes and evidence](../docs/modern-x64/gameplay-width-fix.md) and
+See [savedata fix and evidence](../docs/modern-x64/savedata-width-fix.md) and
 [build instructions](../docs/modern-x64/full-game.md).
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.

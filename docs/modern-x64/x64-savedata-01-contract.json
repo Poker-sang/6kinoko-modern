@@ -1,0 +1,9 @@
+{
+  "source_commit": "150308d9833a6dcf12be512c39b100980e4ae13f",
+  "target": "kinoko_savedata_file_contract",
+  "compiled": true,
+  "executed": false,
+  "path": "runtime-builds\\modern-x64-savedata-01\\tools\\kinoko_savedata_file_contract.exe",
+  "sha256": "8b4c668e8991c025f4ac81b10b405fdfe8bda62d35845b666cefb9c8887a3bcd",
+  "build_log": "build-runs/modern-x64-savedata-01/savedata-contract-build.log"
+}

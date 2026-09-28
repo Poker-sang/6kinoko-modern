@@ -1,6 +1,13 @@
 # x64 build evidence
 
-## Gameplay fixes (current)
+## Savedata fix (current)
+
+Source 150308d9 built x64 `modern-x64-savedata-01` plus the savedata contract,
+and Win32 `modern-savedata-01` plus 80 contracts. DAT/shaders staged and static
+audits passed. No agent game/test execution; save/load acceptance pending.
+See [savedata repair and delivery](savedata-width-fix.md).
+
+## Gameplay fixes (previous user-accepted checkpoint)
 
 User confirmed all four reported gameplay regressions resolved in
 `modern-x64-gameplay-01` (54995147). Contract-only follow-up source 1b0efa3e built
