@@ -46,3 +46,9 @@ Source `5816934cd1165d37646a6bfbc42e1aa45c8db72c`:
 
 Each source batch was committed before building. Deliverables and history are
 backed up on codex/sdl-platform in the modern repository only.
+
+CI [36446328292](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36446328292)
+checked `97adcf363586da3778af2763bf2bc718e1379fff`: Linux, macOS and Windows portable
+jobs passed, including directory/runtime-services contract compilation. The cloud
+Win32 full-game job was still running at this snapshot; local Win32 full-game and
+all-contract compilation passed as recorded above. CI does not run contracts.
