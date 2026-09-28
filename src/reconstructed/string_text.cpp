@@ -2,7 +2,8 @@
 #include "kinoko/string_layout.h"
 #include "kinoko/act_layout_records.hpp"
 #include "kinoko/font_runtime.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.hpp"
 #include <windows.h>
 #include <algorithm>
@@ -16,9 +17,9 @@
 namespace {
 
 
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
+
+
+using kinoko::script::diagnostic_address;
 using kinoko::legacy::StringView;
 using Layout=kinoko::text::StringLayout;
 using Deque=std::deque<kinoko::text::Glyph>;

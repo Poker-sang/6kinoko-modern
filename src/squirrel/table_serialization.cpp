@@ -27,7 +27,7 @@ constexpr uint32_t kFileBufferSize = 0x20000u;
 // Recovered stream prefix: borrowed buffer followed by cursor and limit.
 // memcpy permits the original unaligned callers without integer pointers.
 struct StreamPrefix { unsigned char* buffer; int32_t position; int32_t limit; };
-static_assert(sizeof(StreamPrefix) == 12);
+static_assert(sizeof(StreamPrefix) == sizeof(void*) + 8);
 struct TableStream {
     unsigned char *buffer;
     int32_t position;
@@ -41,7 +41,7 @@ struct TableStream {
     TableStream(unsigned char *data, int32_t size) noexcept
         : buffer(data), position(0), limit(size) {}
     void publish(int32_t *legacy) const noexcept {
-        if (legacy) legacy[1] = position;
+        if (legacy) std::memcpy(reinterpret_cast<unsigned char*>(legacy) + offsetof(StreamPrefix, position), &position, sizeof(position));
     }
     bool transfer(void *bytes, uint32_t size, bool write) noexcept {
         if (!buffer || (!bytes && size) || position < 0 || limit < position ||
@@ -73,20 +73,20 @@ struct TableStream {
 struct Object {
     kinoko::script::ObjectStorage storage{};
     Object() = default;
-    Object(const void* vtable, int32_t type, int32_t data) : storage{vtable, kinoko::script::borrowed_value(type, data)} {}
+    Object(const void* vtable, int32_t type, intptr_t data) : storage{vtable, kinoko::script::borrowed_value(type, data)} {}
     int32_t *raw() noexcept { return reinterpret_cast<int32_t*>(&storage); }
     int32_t type() const noexcept { return static_cast<int32_t>(storage.value._type); }
-    int32_t data() const noexcept { return kinoko::script::data_bits(storage.value); }
+    intptr_t data() const noexcept { return kinoko::script::data_bits(storage.value); }
     void initialize() noexcept { kinoko_sqplus_object_initialize(raw()); }
     void destroy() noexcept { kinoko_sqplus_object_destroy(raw()); }
-    bool assign(int32_t type_tag, int32_t bits) noexcept {
+    bool assign(int32_t type_tag, intptr_t bits) noexcept {
         return kinoko_squirrel_object_from_pair(raw(), type_tag, bits) != 0;
     }
     bool copy_from(Object &source) noexcept {
         return kinoko_squirrel_object_copy(raw(), source.raw()) != 0;
     }
 };
-static_assert(sizeof(Object) == 12);
+static_assert(sizeof(Object) == sizeof(kinoko::script::ObjectStorage));
 
 bool read_string(TableStream &stream, Object &object) {
     uint32_t length = 0;
@@ -176,14 +176,14 @@ bool write_table(TableStream &stream, Object input) {
         if ((value_type & 0x7eu) == 0) continue;
         if (!stream.write(value_type)) { ok = false; break; }
         if (key_type == OT_INTEGER) {
-            ok = stream.write(key_type) && stream.write(key.data());
+            ok = stream.write(key_type) && stream.write(static_cast<int32_t>(key.data()));
         } else if (key_type == OT_STRING) {
             ok = stream.write(key_type) && write_string(stream, key);
         } else { ok = false; }
         if (!ok) break;
 
         if (value_type == OT_INTEGER || value_type == OT_FLOAT) {
-            ok = stream.write(value.data());
+            ok = stream.write(static_cast<int32_t>(value.data()));
         } else if (value_type == OT_BOOL) {
             const uint8_t boolean = static_cast<uint8_t>(value.data());
             ok = stream.write(boolean);
@@ -296,22 +296,22 @@ int32_t save_file(const char *path, Object input) {
 // Registration uses the named path entry; by-value object ownership is preserved.
 // All recursion, byte transfer and ownership live in named C++ routines above.
 int32_t kinoko_savedata_read_table_entry(int32_t *stream, const void* vtable,
-                                      int32_t type, int32_t data) {
+                                      int32_t type, intptr_t data) {
     kinoko::savedata::TableStream view(stream);
     const auto result = kinoko::savedata::read_table(view, {vtable, type, data});
     view.publish(stream);
     return result;
 }
 int32_t kinoko_savedata_write_table_entry(int32_t *stream, const void* vtable,
-                                      int32_t type, int32_t data) {
+                                      int32_t type, intptr_t data) {
     kinoko::savedata::TableStream view(stream);
     const auto result = kinoko::savedata::write_table(view, {vtable, type, data});
     view.publish(stream);
     return result;
 }
-int32_t kinoko_savedata_load_file_entry(const char* path, const void* vtable, int32_t type, int32_t data) {
+int32_t kinoko_savedata_load_file_entry(const char* path, const void* vtable, int32_t type, intptr_t data) {
     return kinoko::savedata::load_file(path, {vtable, type, data});
 }
-int32_t kinoko_savedata_save_file_entry(const char* path, const void* vtable, int32_t type, int32_t data) {
+int32_t kinoko_savedata_save_file_entry(const char* path, const void* vtable, int32_t type, intptr_t data) {
     return kinoko::savedata::save_file(path, {vtable, type, data});
 }

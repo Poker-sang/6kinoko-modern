@@ -8,7 +8,8 @@
 #include "kinoko/graphics_device.h"
 #include "kinoko/render_target.h"
 #include "kinoko/texture_store.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/com_owner.hpp"
 #include <windows.h>
 #include "kinoko/graphics_api.hpp"
@@ -18,8 +19,8 @@
 #include <stdexcept>
 #include "kinoko/legacy_abi.h"
 namespace {
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
+
+
 // 401DC0 -> 402670/402360 stores the unsigned handle as a 20-byte set-node
 // value. It does not AddRef/retain the texture; the set owns only its nodes.
 std::set<uint32_t> render_targets;

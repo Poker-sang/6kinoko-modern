@@ -5,13 +5,12 @@
 #include "sqarray.h"
 
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(SQObjectPtr) == 8);
 static_assert(offsetof(SQArray, _values) == 24);
 static_assert(offsetof(SQVM, _stack) == 24 && offsetof(SQVM, _stackbase) == 52);
+#endif
 
-SQVM *machine(int32_t address) {
-    return reinterpret_cast<SQVM *>(static_cast<uintptr_t>(static_cast<uint32_t>(address)));
-}
 }
 
 // Original 48DD10 -> 48DAC0: push the last value, then pop/shrink the same array.

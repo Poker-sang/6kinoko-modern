@@ -10,12 +10,10 @@
 #include "sqfuncproto.h"
 
 namespace {
-SQVM *machine(int32_t p) {
-    return reinterpret_cast<SQVM *>(static_cast<uintptr_t>(static_cast<uint32_t>(p)));
-}
 int32_t address(const void *p) {
     return static_cast<int32_t>(reinterpret_cast<uintptr_t>(p));
 }
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(void *) == 4);
 static_assert(sizeof(SQVM) == 168);
 static_assert(offsetof(SQVM, _sharedstate) == 140);
@@ -24,6 +22,7 @@ static_assert(offsetof(SQVM, _suspended_root) == 152);
 static_assert(offsetof(SQVM, _suspended_target) == 156);
 static_assert(offsetof(SQVM, _suspended_traps) == 160);
 static_assert(offsetof(SQVM, _suspend_varargs) == 164);
+#endif
 }
 
 // 490C40 / SQVM::Suspend, with the original explicit VM receiver.

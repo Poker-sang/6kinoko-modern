@@ -2,7 +2,8 @@
 #include "kinoko/graphics_device.h"
 #include "kinoko/quad_render.h"
 #include "kinoko/quad_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/diagnostics.h"
 #include "graphics_quad_sink.hpp"
 extern "C" {
@@ -17,7 +18,7 @@ template<class Publish> int32_t submit(void* storage,int32_t texture,
     static volatile LONG traces;
     const bool trace=InterlockedIncrement(&traces)<=8;
     if (trace) {
-        kinoko_trace_i32("draw:vertex-buffer",kinoko::legacy::address(storage));
+        kinoko_trace_i32("draw:vertex-buffer",kinoko::script::diagnostic_address(storage));
         kinoko_trace_i32("draw:handle",texture);
     }
     for(size_t i=0;i<vertices.size();++i) {
@@ -30,7 +31,7 @@ template<class Publish> int32_t submit(void* storage,int32_t texture,
     const auto texture_result=kinoko_texture_bind_stage(0,texture);
     if (trace) kinoko_trace_hresult("draw:set-texture-hr",texture_result);
     auto *device=kinoko_graphics.device;
-    if (!device || !kinoko::legacy::load<const void *>(device)) return E_FAIL;
+    if (!device || !kinoko::memory::load<const void *>(device)) return E_FAIL;
     kinoko::render::GraphicsQuadSink sink(*device);
     const auto format_result=sink.set_layout(kinoko::render::SpriteLayout::screen_rhw);
     if (trace) kinoko_trace_hresult("draw:set-fvf-hr",format_result);

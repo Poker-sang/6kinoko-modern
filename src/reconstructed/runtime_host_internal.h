@@ -126,7 +126,7 @@ extern int32_t kinoko_release_watch_count;
 
 struct kinoko_mcd_data;
 
-void kinoko_trace_star_state(const char *phase, int32_t actor);
+void kinoko_trace_star_state(const char *phase, KinokoActor* actor);
 
 uint32_t timeGetTime(void);
 

@@ -19,7 +19,7 @@ int32_t kinoko_sq_compile_reader(SQVM* vm, void* reader, void* context,
 int32_t kinoko_sq_compile_buffer(SQVM* vm, const char *text, int32_t length,
     const char *name, int32_t raiseerror);
 int32_t kinoko_sq_compilestring(SQVM* vm);
-int32_t kinoko_sq_source_table_vtable(void);
+const void* kinoko_sq_source_table_vtable(void);
 
 #ifdef __cplusplus
 }

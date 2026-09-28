@@ -4,22 +4,22 @@
 #include "kinoko/game_host.h"
 #include "kinoko/game_script_host.h"
 #include "kinoko/actor_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+
 
 #include <cstring>
 
 extern "C" {
 void * kinoko_sqplus_object_instance(void * object, void * index);
 void*  kinoko_sqplus_object_destroy(void * object);
-void kinoko_trace_star_state(const char *phase, int32_t actor);
+void kinoko_trace_star_state(const char *phase, KinokoActor* actor);
 }
 
 namespace {
-static_assert(sizeof(void *) == 4, "Actor methods require the original Win32 layout.");
+
 
 using namespace kinoko::actor;
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
+
+
 
 class ActorMethods {
 public:
@@ -50,7 +50,7 @@ public:
     }
 
     int32_t release() const {
-        kinoko_trace_star_state("release", address(actor_));
+        kinoko_trace_star_state("release", actor_);
         view_.set(&ActorRecord::release_pending, uint8_t{1});
         ManagerView(view_.get(&ActorRecord::manager))
             .set(&ManagerPrefix::cleanup_pending, uint8_t{1});

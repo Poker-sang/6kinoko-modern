@@ -1,7 +1,7 @@
 #include "kinoko/script_callbacks.h"
 #include "kinoko/map_collision.h"
 #include "kinoko/actor_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_game_objects.h"
@@ -9,7 +9,7 @@
 extern "C" void kinoko_trace(const char *);
 namespace {
 using namespace kinoko::actor;
-using kinoko::legacy::address;
+
 
 int32_t invoke(KinokoActor *receiver, KinokoActor *other) {
     const ActorView actor(receiver);

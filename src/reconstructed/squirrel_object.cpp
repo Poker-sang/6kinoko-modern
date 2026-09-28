@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_object.h"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_host_object.hpp"
@@ -29,14 +30,14 @@ extern "C" void* kinoko_squirrel_object_destroy(void* object, SQVM* vm_address, 
     ObjectView destination(object);
     const auto value = destination.value();
     kinoko_trace("4a9d70:begin");
-    kinoko_trace_i32("4a9d70:this", address(object));
-    kinoko_trace_i32("4a9d70:caller", address(_ReturnAddress()));
+    kinoko_trace_i32("4a9d70:this", diagnostic_address(object));
+    kinoko_trace_i32("4a9d70:caller", diagnostic_address(_ReturnAddress()));
     kinoko_trace_i32("4a9d70:type", value._type);
     kinoko_trace_i32("4a9d70:data", data_bits(value));
     destination.set_vtable(vtable);
     if (vm_address) {
         destination.release(vm_address);
-        kinoko_trace_i32("4a9d70:gvm-after-release", address(vm_address));
+        kinoko_trace_i32("4a9d70:gvm-after-release", diagnostic_address(vm_address));
         destination.reset();
         kinoko_trace("4a9d70:after-release");
     } else {

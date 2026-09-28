@@ -6,16 +6,15 @@
 #include "sqarray.h"
 
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(SQGenerator) == 120);
 static_assert(offsetof(SQGenerator, _stack) == 32);
 static_assert(offsetof(SQGenerator, _ci) == 56);
 static_assert(offsetof(SQGenerator, _state) == 116);
 static_assert(sizeof(SQVM::CallInfo) == 48);
 static_assert(offsetof(SQVM, ci) == 132);
+#endif
 
-template <typename T> T *pointer(int32_t address) {
-    return reinterpret_cast<T *>(static_cast<uintptr_t>(static_cast<uint32_t>(address)));
-}
 }
 
 // Original 490370/490630 match the supplied 2.2.2 generator implementation.

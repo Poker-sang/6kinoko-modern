@@ -11,10 +11,12 @@ extern "C" {
 }
 
 static_assert(sizeof(KinokoSpriteVertex) == 28, "Original vertex stride");
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(KinokoSprite, vertices) == 8 &&
               offsetof(KinokoSprite, width) == 120 &&
               offsetof(KinokoSprite, angle) == 144 && sizeof(KinokoSprite) == 148,
               "Original CSprite field offsets");
+#endif
 
 extern "C" void kinoko_sprite_transform(KinokoSprite *sprite, float x, float y) {
     auto &vertices = sprite->vertices;

@@ -10,7 +10,8 @@
 #include <cstdlib>
 #include <new>
 #include <list>
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 
 extern "C" {
 extern void* kinoko_stage_list_slot;
@@ -36,7 +37,7 @@ KinokoIntegerMap*& sound_lookup() { return sound_lookup_slot; }
 int32_t& sound_lookup_count() { return sound_lookup_count_slot; }
 using namespace kinoko::stage;
 using kinoko::native::RecordView;
-using kinoko::legacy::pointer;
+
 StageList* stages() { return static_cast<StageList*>(stage_list_word()); }
 void release_stage_list() {
     delete stages();stage_list_word()=0;stage_list_count()=0;
@@ -91,7 +92,7 @@ extern "C" int32_t kinoko_register_sound_tree_cleanup() {
 extern "C" int32_t kinoko_clear_global_stages() {
     if(!stages()) return 0;
     for(auto& entry:*stages()) { kinoko_stage_owner_destroy(entry.owner);entry.owner=nullptr; }
-    stages()->clear();stage_list_count()=0;return kinoko::legacy::address(stage_list_word());
+    stages()->clear();stage_list_count()=0;return kinoko::script::diagnostic_address(stage_list_word());
 }
 
 // 470890: the rebuilt sound manager owns buffers in its SE pool and BGM

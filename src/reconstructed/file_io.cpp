@@ -5,12 +5,15 @@
 #include <cstdlib>
 #include <cstring>
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(KinokoArchiveReader) == 12);
 static_assert(sizeof(KinokoPackageReader) == 28);
 static_assert(offsetof(KinokoPackageReader, entry_size) == 12);
 static_assert(offsetof(KinokoPackageReader, entry_offset) == 16);
 static_assert(offsetof(KinokoPackageReader, read_position) == 20);
 static_assert(offsetof(KinokoPackageReader, xor_key) == 24);
+#endif
+static_assert(offsetof(KinokoPackageReader, entry_size) == sizeof(KinokoArchiveReader));
 bool valid(const KinokoArchiveReader* reader) { return reader && reader->handle && reader->handle != INVALID_HANDLE_VALUE; }
 bool package(const KinokoArchiveReader* reader) { return reader->methods == &kinoko_package_reader_methods; }
 KinokoPackageReader& packaged(KinokoArchiveReader* reader) { return *reinterpret_cast<KinokoPackageReader*>(reader); }
@@ -34,7 +37,7 @@ int32_t __fastcall open_read(KinokoArchiveReader* reader, void*, const char* pat
 int32_t __fastcall open_write(KinokoArchiveReader* reader, void*, const char* path) { return open_file(reader,path,true); }
 int32_t __fastcall open_string(KinokoArchiveReader* reader, void*, const void* string) {
     // 4072B0 is the std::string overload, not the byte-count accessor.
-    return reader->methods->open_path(reader, kinoko::legacy::StringView(const_cast<void*>(string)).data());
+    return reader->methods->open_path(reader, nullptr, kinoko::legacy::StringView(const_cast<void*>(string)).data());
 }
 uint32_t __fastcall transferred(KinokoArchiveReader* reader, void*) { return reader->transferred; }
 int32_t __fastcall read_file(KinokoArchiveReader* reader, void*, void* data, uint32_t size) {
@@ -88,7 +91,7 @@ extern "C" const KinokoReaderMethods kinoko_file_writer_methods{
     METHOD(transfer,write_file), METHOD(transferred,transferred), METHOD(seek,seek_file), nullptr};
 #undef METHOD
 extern "C" void kinoko_reader_close(KinokoArchiveReader* reader) {
-    if (reader) reader->methods->destroy(reader,1);
+    if (reader) reader->methods->destroy(reader, nullptr,1);
 }
 extern "C" int32_t kinoko_reader_open(KinokoArchiveReader** slot, const char* path) {
     if (!slot || !path) return 0;
@@ -119,10 +122,10 @@ extern "C" int32_t kinoko_writer_open(KinokoArchiveReader** slot, const char* pa
     if (open_file(*slot,path,true)) return 1;
     kinoko_reader_close(*slot); *slot=nullptr; return 0;
 }
-extern "C" uint32_t kinoko_reader_size(KinokoArchiveReader* reader) { return valid(reader) && reader->methods->size ? reader->methods->size(reader) : 0; }
-extern "C" int32_t kinoko_reader_read(KinokoArchiveReader* reader, void* data, uint32_t size) { return valid(reader) ? reader->methods->transfer(reader,data,size) : 0; }
-extern "C" int32_t kinoko_writer_write(KinokoArchiveReader* writer, const void* data, uint32_t size) { return valid(writer) ? writer->methods->transfer(writer,const_cast<void*>(data),size) : 0; }
-extern "C" uint32_t kinoko_reader_seek(KinokoArchiveReader* reader, int32_t distance, uint32_t origin) { return valid(reader) ? reader->methods->seek(reader,distance,origin) : 0; }
+extern "C" uint32_t kinoko_reader_size(KinokoArchiveReader* reader) { return valid(reader) && reader->methods->size ? reader->methods->size(reader, nullptr) : 0; }
+extern "C" int32_t kinoko_reader_read(KinokoArchiveReader* reader, void* data, uint32_t size) { return valid(reader) ? reader->methods->transfer(reader, nullptr,data,size) : 0; }
+extern "C" int32_t kinoko_writer_write(KinokoArchiveReader* writer, const void* data, uint32_t size) { return valid(writer) ? writer->methods->transfer(writer, nullptr,const_cast<void*>(data),size) : 0; }
+extern "C" uint32_t kinoko_reader_seek(KinokoArchiveReader* reader, int32_t distance, uint32_t origin) { return valid(reader) ? reader->methods->seek(reader, nullptr,distance,origin) : 0; }
 extern "C" int32_t kinoko_reader_read_exact(KinokoArchiveReader* reader, void* data, uint32_t size) {
     if (!valid(reader) || !data || !size) return 0;
     DWORD count=0;

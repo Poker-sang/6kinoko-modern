@@ -32,7 +32,7 @@ int main() {
     kinoko_archive_initialize();
     CHECK(kinoko_writer_open(&writer,ordinary.path));
     CHECK(kinoko_writer_write(writer,"ABCDE",5));
-    CHECK(writer->methods->transferred(writer)==5);
+    CHECK(writer->methods->transferred(writer, nullptr)==5);
     CHECK(kinoko_reader_seek(writer,2,FILE_BEGIN)==2);
     CHECK(kinoko_writer_write(writer,"x",1));
     kinoko_reader_close(writer); writer=nullptr;
@@ -49,9 +49,9 @@ int main() {
     kinoko::legacy::StringRecord path_record{};
     char *name=ordinary.path; std::memcpy(path_record.characters,&name,sizeof(name));
     path_record.capacity=MAX_PATH; path_record.length=static_cast<uint32_t>(std::strlen(name));
-    CHECK(string_reader.methods->open_string(&string_reader,&path_record));
-    CHECK(string_reader.methods->size(&string_reader)==5);
-    string_reader.methods->destroy(&string_reader,0);
+    CHECK(string_reader.methods->open_string(&string_reader, nullptr,&path_record));
+    CHECK(string_reader.methods->size(&string_reader, nullptr)==5);
+    string_reader.methods->destroy(&string_reader, nullptr,0);
     CHECK(string_reader.handle==nullptr);
 
     const std::string entry="data/fixture.bin";

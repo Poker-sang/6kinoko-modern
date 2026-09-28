@@ -13,7 +13,8 @@
 #include "kinoko/application.h"
 #include "kinoko/actor_lifecycle.h"
 #include "kinoko/squirrel_host_object.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include <cstdio>
 #include <cstring>
 extern "C" {
@@ -21,30 +22,31 @@ void kinoko_trace(const char *);
 void kinoko_trace_i32(const char *,int32_t);
 void kinoko_trace_squirrel_name(const char *,int32_t);
 }
+inline void kinoko_trace_i32(const char* label, const void* value) { kinoko_trace_i32(label, kinoko::script::diagnostic_address(value)); }
 using namespace kinoko::actor;
 namespace {
-template<class T> const unsigned char *actor_bytes(int32_t actor,T ActorRecord::*member,size_t inner=0) {
-    return ActorView(kinoko::legacy::pointer<void>(actor)).bytes(member)+inner;
+template<class T> const unsigned char *actor_bytes(KinokoActor* actor,T ActorRecord::*member,size_t inner=0) {
+    return ActorView(actor).bytes(member)+inner;
 }
-template<class T,class M> T actor_bits(int32_t actor,M ActorRecord::*member,size_t inner=0) {
-    return kinoko::legacy::load<T>(actor_bytes(actor,member,inner));
+template<class T,class M> T actor_bits(KinokoActor* actor,M ActorRecord::*member,size_t inner=0) {
+    return kinoko::memory::load<T>(actor_bytes(actor,member,inner));
 }
 template<class T,class M> T camera_bits(KinokoCamera *camera,M kinoko::camera::Record::*member,size_t inner=0) {
-    return kinoko::legacy::load<T>(kinoko::camera::View(camera).bytes(member)+inner);
+    return kinoko::memory::load<T>(kinoko::camera::View(camera).bytes(member)+inner);
 }
 }
-extern "C" void kinoko_trace_star_state(const char *phase, int32_t actor) {
+extern "C" void kinoko_trace_star_state(const char *phase, KinokoActor* actor) {
     static struct { uint32_t handle; int hits, samples; } observed[32];
     uint32_t handle;
-    int32_t sprite, proto=0;
+    FrameRecord* sprite; SQFunctionProto* proto=nullptr;
     int release, hits, index;
     char message[768];
     if (!actor || actor_bits<int32_t>(actor, &ActorRecord::take)!=1060) return;
     release=strcmp(phase,"release")==0;
     if (actor_bits<int32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, type))==0x08000100)
-        proto=kinoko::script::address(_funcproto(kinoko::legacy::pointer<SQClosure>(actor_bits<int32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value)))->_function));
-    if (!release && (!proto || kinoko::legacy::pointer<SQFunctionProto>(proto)->_name._type!=0x08000010 ||
-        strcmp(_stringval(kinoko::legacy::pointer<SQFunctionProto>(proto)->_name),"UpdateWalk")!=0)) return;
+        proto=_funcproto(actor_bits<SQClosure*>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value))->_function);
+    if (!release && (!proto || proto->_name._type!=0x08000010 ||
+        strcmp(_stringval(proto->_name),"UpdateWalk")!=0)) return;
     handle=actor_bits<uint32_t>(actor, &ActorRecord::pool_handle);
     index=(int)(handle%32);
     hits=actor_bits<int32_t>(actor, &ActorRecord::hits, 3 * sizeof(int32_t));
@@ -56,7 +58,7 @@ extern "C" void kinoko_trace_star_state(const char *phase, int32_t actor) {
     if(!release && ((observed[index].hits==hits && kinoko_application_frame_count()%10!=0) || observed[index].samples>=256)) return;
     observed[index].hits=hits;
     ++observed[index].samples;
-    sprite=actor_bits<int32_t>(actor, &ActorRecord::current_frame);
+    sprite=actor_bits<FrameRecord*>(actor, &ActorRecord::current_frame);
     sprintf_s(message,sizeof(message),
         "actor:star frame=%d phase=%s handle=%08X xy=(%.6g,%.6g) v=(%.6g,%.6g) "
         "hits=(%d,%d,%d,%d) bounds=(%.6g,%.6g,%.6g,%.6g) "
@@ -70,8 +72,8 @@ extern "C" void kinoko_trace_star_state(const char *phase, int32_t actor) {
         actor_bits<float>(actor, &ActorRecord::world_bounds, offsetof(Bounds, right)),actor_bits<float>(actor, &ActorRecord::world_bounds, offsetof(Bounds, bottom)),
         actor_bits<uint8_t>(actor, &ActorRecord::active),actor_bits<uint8_t>(actor, &ActorRecord::visible),
         actor_bits<uint8_t>(actor, &ActorRecord::release_pending),actor_bits<int32_t>(actor, &ActorRecord::priority),
-        actor_bits<int32_t>(actor, &ActorRecord::alpha),sprite ? kinoko::native::RecordView<FrameRecord>(kinoko::legacy::pointer<void>(sprite)).get(&FrameRecord::texture) : 0,
-        sprite ? kinoko::native::RecordView<FrameRecord>(kinoko::legacy::pointer<void>(sprite)).get(&FrameRecord::positions)[0].y : 0,sprite ? kinoko::native::RecordView<FrameRecord>(kinoko::legacy::pointer<void>(sprite)).get(&FrameRecord::positions)[3].y : 0,
+        actor_bits<int32_t>(actor, &ActorRecord::alpha),sprite ? kinoko::native::RecordView<FrameRecord>(sprite).get(&FrameRecord::texture) : 0,
+        sprite ? kinoko::native::RecordView<FrameRecord>(sprite).get(&FrameRecord::positions)[0].y : 0,sprite ? kinoko::native::RecordView<FrameRecord>(sprite).get(&FrameRecord::positions)[3].y : 0,
         kinoko_map_manager_height(kinoko_game_objects()->map),
         camera_bits<float>(kinoko_game_objects()->camera, &kinoko::camera::Record::bounds, offsetof(Bounds, left)),camera_bits<float>(kinoko_game_objects()->camera, &kinoko::camera::Record::bounds, offsetof(Bounds, top)),
         camera_bits<float>(kinoko_game_objects()->camera, &kinoko::camera::Record::bounds, offsetof(Bounds, right)),camera_bits<float>(kinoko_game_objects()->camera, &kinoko::camera::Record::bounds, offsetof(Bounds, bottom)));
@@ -84,17 +86,15 @@ extern "C" void kinoko_trace_star_state(const char *phase, int32_t actor) {
             const auto& frame=vm->_callsstack[i];
             if (sq_type(frame._closure)==OT_CLOSURE) {
                 auto *caller=_funcproto(_closure(frame._closure)->_function);
-                kinoko_trace_squirrel_name("actor:star-release-source",kinoko::script::address(
-                    sq_type(caller->_sourcename)==OT_STRING?_stringval(caller->_sourcename):"<unknown>"));
-                kinoko_trace_squirrel_name("actor:star-release-function",kinoko::script::address(
-                    sq_type(caller->_name)==OT_STRING?_stringval(caller->_name):"<anonymous>"));
+                kinoko::script::diagnostic_name("actor:star-release-source",sq_type(caller->_sourcename)==OT_STRING?_stringval(caller->_sourcename):"<unknown>");
+                kinoko::script::diagnostic_name("actor:star-release-function",sq_type(caller->_name)==OT_STRING?_stringval(caller->_name):"<anonymous>");
                 kinoko_trace_i32("actor:star-release-instruction",static_cast<int32_t>(frame._ip-caller->_instructions)-1);
             }
         }
     }
 }
 
-static void kinoko_trace_invalid_actor(const char *phase, int32_t actor) {
+static void kinoko_trace_invalid_actor(const char *phase, KinokoActor* actor) {
     static volatile LONG count;
     uint32_t bits[12];
     int invalid=0;
@@ -111,7 +111,7 @@ static void kinoko_trace_invalid_actor(const char *phase, int32_t actor) {
             "actor:invalid-state frame=%d phase=%s actor=%08X take=%d "
             "xy=%08X,%08X v=%08X,%08X parentDelta=%08X,%08X free=%08X,%08X "
             "bounds=%08X,%08X,%08X,%08X step=%08X,%08X",
-            kinoko_application_frame_count(),phase,(uint32_t)actor,actor_bits<int32_t>(actor, &ActorRecord::take),
+            kinoko_application_frame_count(),phase,static_cast<uint32_t>(reinterpret_cast<uintptr_t>(actor)),actor_bits<int32_t>(actor, &ActorRecord::take),
             bits[0],bits[1],bits[2],bits[3],bits[4],bits[5],bits[6],bits[7],
             bits[8],bits[9],bits[10],bits[11],
             actor_bits<uint32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, type)),actor_bits<uint32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value)));
@@ -120,7 +120,7 @@ static void kinoko_trace_invalid_actor(const char *phase, int32_t actor) {
 }
 
 extern "C" int32_t kinoko_actor_trace_step_begin(KinokoActor *receiver, int32_t callback_type) {
-    const int32_t actor = (int32_t)(intptr_t)receiver;
+    KinokoActor* const actor = receiver;
     static volatile LONG step_trace_count;
     LONG step_trace_index;
     step_trace_index = InterlockedIncrement(&step_trace_count);
@@ -135,7 +135,7 @@ extern "C" int32_t kinoko_actor_trace_step_begin(KinokoActor *receiver, int32_t 
                          actor_bits<int32_t>(actor, &ActorRecord::id));
         kinoko_trace_i32("actor:step-type", callback_type);
         kinoko_trace_i32("actor:step-data",
-                         actor_bits<int32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value)));
+                         actor_bits<SQClosure*>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value)));
         kinoko_trace_i32("actor:step-state-vm",
                          actor_bits<int32_t>(actor, &ActorRecord::update_vm));
         kinoko_trace_i32("actor:step-state-type",
@@ -153,7 +153,7 @@ extern "C" int32_t kinoko_actor_trace_step_begin(KinokoActor *receiver, int32_t 
 }
 
 extern "C" void kinoko_actor_trace_step_end(KinokoActor *receiver, int32_t step_result, int32_t step_trace_index) {
-    const int32_t actor = (int32_t)(intptr_t)receiver;
+    KinokoActor* const actor = receiver;
         kinoko_trace_invalid_actor("after-script",actor);
         /* Original 45E180 failure retirement is handled by the C++ adapter. */
         if (step_result < 0) {
@@ -163,7 +163,7 @@ extern "C" void kinoko_actor_trace_step_end(KinokoActor *receiver, int32_t step_
                 sprintf_s(message, sizeof(message),
                     "actor:update-failed frame=%d actor=%08X id=%X take=%d "
                     "xy=(%.3f,%.3f) v=(%.3f,%.3f) camera=(%.3f,%.3f,%.3f,%.3f)",
-                    kinoko_application_frame_count(), (uint32_t)actor, actor_bits<uint32_t>(actor, &ActorRecord::id),
+                    kinoko_application_frame_count(), static_cast<uint32_t>(reinterpret_cast<uintptr_t>(actor)), actor_bits<uint32_t>(actor, &ActorRecord::id),
                     actor_bits<int32_t>(actor, &ActorRecord::take),
                     actor_bits<float>(actor, &ActorRecord::x), actor_bits<float>(actor, &ActorRecord::y),
                     actor_bits<float>(actor, &ActorRecord::velocity_x), actor_bits<float>(actor, &ActorRecord::velocity_y),
@@ -187,7 +187,7 @@ extern "C" void kinoko_actor_trace_step_end(KinokoActor *receiver, int32_t step_
 }
 
 extern "C" void kinoko_actor_trace_motion(KinokoActor *receiver, int32_t phase) {
-    int32_t actor = (int32_t)(intptr_t)receiver;
+    KinokoActor* actor = receiver;
     static volatile LONG trace_count;
     LONG trace_index;
     if (phase == 0) {
@@ -213,12 +213,12 @@ extern "C" void kinoko_actor_trace_motion(KinokoActor *receiver, int32_t phase) 
     }
 }
 
-static void kinoko_trace_actor_window_state(int32_t phase, int32_t actor,
+static void kinoko_trace_actor_window_state(int32_t phase, KinokoActor* actor,
                                              int32_t update_mask)
 {
     int32_t id;
-    int32_t frame;
-    int32_t node;
+    FrameRecord* frame;
+    void* node;
     int32_t value;
 
     if (actor == 0 || kinoko_application_frame_count() < 540 || kinoko_application_frame_count() > 820 || (kinoko_application_frame_count() % 10) != 0)
@@ -227,8 +227,8 @@ static void kinoko_trace_actor_window_state(int32_t phase, int32_t actor,
     if (id < 0x200 || id > 0x207)
         return;
 
-    frame = actor_bits<int32_t>(actor, &ActorRecord::current_frame);
-    node = actor_bits<int32_t>(actor, &ActorRecord::animation);
+    frame = actor_bits<FrameRecord*>(actor, &ActorRecord::current_frame);
+    node = actor_bits<void*>(actor, &ActorRecord::animation);
     kinoko_trace_i32("actor:diag-frame-counter", kinoko_application_frame_count());
     kinoko_trace_i32("actor:diag-phase", phase);
     kinoko_trace_i32("actor:diag-id", id);
@@ -242,7 +242,7 @@ static void kinoko_trace_actor_window_state(int32_t phase, int32_t actor,
     kinoko_trace_i32("actor:diag-timer",
                      actor_bits<int32_t>(actor, &ActorRecord::frame_time));
     value = frame != 0
-        ? (int32_t)kinoko::native::RecordView<FrameRecord>(kinoko::legacy::pointer<void>(frame)).get(&FrameRecord::duration) : 0;
+        ? (int32_t)kinoko::native::RecordView<FrameRecord>(frame).get(&FrameRecord::duration) : 0;
     kinoko_trace_i32("actor:diag-duration", value);
     kinoko_trace_i32("actor:diag-active",
                      actor_bits<unsigned char>(actor, &ActorRecord::active));
@@ -269,23 +269,23 @@ static void kinoko_trace_actor_window_state(int32_t phase, int32_t actor,
     kinoko_trace_i32("actor:diag-bottom", value);
 }
 
-static void kinoko_trace_player_state(const char *phase, int32_t actor,
-                                       int32_t camera) {
+static void kinoko_trace_player_state(const char *phase, KinokoActor* actor,
+                                       KinokoCamera* camera) {
     static volatile LONG count;
-    static int32_t last_actor, last_take;
-    int32_t closure, proto, take, transition;
+    static KinokoActor* last_actor; static int32_t last_take;
+    SQClosure* closure; SQFunctionProto* proto; int32_t take, transition;
     uint32_t xy_bits[2];
     const char *source, *name;
     char message[896];
     if (actor == 0 || actor_bits<int32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, type)) != 0x08000100)
         return;
-    closure = actor_bits<int32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value));
-    proto = kinoko::script::address(_funcproto(kinoko::legacy::pointer<SQClosure>(closure)->_function));
-    if (proto == 0 || kinoko::legacy::pointer<SQFunctionProto>(proto)->_sourcename._type != 0x08000010 ||
-        kinoko::legacy::pointer<SQFunctionProto>(proto)->_name._type != 0x08000010)
+    closure = actor_bits<SQClosure*>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value));
+    proto = _funcproto(closure->_function);
+    if (proto == 0 || proto->_sourcename._type != 0x08000010 ||
+        proto->_name._type != 0x08000010)
         return;
-    source = _stringval(kinoko::legacy::pointer<SQFunctionProto>(proto)->_sourcename);
-    name = _stringval(kinoko::legacy::pointer<SQFunctionProto>(proto)->_name);
+    source = _stringval(proto->_sourcename);
+    name = _stringval(proto->_name);
     if (_stricmp(source, "data/script/player.nut") != 0 || strcmp(name, "Update") != 0)
         return;
     take = actor_bits<int32_t>(actor, &ActorRecord::take);
@@ -305,7 +305,7 @@ static void kinoko_trace_player_state(const char *phase, int32_t actor,
         "actor:player-state frame=%d phase=%s actor=%08X take=%d xy=(%.3f,%.3f) "
         "v=(%.3f,%.3f) free=(%.3f,%.3f) hits=(%d,%d,%d,%d) flags=%08X "
         "bounds=(%.3f,%.3f,%.3f,%.3f) camera=(%.3f,%.3f,%.3f,%.3f) xyBits=%08X,%08X",
-        kinoko_application_frame_count(), phase, (uint32_t)actor, actor_bits<int32_t>(actor, &ActorRecord::take),
+        kinoko_application_frame_count(), phase, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(actor)), actor_bits<int32_t>(actor, &ActorRecord::take),
         actor_bits<float>(actor, &ActorRecord::x), actor_bits<float>(actor, &ActorRecord::y),
         actor_bits<float>(actor, &ActorRecord::velocity_x), actor_bits<float>(actor, &ActorRecord::velocity_y),
         actor_bits<float>(actor, &ActorRecord::free_width), actor_bits<float>(actor, &ActorRecord::free_height),
@@ -314,21 +314,21 @@ static void kinoko_trace_player_state(const char *phase, int32_t actor,
         actor_bits<uint32_t>(actor, &ActorRecord::collision_flags),
         actor_bits<float>(actor, &ActorRecord::world_bounds, offsetof(Bounds, left)), actor_bits<float>(actor, &ActorRecord::world_bounds, offsetof(Bounds, top)),
         actor_bits<float>(actor, &ActorRecord::world_bounds, offsetof(Bounds, right)), actor_bits<float>(actor, &ActorRecord::world_bounds, offsetof(Bounds, bottom)),
-        camera ? camera_bits<float>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, left)) : 0,
-        camera ? camera_bits<float>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, top)) : 0,
-        camera ? camera_bits<float>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, right)) : 0,
-        camera ? camera_bits<float>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, bottom)) : 0, xy_bits[0], xy_bits[1]);
+        camera ? camera_bits<float>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, left)) : 0,
+        camera ? camera_bits<float>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, top)) : 0,
+        camera ? camera_bits<float>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, right)) : 0,
+        camera ? camera_bits<float>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, bottom)) : 0, xy_bits[0], xy_bits[1]);
     kinoko_trace(message);
 }
 
 extern "C" int32_t kinoko_actor_render_trace_begin(KinokoActor *receiver, KinokoCamera *camera_pointer) {
-    int32_t actor = (int32_t)(intptr_t)receiver;
-    int32_t camera = (int32_t)(intptr_t)camera_pointer;
-    int32_t frame;
+    KinokoActor* actor = receiver;
+    KinokoCamera* camera = camera_pointer;
+    FrameRecord* frame;
     static volatile LONG trace_count;
     LONG trace_index = InterlockedIncrement(&trace_count);
     if (!actor) return trace_index;
-    frame = actor_bits<int32_t>(actor, &ActorRecord::current_frame);
+    frame = actor_bits<FrameRecord*>(actor, &ActorRecord::current_frame);
     if (trace_index <= 16) {
         kinoko_trace_i32("actor:render-actor", actor);
         kinoko_trace_i32("actor:render-id",
@@ -337,7 +337,7 @@ extern "C" int32_t kinoko_actor_render_trace_begin(KinokoActor *receiver, Kinoko
         kinoko_trace_i32("actor:render-node",
                          actor_bits<int32_t>(actor, &ActorRecord::animation));
         kinoko_trace_i32("actor:render-handle",
-                         frame != 0 ? kinoko::native::RecordView<FrameRecord>(kinoko::legacy::pointer<void>(frame)).get(&FrameRecord::texture) : 0);
+                         frame != 0 ? kinoko::native::RecordView<FrameRecord>(frame).get(&FrameRecord::texture) : 0);
         kinoko_trace_i32("actor:render-active",
                          actor_bits<int32_t>(actor, &ActorRecord::active));
         kinoko_trace_i32("actor:render-visible",
@@ -351,32 +351,32 @@ extern "C" int32_t kinoko_actor_render_trace_begin(KinokoActor *receiver, Kinoko
         kinoko_trace_i32("actor:render-bottom",
                          actor_bits<int32_t>(actor, &ActorRecord::world_bounds, offsetof(Bounds, bottom)));
         kinoko_trace_i32("actor:render-camera-left",
-                         camera != 0 ? camera_bits<int32_t>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, left)) : 0);
+                         camera != 0 ? camera_bits<int32_t>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, left)) : 0);
         kinoko_trace_i32("actor:render-camera-top",
-                         camera != 0 ? camera_bits<int32_t>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, top)) : 0);
+                         camera != 0 ? camera_bits<int32_t>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, top)) : 0);
         kinoko_trace_i32("actor:render-camera-right",
-                         camera != 0 ? camera_bits<int32_t>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, right)) : 0);
+                         camera != 0 ? camera_bits<int32_t>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, right)) : 0);
         kinoko_trace_i32("actor:render-camera-bottom",
-                         camera != 0 ? camera_bits<int32_t>(kinoko::legacy::pointer<KinokoCamera>(camera), &kinoko::camera::Record::bounds, offsetof(Bounds, bottom)) : 0);
+                         camera != 0 ? camera_bits<int32_t>(camera, &kinoko::camera::Record::bounds, offsetof(Bounds, bottom)) : 0);
     }
     kinoko_trace_star_state("render-entry",actor);
     return trace_index;
 }
 
-extern "C" void kinoko_actor_render_trace_draw(KinokoActor *actor) { kinoko_trace_star_state("draw",(int32_t)(intptr_t)actor); }
+extern "C" void kinoko_actor_render_trace_draw(KinokoActor *actor) { kinoko_trace_star_state("draw",actor); }
 
 extern "C" void kinoko_actor_render_trace_end(int32_t index, int32_t result) {
     if (index <= 16) kinoko_trace_i32("actor:render-submit",result);
 }
 
 extern "C" void kinoko_actor_trace_collision(KinokoActor *actor, int32_t after) {
-    kinoko_trace_invalid_actor(after ? "after-collision" : "before-collision", (int32_t)(intptr_t)actor);
+    kinoko_trace_invalid_actor(after ? "after-collision" : "before-collision", actor);
 }
 
 extern "C" void kinoko_actor_manager_trace_actor(int32_t phase, KinokoActor *actor, KinokoCamera *camera, int32_t mask) {
-    kinoko_trace_actor_window_state(phase, (int32_t)(intptr_t)actor, mask);
+    kinoko_trace_actor_window_state(phase, actor, mask);
     kinoko_trace_player_state(phase == 1 ? "before-script" : phase == 2 ? "after-script" : "after-motion",
-        (int32_t)(intptr_t)actor, (int32_t)(intptr_t)camera);
+        actor, camera);
 }
 
 extern "C" int32_t kinoko_actor_render_layer_update(void *storage,KinokoCamera *camera) {
@@ -385,12 +385,12 @@ extern "C" int32_t kinoko_actor_render_layer_update(void *storage,KinokoCamera *
     if (!storage) return 0;
     const kinoko::native::RecordView<RenderLayerRecord> layer(storage);
     if (trace<=16) {
-        using kinoko::legacy::address;
+        using kinoko::script::diagnostic_address;
         using Camera=kinoko::camera::Record;
         auto *global_camera=kinoko_game_objects()->camera;
-        kinoko_trace_i32("actor:layer-render-this",address(storage));
-        kinoko_trace_i32("actor:layer-render-arg",address(camera));
-        kinoko_trace_i32("actor:layer-render-camera",address(global_camera));
+        kinoko_trace_i32("actor:layer-render-this",diagnostic_address(storage));
+        kinoko_trace_i32("actor:layer-render-arg",diagnostic_address(camera));
+        kinoko_trace_i32("actor:layer-render-camera",diagnostic_address(global_camera));
         kinoko_trace_i32("actor:camera-x",camera_bits<int32_t>(global_camera,&Camera::x));
         kinoko_trace_i32("actor:camera-y",camera_bits<int32_t>(global_camera,&Camera::y));
         kinoko_trace_i32("actor:camera-cx",camera_bits<int32_t>(global_camera,&Camera::center_x));

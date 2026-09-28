@@ -20,6 +20,7 @@ int32_t kinoko_bitmap_load_cv2(KinokoBitmap *bitmap, const char *path);
 void kinoko_bitmap_release_pixels(KinokoBitmap *bitmap);
 #ifdef __cplusplus
 }
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(KinokoBitmap) == 32);
 static_assert(offsetof(KinokoBitmap, bit_depth) == 4);
 static_assert(offsetof(KinokoBitmap, width) == 8);
@@ -28,4 +29,7 @@ static_assert(offsetof(KinokoBitmap, row_width) == 16);
 static_assert(offsetof(KinokoBitmap, encoded_size) == 20);
 static_assert(offsetof(KinokoBitmap, palette) == 24);
 static_assert(offsetof(KinokoBitmap, pixels) == 28);
+#endif
+static_assert(offsetof(KinokoBitmap, width) == sizeof(void*) + 4);
+static_assert(offsetof(KinokoBitmap, pixels) == offsetof(KinokoBitmap, palette) + sizeof(void*));
 #endif

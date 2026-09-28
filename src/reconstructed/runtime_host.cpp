@@ -1,5 +1,6 @@
 #include "kinoko/owned_script_object.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/act_layer_lifecycle.h"
 // Windows x86 runtime host. Original evidence: src/decompiled/6kinoko.exe.c.
 #include "runtime_host_internal.h"
@@ -179,9 +180,9 @@ int32_t kinoko_layer_get_pair[2*sizeof(void*)/sizeof(int32_t)] = {0, 0};
 int32_t kinoko_script_void_result_identity;
 
 int32_t __fastcall kinoko_act_layer_associate_method(KinokoActLayer* receiver, void* unused_edx) {
-    using Associate = int32_t (__thiscall*)(KinokoActLayer*);
-    const auto* methods = kinoko::legacy::load<const unsigned char*>(receiver);
-    return kinoko::legacy::load<Associate>(methods + 6*sizeof(void*))(receiver);
+    using Associate = int32_t (__fastcall*)(KinokoActLayer*,void*);
+    const auto* methods = kinoko::memory::load<const unsigned char*>(receiver);
+    return kinoko::memory::load<Associate>(methods + 6*sizeof(void*))(receiver,nullptr);
 }
 
 int32_t *kinoko_c2d_layout_type(void) {

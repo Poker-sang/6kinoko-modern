@@ -1,6 +1,6 @@
 #include "kinoko/act_host.h"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_memory.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <intrin.h>
@@ -8,7 +8,7 @@
 
 extern "C" void kinoko_trace_i32(const char*, int32_t);
 namespace {
-using kinoko::legacy::pointer;
+
 struct TableHeader {
     std::byte prefix[32];
     int32_t nodes, capacity, used;

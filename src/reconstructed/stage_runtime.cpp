@@ -10,14 +10,15 @@
 #include "kinoko/act_runtime.h"
 #include "kinoko/act_host.h"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
 }
 
 namespace {
-using namespace kinoko::legacy;
+using kinoko::script::diagnostic_address;
 using namespace kinoko::stage;
 using kinoko::act::RuntimeRecord;
 using kinoko::native::RecordView;
@@ -25,7 +26,7 @@ using RuntimeView = RecordView<RuntimeRecord>;
 
 // The list's end sentinel is the list allocation itself (465F70/466050).
 // Keep the original integer return on empty or skipped passes at this boundary.
-int32_t stage_list_identity() { return address(kinoko_stage_list_end()); }
+int32_t stage_list_identity() { return diagnostic_address(kinoko_stage_list_end()); }
 
 KinokoActRuntime *stage_runtime(const KinokoStageNode *node) {
     const auto owner = kinoko_stage_list_value(node);
@@ -45,7 +46,7 @@ extern "C" int32_t kinoko_stages_update() {
     if (trace_index <= 8) {
         kinoko_trace("466050:entry");
         kinoko_trace_i32("466050:g603", stage_list_identity());
-        kinoko_trace_i32("466050:first", address(node));
+        kinoko_trace_i32("466050:first", diagnostic_address(node));
         kinoko_trace_i32("466050:update-mask", kinoko_game_masks.update);
     }
     if (node == kinoko_stage_list_end()) {
@@ -59,17 +60,17 @@ extern "C" int32_t kinoko_stages_update() {
             const RuntimeView runtime(resource);
             if (trace_index <= 8) {
                 auto *act = runtime.get(&RuntimeRecord::active_document);
-                kinoko_trace_i32("466050:resource", address(resource));
+                kinoko_trace_i32("466050:resource", diagnostic_address(resource));
                 // Keep historical four-byte diagnostic snapshots (including
                 // padding) without confusing them with one-byte game flags.
                 kinoko_trace_i32("466050:active", load<int32_t>(runtime.bytes(&RuntimeRecord::stage_active)));
                 kinoko_trace_i32("466050:suspend", load<int32_t>(runtime.bytes(&RuntimeRecord::hidden)));
                 kinoko_trace_i32("466050:time", runtime.get(&RuntimeRecord::wake_time));
-                kinoko_trace_i32("466050:act", address(act));
-                if (act) kinoko_trace_squirrel_name("466050:act-name", address(document_name(act)));
+                kinoko_trace_i32("466050:act", diagnostic_address(act));
+                if (act) kinoko::script::diagnostic_name("466050:act-name",document_name(act));
             }
             kinoko_act_increment_frame(resource, nullptr);
-            result = kinoko_act_update_frame((KinokoActRuntime*)(uintptr_t)(address(resource)));
+            result = kinoko_act_update_frame(resource);
             if (trace_index <= 8) kinoko_trace_i32("466050:update-result", result);
         }
         // Advance after the callback, as in the original traversal.
@@ -84,13 +85,13 @@ extern "C" int32_t kinoko_stages_prepare_draw() {
     const auto trace_index = InterlockedIncrement(&trace_count);
     if (trace_index == 1) {
         kinoko_trace_i32("render:g603", stage_list_identity());
-        kinoko_trace_i32("render:g603-first", address(kinoko_stage_list_first()));
+        kinoko_trace_i32("render:g603-first", diagnostic_address(kinoko_stage_list_first()));
     }
     if (!stage_list_identity()) return 0;
     int32_t result = stage_list_identity();
     for (auto node = kinoko_stage_list_first(); node != kinoko_stage_list_end(); node = kinoko_stage_list_next(node)) {
         const auto resource = stage_runtime(node);
-        result = resource ? kinoko_act_prepare_draw((KinokoActRuntime*)(uintptr_t)(address(resource))) : 0;
+        result = resource ? kinoko_act_prepare_draw(resource) : 0;
     }
     return result;
 }
@@ -101,7 +102,7 @@ extern "C" int32_t kinoko_stages_draw() {
     const auto trace_index = InterlockedIncrement(&trace_count);
     if (trace_index == 1) {
         kinoko_trace_i32("render:g603-float", stage_list_identity());
-        kinoko_trace_i32("render:g603-float-first", address(kinoko_stage_list_first()));
+        kinoko_trace_i32("render:g603-float-first", diagnostic_address(kinoko_stage_list_first()));
     }
     if (!stage_list_identity()) return 0;
     int32_t result = stage_list_identity(), index = 0;
@@ -112,13 +113,13 @@ extern "C" int32_t kinoko_stages_draw() {
         if (trace_index <= 3) {
             auto *act = runtime.get(&RuntimeRecord::active_document);
             kinoko_trace_i32("4660c0:index", index);
-            kinoko_trace_i32("4660c0:resource", address(resource));
+            kinoko_trace_i32("4660c0:resource", diagnostic_address(resource));
             kinoko_trace_i32("4660c0:active", load<int32_t>(runtime.bytes(&RuntimeRecord::stage_active)));
             kinoko_trace_i32("4660c0:suspend", load<int32_t>(runtime.bytes(&RuntimeRecord::hidden)));
-            kinoko_trace_i32("4660c0:act", address(act));
-            if (act) kinoko_trace_squirrel_name("4660c0:act-name", address(document_name(act)));
+            kinoko_trace_i32("4660c0:act", diagnostic_address(act));
+            if (act) kinoko::script::diagnostic_name("4660c0:act-name",document_name(act));
         }
-        result = kinoko_act_draw((KinokoActRuntime*)(uintptr_t)(address(resource)), 0.0f, 0.0f);
+        result = kinoko_act_draw(resource, 0.0f, 0.0f);
     }
     return result;
 }
@@ -128,7 +129,7 @@ extern "C" KinokoStageOwner *kinoko_stage_load(const char *file_name) {
     const auto trace_index = InterlockedIncrement(&trace_count);
     if (trace_index <= 8) {
         kinoko_trace("466100:entry");
-        kinoko_trace_squirrel_name("466100:file", address(file_name));
+        kinoko::script::diagnostic_name("466100:file",file_name);
     }
     // 466100 owns only constructor storage during unwind, not the whole
     // partially loaded stage. In particular it does not reject Load returning 0.
@@ -149,19 +150,19 @@ extern "C" KinokoStageOwner *kinoko_stage_load(const char *file_name) {
         resource = kinoko_act_source_create_runtime(holder);
         owner.set(&OwnerRecord::runtime, resource);
     }
-    kinoko_trace_i32("466100:act", address(act));
-    kinoko_trace_i32("466100:holder", address(holder));
-    kinoko_trace_i32("466100:resource", address(resource));
+    kinoko_trace_i32("466100:act", diagnostic_address(act));
+    kinoko_trace_i32("466100:holder", diagnostic_address(holder));
+    kinoko_trace_i32("466100:resource", diagnostic_address(resource));
 
     if (resource && kinoko_primary_vm) {
         // 466208 has a known callee and receiver. Call the existing explicit
         // host implementation directly, instead of casting a function to void*.
-        const auto result = kinoko_root_table_construct_this((KinokoActRuntime*)(uintptr_t)(address(resource)), (struct SQVM*)(kinoko_primary_vm), (void*)(uintptr_t)(0));
+        const auto result = kinoko_root_table_construct_this(resource, (struct SQVM*)(kinoko_primary_vm), (void*)(uintptr_t)(0));
         kinoko_trace_i32("466100:450e30-result", result);
     }
     if (stage_list_identity()) {
         const auto node = kinoko_stage_list_append(allocation);
-        if (trace_index <= 8) kinoko_trace_i32("466100:list-node", address(node));
+        if (trace_index <= 8) kinoko_trace_i32("466100:list-node", diagnostic_address(node));
     }
     return allocation;
 }

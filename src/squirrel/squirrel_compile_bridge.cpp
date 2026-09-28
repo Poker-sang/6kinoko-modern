@@ -56,11 +56,10 @@ extern "C" int32_t kinoko_squirrel_compile_source(const char *source,
 
 
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(SQSharedState, _compilererrorhandler) == 160);
-int32_t source_table_vtable;
-template<class T> T *pointer(int32_t value) {
-    return reinterpret_cast<T *>(static_cast<uintptr_t>(static_cast<uint32_t>(value)));
-}
+#endif
+const void* source_table_vtable;
 int32_t address(const void *value) {
     return static_cast<int32_t>(reinterpret_cast<uintptr_t>(value));
 }
@@ -76,7 +75,7 @@ SQInteger read_source(SQUserPointer context) {
     return buffer.length < buffer.offset + 1 ? 0 : buffer.text[buffer.offset++];
 }
 }
-extern "C" int32_t kinoko_sq_source_table_vtable(void) { return source_table_vtable; }
+extern "C" const void* kinoko_sq_source_table_vtable(void) { return source_table_vtable; }
 
 // Compile in the current VM, preserving constants, debug info and errors.
 extern "C" int32_t kinoko_sq_compile_proto(SQVM* vm, void* reader, void* context,

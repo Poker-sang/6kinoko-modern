@@ -10,15 +10,14 @@
 #include "sqclosure.h"
 
 namespace {
-template<class T> T* pointer(int32_t value) noexcept {
-    return reinterpret_cast<T*>(static_cast<uintptr_t>(static_cast<uint32_t>(value)));
-}
 int32_t address(const void* value) noexcept {
     return static_cast<int32_t>(reinterpret_cast<uintptr_t>(value));
 }
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(void*) == 4 && sizeof(SQObjectPtr) == 8);
 static_assert(sizeof(SQVM) == 168 && sizeof(SQVM::CallInfo) == 48);
 static_assert(offsetof(SQVM, _sharedstate) == 140 && offsetof(SQVM, ci) == 132);
+#endif
 
 thread_local kinoko_sq_context_exchange exchange_receiver = nullptr;
 std::atomic<const void*> source_vm_vtable{nullptr};
@@ -170,5 +169,5 @@ extern "C" int32_t kinoko_sq_compile_act_source(SQVM* id, const char *text,
 }
 
 extern "C" KinokoVmStackSnapshot kinoko_sq_stack_snapshot(const SQVM *vm) {
-    return {vm->_stack._vals, vm->_top, vm->_stackbase};
+    return {vm->_stack._vals, static_cast<int32_t>(vm->_top), static_cast<int32_t>(vm->_stackbase)};
 }

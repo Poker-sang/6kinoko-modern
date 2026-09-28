@@ -9,7 +9,8 @@
 #include "kinoko/graphics_device.h"
 #include "kinoko/renderer.h"
 #include "kinoko/stage_cleanup.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 extern "C" {
 void kinoko_trace(const char*);
 void kinoko_trace_i32(const char*, int32_t);
@@ -36,7 +37,7 @@ extern "C" void kinoko_runtime_initialize_objects(const KinokoRuntimeBootSymbols
         } else {
             map_constructed = true;
             kinoko_trace_i32("map-manager:sentinel",
-                kinoko::legacy::address(kinoko_map_manager_containers(symbols->map)));
+                kinoko::script::diagnostic_address(kinoko_map_manager_containers(symbols->map)));
         }
     }
     if (!kinoko_actor_manager_construct(symbols->actors))

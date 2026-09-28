@@ -11,15 +11,11 @@
 
 
 namespace {
-template<class T> T &at(int32_t p) {
-    return *reinterpret_cast<T *>(static_cast<uintptr_t>(static_cast<uint32_t>(p)));
-}
-template<class T> int32_t address(T *p) {
-    return static_cast<int32_t>(reinterpret_cast<uintptr_t>(p));
-}
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(SQObjectPtr) == 8 && sizeof(SQVM::CallInfo) == 48);
 static_assert(offsetof(SQVM::CallInfo, _vargs) == 44);
 static_assert(offsetof(SQVM, _vargsstack) == 36);
+#endif
 
 // A script metamethod can grow the VM stack. Keep a slot index across it,
 // while allowing callers to supply ordinary local output objects as well.

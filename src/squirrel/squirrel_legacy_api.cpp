@@ -19,14 +19,13 @@
 #include <new>
 
 namespace {
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(void*) == 4 && sizeof(SQObjectPtr) == 8);
-template<class T> T* ptr(int32_t value) noexcept {
-    return reinterpret_cast<T*>(static_cast<uintptr_t>(static_cast<uint32_t>(value)));
-}
+#endif
 int32_t addr(const void* value) noexcept {
     return static_cast<int32_t>(reinterpret_cast<uintptr_t>(value));
 }
-SQVM* vm(int32_t value) noexcept { return ptr<SQVM>(value); }
+
 SQObjectPtr* top_slot(SQVM* machine) { return &machine->GetUp(-1); }
 }
 
@@ -76,7 +75,10 @@ extern "C" int32_t kinoko_sq_get_type(SQVM* machine, int32_t a2) {
 
 
 extern "C" int32_t kinoko_sq_get_integer(SQVM* machine, int32_t a2, int32_t * a3) {
-    return sq_getinteger(machine, a2, a3);
+    SQInteger value = 0;
+    const auto result = sq_getinteger(machine, a2, &value);
+    if (SQ_SUCCEEDED(result) && a3) *a3 = static_cast<int32_t>(value);
+    return static_cast<int32_t>(result);
 }
 
 
@@ -161,8 +163,8 @@ extern "C" SQVM* kinoko_sq_set_print_function(SQVM* machine, SQPRINTFUNCTION cal
 }
 
 
-extern "C" int32_t kinoko_sq_get_print_function(SQVM* machine) {
-    return addr(reinterpret_cast<const void*>(sq_getprintfunc(machine)));
+extern "C" SQPRINTFUNCTION kinoko_sq_get_print_function(SQVM* machine) {
+    return sq_getprintfunc(machine);
 }
 
 
@@ -276,7 +278,7 @@ extern "C" SQObjectPtr* kinoko_sq_assign_object(SQObjectPtr* destination, const 
 
 
 extern "C" SQObjectPtr* kinoko_sq_assign_nullable_integer(SQObjectPtr* destination, int32_t value) {
-    if (destination) *destination = value;
+    if (destination) *destination = static_cast<SQInteger>(value);
     return destination;
 }
 
@@ -323,13 +325,13 @@ extern "C" int32_t kinoko_sq_raise_formatted_error(SQVM* receiver, const char *f
 
 
 
-extern "C" void kinoko_squirrel_addref(int32_t type, int32_t data) {
-    if (ISREFCOUNTED(type) && data) ++ptr<SQRefCounted>(data)->_uiRef;
+extern "C" void kinoko_squirrel_addref(int32_t type, intptr_t data) {
+    if (ISREFCOUNTED(type) && data) ++reinterpret_cast<SQRefCounted*>(data)->_uiRef;
 }
 
-extern "C" void kinoko_squirrel_release(int32_t type, int32_t data) {
+extern "C" void kinoko_squirrel_release(int32_t type, intptr_t data) {
     if (ISREFCOUNTED(type) && data) {
-        auto* object = ptr<SQRefCounted>(data);
+        auto* object = reinterpret_cast<SQRefCounted*>(data);
         if (--object->_uiRef == 0) object->Release();
     }
 }

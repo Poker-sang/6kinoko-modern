@@ -33,7 +33,7 @@ int32_t kinoko_sq_destroy_userdata_entry(SQUserData* object, void* unused, int32
 int32_t kinoko_sq_get_instance_pointer(SQVM* machine, int32_t index, void** output, void* tag);
 int32_t kinoko_sq_get_integer(SQVM* machine, int32_t a2, int32_t * a3);
 SQObjectPtr* kinoko_sq_get_last_error(SQVM* machine);
-int32_t kinoko_sq_get_print_function(SQVM* machine);
+SQPRINTFUNCTION kinoko_sq_get_print_function(SQVM* machine);
 int32_t kinoko_sq_get_slot(SQVM* machine, int32_t a2);
 int32_t kinoko_sq_get_stack_object(SQVM* machine, int32_t index, HSQOBJECT* output);
 int32_t kinoko_sq_get_stack_top(SQVM* machine);
@@ -71,8 +71,8 @@ int32_t kinoko_sq_write_closure(SQVM* machine, SQWRITEFUNC writer, SQUserPointer
 void kinoko_sq_finalize_userdata_entry(SQUserData* object, void* unused);
 
 int32_t kinoko_sq_raise_formatted_error(SQVM* this_ptr, const char *format, ...);
-void kinoko_squirrel_addref(int32_t type, int32_t data);
-void kinoko_squirrel_release(int32_t type, int32_t data);
+void kinoko_squirrel_addref(int32_t type, intptr_t data);
+void kinoko_squirrel_release(int32_t type, intptr_t data);
 void kinoko_squirrel_assign(int32_t *dst, const int32_t *src);
 void kinoko_release_squirrel_value(int32_t *value_ptr);
 #ifdef __cplusplus

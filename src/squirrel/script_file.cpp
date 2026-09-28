@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/owned_script_object.h"
 #include "kinoko/script_file.h"
 #include "kinoko/compat/resource_rules.hpp"
@@ -50,7 +51,7 @@ void trace_error(HSQUIRRELVM vm) {
     sq_getlasterror(vm);
     const SQChar* message = nullptr;
     if (SQ_SUCCEEDED(sq_getstring(vm, -1, &message)) && message)
-        kinoko_trace_squirrel_name("402d40:error", address(message));
+        kinoko_trace_squirrel_name("402d40:error", diagnostic_address(message));
 }
 class Reference final {
 public:
@@ -93,7 +94,7 @@ extern "C" void* kinoko_script_initialize_root() noexcept(false) {
     kinoko_trace("402aa0:after-debug");
     kinoko_trace("402aa0:before-4a8cc0");
     auto source = kinoko_sqplus_root_object();
-    kinoko_trace_i32("402aa0:source", address(source));
+    kinoko_trace_i32("402aa0:source", diagnostic_address(source));
     kinoko_trace("402aa0:after-4a8cc0");
     auto result = kinoko_sqplus_object_assign(kinoko_script_root(), source);
     kinoko_trace("402aa0:done");
@@ -111,7 +112,7 @@ extern "C" int32_t kinoko_script_load_file(const char* path, const void* environ
     kinoko_trace("402d40:entry");
     kinoko_trace_i32("402d40:archives", kinoko_archive_count);
     if (!path) return 0;
-    kinoko_trace_squirrel_name("402d40:file", address(path));
+    kinoko_trace_squirrel_name("402d40:file", diagnostic_address(path));
     const char* lookup = path;
     char packed_lookup[MAX_PATH];
     if (compiled_assets()) {

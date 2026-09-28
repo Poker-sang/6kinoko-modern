@@ -2,7 +2,8 @@
 #include "kinoko/resource_allocation.hpp"
 #include "kinoko/texture_store.h"
 #include "kinoko/string_layout.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include <algorithm>
 #include <climits>
 using kinoko::legacy::StringView;
@@ -84,5 +85,5 @@ extern "C" KinokoStringLayout* __fastcall kinoko_method_destroy_string_layout(Ki
 }
 extern "C" int32_t kinoko_string_layout_type_identity;
 extern "C" int32_t __fastcall kinoko_method_string_layout_type(KinokoStringLayout*,void*) {
-    return kinoko::legacy::address(&kinoko_string_layout_type_identity);
+    return kinoko::script::diagnostic_address(&kinoko_string_layout_type_identity);
 }

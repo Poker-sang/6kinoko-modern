@@ -1,19 +1,20 @@
 #include "kinoko/render_queue.h"
 #include "kinoko/camera.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include <list>
 #include <stdexcept>
 
 namespace {
 // 46A210 appends every borrowed layer; duplicates and insertion order matter.
 struct RenderLayer;
-using DrawLayer = int32_t (__thiscall *)(RenderLayer *,KinokoCamera *);
+using DrawLayer = int32_t (__fastcall *)(RenderLayer *,void*,KinokoCamera *);
 struct LayerMethods { DrawLayer draw; };
 struct RenderLayer { const LayerMethods *methods; };
 std::list<RenderLayer *> layers; // borrowed; queue never destroys a layer
-using kinoko::legacy::address;
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
+using kinoko::script::diagnostic_address;
+
+
 }
 extern "C" void kinoko_initialize_render_queue(void) { layers.clear(); }
 extern "C" void* kinoko_render_queue_identity(void) { return &layers; }
@@ -33,7 +34,7 @@ extern "C" void *kinoko_render_queue_append(KinokoRenderLayer *object) {
 extern "C" void kinoko_draw_render_queue(struct KinokoCamera* camera) {
     for(auto *object:layers) {
         if(!object) continue;
-        const auto *methods=kinoko::legacy::load<const LayerMethods *>(object);
-        if(methods && methods->draw) methods->draw(object,camera);
+        const auto *methods=kinoko::memory::load<const LayerMethods *>(object);
+        if(methods && methods->draw) methods->draw(object,nullptr,camera);
     }
 }

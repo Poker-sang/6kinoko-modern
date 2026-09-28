@@ -5,7 +5,8 @@
 #include "kinoko/integer_vector.h"
 #include "kinoko/texture_store.h"
 #include "kinoko/act_host.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include <array>
 #include <atomic>
 #include <cstring>
@@ -15,8 +16,8 @@
 namespace {
 using namespace kinoko::actor;
 using kinoko::native::RecordView;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
+using kinoko::script::diagnostic_address;
+
 struct CloseReader {
     void operator()(KinokoArchiveReader *reader) const { kinoko_reader_close(reader); }
 };
@@ -81,7 +82,7 @@ bool read_frame(const Reader &reader,KinokoActorManager *manager,KinokoAnimation
 }
 int32_t load_texture(const char *directory,const char *name) {
     char path[260]{};
-    kinoko_trace_squirrel_name("actor:pat-texture",address(name));
+    kinoko::script::diagnostic_name("actor:pat-texture",name);
     if (strcpy_s(path,sizeof(path),directory)) return 0;
     auto length=std::strlen(path);
     if (length && path[length-1]!='/' && path[length-1]!='\\') {
@@ -152,8 +153,8 @@ extern "C" int32_t kinoko_pat_load(KinokoActorManager *receiver,const char *file
     const auto trace=++traces;
     if (!receiver || !file_name || !directory) return 0;
     if (trace<=32) {
-        kinoko_trace_squirrel_name("actor:pat-path",address(file_name));
-        kinoko_trace_squirrel_name("actor:pat-directory",address(directory));
+        kinoko::script::diagnostic_name("actor:pat-path",file_name);
+        kinoko::script::diagnostic_name("actor:pat-directory",directory);
     }
     KinokoArchiveReader *reader_slot=nullptr;
     if (!kinoko_reader_open(&reader_slot,file_name)) return 0;
