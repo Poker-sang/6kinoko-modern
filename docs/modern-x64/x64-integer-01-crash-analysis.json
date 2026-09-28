@@ -1,0 +1,25 @@
+{
+  "addr": "0x14009e670",
+  "code": "char __fastcall sub_14009E670(__int64 a1, __int64 a2, _QWORD *a3)\n{\n  _QWORD *v7; // [rsp+48h] [rbp+20h] BYREF\n\n  if ( (((unsigned int)sub_14000CC00() - 83886082) & 0xFFFFFFFD) != 0 ) /*0x14009e6a2*/\n  {\n    sub_14000C810(a1, a2, a3: &v7); /*0x14009e6a4*/\n    return 0; /*0x14009e6a9*/\n  }\n  else\n  {\n    v7 = nullptr; /*0x14009e6be*/\n    sub_14000C750(a1, a2, a3: &v7, a4: 0); /*0x14009e6c7*/\n    *a3 = *v7; /*0x14009e6db*/\n    return 1; /*0x14009e6d9*/\n  }\n}",
+  "refs": [
+    {
+      "addr": "0x14000c810",
+      "name": "sub_14000C810"
+    },
+    {
+      "addr": "0x14000c750",
+      "name": "sub_14000C750"
+    },
+    {
+      "addr": "0x14000cc00",
+      "name": "sub_14000CC00"
+    }
+  ],
+  "crashed_source": "c9eee4687df835e77c3e24dd4f3dc38d68b70991",
+  "crash_rva": "0x9e6d6",
+  "exception": "C0000005 read of address 0",
+  "source_function": "kinoko::script::upstream::sqrat_integer_argument",
+  "cause": "SQInteger (__int64) used unspecialized Sqrat::Var<T>; defined(__int64) is false on MSVC",
+  "user_run": true,
+  "agent_run": false
+}

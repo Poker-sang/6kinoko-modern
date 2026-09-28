@@ -1,5 +1,13 @@
 # Modern 迁移与后续功能 TODO
 
+## 当前运行修复：x64 启动崩溃
+- [x] 用户诊断日志与 IDA 对应到 Sqrat 缺失 64 位整数特化；修复整数读取和压栈。
+- [x] 修复回调状态混用 VM 地址及碰撞参数宽度；保留回归合约。
+- [x] modern-x64-integer-01 / modern-integer-width-01 构建、DAT 校验与静态审计；合约仅编译。
+- [ ] 用户验证新版启动和运行；旧版黑屏、新版修复前崩溃不记为验收通过。
+- 证据：`../modern-x64/startup-integer-fix.md`。
+
+
 ## 当前检查点：完整 x64 EXE
 - [x] modern-full-x64-24 完整游戏编译链接，静态确认 AMD64 / PE32+；DAT 与着色器已部署。
 - [x] modern-full-width-03 全量 Win32 构建与 78 个合约编译；两架构 D3D9 静态审计通过。

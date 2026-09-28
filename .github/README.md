@@ -17,18 +17,20 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
-The complete x64 game compiled and linked in `modern-full-x64-24`, source
-`e720bc466dda17c600023c84a9cd3680da79ae3d`. Static inspection confirms AMD64 / PE32+.
-EXE: `runtime-builds/modern-full-x64-24/kinoko_modern_gpu.exe`.
+The previous x64 build crashed in Sqrat integer conversion, confirmed from user-captured diagnostics and IDA. The missing 64-bit scalar specialization is fixed; final runtime acceptance is still pending.
+
+The complete x64 game compiled and linked in `modern-x64-integer-01`, source
+`7f1044f0614b5b40ff5c03643760d23aa3de4968`. Static inspection confirms AMD64 / PE32+.
+EXE: `runtime-builds/modern-x64-integer-01/kinoko_modern_gpu.exe`.
 Three original DAT files were staged and size/SHA256 verified; two sprite shaders
 are included. Keep the DAT files and `shaders` directory beside the EXE.
 
-The same source built the Win32 game and 78 contracts in `modern-full-width-03`.
-The new original-width bytecode contract also compiled separately for x64.
+The same source built the Win32 game and 79 contracts in `modern-integer-width-01`.
+The upstream bindings and callback-status contracts also compiled separately for x64.
 Both builds passed static D3D9 audits. No game, CTest or contract executable was
 run. Experimental x64 runtime, real DAT bytecode loading and save compatibility
 remain unvalidated; compilation does not prove all runtime pointer flows correct.
-See [full-game delivery](../docs/modern-x64/full-game-native.md) and
+See [full-game delivery](../docs/modern-x64/startup-integer-fix.md) and
 [build instructions/evidence](../docs/modern-x64/full-game.md).
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.

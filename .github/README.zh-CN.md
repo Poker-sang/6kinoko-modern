@@ -17,17 +17,19 @@ Use a new build name and runtime directory for every batch. 每批使用新的�
 
 ## Status / 状态
 
-完整 x64 游戏已在 `modern-full-x64-24` 编译、链接成功，源码提交为
-`e720bc466dda17c600023c84a9cd3680da79ae3d`。静态检查确认 AMD64 / PE32+。
-EXE：`runtime-builds/modern-full-x64-24/kinoko_modern_gpu.exe`。
+上一版 x64 在 Sqrat 整数转换处崩溃，已由用户诊断和 IDA 定位。缺失的 64 位标量特化已修复，新版仍待运行验收。
+
+完整 x64 游戏已在 `modern-x64-integer-01` 编译、链接成功，源码提交为
+`7f1044f0614b5b40ff5c03643760d23aa3de4968`。静态检查确认 AMD64 / PE32+。
+EXE：`runtime-builds/modern-x64-integer-01/kinoko_modern_gpu.exe`。
 三个原版 DAT 已复制并校验大小和 SHA256，两个精灵着色器已部署。
 请保留 EXE 同目录的 DAT 文件和 `shaders` 目录。
 
-同一源码在 `modern-full-width-03` 完成 Win32 游戏及 78 个合约的编译。
-新增的原版位宽字节码合约也已单独通过 x64 编译。两架构 D3D9 静态审计通过。
+同一源码在 `modern-integer-width-01` 完成 Win32 游戏及 79 个合约的编译。
+上游绑定和回调状态合约也已单独通过 x64 编译。两架构 D3D9 静态审计通过。
 未运行游戏、CTest 或任何合约程序。实验性 x64 的真实 DAT 字节码加载、游戏行为
 及存档兼容仍未验证；编译成功不代表所有运行时指针流已经正确。
-详见[完整游戏交付](../docs/modern-x64/full-game-native.md)及
+详见[完整游戏交付](../docs/modern-x64/startup-integer-fix.md)及
 [构建说明与证据](../docs/modern-x64/full-game.md)。
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.

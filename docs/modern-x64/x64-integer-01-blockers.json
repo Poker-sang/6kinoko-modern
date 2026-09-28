@@ -1,0 +1,12 @@
+{
+  "source_commit": "7f1044f0614b5b40ff5c03643760d23aa3de4968",
+  "target": "kinoko_modern_gpu",
+  "full_build_succeeded": true,
+  "source_guards_enabled": true,
+  "executed_built_code": false,
+  "unique_diagnostics": 0,
+  "by_code": {},
+  "by_file": {},
+  "diagnostics": [],
+  "limitations": "Compiler/linker diagnostics from this build, not a complete pointer-flow or runtime correctness audit. Guard failures cause cascading diagnostics; counts are not independent migration tasks."
+}

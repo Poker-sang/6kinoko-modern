@@ -1,0 +1,17 @@
+{
+  "source_commit": "7f1044f0614b5b40ff5c03643760d23aa3de4968",
+  "executable": "runtime-builds\\modern-x64-integer-01\\kinoko_modern_gpu.exe",
+  "sha256": "12a7509516cd212875b5124e1ff63f3490257da54982eeb2833c4fe22bd8e0a2",
+  "compile_dependency_logs": 26,
+  "link_dependency_logs": 5,
+  "checked_executable_markers": [
+    "d3d9.dll",
+    "d3dx9_33.dll",
+    "Direct3DCreate9",
+    "Direct3DCreate9Ex"
+  ],
+  "violations": [],
+  "passed": true,
+  "executed_built_code": false,
+  "scope": "Fresh modern-only MSVC dependency records and static executable markers; not runtime validation"
+}

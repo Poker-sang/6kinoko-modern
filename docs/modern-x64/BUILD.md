@@ -1,6 +1,16 @@
 # x64 build evidence
 
-## Complete x64 game checkpoint (current)
+## x64 startup integer fix (current)
+
+User-reported callback-01 crash traced with IDA and user diagnostics to missing
+Sqrat SQInteger specialization. Source `7f1044f` builds x64 `modern-x64-integer-01`
+and Win32 `modern-integer-width-01` (79 contracts). DAT/shaders staged, static
+D3D9 audits passed; upstream/callback contracts also compiled for x64. No game or
+tests executed by the agent; final runtime acceptance pending.
+See [cause, fix, paths and evidence](startup-integer-fix.md).
+
+
+## First complete x64 game checkpoint (historical)
 
 Source `e720bc466dda17c600023c84a9cd3680da79ae3d`: `modern-full-x64-24`
 compiled and linked the complete AMD64 / PE32+ game, staged/verified three DAT

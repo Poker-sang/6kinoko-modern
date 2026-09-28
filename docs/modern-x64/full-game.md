@@ -1,9 +1,9 @@
 # Full-game x64 milestone
 
-The complete Windows x64 game now compiles and links: `modern-full-x64-24`,
-source `e720bc466dda17c600023c84a9cd3680da79ae3d`. It remains experimental:
+The complete Windows x64 game now compiles and links: `modern-x64-integer-01`,
+source `7f1044f0614b5b40ff5c03643760d23aa3de4968`. It remains experimental:
 no game or tests were executed, and real DAT/save compatibility is unvalidated.
-See [delivery, implementation and limitations](full-game-native.md) and
+See [startup crash fix and delivery](startup-integer-fix.md) and
 [build evidence and historical checkpoints](BUILD.md).
 
 ## Build the real game graph
