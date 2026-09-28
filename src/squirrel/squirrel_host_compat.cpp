@@ -310,7 +310,7 @@ extern "C" int32_t kinoko_sqplus_object_set_delegate(void * object, const void *
 extern "C" int32_t kinoko_sqplus_object_get_userdata(void * object, const char * key, void * output, void * tag_output) {
     kinoko_trace("4aa080:begin");
     kinoko_trace_i32("4aa080:this", diagnostic_address(object));
-    kinoko_trace_squirrel_name("4aa080:name", diagnostic_address(key));
+    kinoko::script::diagnostic_name("4aa080:name", key);
     kinoko_trace_i32("4aa080:out", diagnostic_address(output));
     kinoko_trace_i32("4aa080:aux", diagnostic_address(tag_output));
     if (object) trace_value("4aa080:this-type", "4aa080:this-data", ObjectView(object));

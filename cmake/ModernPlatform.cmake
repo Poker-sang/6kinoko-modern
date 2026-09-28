@@ -168,7 +168,8 @@ if(WIN32)
         third_party/sqplus-20080713/sqplus/SquirrelObject.cpp
         src/reconstructed/act_script_lifecycle.cpp src/reconstructed/act_script_io.cpp
         src/reconstructed/act_layer_lifecycle.cpp src/reconstructed/act_layer_clone.cpp
-        src/reconstructed/act_document_io.cpp src/reconstructed/act_document_clone.cpp)
+        src/reconstructed/act_document_io.cpp src/reconstructed/act_document_clone.cpp
+        src/reconstructed/act_layer_access.cpp src/reconstructed/act_frame_update.cpp)
     target_include_directories(kinoko_binding_act_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/squirrel"

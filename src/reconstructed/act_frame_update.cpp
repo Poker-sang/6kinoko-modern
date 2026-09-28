@@ -1,10 +1,11 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.h"
 #include "kinoko/act_frame.h"
 #include "kinoko/act_layer_access.h"
 #include "kinoko/act_layer_records.hpp"
 #include "kinoko/stage_records.hpp"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/windows_owner.hpp"
 #include <mmsystem.h>
 
@@ -17,7 +18,8 @@ int32_t  kinoko_sqrat_invoke_callback(const void * );
 
 namespace {
 using namespace kinoko::act;
-using namespace kinoko::legacy;
+using namespace kinoko::memory;
+using kinoko::script::diagnostic_address;
 using kinoko::native::RecordView;
 using RuntimeView = RecordView<RuntimeRecord>;
 KinokoActDocument *source_document(const RuntimeView& resource) {
@@ -37,7 +39,7 @@ extern "C" int32_t kinoko_act_layer_update(KinokoActLayer *object) {
     static volatile LONG trace_count;
     if (InterlockedIncrement(&trace_count) <= 160) {
         const auto callback = layer.get(&LayerKeys::update_callback);
-        kinoko_trace_i32("41efb0:layer", address(object));
+        kinoko_trace_i32("41efb0:layer", diagnostic_address(object));
         const char* labels[] = {"41efb0:callback-vm", "41efb0:callback-env-type",
             "41efb0:callback-env-data", "41efb0:callback-type", "41efb0:callback-data"};
         const int32_t words[] = {static_cast<int32_t>(reinterpret_cast<uintptr_t>(callback.vm)), callback.environment[0], callback.environment[sizeof(void*)/4], callback.closure[0], callback.closure[sizeof(void*)/4]};
@@ -56,13 +58,13 @@ extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
     const auto trace_index = InterlockedIncrement(&trace_count);
     if (trace_index <= 48) {
         const auto act = self ? resource.get(&RuntimeRecord::active_document) : 0;
-        kinoko_trace_i32("451640:resource", address(self));
+        kinoko_trace_i32("451640:resource", diagnostic_address(self));
         kinoko_trace_i32("451640:active", self ? load<int32_t>(resource.bytes(&RuntimeRecord::stage_active)) : 0);
         kinoko_trace_i32("451640:suspend", self ? load<int32_t>(resource.bytes(&RuntimeRecord::hidden)) : 0);
         kinoko_trace_i32("451640:time", self ? resource.get(&RuntimeRecord::wake_time) : 0);
         kinoko_trace_i32("451640:current", self ? resource.get(&RuntimeRecord::current_time) : 0);
-        kinoko_trace_i32("451640:act", address(act));
-        if (act) kinoko_trace_squirrel_name("451640:act-name", address(kinoko_string_data((const void*)(DocumentView(act).bytes(&DocumentRecord::name)))));
+        kinoko_trace_i32("451640:act", diagnostic_address(act));
+        if (act) kinoko::script::diagnostic_name("451640:act-name", kinoko_string_data((const void*)(DocumentView(act).bytes(&DocumentRecord::name))));
     }
     if (!self || resource.get(&RuntimeRecord::hidden)) {
         if (trace_index <= 48) kinoko_trace("451640:skip-suspended");

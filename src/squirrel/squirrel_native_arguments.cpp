@@ -85,11 +85,10 @@ extern "C" int32_t kinoko_native_string_arg(struct SQVM * vm_address, int32_t in
     return result;
 }
 extern "C" int32_t kinoko_native_integer_arg(struct SQVM * vm, int32_t index, int32_t* output) {
-    static_assert(sizeof(SQInteger) == sizeof(int32_t));
     SQInteger value = 0;
     const auto result = argument(vm, index, OT_INTEGER,
                                  output ? &value : nullptr, sq_getinteger);
-    if (result) std::memcpy(output, &value, sizeof(value));
+    if (result) *output=static_cast<int32_t>(value);
     return result;
 }
 extern "C" int32_t kinoko_native_float_arg(struct SQVM * vm, int32_t index, float* output) {

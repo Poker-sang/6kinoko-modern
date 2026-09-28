@@ -1,4 +1,8 @@
-#include "kinoko/squirrel_api_types.h"
+#include <sqstdaux.h>
+#include <sqstdio.h>
+#include <sqstdblob.h>
+#include <sqstdmath.h>
+#include <sqstdstring.h>
 #include "kinoko/squirrel_vm_bootstrap.h"
 #include "kinoko/squirrel_host_compat.h"
 #include "kinoko/squirrel_host_object.hpp"

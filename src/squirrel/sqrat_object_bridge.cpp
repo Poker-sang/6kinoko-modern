@@ -89,7 +89,7 @@ int32_t set_pair(SQVM* id, const int32_t* object, const char* name,
     if (!raw) {
         static std::atomic<unsigned> traces{0};
         if (traces.fetch_add(1, std::memory_order_relaxed) < 96) {
-            kinoko_trace_squirrel_name("sqrat:set-name", diagnostic_address(name));
+            kinoko::script::diagnostic_name("sqrat:set-name", name);
             trace_pair("sqrat:set-object-type", "sqrat:set-object-data", receiver);
             trace_pair("sqrat:set-value-type", "sqrat:set-value-data", incoming);
         }
@@ -260,7 +260,7 @@ extern "C" struct SQVM * kinoko_sqrat_bind_object_function(void * storage, const
     ObjectView object(storage);
     auto vm = object.vm();
     if (!vm || !function || size < 0 || (size && !source)) return nullptr;
-    kinoko_trace_squirrel_name("415550:name", diagnostic_address(name));
+    kinoko::script::diagnostic_name("415550:name", name);
     kinoko_trace_i32("415550:size", size);
     kinoko_trace_i32("415550:native", diagnostic_address(function));
     // Execute Sqrat's actual BindFunc body, including userdata copy, closure,

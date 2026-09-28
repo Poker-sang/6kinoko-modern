@@ -40,6 +40,7 @@ template<class T> T load(int32_t data) noexcept { return load<T>(pointer(data));
 template<class T> void store(void* data, const T& value) noexcept {
     std::memcpy(data, &value, sizeof(value));
 }
+#if INTPTR_MAX == INT32_MAX
 template<class T> void store(int32_t data, const T& value) noexcept {
     store(pointer(data), value);
 }

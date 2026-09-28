@@ -69,9 +69,9 @@ private:
     unsigned char* storage_;
 };
 template<class T> bool argument(HSQUIRRELVM vm, T& value);
-template<> bool argument<SQInteger>(HSQUIRRELVM vm, SQInteger& value) { return upstream::sqrat_integer_argument(vm, 2, value); }
+template<> bool argument<int32_t>(HSQUIRRELVM vm, int32_t& value) { SQInteger native{}; if(!upstream::sqrat_integer_argument(vm,2,native)) return false; value=static_cast<int32_t>(native); return true; }
 template<> bool argument<SQFloat>(HSQUIRRELVM vm, SQFloat& value) { return upstream::sqrat_float_argument(vm, 2, value); }
-void push(HSQUIRRELVM vm, SQInteger value) { upstream::sqrat_push_integer(vm, value); }
+void push(HSQUIRRELVM vm, int32_t value) { upstream::sqrat_push_integer(vm, value); }
 void push(HSQUIRRELVM vm, SQFloat value) { upstream::sqrat_push_float(vm, value); }
 template<class T> int32_t get_number(SQVM* id, bool trace, bool indirect = false) {
     NativeField field(id, trace, indirect);
@@ -112,16 +112,16 @@ void assign_string(void* field, const char* value) {
 
 extern "C" void* kinoko_cact_layer_property_offset(SQVM* id, int32_t* offset) { return descriptor(id, offset, true); }
 extern "C" void* kinoko_c2dlayout_property_offset(SQVM* id, int32_t* offset) { return descriptor(id, offset, false); }
-extern "C" int32_t kinoko_cact_layer_get_int(SQVM* id) { return get_number<SQInteger>(id, true); }
-extern "C" int32_t kinoko_cact_layer_set_int(SQVM* id) { return set_number<SQInteger>(id, true); }
+extern "C" int32_t kinoko_cact_layer_get_int(SQVM* id) { return get_number<int32_t>(id, true); }
+extern "C" int32_t kinoko_cact_layer_set_int(SQVM* id) { return set_number<int32_t>(id, true); }
 extern "C" int32_t kinoko_cact_layer_get_float(SQVM* id) { return get_number<SQFloat>(id, true); }
 extern "C" int32_t kinoko_cact_layer_set_float(SQVM* id) { return set_number<SQFloat>(id, true); }
-extern "C" int32_t kinoko_cact_layer_get_pointer_int(SQVM* id) { return get_number<SQInteger>(id, true, true); }
-extern "C" int32_t kinoko_cact_layer_set_pointer_int(SQVM* id) { return set_number<SQInteger>(id, true, true); }
+extern "C" int32_t kinoko_cact_layer_get_pointer_int(SQVM* id) { return get_number<int32_t>(id, true, true); }
+extern "C" int32_t kinoko_cact_layer_set_pointer_int(SQVM* id) { return set_number<int32_t>(id, true, true); }
 extern "C" int32_t kinoko_cact_layer_get_pointer_float(SQVM* id) { return get_number<SQFloat>(id, true, true); }
 extern "C" int32_t kinoko_cact_layer_set_pointer_float(SQVM* id) { return set_number<SQFloat>(id, true, true); }
-extern "C" int32_t kinoko_c2dlayout_get_int(SQVM* id) { return get_number<SQInteger>(id, false); }
-extern "C" int32_t kinoko_c2dlayout_set_int(SQVM* id) { return set_number<SQInteger>(id, false); }
+extern "C" int32_t kinoko_c2dlayout_get_int(SQVM* id) { return get_number<int32_t>(id, false); }
+extern "C" int32_t kinoko_c2dlayout_set_int(SQVM* id) { return set_number<int32_t>(id, false); }
 extern "C" int32_t kinoko_c2dlayout_get_float(SQVM* id) { return get_number<SQFloat>(id, false); }
 extern "C" int32_t kinoko_c2dlayout_set_float(SQVM* id) { return set_number<SQFloat>(id, false); }
 extern "C" int32_t kinoko_cact_layer_get_bool(SQVM* id) { return get_bool(id, true); }
@@ -143,7 +143,7 @@ extern "C" int32_t kinoko_cact_layer_set_string(SQVM* id) {
 }
 extern "C" int32_t kinoko_c2dlayout_set_color(SQVM* id) {
     NativeField field(id, false, false, true);
-    SQInteger value = 0;
+    int32_t value = 0;
     if (field.storage() && argument(field.vm(), value)) field.value(std::clamp(value, 0, 255));
     return 0;
 }
@@ -160,7 +160,7 @@ extern "C" int32_t kinoko_acting_player_get_property(SQVM* id) {
     if (offset == 8 || offset == 132) sq_pushbool(vm, read<uint8_t>(storage) != 0);
     else if (offset == 124 || offset == 128) sq_pushfloat(vm, read<SQFloat>(storage));
     else if (offset == 148) sq_pushstring(vm, kinoko_string_data((const void*)(storage)), -1);
-    else sq_pushinteger(vm, read<SQInteger>(storage));
+    else sq_pushinteger(vm, read<int32_t>(storage));
     return 1;
 }
 extern "C" int32_t kinoko_acting_player_set_property(SQVM* id) {
@@ -177,7 +177,7 @@ extern "C" int32_t kinoko_acting_player_set_property(SQVM* id) {
     } else if (offset == 124 || offset == 128) {
         SQFloat value = 0; if (argument(vm, value)) write(storage, value);
     } else {
-        SQInteger value = 0; if (argument(vm, value)) write(storage, value);
+        int32_t value = 0; if (argument(vm, value)) write(storage, value);
     }
     return 0;
 }
@@ -188,22 +188,22 @@ extern "C" int32_t kinoko_native_view_get_short(SQVM* id) {
 }
 extern "C" int32_t kinoko_native_view_set_short(SQVM* id) {
     NativeField field(id, false, false, true);
-    SQInteger value = 0;
+    int32_t value = 0;
     if (field.storage() && argument(field.vm(), value)) field.value(static_cast<uint16_t>(value));
     return 0;
 }
 
 // These entry points and the host property callbacks use SQFUNCTION directly.
-extern "C" SQInteger kinoko_sqrat_get_int(HSQUIRRELVM vm) { return get_number<SQInteger>(vm, false); }
-extern "C" SQInteger kinoko_sqrat_set_int(HSQUIRRELVM vm) { return set_number<SQInteger>(vm, false); }
+extern "C" SQInteger kinoko_sqrat_get_int(HSQUIRRELVM vm) { return get_number<int32_t>(vm, false); }
+extern "C" SQInteger kinoko_sqrat_set_int(HSQUIRRELVM vm) { return set_number<int32_t>(vm, false); }
 extern "C" SQInteger kinoko_sqrat_get_float(HSQUIRRELVM vm) { return get_number<SQFloat>(vm, false); }
 extern "C" SQInteger kinoko_sqrat_set_float(HSQUIRRELVM vm) { return set_number<SQFloat>(vm, false); }
 extern "C" SQInteger kinoko_sqrat_get_bool(HSQUIRRELVM vm) { return get_bool(vm, false); }
 extern "C" SQInteger kinoko_sqrat_set_bool(HSQUIRRELVM vm) { return set_bool(vm, false); }
 extern "C" SQInteger kinoko_sqrat_get_short(HSQUIRRELVM vm) { return kinoko_native_view_get_short((struct SQVM*)(uintptr_t)(vm)); }
 extern "C" SQInteger kinoko_sqrat_set_short(HSQUIRRELVM vm) { return kinoko_native_view_set_short((struct SQVM*)(uintptr_t)(vm)); }
-extern "C" SQInteger kinoko_sqrat_get_pointer_int(HSQUIRRELVM vm) { return get_number<SQInteger>(vm, false, true); }
-extern "C" SQInteger kinoko_sqrat_set_pointer_int(HSQUIRRELVM vm) { return set_number<SQInteger>(vm, false, true); }
+extern "C" SQInteger kinoko_sqrat_get_pointer_int(HSQUIRRELVM vm) { return get_number<int32_t>(vm, false, true); }
+extern "C" SQInteger kinoko_sqrat_set_pointer_int(HSQUIRRELVM vm) { return set_number<int32_t>(vm, false, true); }
 extern "C" SQInteger kinoko_sqrat_get_pointer_float(HSQUIRRELVM vm) { return get_number<SQFloat>(vm, false, true); }
 extern "C" SQInteger kinoko_sqrat_set_pointer_float(HSQUIRRELVM vm) { return set_number<SQFloat>(vm, false, true); }
 extern "C" SQInteger kinoko_sqrat_noop(HSQUIRRELVM) { return 0; }

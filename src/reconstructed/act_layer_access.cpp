@@ -1,8 +1,9 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/act_layer_access.h"
 #include "kinoko/act_layer_records.hpp"
 #include "kinoko/stage_records.hpp"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 
 // The remaining allocator ABI still returns an integer address. Convert here,
 // not throughout the layer/document APIs. It currently forwards to malloc.
@@ -11,7 +12,8 @@ extern "C" void kinoko_trace_i32(const char* label, int32_t value);
 
 namespace {
 using namespace kinoko::act;
-using namespace kinoko::legacy;
+using namespace kinoko::memory;
+using kinoko::script::diagnostic_address;
 using kinoko::native::RecordView;
 KinokoActDocument *source_document(const KinokoActSourceHolder *holder) {
     return holder ? load<KinokoActSourceHolder>(holder).document : nullptr;
@@ -25,7 +27,7 @@ bool has_layer(KinokoActDocument *document, int32_t index) {
     return ordered_layers(layers) && index < layer_distance(layers);
 }
 template<class Holder> void make_holder(Holder **output, const Holder& borrowed) {
-    auto *holder = pointer<Holder>(_3f__3f_2_40_YAPAXI_40_Z(sizeof(Holder)));
+    auto *holder = static_cast<Holder*>(std::malloc(sizeof(Holder)));
     if (holder) {
         store(holder, borrowed);
         store(output, holder);
@@ -74,7 +76,7 @@ extern "C" KinokoActKeyHolder **kinoko_act_key_holder(
 }
 
 extern "C" KinokoActKey *kinoko_act_first_key(KinokoActRuntime *resource, int32_t index) {
-    kinoko_trace_i32("452040:resource", address(resource));
+    kinoko_trace_i32("452040:resource", diagnostic_address(resource));
     kinoko_trace_i32("452040:index", index);
     if (!resource || index < 0 || !RecordView<RuntimeRecord>(resource).get(&RuntimeRecord::stage_active)) return nullptr;
     auto *holder = RecordView<RuntimeRecord>(resource).get(&RuntimeRecord::active_holder);
@@ -82,9 +84,9 @@ extern "C" KinokoActKey *kinoko_act_first_key(KinokoActRuntime *resource, int32_
     KinokoActLayerHolder *layer_result = nullptr;
     kinoko_act_layer_holder(holder, index, &layer_result);
     Allocation<KinokoActLayerHolder> layer_holder(layer_result);
-    kinoko_trace_i32("452040:item-holder", address(layer_result));
+    kinoko_trace_i32("452040:item-holder", diagnostic_address(layer_result));
     auto *layer = layer_value(layer_result);
-    kinoko_trace_i32("452040:item", address(layer));
+    kinoko_trace_i32("452040:item", diagnostic_address(layer));
     if (!layer) {
         release_holder(layer_holder, "452040:free-item-holder-before", "452040:free-item-holder-after");
         return nullptr;
@@ -101,15 +103,15 @@ extern "C" KinokoActKey *kinoko_act_first_key(KinokoActRuntime *resource, int32_
     KinokoActKeyHolder *key_result = nullptr;
     kinoko_act_key_holder(layer_holder.get(), 0, &key_result);
     Allocation<KinokoActKeyHolder> key_holder(key_result);
-    kinoko_trace_i32("452040:value-holder", address(key_result));
+    kinoko_trace_i32("452040:value-holder", diagnostic_address(key_result));
     auto *key = key_result ? load<KinokoActKeyHolder>(key_result).key : nullptr;
-    kinoko_trace_i32("452040:value", address(key));
+    kinoko_trace_i32("452040:value", diagnostic_address(key));
     if (key_holder) release_holder(key_holder, "452040:free-value-holder-before", "452040:free-value-holder-after");
     if (!key) {
         release_holder(layer_holder, "452040:free-item-holder-empty-before", "452040:free-item-holder-empty-after");
         return nullptr;
     }
-    kinoko_trace_i32("452040:result", address(key));
+    kinoko_trace_i32("452040:result", diagnostic_address(key));
     release_holder(layer_holder, "452040:free-item-holder-before", "452040:free-item-holder-after");
     return key;
 }
