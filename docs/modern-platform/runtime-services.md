@@ -32,3 +32,9 @@ Source: `1d625a79114ab6a5b4a3eaa498c655737644c1c1`.
   `modern-x64-runtime-01` compiled but is superseded by runtime-02.
 
 Build logs, manifests and static audit outputs remain in the matching build-runs directories.
+
+CI run [36441936904](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36441936904)
+checked `aca43aa52d3c3bffc02caa2b1cd6a622485a5d30`: Linux (ubuntu-24.04), macOS
+(macos-14) and Windows portable jobs all passed, including runtime services contract
+compilation. The Windows full-game cloud job was still running at this snapshot;
+local full-game builds above passed. CI compiles only, without executing contracts.
