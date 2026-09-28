@@ -12,10 +12,9 @@
 #include "kinoko/act_resource_records.hpp"
 #include "kinoko/legacy_memory.hpp"
 static DWORD test_clock;
-static DWORD WINAPI clock_now() { return test_clock; }
-#define timeGetTime clock_now
+extern "C" uint32_t kinoko_clock_milliseconds() { return test_clock; }
+extern "C" void kinoko_clock_delay(uint32_t) {}
 #include "../src/reconstructed/act_resource.cpp"
-#undef timeGetTime
 
 namespace test {
 int32_t cleared_slot;

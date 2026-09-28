@@ -128,7 +128,6 @@ struct kinoko_mcd_data;
 
 void kinoko_trace_star_state(const char *phase, KinokoActor* actor);
 
-uint32_t timeGetTime(void);
 
 typedef float float32_t;
 

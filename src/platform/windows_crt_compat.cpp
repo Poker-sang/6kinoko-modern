@@ -30,8 +30,6 @@ using kinoko_co_initialize_fn = HRESULT (WINAPI *)(LPVOID);
 using kinoko_co_uninitialize_fn = void (WINAPI *)(void);
 using kinoko_co_create_instance_fn = HRESULT (WINAPI *)(
     const GUID *, void *, DWORD, const GUID *, LPVOID *);
-using kinoko_time_get_time_fn = DWORD (WINAPI *)(void);
-using kinoko_time_begin_period_fn = UINT (WINAPI *)(UINT);
 
 static HMODULE kinoko_module(const char *name)
 {
@@ -137,19 +135,6 @@ int32_t CoCreateInstance(
                                     actual_riid, (LPVOID *)result);
 }
 
-uint32_t timeGetTime(void)
-{
-    kinoko_time_get_time_fn get_time =
-        resolve<kinoko_time_get_time_fn>("winmm.dll", "timeGetTime");
-    return get_time == nullptr ? GetTickCount() : (uint32_t)get_time();
-}
-
-uint32_t timeBeginPeriod(uint32_t period)
-{
-    kinoko_time_begin_period_fn begin_period =
-        resolve<kinoko_time_begin_period_fn>("winmm.dll", "timeBeginPeriod");
-    return begin_period == nullptr ? 0u : (uint32_t)begin_period((UINT)period);
-}
 
 #endif
 
