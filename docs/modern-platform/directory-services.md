@@ -16,7 +16,8 @@ Application startup selects the executable directory through a portable service
 before launching workers. SDL supplies the path on Windows/Linux; macOS uses the
 actual binary path rather than SDL's bundle Resources default, keeping all three
 DAT beside the executable. A failure aborts startup instead of searching an
-unrelated working directory. Existing DAT filename lookup and save formats remain.
+unrelated working directory. The duplicate process-path cwd setter and unread fixed-size path cache are removed.
+Existing DAT filename lookup and save formats remain.
 
 Contracts cover matching, missing paths, extensionless entries, directories,
 concurrent search ownership, EOF, and executable-directory selection. Contracts

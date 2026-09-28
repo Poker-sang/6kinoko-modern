@@ -14,17 +14,7 @@ extern "C" int32_t kinoko_process_initialize(HINSTANCE instance, HWND window) {
     context.instance = instance; // Original 51B060, previously discarded.
     context.window = window;
     game_window_handle = reinterpret_cast<char*>(window);
-    auto& directory = context.executable_directory;
-    const DWORD length = GetModuleFileNameA(nullptr, directory, MAX_PATH);
-    if (!length || length >= MAX_PATH) { directory[0] = 0; return 0; }
-    // 408650 checks slash before backslash; module paths normally use backslash.
-    char* separator = std::strrchr(directory, '/');
-    if (!separator) separator = std::strrchr(directory, '\\');
-    if (!separator) { directory[0] = 0; return 0; }
-    separator[1] = 0;
-    // Existing standalone-EXE compatibility: original only cached this path.
-    // Relative DAT/resource reads must continue to resolve beside this EXE.
-    SetCurrentDirectoryA(directory);
+    // Executable-directory selection is performed once before host startup.
     return 1;
 }
 extern "C" int32_t kinoko_path_split(const char* path, char* directory, char* file) {

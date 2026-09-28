@@ -13,7 +13,6 @@ int32_t kinoko_decompress_buffer(const void* input, int32_t input_size,
 typedef struct KinokoProcessContext {
     HINSTANCE instance;
     HWND window;
-    char executable_directory[MAX_PATH];
 } KinokoProcessContext;
 const KinokoProcessContext* kinoko_process_context(void);
 int32_t kinoko_process_initialize(HINSTANCE instance, HWND window);
