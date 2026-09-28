@@ -38,3 +38,9 @@ Source commit: `a044dd231f1c9b6067b2dc0d6ffed9c891d80142`.
 
 Every source correction was committed before its fresh build. All logs and prior
 artifacts remain in build-runs/runtime-builds; this batch is pushed to modern only.
+
+CI [36443983840](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36443983840)
+checked `0010407f4e2bedb69fe2f4ef28d3a2ba7b9a7373`: portable compilation passed on
+Linux, macOS and Windows, including the real internal lock implementation and
+contract. Cloud Win32 full-game job still running at this snapshot; the local
+Win32 full-game/all-contract build above passed. No runtime test execution.
