@@ -112,3 +112,15 @@ if(WIN32)
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
     target_compile_features(kinoko_native_calls_width_compile PRIVATE cxx_std_17)
 endif()
+
+add_executable(kinoko_serialized_hash_contract tests/serialized_hash_contract.cpp
+    src/reconstructed/boost_hash.cpp)
+target_include_directories(kinoko_serialized_hash_contract PRIVATE include)
+target_compile_features(kinoko_serialized_hash_contract PRIVATE cxx_std_17)
+add_test(NAME serialized_hash_contract COMMAND kinoko_serialized_hash_contract)
+if(WIN32)
+    add_library(kinoko_windows_services_width_compile OBJECT
+        src/platform/diagnostics.cpp src/reconstructed/critical_section.cpp)
+    target_include_directories(kinoko_windows_services_width_compile PRIVATE include)
+    target_compile_features(kinoko_windows_services_width_compile PRIVATE cxx_std_17)
+endif()

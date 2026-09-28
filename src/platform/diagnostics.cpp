@@ -90,6 +90,18 @@ void write_fault_record(const char *phase, EXCEPTION_POINTERS *exception) {
     const auto &record = *exception->ExceptionRecord;
     const auto &context = *exception->ContextRecord;
     char message[768];
+#if defined(_M_X64)
+    const int length = std::snprintf(message,sizeof(message),
+        "%s pid=%lu tid=%lu code=%08lX flags=%08lX address=%p module=%p "
+        "rip=%016llX rsp=%016llX rbp=%016llX rax=%016llX rbx=%016llX rcx=%016llX "
+        "rdx=%016llX rsi=%016llX rdi=%016llX access=%llu target=%016llX\r\n",
+        phase,GetCurrentProcessId(),GetCurrentThreadId(),record.ExceptionCode,
+        record.ExceptionFlags,record.ExceptionAddress,GetModuleHandleA(nullptr),
+        context.Rip,context.Rsp,context.Rbp,context.Rax,context.Rbx,context.Rcx,
+        context.Rdx,context.Rsi,context.Rdi,
+        static_cast<unsigned long long>(record.NumberParameters>0 ? record.ExceptionInformation[0] : 0),
+        static_cast<unsigned long long>(record.NumberParameters>1 ? record.ExceptionInformation[1] : 0));
+#else
     const int length = std::snprintf(message, sizeof(message),
         "%s pid=%lu tid=%lu code=%08lX flags=%08lX address=%p module=%p "
         "eip=%08lX esp=%08lX ebp=%08lX eax=%08lX ebx=%08lX ecx=%08lX "
@@ -100,6 +112,7 @@ void write_fault_record(const char *phase, EXCEPTION_POINTERS *exception) {
         context.Edx, context.Esi, context.Edi,
         record.NumberParameters > 0 ? record.ExceptionInformation[0] : 0,
         record.NumberParameters > 1 ? record.ExceptionInformation[1] : 0);
+#endif
     if (length > 0 && length < static_cast<int>(sizeof(message))) {
         DWORD written;
         WriteFile(fault_file, message, static_cast<DWORD>(length), &written, nullptr);
@@ -154,7 +167,11 @@ void capture_script_failure(const char *message) {
         // A labeled snapshot, not a raised exception: the VM keeps its normal
         // error propagation and callback cleanup. Capture before that cleanup.
         record.ExceptionCode = 0xE04B0001;
+#if defined(_M_X64)
+        record.ExceptionAddress = reinterpret_cast<void *>(context.Rip);
+#else
         record.ExceptionAddress = reinterpret_cast<void *>(context.Eip);
+#endif
         EXCEPTION_POINTERS snapshot{&record, &context};
         write_dump(&snapshot, false, "script");
     }
@@ -306,11 +323,18 @@ extern "C" int kinoko_report_exception(EXCEPTION_POINTERS *exception) {
         write_dump(exception);
         char message[256];
         const auto &context = *exception->ContextRecord;
+#if defined(_M_X64)
+        std::snprintf(message,sizeof(message),
+            "seh:code=0x%08lX addr=%p rip=0x%016llX rsp=0x%016llX rbp=0x%016llX",
+            exception->ExceptionRecord->ExceptionCode,
+            exception->ExceptionRecord->ExceptionAddress,context.Rip,context.Rsp,context.Rbp);
+#else
         std::snprintf(message, sizeof(message),
             "seh:code=0x%08lX addr=%p eip=0x%08lX esp=0x%08lX ebp=0x%08lX",
             exception->ExceptionRecord->ExceptionCode,
             exception->ExceptionRecord->ExceptionAddress,
             context.Eip, context.Esp, context.Ebp);
+#endif
         kinoko_trace(message);
     }
     return EXCEPTION_EXECUTE_HANDLER;

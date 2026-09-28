@@ -381,7 +381,12 @@ target_compile_options(kinoko_modern_gpu PRIVATE
     $<$<COMPILE_LANGUAGE:C>:/TC>
     "$<$<COMPILE_LANGUAGE:C,CXX>:/Gy;/wd4100;/wd4244;/wd4267;/wd4706>")
 # Match the original PE subsystem version and its non-client frame metrics.
-target_link_options(kinoko_modern_gpu PRIVATE /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS,5.01)
+target_link_options(kinoko_modern_gpu PRIVATE /OPT:REF /OPT:ICF)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    target_link_options(kinoko_modern_gpu PRIVATE /SUBSYSTEM:WINDOWS,5.01)
+else()
+    target_link_options(kinoko_modern_gpu PRIVATE /SUBSYSTEM:WINDOWS,6.00)
+endif()
 if(KINOKO_RETDEC_MAP_FILE)
     target_link_options(kinoko_modern_gpu PRIVATE "/MAP:${KINOKO_RETDEC_MAP_FILE}")
 endif()

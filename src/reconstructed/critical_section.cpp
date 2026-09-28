@@ -2,8 +2,9 @@
 #include <cstddef>
 #include <cstdlib>
 
-static_assert(sizeof(KinokoCriticalSection) == 28);
-static_assert(offsetof(KinokoCriticalSection, native) == 4);
+// All consumers use the native field; this lock is never a serialized record.
+static_assert(offsetof(KinokoCriticalSection, native) == sizeof(void*));
+static_assert(sizeof(KinokoCriticalSection) == sizeof(void*)+sizeof(CRITICAL_SECTION));
 extern "C" const KinokoCriticalSectionMethods kinoko_critical_section_methods{
     kinoko_critical_section_delete
 };
