@@ -1,12 +1,12 @@
 #include "kinoko/act_document.h"
 #include "kinoko/act_document_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <cstring>
 
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_texture_resource.hpp"
 using namespace kinoko::act;
-using kinoko::legacy::load;
+using kinoko::memory::load;
 
 extern "C" int32_t kinoko_act_document_load_resources(KinokoActDocument *document, const char *prefix) {
     return DocumentMethods(document).load_resources(prefix);

@@ -212,6 +212,35 @@ if(WIN32)
         src/squirrel/act_binding.cpp src/squirrel/native_property_bridge.cpp
         src/reconstructed/act_mesh.cpp src/squirrel/sqrat_object_bridge.cpp
         tests/act_map_width_compile.cpp)
+    target_sources(kinoko_act_map_width_compile PRIVATE
+        src/reconstructed/act_array.cpp
+        src/reconstructed/act_clone.cpp
+        src/reconstructed/act_document_association.cpp
+        src/reconstructed/act_document_clone.cpp
+        src/reconstructed/act_document_io.cpp
+        src/reconstructed/act_document_resources.cpp
+        src/reconstructed/act_draw_storage.cpp
+        src/reconstructed/act_frame_render.cpp
+        src/reconstructed/act_frame_update.cpp
+        src/reconstructed/act_layer_access.cpp
+        src/reconstructed/act_layer_clone.cpp
+        src/reconstructed/act_layer_lifecycle.cpp
+        src/reconstructed/act_layout.cpp
+        src/reconstructed/act_layout_3d.cpp
+        src/reconstructed/act_lifetime.cpp
+        src/reconstructed/act_list.cpp
+        src/reconstructed/act_map.cpp
+        src/reconstructed/act_render_state.cpp
+        src/reconstructed/act_resource.cpp
+        src/reconstructed/act_runtime_lifecycle.cpp
+        src/reconstructed/act_script_io.cpp
+        src/reconstructed/act_script_lifecycle.cpp
+        src/reconstructed/act_serializable.cpp
+        src/reconstructed/act_source.cpp
+        src/reconstructed/actor_motion.cpp
+        src/reconstructed/string_layout_render.cpp
+        src/reconstructed/string_render.cpp
+        src/squirrel/camera_map_binding.cpp)
     target_include_directories(kinoko_act_map_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/squirrel")

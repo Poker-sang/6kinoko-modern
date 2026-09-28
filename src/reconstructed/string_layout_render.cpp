@@ -6,9 +6,8 @@
 #include "kinoko/string_layout.h"
 #include "kinoko/renderer.h"
 #include "kinoko/quad_render.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <cstring>
-using kinoko::legacy::pointer;
 using kinoko::legacy::StringView;
 namespace {
 using TextRecord=kinoko::text::StringLayout;

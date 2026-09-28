@@ -19,8 +19,6 @@
 namespace {
 using namespace kinoko::map;
 using namespace kinoko::render;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 struct VisibleChip { kinoko_mcd_chip *chip; Placement *placement; int32_t index; };
 
 Position3 world_position(KinokoActLayer *layer) {

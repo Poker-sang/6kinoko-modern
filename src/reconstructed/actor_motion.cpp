@@ -5,8 +5,6 @@
 namespace {
 using namespace kinoko::actor;
 using namespace kinoko::collision;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 void save_previous(const ActorView &actor) {
     actor.set(&ActorRecord::previous_x, actor.get(&ActorRecord::x));
     actor.set(&ActorRecord::previous_y, actor.get(&ActorRecord::y));

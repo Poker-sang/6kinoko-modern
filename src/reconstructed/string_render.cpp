@@ -8,7 +8,7 @@
 #include "kinoko/string_font.h"
 #include "kinoko/act_layout_records.hpp"
 #include "kinoko/font_runtime.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/texture_store.h"
 #include <windows.h>
@@ -16,8 +16,6 @@
 #include <algorithm>
 #include <cstring>
 namespace {
-using kinoko::legacy::field;
-using kinoko::legacy::pointer;
 using kinoko::legacy::StringView;
 using LayoutRecord=kinoko::text::StringLayout;
 using GlyphRecord=kinoko::text::Glyph;
