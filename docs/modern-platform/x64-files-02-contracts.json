@@ -1,0 +1,28 @@
+{
+  "source_commit": "47ec4e47067a075a91446ef2064f7afa0feb0abd",
+  "contracts": [
+    {
+      "target": "kinoko_file_service_contract",
+      "path": "runtime-builds\\modern-x64-files-02\\kinoko_file_service_contract.exe",
+      "sha256": "73e5e98c2bed4357787d610da8b7db06bbb205f3f64784ac89cfbae6c413dc28",
+      "compiled": true,
+      "executed": false
+    },
+    {
+      "target": "kinoko_file_archive_contract",
+      "path": "runtime-builds\\modern-x64-files-02\\tools\\kinoko_file_archive_contract.exe",
+      "sha256": "bc83af4976dd174dc78e3da2c79519bbb625dd3cb270b8430924b955e5790ada",
+      "compiled": true,
+      "executed": false
+    },
+    {
+      "target": "kinoko_savedata_file_contract",
+      "path": "runtime-builds\\modern-x64-files-02\\tools\\kinoko_savedata_file_contract.exe",
+      "sha256": "24572fd174d0c8c0697e3872c534b5ba9c495c36857cfb67c87540ca23115941",
+      "compiled": true,
+      "executed": false
+    }
+  ],
+  "reader_implementation_compiled": true,
+  "build_log": "build-runs/modern-x64-files-02/file-contracts-build.log"
+}

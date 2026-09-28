@@ -33,4 +33,19 @@ is a migrated production service, not a complete cross-platform game release.
 First builds files-01 exposed a script error-window dependency on indirectly
 included windows.h. That host source now includes its own Windows dependency;
 file-service and actual reader compilation succeeded. Failed builds are retained.
-Fresh files-02 game builds and compile evidence pending.
+
+## Delivery
+
+Source `47ec4e47067a075a91446ef2064f7afa0feb0abd`:
+- Full x64 game: `runtime-builds/modern-x64-files-02/kinoko_modern_gpu.exe`.
+- Win32: `runtime-builds/modern-files-02/kinoko_modern_gpu.exe`, 81 contracts compiled.
+- x64 file-service, archive and savedata contracts compiled separately, along
+  with the real reader implementation. None were executed.
+- Three DAT staged and size/SHA256 verified on both builds; two sprite shaders
+  beside each EXE. Both static D3D9 audits passed.
+- Native file formats are unchanged. No original saves/configs copied or edited.
+- Local WSL has no Linux installation. Non-Windows compilation awaits CI;
+  no Linux/macOS full-game or runtime success is claimed.
+
+User confirmed the preceding savedata-01 works. This files-02 batch is not yet
+user-validated. All old successful/failed builds and logs are retained.

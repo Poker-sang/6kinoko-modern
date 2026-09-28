@@ -1,12 +1,13 @@
 # Full-game x64 migration and earlier preparation checkpoints
 
-The active milestone is a complete Windows x64 game, followed by Linux gameplay
-and macOS validation. The full target can now be compiled experimentally with all
-source guards enabled; it is still blocked and is not a delivered x64 game.
-[Current build entry and migration scope](full-game.md). User reports
-modern-string-native-01 normal; that is user feedback, not agent-run validation.
+The complete Windows x64 game is delivered. The user confirmed gameplay-01's
+four gameplay fixes and savedata-01's load/save repair. Latest production work
+moves file I/O behind a portable boundary; see
+[file-service delivery](../modern-platform/file-services.md).
+Complete Linux/macOS games still require remaining platform-service migrations.
+No agent game/test execution is implied by build or user-feedback records.
 
-The sections below retain earlier graphics preparation evidence.
+The sections below are historical graphics preparation evidence, not current blockers.
 
 ## Completed boundary
 

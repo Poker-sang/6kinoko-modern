@@ -21,19 +21,20 @@ The user confirmed startup and the four reported gameplay regressions (digits,
 stomp/kick interaction, background scrolling and road explosion effects) resolved
 in `modern-x64-gameplay-01`, source `54995147`. This is user verification.
 
-Latest delivery: `modern-x64-savedata-01`, source
-`150308d9833a6dcf12be512c39b100980e4ae13f`. It fixes a truncated table pointer shared
-by save/load, signed 32-bit save integers, and premature file truncation before
-serialization. Save/load runtime acceptance is pending.
-The x64 game and savedata contract compiled; `modern-savedata-01` compiled the
-Win32 game and all 80 contracts.
-EXE: `runtime-builds/modern-x64-savedata-01/kinoko_modern_gpu.exe`.
+Latest delivery: `modern-x64-files-02`, source
+`47ec4e47067a075a91446ef2064f7afa0feb0abd`. DAT, ordinary files, savedata and input
+configuration use a portable file-service boundary. Unused 32-bit file-address
+adapters are deleted. The user confirmed the preceding savedata-01 load/save fix.
+The x64 game and three file/archive/save contracts compiled; `modern-files-02`
+compiled the Win32 game and all 81 contracts. File-service runtime acceptance
+and Linux/macOS CI compilation are pending.
+EXE: `runtime-builds/modern-x64-files-02/kinoko_modern_gpu.exe`.
 Three original DAT files were staged and size/SHA256 verified; two sprite shaders
 are included. Keep the DAT files and `shaders` directory beside the EXE.
 
 Both builds passed static D3D9 audits. The agent ran no game, CTest or contract
 executable. Full level/save compatibility remains experimental.
-See [savedata fix and evidence](../docs/modern-x64/savedata-width-fix.md) and
+See [file service and evidence](../docs/modern-platform/file-services.md) and
 [build instructions](../docs/modern-x64/full-game.md).
 
 SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7.
