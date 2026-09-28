@@ -1,7 +1,7 @@
 #include "kinoko/map_manager_records.hpp"
 #include "kinoko/map_containers.h"
 #include "kinoko/map_layout_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <list>
 #include <vector>
 #include <stdexcept>
@@ -10,7 +10,7 @@
 extern "C" unsigned char kinoko_map_render_layer_methods_storage;
 namespace kinoko::map {
 using RenderLayer = kinoko::map::RenderLayerRecord;
-static_assert(sizeof(RenderLayer) == 8);
+static_assert(sizeof(RenderLayer) == 2*sizeof(void*));
 inline constexpr auto render_layer_vtable = &kinoko_map_render_layer_methods_storage;
 struct Containers {
     std::list<RenderLayer> layers;

@@ -8,7 +8,7 @@
 #include <limits>
 
 namespace {
-static_assert(sizeof(KinokoCollisionRecord) == 12, "Original collision records require Win32 pointers");
+static_assert(offsetof(KinokoCollisionRecord,index)==2*sizeof(void*));
 using namespace kinoko::actor;
 using Rect = Bounds;
 struct Contact {

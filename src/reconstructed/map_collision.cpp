@@ -11,7 +11,7 @@
 namespace {
 using namespace kinoko::map;
 using namespace kinoko::collision;
-static_assert(sizeof(HitBuffer) == 12 && sizeof(KinokoCollisionRecord) == 12);
+static_assert(offsetof(KinokoCollisionRecord,index)==2*sizeof(void*));
 }
 
 extern "C" int32_t kinoko_map_collision_append(KinokoCollisionState *state,
@@ -25,8 +25,8 @@ extern "C" int32_t kinoko_map_collision_append(KinokoCollisionState *state,
     records[*count] = {chip, placement, index};
     ++*count;
     // Preserve the legacy signed Win32 address comparison and high-water end.
-    if (kinoko::legacy::address(hits.get(&HitBuffer::end)) <
-        kinoko::legacy::address(records + *count))
+    if (reinterpret_cast<intptr_t>(hits.get(&HitBuffer::end)) <
+        reinterpret_cast<intptr_t>(records + *count))
         hits.set(&HitBuffer::end, records + *count);
     return 1;
 }

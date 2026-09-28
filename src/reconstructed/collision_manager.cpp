@@ -3,7 +3,7 @@
 #include "kinoko/actor_records.hpp"
 #include "kinoko/actor_methods.h"
 #include "kinoko/map_layout_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/native_buffer.h"
 #include "kinoko/native_control.h"
 #include <climits>
@@ -15,13 +15,10 @@ namespace {
 using namespace kinoko::collision;
 using namespace kinoko::actor;
 using namespace kinoko::map;
-using kinoko::legacy::address;
-using kinoko::legacy::pointer;
 
 template<class T> int32_t buffer_count(const Buffer<T>& buffer) {
-    const uint32_t bytes = static_cast<uint32_t>(address(buffer.end)) -
-        static_cast<uint32_t>(address(buffer.begin));
-    return kinoko::legacy::load<int32_t>(&bytes) / static_cast<int32_t>(sizeof(T));
+    const uintptr_t bytes = reinterpret_cast<uintptr_t>(buffer.end) - reinterpret_cast<uintptr_t>(buffer.begin);
+    return static_cast<int32_t>(static_cast<intptr_t>(bytes) / static_cast<intptr_t>(sizeof(T)));
 }
 template<class T> bool reserve(kinoko::native::RecordView<Buffer<T>> buffer, uint32_t count) {
     return count <= INT32_MAX / sizeof(T) &&
@@ -31,8 +28,8 @@ template<class T> bool reserve(kinoko::native::RecordView<Buffer<T>> buffer, uin
 
 template<class T> uint32_t guarded_buffer_count(const Buffer<T>& buffer) {
     // Preserve the old signed Win32 address guard at this legacy span boundary.
-    const int32_t begin = address(buffer.begin), end = address(buffer.end);
-    return end >= begin ? (static_cast<uint32_t>(end) - static_cast<uint32_t>(begin)) / sizeof(T) : 0;
+    const intptr_t begin = reinterpret_cast<intptr_t>(buffer.begin), end = reinterpret_cast<intptr_t>(buffer.end);
+    return end >= begin ? static_cast<uint32_t>((static_cast<uintptr_t>(end) - static_cast<uintptr_t>(begin)) / sizeof(T)) : 0;
 }
 }
 

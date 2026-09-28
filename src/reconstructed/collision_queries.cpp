@@ -3,21 +3,20 @@
 #include "kinoko/actor_records.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/map_containers.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/native_buffer.h"
 
 namespace {
 using namespace kinoko::collision;
 using namespace kinoko::actor;
 using namespace kinoko::map;
-using kinoko::legacy::address;
 int32_t *scan_cache(const ActorView &actor, int32_t index) {
     return reinterpret_cast<int32_t *>(actor.bytes(&ActorRecord::collision_scan_cache) + index * sizeof(int32_t));
 }
 class PointHits final {
-    std::array<int32_t, 12> storage_{};
+    StateRecord storage_{};
 public:
-    KinokoCollisionState *state() { return reinterpret_cast<KinokoCollisionState *>(storage_.data()); }
+    KinokoCollisionState *state() { return reinterpret_cast<KinokoCollisionState *>(&storage_); }
     auto hits() { return StateView(state()).view(&StateRecord::hits); }
     ~PointHits() { kinoko_native_buffer_destroy((void*)(hits().data())); }
 };

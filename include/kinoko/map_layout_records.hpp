@@ -2,7 +2,8 @@
 #pragma once
 #include "kinoko/act_types.h"
 #include "kinoko/quad_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/act_layer_storage.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/native_record_view.hpp"
 #include <array>
@@ -52,7 +53,7 @@ using TextureReferenceBuffer=MapRecordBuffer<kinoko_mcd_texture *>;
 struct RenderLayerRecord { const void *methods; KinokoActLayout *layout; };
 struct LayoutRecord {
     const unsigned char *methods;
-    std::array<uint8_t, 232> sprite_and_base;
+    render::QuadRecord sprite_and_base;
     int32_t layer_type;
     int32_t max_chip_width, max_chip_height;
     int32_t chip_left, chip_top, chip_right, chip_bottom;
@@ -68,7 +69,8 @@ struct LayoutRecord {
     int32_t blend;
     QuadBuffer render_quads;
     uint32_t unknown344;
-    std::array<uint8_t, 32> render_reference_buffers;
+    struct ReservedRenderBuffer { MapRecordBuffer<unsigned char> buffer; uint32_t reserved; };
+    std::array<ReservedRenderBuffer, 2> render_reference_buffers;
     int32_t render_count;
     ChipSpriteBuffer chip_sprites;
     uint32_t unknown396;
@@ -86,11 +88,14 @@ struct LayoutRecord {
 };
 struct LayerRecord {
     const unsigned char *methods;
-    std::array<uint8_t, 84> prefix;
+    act::LayerPropertyAliases property_aliases;
+    act::DocumentPointerSpan<KinokoActLayer> children;
+    uint32_t unknown84;
     KinokoActLayer *parent;
-    std::array<uint8_t, 8> unknown92;
-    KinokoActResource *resource; // document-owned; authoritative for creation
-    std::array<uint8_t, 8> unknown104;
+    std::array<unsigned char, 4> flags92;
+    int32_t resource_id;
+    KinokoActResource *resource;
+    int32_t layer_id, parent_id;
     kinoko::legacy::StringRecord name;
     uint32_t unknown136;
     uint8_t visible;
@@ -102,36 +107,76 @@ using LayerView = kinoko::native::RecordView<LayerRecord>;
 using PlacementView = kinoko::native::RecordView<Placement>;
 using ChipView = kinoko::native::RecordView<ChipDefinition>;
 
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(ChipSpriteCache)==288 && offsetof(ChipSpriteCache,definition)==232);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(ChipSpriteCache,valid)==280);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_references)==280 && offsetof(LayoutRecord,texture_references)==296);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_sprites)==384 && offsetof(LayoutRecord,chip_sprite_count)==400);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_definitions)==404 && offsetof(LayoutRecord,changed_chips)==420);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord,chip_indices)==436 && offsetof(LayoutRecord,maximum_chip_id)==452);
+#endif
 static_assert(sizeof(Placement) == 32 && offsetof(Placement, alpha) == 28);
 static_assert(offsetof(Placement, fractional_left) == 12 && offsetof(Placement, visible) == 24);
 static_assert(sizeof(ChipDefinition) == 48 && offsetof(ChipDefinition, width) == 12);
 static_assert(offsetof(ChipDefinition, height) == 14 && offsetof(ChipDefinition, flags) == 16);
 static_assert(offsetof(ChipDefinition, shape) == 34);
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, max_chip_width) == 240);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, placements) == 264);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, owning_layer) == 312);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, cached_chip_resource) == 316);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, alpha) == 320 && offsetof(LayoutRecord, blend) == 328);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, render_quads) == 332 && offsetof(LayoutRecord, render_count) == 380);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, render_scan_cache) == 456);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayoutRecord, suppress_next_binding) == 460 && sizeof(LayoutRecord) == 464);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayerRecord, resource) == 100 && offsetof(LayerRecord, name) == 112);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayerRecord, visible) == 140 && offsetof(LayerRecord, position_x) == 144);
+#endif
+#if INTPTR_MAX == INT32_MAX
 static_assert(offsetof(LayerRecord, position_y) == 148);
+#endif
+
+static_assert(offsetof(LayerRecord,resource)==offsetof(act::LayerAssociationRecord,resource));
+static_assert(offsetof(LayerRecord,name)==offsetof(act::LayerStorageRecord,name));
+static_assert(offsetof(LayerRecord,visible)==offsetof(act::LayerStorageRecord,visibility_flags));
+static_assert(offsetof(LayerRecord,position_x)==offsetof(act::LayerStorageRecord,position));
+static_assert(offsetof(ChipSpriteCache,definition)==sizeof(render::QuadRecord));
+static_assert(offsetof(LayoutRecord,layer_type)==sizeof(void*)+sizeof(render::QuadRecord));
 
 inline int32_t placement_count(KinokoActLayout *layout) {
     if (!layout) return 0;
     const auto span = LayoutView(layout).get(&LayoutRecord::placements);
     // Keep the x86 byte-distance contract, including borrowed C fixtures.
-    const uint32_t bytes = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(span.end)) -
-        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(span.begin));
-    return kinoko::legacy::load<int32_t>(&bytes) / static_cast<int32_t>(sizeof(Placement));
+    const uintptr_t bytes = reinterpret_cast<uintptr_t>(span.end) - reinterpret_cast<uintptr_t>(span.begin);
+    return static_cast<int32_t>(static_cast<intptr_t>(bytes) / static_cast<intptr_t>(sizeof(Placement)));
 }
 inline Placement *placement_at(KinokoActLayout *layout, int32_t index) {
     if (index < 0 || index >= placement_count(layout)) return nullptr;

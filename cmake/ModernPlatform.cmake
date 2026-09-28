@@ -198,3 +198,20 @@ if(WIN32)
         WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
     target_compile_features(kinoko_act_render_width_compile PRIVATE cxx_std_17)
 endif()
+
+if(WIN32)
+    add_library(kinoko_act_map_width_compile OBJECT
+        src/reconstructed/act_document.cpp src/reconstructed/act_texture_io.cpp
+        src/reconstructed/map_activation.cpp src/reconstructed/map_chip_cache.cpp
+        src/reconstructed/map_collision.cpp src/reconstructed/map_containers.cpp
+        src/reconstructed/map_copy.cpp src/reconstructed/map_layers.cpp
+        src/reconstructed/map_layout_lifetime.cpp src/reconstructed/map_loading.cpp
+        src/reconstructed/map_manager.cpp src/reconstructed/map_render.cpp
+        src/reconstructed/actor_collision.cpp src/reconstructed/collision_manager.cpp
+        src/reconstructed/collision_queries.cpp)
+    target_include_directories(kinoko_act_map_width_compile PRIVATE include
+        "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include")
+    target_compile_definitions(kinoko_act_map_width_compile PRIVATE
+        WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
+    target_compile_features(kinoko_act_map_width_compile PRIVATE cxx_std_17)
+endif()

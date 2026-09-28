@@ -2,7 +2,7 @@
 #include "kinoko/map_manager_records.hpp"
 #include "kinoko/map_render.h"
 #include "kinoko/act_runtime.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include "kinoko/map_layout_records.hpp"
 #include "kinoko/act_source.h"
 #include "kinoko/map_containers.h"
@@ -50,7 +50,7 @@ extern "C" KinokoRenderLayer *kinoko_map_make_render_layer(KinokoMapManager *man
 }
 
 namespace {
-using kinoko::legacy::load;
+using kinoko::memory::load;
 
 }
 

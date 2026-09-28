@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/map_manager_records.hpp"
 #include "kinoko/map_containers.h"
@@ -6,7 +7,7 @@
 #include "kinoko/act_resource.h"
 #include "kinoko/act_frame.h"
 #include "kinoko/stage_records.hpp"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <atomic>
@@ -16,7 +17,6 @@ void kinoko_trace_i32(const char *, int32_t);
 }
 namespace {
 using namespace kinoko::map;
-using kinoko::legacy::address;
 void delete_source(const ManagerView& manager) {
     auto *source = manager.get(&ManagerRecord::source_act);
     if (!source) return;
@@ -51,14 +51,14 @@ extern "C" void kinoko_map_manager_clear(KinokoMapManager *storage) {
 extern "C" int32_t kinoko_map_manager_update(KinokoMapManager *storage) {
     static std::atomic<int32_t> trace_count{0};
     const auto trace = ++trace_count <= 16;
-    if (trace) { kinoko_trace("46f0b0:entry"); kinoko_trace_i32("46f0b0:manager", address(storage)); }
+    if (trace) { kinoko_trace("46f0b0:entry"); kinoko_trace_i32("46f0b0:manager", kinoko::script::diagnostic_address(storage)); }
     if (!storage) return 0;
     const ManagerView manager(storage);
     auto *player = manager.get(&ManagerRecord::player);
     if (trace) {
-        kinoko_trace_i32("46f0b0:act", address(manager.get(&ManagerRecord::source_act)));
-        kinoko_trace_i32("46f0b0:holder", address(manager.get(&ManagerRecord::source_holder)));
-        kinoko_trace_i32("46f0b0:resource", address(player));
+        kinoko_trace_i32("46f0b0:act", kinoko::script::diagnostic_address(manager.get(&ManagerRecord::source_act)));
+        kinoko_trace_i32("46f0b0:holder", kinoko::script::diagnostic_address(manager.get(&ManagerRecord::source_holder)));
+        kinoko_trace_i32("46f0b0:resource", kinoko::script::diagnostic_address(player));
     }
     if (!manager.get(&ManagerRecord::source_act) || !player) {
         if (trace) kinoko_trace("46f0b0:skip");
@@ -66,7 +66,7 @@ extern "C" int32_t kinoko_map_manager_update(KinokoMapManager *storage) {
     }
     kinoko_act_increment_frame(player, nullptr);
     // 46F0C5 reloads the receiver after IncrementFrame.
-    const auto result = kinoko_act_update_frame((KinokoActRuntime*)(uintptr_t)(address(manager.get(&ManagerRecord::player))));
+    const auto result = kinoko_act_update_frame(manager.get(&ManagerRecord::player));
     if (trace) kinoko_trace_i32("46f0b0:result", result);
     return result;
 }

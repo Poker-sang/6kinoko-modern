@@ -12,7 +12,6 @@
 #include <vector>
 namespace kinoko::map {
 namespace {
-using kinoko::legacy::address;
 using kinoko::native::RecordView;
 using render::QuadRecord;
 using render::QuadView;

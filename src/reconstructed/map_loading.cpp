@@ -1,3 +1,4 @@
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/upstream_bindings.hpp"
@@ -61,7 +62,7 @@ void publish(KinokoMapManager *storage, SQVM *vm, void *map_class, void *root_st
     // 46F99A -> 46F9AF always publishes the lookup result (including null).
     // The old reconstruction indexed current_map+4 in a three-word array.
     kinoko_sqplus_object_raw_set_name(root.data(), "currentMap", current.data());
-    kinoko_trace_squirrel_name("map:act-name", address(name));
+    kinoko::script::diagnostic_name("map:act-name", name);
     kinoko_trace_i32("map:current-map-type", current.view().value()._type);
     kinoko_trace_i32("map:current-map-data", data_bits(current.view().value()));
     // current, root, names release in the original order.
@@ -100,15 +101,15 @@ extern "C" int32_t kinoko_map_manager_load(KinokoMapManager *storage, const char
     // Null allocation is a retained native boundary. Negative callback results
     // are NOT failure branches in 46F7EE/46F7F9; continue and re-read the player.
     if (!player) { kinoko_map_manager_clear(storage); return 0; }
-    kinoko_root_table_construct_this((KinokoActRuntime*)(uintptr_t)(address(player)), (struct SQVM*)(vm), (void*)(uintptr_t)(0));
-    kinoko_begin_stage_this((KinokoActRuntime*)(uintptr_t)(address(manager.get(&ManagerRecord::player))), 0);
+    kinoko_root_table_construct_this(player, (struct SQVM*)(vm), (void*)(uintptr_t)(0));
+    kinoko_begin_stage_this(manager.get(&ManagerRecord::player), 0);
     source = manager.get(&ManagerRecord::source_act);
     manager.set(&ManagerRecord::width, kinoko_act_document_screen_width(source));
     manager.set(&ManagerRecord::height, kinoko_act_document_screen_height(source));
     if (!map_class || !root_object) return 0; // invalid native caller, retain ownership
     publish(storage, vm, map_class, root_object);
-    kinoko_trace_i32("map:instance", address(storage));
-    kinoko_trace_i32("map:act", address(source));
-    kinoko_trace_squirrel_name("map:path", address(path));
+    kinoko_trace_i32("map:instance", kinoko::script::diagnostic_address(storage));
+    kinoko_trace_i32("map:act", kinoko::script::diagnostic_address(source));
+    kinoko::script::diagnostic_name("map:path", path);
     return 1;
 }

@@ -31,6 +31,7 @@ struct StateRecord {
 };
 using StateView = kinoko::native::RecordView<StateRecord>;
 using ReferenceView = kinoko::native::RecordView<ActorReference>;
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(ActorReference) == 8 && sizeof(HitBuffer) == 12);
 static_assert(offsetof(StateRecord, layouts) == 4);
 static_assert(offsetof(StateRecord, layer_hit_ends) == 20);
@@ -38,4 +39,7 @@ static_assert(offsetof(StateRecord, hits) == 36);
 static_assert(offsetof(StateRecord, map_parents) == 52);
 static_assert(offsetof(StateRecord, actors) == 68);
 static_assert(offsetof(StateRecord, actor_count) == 84 && sizeof(StateRecord) == 88);
+#endif
+static_assert(sizeof(ActorReference)==2*sizeof(void*));
+static_assert(sizeof(HitBuffer)==3*sizeof(void*));
 }

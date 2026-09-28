@@ -13,8 +13,7 @@ extern "C" void kinoko_trace_i32(const char *label, int32_t value);
 
 namespace {
 using namespace kinoko::map;
-using kinoko::legacy::address;
-using kinoko::legacy::load;
+using kinoko::memory::load;
 using kinoko::script::ObjectStorage;
 
 // Lookup captures one external SqPlus reference. Keep its lifetime identical

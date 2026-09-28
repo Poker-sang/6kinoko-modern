@@ -19,14 +19,14 @@
 #include "kinoko/act_array.h"
 #include "kinoko/act_list.h"
 #include "kinoko/string_layout.h"
-#include "kinoko/squirrel_api_types.h"
 // Native C++ continuation of the recovered ACT path. Original function names
 // remain C ABI ports until the surrounding decompiled host is migrated.
 #include "kinoko/act_runtime.h"
 #include "kinoko/act_host.h"
 #include "kinoko/boost_hash.h"
 #include "kinoko/diagnostics.h"
-#include "kinoko/legacy_memory.hpp"
+#include "kinoko/memory_access.hpp"
+#include "kinoko/script_diagnostics.hpp"
 #include "kinoko/sqrat_object_bridge.h"
 #include "kinoko/native_property_bridge.h"
 #include "kinoko/squirrel_binding.h"
@@ -61,9 +61,6 @@
 #include <cstring>
 #include <cstdlib>
 
-using kinoko::legacy::pointer;
-using kinoko::legacy::address;
-using kinoko::legacy::field;
 
 // Scalar archive reads shared by the native schema loaders.
 int32_t kinoko_act_read_u8(KinokoArchiveReader* reader_ptr, uint8_t *value)
@@ -140,20 +137,20 @@ KinokoActLayout* kinoko_act_make_layout(KinokoArchiveReader* reader_ptr)
 KinokoActLayout* kinoko_act_make_map_layout(KinokoArchiveReader* reader_ptr)
 {
     auto layout = std::unique_ptr<KinokoActLayout, decltype(&std::free)>(
-        static_cast<KinokoActLayout *>(std::calloc(1u, sizeof(kinoko::act::MapLayoutRecord))),
+        static_cast<KinokoActLayout *>(std::calloc(1u, sizeof(kinoko::map::LayoutRecord))),
         &std::free);
     if (!layout) return 0;
-    kinoko::act::MapLayoutView record(layout.get());
-    record.set(&kinoko::act::MapLayoutRecord::methods,
+    kinoko::map::LayoutView record(layout.get());
+    record.set(&kinoko::map::LayoutRecord::methods,
         kinoko_act_host_symbols()->map_layout_vtable);
-    record.set(&kinoko::act::MapLayoutRecord::view_methods,
+    record.view(&kinoko::map::LayoutRecord::sprite_and_base).set(&kinoko::render::QuadRecord::vtable,
         kinoko_act_host_symbols()->map_view_vtable);
-    record.set(&kinoko::act::MapLayoutRecord::x_limit, INT32_MAX);
-    record.set(&kinoko::act::MapLayoutRecord::y_limit, INT32_MAX);
-    record.set(&kinoko::act::MapLayoutRecord::alpha, 1.0f);
-    record.set(&kinoko::act::MapLayoutRecord::secondary_alpha, 1.0f);
-    record.set(&kinoko::act::MapLayoutRecord::blend, int32_t{1});
-    record.set(&kinoko::act::MapLayoutRecord::resource_id, int32_t{-1});
+    record.set(&kinoko::map::LayoutRecord::max_chip_width, INT32_MAX);
+    record.set(&kinoko::map::LayoutRecord::max_chip_height, INT32_MAX);
+    record.set(&kinoko::map::LayoutRecord::alpha, 1.0f);
+    record.set(&kinoko::map::LayoutRecord::scale, 1.0f);
+    record.set(&kinoko::map::LayoutRecord::blend, int32_t{1});
+    record.set(&kinoko::map::LayoutRecord::maximum_chip_id, int32_t{-1});
     if (!kinoko_act_read_map_properties_typed(layout.get(),
             reader_ptr)) return 0;
     return layout.release();
@@ -162,8 +159,8 @@ KinokoActLayout* kinoko_act_make_map_layout(KinokoArchiveReader* reader_ptr)
 void kinoko_act_free_map_records(KinokoActLayout* layout)
 {
     if (layout) {
-        kinoko::act::MapLayoutView record(layout);
-        kinoko_native_buffer_destroy((void*)(record.bytes(&kinoko::act::MapLayoutRecord::records_begin)));
+        kinoko::map::LayoutView record(layout);
+        kinoko_native_buffer_destroy((void*)(record.bytes(&kinoko::map::LayoutRecord::placements)));
     }
 }
 
@@ -181,8 +178,8 @@ int32_t kinoko_act_read_map_records(KinokoActLayout* layout,
         !kinoko_act_read_u32(reader_ptr, &serialized_size) ||
         count > 0x10000u || serialized_size > 0x20u)
         return 0;
-    kinoko::act::MapLayoutView map(layout);
-    auto* records_slot = map.bytes(&kinoko::act::MapLayoutRecord::records_begin);
+    kinoko::map::LayoutView map(layout);
+    auto* records_slot = map.bytes(&kinoko::map::LayoutRecord::placements);
     kinoko_native_buffer_destroy(records_slot);
     if (count == 0)
         return 1;
@@ -191,8 +188,8 @@ int32_t kinoko_act_read_map_records(KinokoActLayout* layout,
         count > UINT32_MAX / 0x20u)
         return 0;
     if(!kinoko_native_buffer_resize(records_slot, count*sizeof(kinoko::act::MapCellRecord))) return 0;
-    records=static_cast<unsigned char *>(map.get(&kinoko::act::MapLayoutRecord::records_begin) ?
-        static_cast<void *>(map.get(&kinoko::act::MapLayoutRecord::records_begin)) : nullptr);
+    records=static_cast<unsigned char *>(map.get(&kinoko::map::LayoutRecord::placements).begin ?
+        static_cast<void *>(map.get(&kinoko::map::LayoutRecord::placements).begin) : nullptr);
     read_size = serialized_size;
     for (index = 0; index < count; ++index) {
         unsigned char *record = records + (size_t)index * 0x20u;
@@ -206,10 +203,10 @@ int32_t kinoko_act_read_map_records(KinokoActLayout* layout,
         cell.set(&kinoko::act::MapCellRecord::enabled, uint8_t{1});
         cell.set(&kinoko::act::MapCellRecord::opacity, 1.0f);
     }
-    map.set(&kinoko::act::MapLayoutRecord::records_begin,
-        reinterpret_cast<kinoko::act::MapCellRecord *>(records));
-    map.set(&kinoko::act::MapLayoutRecord::records_end,
-        reinterpret_cast<kinoko::act::MapCellRecord *>(records + size_t{count} * sizeof(kinoko::act::MapCellRecord)));
+    map.view(&kinoko::map::LayoutRecord::placements).set(&kinoko::map::PlacementBuffer::begin,
+        reinterpret_cast<kinoko::map::Placement *>(records));
+    map.view(&kinoko::map::LayoutRecord::placements).set(&kinoko::map::PlacementBuffer::end,
+        reinterpret_cast<kinoko::map::Placement *>(records + size_t{count} * sizeof(kinoko::act::MapCellRecord)));
 
     kinoko_trace_i32("act:map-record-count", (int32_t)count);
     kinoko_trace_i32("act:map-record-size", (int32_t)serialized_size);
@@ -300,8 +297,7 @@ int32_t kinoko_act_load_layer(KinokoActLayer* layer, KinokoArchiveReader* reader
         kinoko_trace("act:layer-properties-failed");
         return 0;
     }
-    kinoko_trace_squirrel_name("act:layer-name",
-                               address(kinoko_string_data(layer_record.bytes(&kinoko::act::LayerKeys::name))));
+    kinoko::script::diagnostic_name("act:layer-name", kinoko_string_data(layer_record.bytes(&kinoko::act::LayerKeys::name)));
     if (!kinoko_act_read_u32(reader_ptr, &count) || count > 0x10000u) {
         kinoko_trace("act:layer-key-count-failed");
         return 0;
@@ -322,10 +318,9 @@ int32_t kinoko_act_load_layer(KinokoActLayer* layer, KinokoArchiveReader* reader
         // the next key. Resource association may happen later during ACT load.
         auto *layout = kinoko::act::KeyView(key).get(&kinoko::act::KeyRecord::layout);
         if (layout) kinoko::act::LayoutMethods(layout).set_layer(layer);
-        kinoko_trace_squirrel_name(
-            "act:key-script", address(kinoko_string_data(kinoko::act::KeyView(key).bytes(&kinoko::act::KeyRecord::script_name))));
-        kinoko_trace_i32("act:key-layout", address(layout));
-        if (layout && kinoko::legacy::load<const void*>(layout) ==
+        kinoko::script::diagnostic_name("act:key-script", kinoko_string_data(kinoko::act::KeyView(key).bytes(&kinoko::act::KeyRecord::script_name)));
+        kinoko_trace_i32("act:key-layout", kinoko::script::diagnostic_address(layout));
+        if (layout && kinoko::memory::load<const void*>(layout) ==
                 kinoko_act_host_symbols()->map_layout_vtable) {
             const auto placement = kinoko::native::RecordView<kinoko::map::LayoutRecord>(layout).get(&kinoko::map::LayoutRecord::placements);
             auto key_begin = reinterpret_cast<uintptr_t>(placement.begin);
@@ -427,7 +422,7 @@ int32_t load_chip_archive(KinokoActResource *resource, const char *file_name) {
     if (!resource || !file_name || !*file_name) return 0;
     KinokoArchiveReader *opened = nullptr;
     if (!kinoko_reader_open(&opened, file_name)) {
-        kinoko_trace_squirrel_name("mcd:open-failed", address(file_name));
+        kinoko::script::diagnostic_name("mcd:open-failed", file_name);
         return 0;
     }
     ArchiveOwner reader(opened, &kinoko_reader_close);
@@ -492,7 +487,7 @@ int32_t load_chip_archive(KinokoActResource *resource, const char *file_name) {
         }
         name.get()[name_length] = 0;
         const int32_t handle = kinoko_load_act_texture(name.get());
-        kinoko_trace_squirrel_name("mcd:texture-name", address(name.get()));
+        kinoko::script::diagnostic_name("mcd:texture-name", name.get());
         kinoko_trace_i32("mcd:texture-id", static_cast<int32_t>(texture_id));
         kinoko_trace_i32("mcd:texture-handle", handle);
         if (handle > 0 && static_cast<uint32_t>(handle) < KINOKO_TEXTURE_CAPACITY) {
@@ -714,7 +709,7 @@ int32_t kinoko_act_load(KinokoActDocument* this_ptr, KinokoArchiveReader* reader
             kinoko::native::RecordView<kinoko::act::ResourceIdentityRecord> identity(resource);
             kinoko_trace_i32("act:resource-id",
                 identity.get(&kinoko::act::ResourceIdentityRecord::id));
-            const auto* methods = kinoko::legacy::load<const void*>(resource);
+            const auto* methods = kinoko::memory::load<const void*>(resource);
             const auto* symbols = kinoko_act_host_symbols();
             const bool image = methods == symbols->texture_resource_vtable || methods == symbols->render_target_vtable;
             kinoko_trace_i32("act:resource-texture",

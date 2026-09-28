@@ -3,12 +3,13 @@
 #include "kinoko/camera_records.hpp"
 #include "kinoko/native_record_view.hpp"
 #include <array>
+#include "kinoko/owned_script_object.h"
 namespace kinoko::map {
 struct Containers;
 // Recovered 84-byte prefix. The host reserves more storage; that is not the
 // original class size. Original STL bytes 24..51 now hold one native owner.
 struct ManagerRecord {
-    std::array<unsigned char, 12> script_object;
+    KinokoOwnedObjectWords script_object;
     KinokoActDocument *source_act;
     KinokoActSourceHolder *source_holder;
     KinokoActRuntime *player;
@@ -20,6 +21,7 @@ struct ManagerRecord {
     int32_t width, height;
 };
 using ManagerView = native::RecordView<ManagerRecord>;
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(ManagerRecord) == 84);
 static_assert(offsetof(ManagerRecord, source_act) == 12);
 static_assert(offsetof(ManagerRecord, source_holder) == 16);
@@ -30,4 +32,6 @@ static_assert(offsetof(ManagerRecord, last_id) == 56);
 static_assert(offsetof(ManagerRecord, last_bounds) == 60);
 static_assert(offsetof(ManagerRecord, width) == 76);
 static_assert(offsetof(ManagerRecord, height) == 80);
+#endif
+static_assert(offsetof(ManagerRecord,source_act)==sizeof(KinokoOwnedObjectWords));
 }
