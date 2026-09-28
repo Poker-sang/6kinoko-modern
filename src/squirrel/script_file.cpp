@@ -158,7 +158,7 @@ extern "C" int32_t kinoko_script_load_file(const char* path, const void* environ
 }
 
 extern "C" int32_t kinoko_script_compile_file_argument(const char* path, const void*,
-    struct SQVM* argument_vm, int32_t type, int32_t data, char owns_reference) noexcept(false) {
+    struct SQVM* argument_vm, int32_t type, intptr_t data, char owns_reference) noexcept(false) {
     const auto value = borrowed_value(type, data);
     // Destruction order: SqPlus temporary first, incoming Sqrat argument last.
     HSQOBJECT incoming;

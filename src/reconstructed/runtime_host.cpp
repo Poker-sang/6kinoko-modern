@@ -336,7 +336,7 @@ int32_t kinoko_compile_file_native(struct SQVM* vm) {
     if (sq_gettop(vm) > 3 &&
         sq_getstackobj(vm, 3, &environment) < 0)
         return -1;
-    result = kinoko_script_compile_file_argument((const char*)(uintptr_t)(path), (const void*)(uintptr_t)((int32_t)(uintptr_t)&kinoko_compile_environment_vtable), vm, static_cast<int32_t>(environment._type), kinoko::script::data_bits(environment), 0);
+    result = kinoko_script_compile_file_argument((const char*)(uintptr_t)(path), &kinoko_compile_environment_vtable, vm, static_cast<int32_t>(environment._type), kinoko::script::data_bits(environment), 0);
     sq_pushbool(vm, ((result) != 0));
     return 1;
 }

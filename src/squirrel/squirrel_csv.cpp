@@ -75,7 +75,7 @@ SQObjectPtr string(SQVM &vm, const std::string &text) {
 }
 struct WrapperOwner {
     int32_t *object;
-    ~WrapperOwner() { (int32_t)(intptr_t)(kinoko_sqplus_object_destroy((void *)(intptr_t)(static_cast<int32_t>(reinterpret_cast<uintptr_t>(object))))); }
+    ~WrapperOwner() { kinoko_sqplus_object_destroy(object); }
 };
 }
 extern "C" int32_t kinoko_csv_populate(struct SQVM* address, const char *text, const int32_t object[2]) {

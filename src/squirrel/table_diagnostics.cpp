@@ -19,9 +19,9 @@ void table_snapshot(const char* label, SQTable* table) {
         if (next == -1) break;
         iterator = next;
         std::snprintf(message, sizeof(message), "%s:key=(%08X,%llX) text=%.256s value=(%08X,%llX)",
-            label, static_cast<unsigned>(type(key)), static_cast<unsigned long long>(_rawval(key)),
+            label, static_cast<unsigned>(type(key)), static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(_rawval(key))),
             type(key) == OT_STRING ? _stringval(key) : "", static_cast<unsigned>(type(value)),
-            static_cast<unsigned long long>(_rawval(value)));
+            static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(_rawval(value))));
         kinoko_trace(message);
     }
 }

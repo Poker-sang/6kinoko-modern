@@ -1,4 +1,5 @@
 #include "sqpcheader.h"
+#include "sqtable.h"
 #include "sqclass.h"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_type_key.hpp"
