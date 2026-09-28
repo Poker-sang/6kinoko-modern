@@ -45,7 +45,7 @@ void paths() {
         Case{"marisaA.dat", "", "marisaA.dat"},
         Case{"C:test.nut", "C:", "test.nut"},
         Case{"data/actor/", "data/actor/", ""}}) {
-        char directory[MAX_PATH]{}, file[MAX_PATH]{};
+        char directory[260]{}, file[260]{};
         require(kinoko_path_split(entry.path, directory, file) == 0, "split status");
         require(std::string(directory) == entry.directory && std::string(file) == entry.file,
             "drive/directory and name/extension decomposition");
@@ -53,7 +53,7 @@ void paths() {
         require(kinoko_path_split(entry.path, directory, nullptr) == 0 &&
             std::string(directory) == entry.directory, "directory-only path");
     }
-    char directory[MAX_PATH]{};
+    char directory[260]{};
     require(kinoko_path_split(nullptr, directory, nullptr) != 0, "invalid path status");
 }
 void locks() {

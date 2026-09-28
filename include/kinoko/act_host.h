@@ -64,7 +64,7 @@ intptr_t kinoko_sqrat_call_integer0(struct SQVM* a1);
 intptr_t kinoko_sqrat_call_integer1(struct SQVM* a1);
 int32_t kinoko_is_release_watch_data(intptr_t data);
 int32_t kinoko_load_act_texture(const char *texture_name);
-__declspec(noinline) void kinoko_trace_i32(const char *label,
+KINOKO_NOINLINE void kinoko_trace_i32(const char *label,
                                                   int32_t value);
 void kinoko_trace_ref_watch(const char *label, struct SQSharedState* shared_state,
                                    int32_t type, intptr_t data);

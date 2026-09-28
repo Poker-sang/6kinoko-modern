@@ -410,7 +410,7 @@ namespace Sqrat {
 
 			// add weakref (apparently not provided by default)
 			sq_pushstring(vm, _SC("weakref"), -1);
-			sq_newclosure(vm, &Class::ClassWeakref, 0);
+			sq_newclosure(vm, &Class<C,A>::ClassWeakref, 0);
 			sq_newslot(vm, -3, false);
 
 			// pop the class
