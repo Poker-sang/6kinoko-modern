@@ -62,7 +62,7 @@ static const kinoko::graphics::VertexElement elements[]={
 template<class Buffer> void fill(Buffer *buffer,const void *data,size_t size) {
     if(!buffer) return;
     void *destination=nullptr;
-    if(SUCCEEDED(buffer->Lock(0,0,&destination,0))) {
+    if(kinoko::graphics::succeeded(buffer->Lock(0,0,&destination,0))) {
         if(size) std::memcpy(destination,data,size);
         buffer->Unlock();
     }
@@ -74,13 +74,13 @@ bool bind_mesh(Renderer &render,const Node *model) {
     const auto &mesh=*model->geometry;
     // 456690 intentionally creates 16-bit indices even though the file reader
     // accepts 32-bit arrays. Preserve the existing renderer's byte count.
-    bool failed=FAILED(device->CreateIndexBuffer(mesh.index_count*2,0,kinoko::graphics::format_index16,
+    bool failed=kinoko::graphics::failed(device->CreateIndexBuffer(mesh.index_count*2,0,kinoko::graphics::format_index16,
         kinoko::graphics::pool_managed,render.indices.put()));
-    const auto vertex_count=static_cast<UINT>(mesh.positions.size());
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_xyz,kinoko::graphics::pool_managed,render.positions.put()))||failed;
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_normal,kinoko::graphics::pool_managed,render.normals.put()))||failed;
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*8,0,kinoko::graphics::vertex_tex1,kinoko::graphics::pool_managed,render.coordinates.put()))||failed;
-    failed=FAILED(device->CreateVertexDeclaration(elements,render.declaration.put()))||failed;
+    const auto vertex_count=static_cast<std::uint32_t>(mesh.positions.size());
+    failed=kinoko::graphics::failed(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_xyz,kinoko::graphics::pool_managed,render.positions.put()))||failed;
+    failed=kinoko::graphics::failed(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_normal,kinoko::graphics::pool_managed,render.normals.put()))||failed;
+    failed=kinoko::graphics::failed(device->CreateVertexBuffer(vertex_count*8,0,kinoko::graphics::vertex_tex1,kinoko::graphics::pool_managed,render.coordinates.put()))||failed;
+    failed=kinoko::graphics::failed(device->CreateVertexDeclaration(elements,render.declaration.put()))||failed;
     if(failed) {
         render.indices.reset();render.positions.reset();render.normals.reset();
         render.coordinates.reset();render.declaration.reset();return false;
@@ -123,7 +123,7 @@ uint8_t Renderer::draw() {
     }
     kinoko_texture_bind_stage(0,0);kinoko_texture_bind_stage(0,0);
     // 45662A..45665A retains the original final XYZ/RHW/diffuse triangle.
-    struct DebugVertex { float x,y,z,rhw;DWORD color; };
+    struct DebugVertex { float x,y,z,rhw;std::uint32_t color; };
     static const DebugVertex triangle[]={{200,10,1,1,0xffff0000},{400,200,1,1,0xffff0000},{10,200,1,1,0xffff0000}};
     device->SetFVF(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse);
     device->DrawPrimitiveUP(kinoko::graphics::primitive_trianglestrip,1,triangle,sizeof(DebugVertex));
@@ -197,14 +197,14 @@ void clear_resource(Resource *resource) {
     if (resource) resource->clear();
 }
 int32_t replace_texture(Resource *resource,const char *name,KinokoActResource *texture) {
-    if(!name || !texture) return E_FAIL;
+    if(!name || !texture) return kinoko::graphics::error_failure;
     const kinoko::act::ResourceMethods methods(texture);
     auto* converted = methods.query(kinoko::act::ResourceKind::render_target);
     if (!converted) converted = methods.query(kinoko::act::ResourceKind::texture);
-    if (!converted) return E_FAIL;
+    if (!converted) return kinoko::graphics::error_failure;
     const auto handle=kinoko::act::texture_resource(converted).texture;
     resource->replace_texture(name,handle);
-    return S_OK;
+    return kinoko::graphics::ok;
 }
 namespace {
 uint32_t hash_name(const char *name) {return static_cast<uint32_t>(kinoko_boost_hash_range(name, name+std::strlen(name)));}

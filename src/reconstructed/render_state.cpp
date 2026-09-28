@@ -12,7 +12,7 @@ extern "C" int32_t kinoko_render_set_alpha(int32_t blend_enabled,int32_t test_en
     auto *device=kinoko_renderer.device;
     auto *flags=reinterpret_cast<unsigned char *>(&kinoko_renderer.state.alpha_flags);
     const auto blend=static_cast<uint8_t>(blend_enabled),test=static_cast<uint8_t>(test_enabled);
-    HRESULT result=S_OK;
+    kinoko::graphics::Result result=kinoko::graphics::ok;
     if(flags[0]!=blend) {
         if(device) result=device->SetRenderState(kinoko::graphics::state_alphablendenable,blend);
         flags[0]=blend;
@@ -28,7 +28,7 @@ extern "C" int32_t kinoko_render_set_alpha(int32_t blend_enabled,int32_t test_en
 extern "C" int32_t kinoko_render_set_depth(int32_t test_enabled,int32_t write_enabled) {
     auto *device=kinoko_renderer.device;
     const auto test=static_cast<uint8_t>(test_enabled),write=static_cast<uint8_t>(write_enabled);
-    HRESULT result=S_OK;
+    kinoko::graphics::Result result=kinoko::graphics::ok;
     if(device) {
         device->SetRenderState(kinoko::graphics::state_zenable,test);
         result=device->SetRenderState(kinoko::graphics::state_zwriteenable,write);
@@ -41,7 +41,7 @@ extern "C" int32_t kinoko_render_set_depth(int32_t test_enabled,int32_t write_en
 extern "C" int32_t kinoko_render_set_filter(int32_t mode) {
     if(kinoko_renderer.state.filter==mode) return 0;
     auto *device=kinoko_renderer.device;
-    HRESULT status=S_OK;
+    kinoko::graphics::Result status=kinoko::graphics::ok;
     if(device && (mode==1 || mode==2)) {
         device->SetSamplerState(0,kinoko::graphics::sampler_magfilter,mode);
         device->SetSamplerState(0,kinoko::graphics::sampler_minfilter,mode);
@@ -52,7 +52,7 @@ extern "C" int32_t kinoko_render_set_filter(int32_t mode) {
 }
 extern "C" int32_t kinoko_render_set_cull(int32_t mode) {
     if(kinoko_renderer.state.cull==mode) return 0;
-    HRESULT status=S_OK;
+    kinoko::graphics::Result status=kinoko::graphics::ok;
     if(kinoko_graphics.device && mode>=1 && mode<=3)
         status=kinoko_graphics.device->SetRenderState(kinoko::graphics::state_cullmode,mode);
     kinoko_renderer.state.cull=mode;

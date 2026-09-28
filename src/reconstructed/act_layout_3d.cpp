@@ -19,16 +19,16 @@ kinoko::graphics::Matrix* matrix_multiply(kinoko::graphics::Matrix* out,const ki
 namespace kinoko::act {
 // 43C690 does not install the 2D layer's transform-property aliases.
 int32_t bind_layout_3d(Layout3DRecord *layout, KinokoActLayer *layer) {
-    if (!layer) return E_FAIL;
+    if (!layer) return kinoko::graphics::error_failure;
     layout->layer=layer;
-    return S_OK;
+    return kinoko::graphics::ok;
 }
 
 int32_t update_layout_3d(Layout3DRecord *layout) {
-    if (!layout->layer) return E_FAIL;
+    if (!layout->layer) return kinoko::graphics::error_failure;
     const LayerStorageView owner(layout->layer);
-    if (!(owner.get(&LayerStorageRecord::visibility_flags) & 0xff)) return S_OK;
-    if (!owner.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource)) return E_FAIL;
+    if (!(owner.get(&LayerStorageRecord::visibility_flags) & 0xff)) return kinoko::graphics::ok;
+    if (!owner.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource)) return kinoko::graphics::error_failure;
     kinoko::graphics::Matrix world{}, operation{};
     world.m[0][0]=world.m[1][1]=world.m[2][2]=world.m[3][3]=1.0f;
     // 43C920: yaw/pitch/roll in radians, then translation, then scaling.
@@ -40,15 +40,15 @@ int32_t update_layout_3d(Layout3DRecord *layout) {
     matrix_scaling(&operation,layout->scale.x,layout->scale.y,layout->scale.z);
     matrix_multiply(&world,&world,&operation);
     std::memcpy(layout->world,&world,sizeof(world));
-    return S_OK;
+    return kinoko::graphics::ok;
 }
 
 int32_t draw_layout_3d(Layout3DRecord *layout) {
-    if (!layout->layer) return E_FAIL;
+    if (!layout->layer) return kinoko::graphics::error_failure;
     const LayerStorageView owner(layout->layer);
-    if (!(owner.get(&LayerStorageRecord::visibility_flags) & 0xff)) return S_OK;
+    if (!(owner.get(&LayerStorageRecord::visibility_flags) & 0xff)) return kinoko::graphics::ok;
     auto *resource=owner.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource);
-    if (!resource) return E_FAIL;
+    if (!resource) return kinoko::graphics::error_failure;
     auto *device=kinoko_graphics.device;
     std::uint32_t depth{},write_depth{},alpha{};
     kinoko::graphics::Matrix previous{},world{};
@@ -63,13 +63,13 @@ int32_t draw_layout_3d(Layout3DRecord *layout) {
     device->SetTransform(kinoko::graphics::transform_world,&world);
     void* converted = nullptr;
     // 43CB5D deliberately returns before restoring the state on failed Query.
-    if (!ResourceMethods(resource).query_type(&resource_type_descriptor(ResourceKind::mesh), &converted)) return E_FAIL;
+    if (!ResourceMethods(resource).query_type(&resource_type_descriptor(ResourceKind::mesh), &converted)) return kinoko::graphics::error_failure;
     static_cast<kinoko::mesh::Resource*>(converted)->draw();
     device->SetTransform(kinoko::graphics::transform_world,&previous);
     device->SetRenderState(kinoko::graphics::state_zenable,depth);
     device->SetRenderState(kinoko::graphics::state_zwriteenable,write_depth);
     device->SetRenderState(kinoko::graphics::state_alphablendenable,alpha);
-    return S_OK;
+    return kinoko::graphics::ok;
 }
 
 // 43C220 copies all nine scalar fields, the borrowed layer, and the matrix.

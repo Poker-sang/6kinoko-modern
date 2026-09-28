@@ -4,6 +4,7 @@
 #include "kinoko/act_host.h"
 #include "kinoko/memory_access.hpp"
 #include <vector>
+#include <atomic>
 #include <type_traits>
 #include <new>
 extern "C" void kinoko_trace_i32(const char*, int32_t);
@@ -46,19 +47,19 @@ void* sprite_storage(KinokoActRuntime* runtime) { return RecordView<RuntimeRecor
 extern "C" int32_t kinoko_act_append_blit(KinokoActRuntime* self, int32_t x, int32_t y,
     int32_t width, int32_t height, KinokoActResource* texture_resource, int32_t sx, int32_t sy,
     int32_t blend, float alpha) {
-    if (!self || !texture_resource) return E_FAIL;
+    if (!self || !texture_resource) return kinoko::graphics::error_failure;
     const auto* symbols=kinoko_act_host_symbols();
     const auto type=kinoko::memory::load<const void*>(texture_resource);
     if(type!=symbols->texture_resource_vtable &&
-       type!=symbols->render_target_vtable) return E_FAIL;
+       type!=symbols->render_target_vtable) return kinoko::graphics::error_failure;
     const auto texture=texture_runtime_state(texture_resource);
     const BlitCommand command{blend,alpha<0?0:alpha>1?1:alpha,
         static_cast<float>(x),static_cast<float>(y),sx,sy,width,height,
         texture.handle};
     try { ensure<KinokoActCommandStorage>(command_storage(self))->values.push_back(command); }
-    catch(const std::bad_alloc&) { return E_OUTOFMEMORY; }
-    static volatile LONG trace_count;
-    if(InterlockedIncrement(&trace_count)<=12) {
+    catch(const std::bad_alloc&) { return kinoko::graphics::error_out_of_memory; }
+    static std::atomic<int32_t> trace_count{0};
+    if(++trace_count<=12) {
         kinoko_trace_i32("act:bitblt-texture",command.texture);
         kinoko_trace_i32("act:bitblt-x",x);kinoko_trace_i32("act:bitblt-y",y);
     }

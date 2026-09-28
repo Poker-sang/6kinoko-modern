@@ -677,7 +677,7 @@ extern "C" int32_t __fastcall kinoko_method_write_act(KinokoActDocument* act,voi
 // CActResource2D stores extensionless names. The CV2 loader returns the
 // logical handle; ownership of the D3D texture stays with the texture store.
 extern "C" int32_t kinoko_load_act_texture(const char *texture_name) {
-    char path[MAX_PATH];
+    char path[260]; // Existing asset-name capacity, independent of OS path limits.
     if (!texture_name || !kinoko_graphics.device) return 0;
     const size_t length = std::strlen(texture_name);
     if (!length || length + 5 > sizeof(path)) return 0;

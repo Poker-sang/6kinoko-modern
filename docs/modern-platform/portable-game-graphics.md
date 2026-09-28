@@ -24,3 +24,9 @@ native application entrypoint/modal hook, shader staging/selection (the game
 currently loads DXBC), and residual Windows consumers. Compiling the backend on
 other platforms does not yet establish a playable non-Windows game. No game or
 contract execution is performed for this batch.
+
+User notes most visible game text is image-based, but asks to retain text support
+for future localization. Keep layout, glyph caching and rendering interfaces;
+do not delete text functionality based on that observation. GDI and CharNextA
+remain explicit font-backend migration work, including checking actual callers
+and choosing a distributable font/metrics policy before switching rasterizers.

@@ -25,10 +25,10 @@ extern "C" int32_t kinoko_texture_bind_stage(int32_t stage,int32_t handle) {
     // Existing invalid-device/handle guards remain reconstruction boundaries.
     // Eight stages correspond to the recovered cache, not an unbounded offset.
     if (stage<0 || stage>=KINOKO_TEXTURE_STAGE_COUNT || !device ||
-        !*reinterpret_cast<void***>(device)) return E_FAIL;
+        !*reinterpret_cast<void***>(device)) return kinoko::graphics::error_failure;
     if (handle && (handle<0 || handle>=KINOKO_TEXTURE_CAPACITY || !kinoko_texture_slots[handle].texture)) {
         kinoko_trace_i32("texture:unresolved-handle",handle);
-        return E_FAIL;
+        return kinoko::graphics::error_failure;
     }
     BindingSink sink(*device);
     return stage_handles.bind(sink,static_cast<uint32_t>(stage),handle);

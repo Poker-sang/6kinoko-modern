@@ -8,19 +8,21 @@
 #include "kinoko/quad_render.h"
 #include "kinoko/memory_access.hpp"
 #include <cstring>
+// CharNextA remains with the existing GDI/ANSI text backend until font migration.
+#include <windows.h>
 using kinoko::legacy::StringView;
 namespace {
 using TextRecord=kinoko::text::StringLayout;
 using GlyphRecord=kinoko::text::Glyph;
 }
 extern "C" int32_t __fastcall kinoko_method_set_string_layer(KinokoStringLayout* object,void*,KinokoActLayer* layer) {
-    if(!layer) return E_FAIL;
+    if(!layer) return kinoko::graphics::error_failure;
     reinterpret_cast<TextRecord*>(object)->layer=layer;return 0;
 }
 extern "C" int32_t __fastcall kinoko_method_update_string_layout(KinokoStringLayout* layout,void*) {
     auto& text=*reinterpret_cast<TextRecord*>(layout);
     auto *layer=text.layer;
-    if(!layer) return E_FAIL;
+    if(!layer) return kinoko::graphics::error_failure;
     if(text.rebuild) { kinoko_string_rebuild_queue(layout);text.rebuild = uint8_t{0}; }
     StringView pending(&text.pending),displayed(&text.text);
     // Original consumes pending multibyte characters before visibility testing.
@@ -66,7 +68,7 @@ extern "C" int32_t __fastcall kinoko_method_update_string_layout(KinokoStringLay
 extern "C" int32_t __fastcall kinoko_method_draw_string_layout(KinokoStringLayout* layout,void*,float x,float y) {
     auto& text=*reinterpret_cast<TextRecord*>(layout);
     auto *layer=text.layer;
-    if(!layer) return E_FAIL;
+    if(!layer) return kinoko::graphics::error_failure;
     if(!kinoko::map::LayerView(layer).get(&kinoko::map::LayerRecord::visible)) return 0;
     auto *device=kinoko_graphics.device;
     kinoko::render::GraphicsDrawState saved(device,kinoko::render::ScopeKind::blend);

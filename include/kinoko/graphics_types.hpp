@@ -2,6 +2,7 @@
 #include <cstdint>
 namespace kinoko::graphics {
 using Result = std::int32_t;
+inline constexpr Result error_out_of_memory = static_cast<Result>(0x8007000eu);
 inline constexpr Result error_failure = static_cast<Result>(0x80004005u);
 inline constexpr Result error_pointer = static_cast<Result>(0x80004003u);
 inline constexpr Result error_argument = static_cast<Result>(0x80070057u);
