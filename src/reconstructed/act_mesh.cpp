@@ -8,7 +8,6 @@
 #include "kinoko/act_host.h"
 #include "kinoko/act_runtime.h"
 #include "kinoko/legacy_method_entries.h"
-#include "kinoko/legacy_memory.hpp"
 #include "kinoko/native_record_view.hpp"
 #include "kinoko/legacy_abi.h"
 #include "kinoko/boost_hash.h"
@@ -26,8 +25,6 @@
 
 namespace kinoko::mesh {
 namespace {
-using legacy::address;
-using legacy::pointer;
 using legacy::StringView;
 struct ReaderOwner {
     KinokoArchiveReader *reader{};
@@ -210,7 +207,7 @@ int32_t replace_texture(Resource *resource,const char *name,KinokoActResource *t
     return S_OK;
 }
 namespace {
-uint32_t hash_name(const char *name) {return static_cast<uint32_t>(kinoko_boost_hash_range((const char*)(uintptr_t)(address(name)), (const char*)(uintptr_t)(address(name+std::strlen(name)))));}
+uint32_t hash_name(const char *name) {return static_cast<uint32_t>(kinoko_boost_hash_range(name, name+std::strlen(name)));}
 Resource *__fastcall clone_resource(Resource *source,void *) {
     auto *copy=create_resource();
     if(!copy) return nullptr;
@@ -272,48 +269,3 @@ act::Layout3DRecord *create_layout() {
 }
 }
 
-// 457A10: a controller owns its child vector, while the mesh manager owns
-// lookup handles. A handle borrows the object reached through its first word.
-extern "C" const void* kinoko_mesh_manager_methods;
-namespace {
-struct MeshChildRange {
-    unsigned char prefix[156];
-    int32_t *begin, *end;
-};
-static_assert(offsetof(MeshChildRange, begin) == 156);
-static_assert(offsetof(MeshChildRange, end) == 160);
-}
-extern "C" int32_t kinoko_update_mesh_children(void *node, int32_t argument) {
-    if (!node) return 0;
-    using kinoko::legacy::address;
-    using kinoko::legacy::field;
-    using kinoko::legacy::pointer;
-    const kinoko::native::RecordView<MeshChildRange> children(node);
-    const auto begin = children.get(&MeshChildRange::begin);
-    const auto end = children.get(&MeshChildRange::end);
-    const auto byte_count = static_cast<int32_t>(reinterpret_cast<uintptr_t>(end) - reinterpret_cast<uintptr_t>(begin));
-    if (byte_count < static_cast<int32_t>(sizeof(int32_t))) return 0;
-
-    int32_t result = 0;
-    for (uint32_t index = 0; index < static_cast<uint32_t>(byte_count >> 2); ++index) {
-        const auto entry = kinoko::legacy::load<int32_t>(begin + index);
-        if (!entry) continue;
-        const auto* methods = static_cast<const unsigned char*>(kinoko_mesh_manager_methods);
-        using Lookup = void** (__thiscall*)(const void*, int32_t, int32_t);
-        void** handle = nullptr;
-        if (methods) {
-            const auto lookup = kinoko::legacy::load<Lookup>(methods + 3*sizeof(void*));
-            if (lookup) handle = lookup(&kinoko_mesh_manager_methods, entry, argument);
-        }
-        if (!handle) continue;
-        auto* object = kinoko::legacy::load<void*>(handle);
-        if (!object) continue;
-        const auto* object_methods = kinoko::legacy::load<const unsigned char*>(object);
-        using Update = int32_t (__thiscall*)(void*, int32_t);
-        if (object_methods) {
-            const auto update = kinoko::legacy::load<Update>(object_methods);
-            if (update) result = update(object, argument);
-        }
-    }
-    return result;
-}

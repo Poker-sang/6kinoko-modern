@@ -155,7 +155,6 @@ int32_t kinoko_texture_type_identity = 0;
 
 int32_t kinoko_render_target_type_identity = 0;
 
-const void* kinoko_mesh_manager_methods = 0;
 
 char kinoko_resource2d_class_published = 0;
 

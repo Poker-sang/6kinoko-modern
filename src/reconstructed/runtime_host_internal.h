@@ -762,7 +762,6 @@ extern int32_t kinoko_texture_type_identity;
 
 extern int32_t kinoko_render_target_type_identity;
 
-extern const void* kinoko_mesh_manager_methods;
 
 extern char kinoko_resource2d_class_published;
 

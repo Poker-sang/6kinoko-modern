@@ -75,12 +75,6 @@ extern "C" int32_t kinoko_act_append_blit(KinokoActRuntime* receiver, int32_t x,
             bits(source_x), bits(source_y), bits(blend), bits(alpha)});
 }
 
-extern "C" int32_t kinoko_update_mesh_children(void* node, int32_t argument) {
-    return record(9, {bits((int32_t)(intptr_t)node), bits(argument)});
-}
-
-
-
 extern "C" KinokoCollisionState *kinoko_game_collision_state(void) { return nullptr; }
 extern "C" int32_t kinoko_actor_move(KinokoCollisionState *, KinokoActor *actor, float dx, float dy) {
     const auto receiver=(int32_t)(intptr_t)actor;
@@ -159,11 +153,6 @@ int main() {
         if (!check(8, kinoko_call_draw_method(receiver, reinterpret_cast<void*>(&kinoko_method_act_bitblt), (-31), (-14), (3), (20), (KinokoActResource*)(uintptr_t)((37)), (54), (71), (88), (7.75f)), {receiver_bits, bits(-31), bits(-14), bits(3), bits(20), bits(37),
             bits(54), bits(71), bits(88), bits(7.75f)})) {
             std::fprintf(stderr, "Entry contract failed: function_4514a0\n"); return 1;
-        }
-        if (!check(9, kinoko_call_thiscall1_result(receiver,
-            reinterpret_cast<void*>(&kinoko_method_update_children), static_cast<int32_t>(bits(-31))),
-            {receiver_bits, bits(-31)})) {
-            std::fprintf(stderr, "Entry contract failed: function_457a10\n"); return 1;
         }
         if (!check(11, kinoko_call_thiscall2_result(receiver,
             reinterpret_cast<void*>(&kinoko_method_actor_move), static_cast<int32_t>(bits(-3.25f)),

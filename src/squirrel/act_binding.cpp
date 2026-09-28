@@ -947,7 +947,7 @@ int32_t kinoko_publish_acting_player(SQVM* vm,
         kinoko_trace_i32("act:acting-instance-user-after",
                          kinoko::script::diagnostic_address(instance->_userpointer));
     }
-    sq_getstackobj(vm, -1, (HSQOBJECT*)(out_pair));
+    kinoko::script::pair::capture(vm, -1, out_pair);
     kinoko_sqrat_retain_pair(vm, out_pair);
     result = sq_newslot(vm, -3, ((0) != 0));
     if (std::strcmp(name, "pl") == 0 || std::strcmp(name, "player") == 0) {
@@ -1062,7 +1062,7 @@ intptr_t kinoko_local_compile_file_native(SQVM* vm) {
     int32_t environment[sizeof(HSQOBJECT)/sizeof(int32_t)] = {static_cast<int32_t>(OT_NULL), 0};
     if (sq_gettop(vm) < 2 || SQ_FAILED(sq_getstring(vm, 2, &path))) return 0;
     if (sq_gettop(vm) >= 3)
-        sq_getstackobj(vm, 3, reinterpret_cast<HSQOBJECT*>(environment));
+        kinoko::script::pair::capture(vm, 3, environment);
     sq_pushbool(vm, kinoko_compile_act_file(vm, path, environment));
     return 1;
 }
@@ -1134,7 +1134,7 @@ int32_t kinoko_prepare_cact_layer_objects(SQVM* vm, KinokoActLayer* layer,
         std::memcpy(pair, &empty, sizeof empty);
     };
     reset(script, kinoko_act_host_symbols()->layer_ref_vtable);
-    std::array<int32_t, 2> table{static_cast<int32_t>(OT_NULL), 0};
+    kinoko::act::ScriptValueStorage table{static_cast<int32_t>(OT_NULL), 0};
     if (!kinoko_sqrat_new_table(machine, table.data())) return 0;
     script.set(&LayerObjectRecord::value, table);
     kinoko_sqrat_retain_pair(machine, reinterpret_cast<const int32_t*>(script.bytes(&LayerObjectRecord::value)));
@@ -1201,7 +1201,7 @@ int32_t kinoko_bind_original_layout(KinokoActLayout* layout, bool map) {
     if (!vm) return static_cast<int32_t>(E_INVALIDARG);
     kinoko::act::LayerObjectRecord root{}; int32_t  klass[sizeof(HSQOBJECT)/sizeof(int32_t)] = {static_cast<int32_t>(OT_NULL), 0};
     int32_t outer[sizeof(HSQOBJECT)/sizeof(int32_t)] = {static_cast<int32_t>(OT_NULL), 0}, script[sizeof(HSQOBJECT)/sizeof(int32_t)] = {static_cast<int32_t>(OT_NULL), 0};
-    if (!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return static_cast<int32_t>(E_FAIL);
+    if (!kinoko_sqrat_root_construct(&root, vm)) return static_cast<int32_t>(E_FAIL);
     const bool registered = map
         ? kinoko_publish_c2dmaplayout_class(vm, reinterpret_cast<void*>(&root), klass) != 0
         : kinoko_publish_c2dlayout_class(vm, reinterpret_cast<void*>(&root)) && get_pair(reinterpret_cast<void*>(&root), "C2DLayout", klass);
@@ -1271,7 +1271,7 @@ intptr_t kinoko_map_get_chip_layout(SQVM* vm) {
         sq_pushnull(vm);
         return 1;
     }
-    if (!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm)))
+    if (!kinoko_sqrat_root_construct(&root, vm))
         return 0;
     if (get_pair(reinterpret_cast<void*>(&root), "ChipLayout", chip_class) &&
         kinoko_create_unbound_instance(vm, chip_class, begin + index, instance))
@@ -1532,7 +1532,7 @@ intptr_t kinoko_resource_get_chip_info(SQVM* vm) {
         get_game_integer(vm, 2, &id) < 0)
         return 0;
     chip = kinoko_mcd_find_chip(kinoko::act::chip_resource(resource).data.get(), (uint32_t)id);
-    if (chip == nullptr || !(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) {
+    if (chip == nullptr || !kinoko_sqrat_root_construct(&root, vm)) {
         sq_pushnull(vm);
         return 1;
     }
@@ -1610,7 +1610,7 @@ extern "C" int32_t __fastcall kinoko_method_register_chip_resource(
 int32_t kinoko_get_act_resource_class(SQVM* vm, KinokoActResource* resource, int32_t out[sizeof(HSQOBJECT)/sizeof(int32_t)]) {
     if(kinoko::memory::load<const void*>(resource)==kinoko::mesh::resource_methods()) {
         kinoko::act::LayerObjectRecord root{};
-        if(!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return 0;
+        if(!kinoko_sqrat_root_construct(&root, vm)) return 0;
         const auto ok=kinoko_publish_mesh_resource_class(vm, reinterpret_cast<void*>(&root), out);
         kinoko_sqrat_object_release((void *)(&root));return ok;
     }
@@ -1620,7 +1620,7 @@ int32_t kinoko_get_act_resource_class(SQVM* vm, KinokoActResource* resource, int
         return out[0] == 0x08004000;
     }
     kinoko::act::LayerObjectRecord root{};
-    if (!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return 0;
+    if (!kinoko_sqrat_root_construct(&root, vm)) return 0;
     const auto ok = kinoko_publish_chip_resource_class(vm, reinterpret_cast<void*>(&root), out);
     kinoko_sqrat_object_release((void *)(&root));
     return ok;
@@ -1641,7 +1641,7 @@ int32_t kinoko_bind_original_resource(KinokoActResource* resource, void* object,
     if (!vm || (raw && (!name || !*name))) return static_cast<int32_t>(E_FAIL);
     if (!name || !*name) name = kinoko_string_data(ResourcePublicationView(resource).bytes(&ResourcePublicationRecord::name));
     kinoko::act::LayerObjectRecord root{}; int32_t  klass[sizeof(HSQOBJECT)/sizeof(int32_t)] = { static_cast<int32_t>(OT_NULL), 0 }, instance[sizeof(HSQOBJECT)/sizeof(int32_t)] = { static_cast<int32_t>(OT_NULL), 0 };
-    if (!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return static_cast<int32_t>(E_FAIL);
+    if (!kinoko_sqrat_root_construct(&root, vm)) return static_cast<int32_t>(E_FAIL);
     bool registered = get_pair(reinterpret_cast<void*>(&root), class_name, klass) && klass[0] == 0x08004000;
     if (!registered) {
         kinoko_sqrat_release_pair(vm, klass);
@@ -1862,14 +1862,14 @@ int32_t kinoko_begin_stage_this(KinokoActRuntime* resource_ptr, int32_t stage) {
                 kinoko_trace_i32("450950:layer-count", layer_count);
                 kinoko_register_act_script(DocumentView(act).bytes(&DocumentRecord::script), &tables.global);
                 auto* source = runtime.get(&RuntimeRecord::source_holder)->document;
-                kinoko_execute_act_callback(DocumentView(source).bytes(&DocumentRecord::script), 4, "act:callback-init");
+                kinoko_execute_act_callback(DocumentView(source).bytes(&DocumentRecord::script), offsetof(ScriptStorageRecord,initialize), "act:callback-init");
                 for (int32_t index = 0;; ++index) {
                     const DocumentView current(runtime.get(&RuntimeRecord::active_document));
                     const auto layers = current.get(&DocumentRecord::layers);
                     if (!ordered_layers(layers) || index >= layer_distance(layers)) break;
                     auto* layer = layer_at(layers, index);
                     auto* script = layer ? LayerStorageView(layer).bytes(&LayerStorageRecord::script) : nullptr;
-                    kinoko_execute_act_callback(script, 4, "act:layer-callback-init");
+                    kinoko_execute_act_callback(script, offsetof(ScriptStorageRecord,initialize), "act:layer-callback-init");
                 }
             }
         }
@@ -1992,7 +1992,7 @@ int32_t kinoko_root_table_register_resource(void* root_object,
         // 451214 ignores Register's HRESULT, then invokes any captured OnCreate.
         const auto registered = kinoko_register_act_script((void*)(uintptr_t)(script_ptr), reinterpret_cast<void*>(&global_object));
         kinoko_trace_i32("450f30:embedded-script-result", registered >= 0);
-        kinoko_execute_act_callback((void*)(uintptr_t)(script_ptr), 44, "act:callback-oncreate");
+        kinoko_execute_act_callback((void*)(uintptr_t)(script_ptr), offsetof(kinoko::act::ScriptStorageRecord,release), "act:callback-oncreate");
     }
 
     /* 466100 only publishes the ACT.  BeginStage is a script-facing
@@ -2023,7 +2023,7 @@ int32_t kinoko_root_table_construct_this(KinokoActRuntime* resource_ptr,
 
     if (resource_ptr == 0 || vm == 0)
         return (int32_t)0x80070057u;
-    if (!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root_object), vm)))
+    if (!kinoko_sqrat_root_construct(&root_object, vm))
         return (int32_t)0x80004005u;
 
     /* 450E30 accepts an optional pre-existing Sqrat object only to verify
@@ -2250,7 +2250,7 @@ extern "C" int32_t __fastcall kinoko_method_register_string_layout(KinokoStringL
     SQVM* const vm = wrapper.get(&kinoko::act::LayerObjectRecord::vm);
     if(!vm) return E_INVALIDARG;
     kinoko::act::LayerObjectRecord root{}; int32_t klass[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0},outer[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0},script[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0};
-    if(!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return E_FAIL;
+    if(!kinoko_sqrat_root_construct(&root, vm)) return E_FAIL;
     const bool ok=kinoko_publish_string_layout_class(vm, reinterpret_cast<void*>(&root), klass) &&
         kinoko_create_unbound_instance(vm, klass, layout, outer) &&
         kinoko_sqrat_raw_set_pair(vm, pair, "layout", outer) &&
@@ -2295,7 +2295,7 @@ extern "C" int32_t kinoko_publish_mesh_resource_class(SQVM* vm,void* root,int32_
 extern "C" int32_t __fastcall kinoko_method_register_mesh_resource(void*,void *,SQVM* vm) {
     if(!vm) return E_INVALIDARG;
     kinoko::act::LayerObjectRecord root{}; int32_t klass[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0};
-    if(!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return E_FAIL;
+    if(!kinoko_sqrat_root_construct(&root, vm)) return E_FAIL;
     const auto ok=kinoko_publish_mesh_resource_class(vm, reinterpret_cast<void*>(&root), klass);
     kinoko_sqrat_release_pair(vm, klass);kinoko_sqrat_object_release((void *)(&root));
     return ok?S_OK:E_FAIL;
@@ -2316,7 +2316,7 @@ extern "C" int32_t __fastcall kinoko_method_register_layout_3d(KinokoActLayout* 
     const auto vm = wrapper.get(&kinoko::act::LayerObjectRecord::vm);
     if(!vm) return E_INVALIDARG;
     kinoko::act::LayerObjectRecord root{}; int32_t klass[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0},outer[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0},script[sizeof(HSQOBJECT)/sizeof(int32_t)]={static_cast<int32_t>(OT_NULL),0};
-    if(!(int32_t)(intptr_t)(kinoko_sqrat_root_construct((void *)(&root), vm))) return E_FAIL;
+    if(!kinoko_sqrat_root_construct(&root, vm)) return E_FAIL;
     // 43C2B0 spells the translation-Z script property "coS_z". Do not invent
     // a trans_z alias or copy the serialized trans/roll offset alias into SQ.
     static const kinoko_native_view_property properties[]={

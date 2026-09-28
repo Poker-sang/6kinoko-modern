@@ -96,9 +96,6 @@ int32_t __fastcall kinoko_method_root_table_construct(KinokoActRuntime* receiver
 int32_t __fastcall kinoko_method_act_bitblt(KinokoActRuntime* receiver, void* unused_edx, int32_t x, int32_t y,
     int32_t width, int32_t height, KinokoActResource* resource, int32_t source_x, int32_t source_y, int32_t blend,
     float alpha);
-// function_457a10
-int32_t __fastcall kinoko_method_update_children(void* receiver, void* unused_edx, int32_t argument);
-
 // function_45dbd0
 int32_t __fastcall kinoko_method_actor_move(struct KinokoActor* receiver, void* unused_edx, float dx, float dy);
 // function_45eb00

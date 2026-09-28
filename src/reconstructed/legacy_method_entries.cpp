@@ -16,7 +16,6 @@ extern "C" {
 void* kinoko_destroy_cact_with_flags(KinokoActDocument* receiver, unsigned char flags);
 int32_t kinoko_begin_stage_this(KinokoActRuntime* receiver, int32_t stage);
 int32_t kinoko_root_table_construct_this(KinokoActRuntime* receiver, struct SQVM* vm, void* output);
-int32_t kinoko_update_mesh_children(void* receiver, int32_t argument);
 
 
 
@@ -72,15 +71,6 @@ extern "C" int32_t __fastcall kinoko_method_act_bitblt(KinokoActRuntime* receive
     int32_t source_y, int32_t blend, float alpha) {
     return kinoko_act_append_blit(receiver, x, y, width, height, resource, source_x, source_y, blend, alpha);
 }
-
-// function_457a10
-extern "C" int32_t __fastcall kinoko_method_update_children(void* receiver, void* /* unused_edx */,
-    int32_t argument) {
-    return kinoko_update_mesh_children(reinterpret_cast<void*>(receiver), argument);
-}
-
-
-
 
 // function_45dbd0
 extern "C" int32_t __fastcall kinoko_method_actor_move(struct KinokoActor* receiver, void* /* unused_edx */,
