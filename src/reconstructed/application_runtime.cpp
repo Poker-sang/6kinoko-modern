@@ -1,3 +1,4 @@
+#include "kinoko/runtime_paths.h"
 #include "kinoko/windows_owner.hpp"
 #include "kinoko/base_utilities.h"
 #include "kinoko/game_runtime.h"
@@ -321,10 +322,10 @@ extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     kinoko_application_initialize_host();
     kinoko::windows::HandleOwner singleton(CreateMutexA(nullptr, TRUE, kinoko_application_title()));
     if (GetLastError() == ERROR_ALREADY_EXISTS) return 1;
-    char executable[MAX_PATH]{};
-    const DWORD length = GetModuleFileNameA(nullptr, executable, MAX_PATH);
-    if (length && length < MAX_PATH) {
-        if (auto* slash = std::strrchr(executable, '\\')) { slash[1] = 0; SetCurrentDirectoryA(executable); }
+    if (!kinoko_use_executable_directory()) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Startup error",
+            "Cannot access the executable directory.", nullptr);
+        return 1;
     }
     // SDL expects UTF-8; the inherited title accessor contains CP932 bytes.
     auto& platform = kinoko::platform::host();

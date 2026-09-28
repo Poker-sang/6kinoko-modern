@@ -1,4 +1,4 @@
-#include <windows.h> // Remaining FindFirst/Next/Close host boundary.
+#include "kinoko/directory_search.h"
 #include "kinoko/act_ownership.hpp"
 #include "kinoko/legacy_string.hpp"
 #include "kinoko/act_frame.h"
@@ -15,9 +15,8 @@
 
 namespace kinoko::act {
 struct FindEntry {
-    HANDLE handle = INVALID_HANDLE_VALUE;
-    WIN32_FIND_DATAA data{};
-    ~FindEntry() { if (handle != INVALID_HANDLE_VALUE) FindClose(handle); }
+    KinokoDirectorySearch* search = nullptr;
+    ~FindEntry() { kinoko_directory_close(search); }
 };
 struct FindState {
     std::map<int32_t, std::unique_ptr<FindEntry>> entries;
@@ -40,14 +39,14 @@ FindMap *finds(KinokoActRuntime *storage) {
 }
 
 // Original 452150..4522C0. IDs count successful starts, independently of the
-// number of live handles. FindNext writes the same per-search WIN32 data.
+// number of live handles. Each search owns its current filename.
 extern "C" int32_t kinoko_act_find_first(KinokoActRuntime *storage, const char* pattern) {
     auto* entries=finds(storage);
     if (!entries || !pattern) return 0;
     try {
         auto entry=std::make_unique<FindEntry>();
-        entry->handle=FindFirstFileA(pattern,&entry->data);
-        if (entry->handle==INVALID_HANDLE_VALUE) return 0;
+        entry->search=kinoko_directory_first(pattern);
+        if (!entry->search) return 0;
         const auto view=runtime(storage);
         const auto id=view.get(&RuntimeRecord::next_find_id)+uint32_t{1};
         view.set(&RuntimeRecord::next_find_id,id);
@@ -61,24 +60,24 @@ extern "C" int32_t kinoko_act_find_next(KinokoActRuntime *storage, int32_t id) {
     auto* entries=finds(storage);
     if (!entries) return 0;
     const auto found=entries->find(id);
-    return found!=entries->end() && FindNextFileA(found->second->handle,&found->second->data);
+    return found!=entries->end() && kinoko_directory_next(found->second->search);
 }
 extern "C" int32_t kinoko_act_find_close(KinokoActRuntime *storage, int32_t id) {
     auto* entries=finds(storage);
     if (!entries) return 0;
     const auto found=entries->find(id);
     if (found==entries->end()) return 0;
-    const auto handle=found->second->handle;
-    found->second->handle=INVALID_HANDLE_VALUE;
+    const auto search=found->second->search;
+    found->second->search=nullptr;
     entries->erase(found); // Original erases even if the OS close fails.
     runtime(storage).set(&RuntimeRecord::find_count,static_cast<uint32_t>(entries->size()));
-    return FindClose(handle)!=0;
+    return kinoko_directory_close(search);
 }
 extern "C" const char* kinoko_act_find_name(KinokoActRuntime *storage, int32_t id) {
     auto* entries=finds(storage);
     if (!entries) return nullptr;
     const auto found=entries->find(id);
-    return found==entries->end() ? nullptr : found->second->data.cFileName;
+    return found==entries->end() ? nullptr : kinoko_directory_name(found->second->search);
 }
 
 // Original 44FDE0 writes selected members, not all 192 bytes. Keep unknown

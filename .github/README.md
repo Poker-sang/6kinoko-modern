@@ -75,3 +75,6 @@ Portable application/audio worker, event and clock migration: [runtime services]
 
 
 Internal graphics/ACT/actor synchronization now uses portable recursive mutexes; unused audio locks were removed. See [internal locks](../docs/modern-platform/internal-locks.md).
+
+
+ACT directory searches and executable-directory startup now use portable services. See [directory services](../docs/modern-platform/directory-services.md) for platform semantics and remaining full-game blockers.

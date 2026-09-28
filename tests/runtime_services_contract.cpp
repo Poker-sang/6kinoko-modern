@@ -1,3 +1,6 @@
+#include "kinoko/runtime_paths.h"
+#include <SDL3/SDL_filesystem.h>
+#include <filesystem>
 #include "kinoko/critical_section.h"
 #include "kinoko/runtime_sync.hpp"
 #include "kinoko/runtime_clock.h"
@@ -7,6 +10,13 @@
 using namespace kinoko::runtime;
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"failed: %s\n",#x); return 1; } } while(0)
 int main() {
+    const auto previous_directory=std::filesystem::current_path();
+    const bool directory_ready=kinoko_use_executable_directory()!=0;
+    const bool directory_matches=directory_ready && std::filesystem::equivalent(
+        std::filesystem::current_path(),std::filesystem::u8path(SDL_GetBasePath()));
+    std::filesystem::current_path(previous_directory);
+    CHECK(directory_matches);
+
     struct GuardedLock { uint32_t before; KinokoCriticalSection lock; uint32_t after; } storage{0xaabbccdd,{},0x12345678};
     auto* owned=kinoko_critical_section_construct(&storage.lock);
     owned->native->lock();

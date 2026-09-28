@@ -306,3 +306,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Migrate graphics/ACT/actor pool locks; delete idle audio locks and Windows lock helper.
 - [ ] Migrate host/COM/IME, fonts and ACT directory enumeration.
 - Details: [internal-locks.md](internal-locks.md).
+
+
+## Directory services checkpoint
+- [x] Migrate ACT directory enumeration and executable-directory startup.
+- [x] Record user acceptance of modern-x64-locks-03.
+- [ ] Migrate remaining window/COM/IME/font host boundaries.
+- Details: [directory-services.md](directory-services.md).

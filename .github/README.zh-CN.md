@@ -70,3 +70,6 @@ ACT/资源、角色/相机、地图/碰撞、输入/音频/应用与 VM 桥接�
 
 
 图形、ACT 和角色池内部同步已改用跨平台递归锁，闲置音频锁已删除。详见[内部锁迁移](../docs/modern-platform/internal-locks.md)。
+
+
+ACT 文件枚举和 EXE 所在目录初始化已接入跨平台服务。平台语义与完整游戏剩余阻塞见[目录服务](../docs/modern-platform/directory-services.md)。
