@@ -1954,13 +1954,10 @@ int32_t kinoko_root_table_register_resource(void* root_object,
         kinoko_trace_i32("sq-watch:fader-global-data", pair_data(global_pair));
         kinoko_trace_i32("sq-watch:fader-global-internal",
                          static_cast<int32_t>(_table(kinoko::script::pair::read(global_pair))->_uiRef));
-#if INTPTR_MAX == INT32_MAX
         kinoko_trace_ref_watch("fader-global-created",
-                               kinoko::script::diagnostic_address(kinoko_primary_shared_state),
+                               kinoko_primary_shared_state,
                                global_pair[0], pair_data(global_pair));
-#else
-        kinoko_trace("fader-global-created");
-#endif
+
     }
 
     kinoko_sqrat_bind_string(vm, act_pair, "stName", act_name);

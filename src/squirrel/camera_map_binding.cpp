@@ -1,3 +1,5 @@
+#include "sqpcheader.h"
+#include "sqclass.h"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/squirrel_type_key.hpp"
 #include "kinoko/map_manager_records.hpp"
@@ -10,7 +12,7 @@
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
 void kinoko_trace_i32(const char*, int32_t);
-void kinoko_trace_squirrel_table_entries(const char*, int32_t);
+void kinoko_trace_squirrel_table_entries(const char*, struct SQTable*);
 intptr_t kinoko_camera_update_entry(struct SQVM*);
 }
 namespace {
@@ -172,9 +174,7 @@ int32_t register_camera_binding_impl() {
     if (data_bits(value)) {
         kinoko_trace_i32("camera-class:type", value._type);
         kinoko_trace_i32("camera-class:data", data_bits(value));
-#if INTPTR_MAX == INT32_MAX
-        kinoko_trace_squirrel_table_entries("camera-class-members", load<int32_t>(data_bits(value)+24));
-#endif
+kinoko_trace_squirrel_table_entries("camera-class-members", _class(value)->_members);
     }
     kinoko_sqplus_object_destroy(&state.second_table);
     kinoko_sqplus_object_destroy(&state.first_table);

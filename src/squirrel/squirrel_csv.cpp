@@ -1,3 +1,4 @@
+#include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_api_types.h"
 #include "kinoko/csv_bridge.h"
 #include <windows.h>
@@ -124,7 +125,7 @@ extern "C" int32_t kinoko_read_csv(struct SQVM* vm, void* window, const char *pa
     int32_t object[3], int32_t encoded) {
     WrapperOwner owner{object}; // consume the original by-value SquirrelObject
     const char *error = nullptr;
-    if (object[1] != OT_TABLE) error = "SqReadCSV-ObjectNotTable";
+    if (kinoko::script::ObjectView(object).value()._type != OT_TABLE) error = "SqReadCSV-ObjectNotTable";
     else {
         std::string filename(path);
         if (encoded && filename.size() >= 4) filename.replace(filename.size() - 4, 4, ".cv1");
@@ -134,7 +135,7 @@ extern "C" int32_t kinoko_read_csv(struct SQVM* vm, void* window, const char *pa
             std::unique_ptr<char, decltype(&std::free)> bytes(raw, &std::free);
             // The byte transform is performed by the reader bridge, which
             // knows the exact file length (including embedded zero bytes).
-            if (kinoko_csv_populate((struct SQVM*)(uintptr_t)(vm), raw, object + 1) == 2) error = "SqReadCSV-DefineError";
+            if (kinoko_csv_populate((struct SQVM*)(uintptr_t)(vm), raw, reinterpret_cast<int32_t*>(kinoko::script::ObjectView(object).payload_data())) == 2) error = "SqReadCSV-DefineError";
         }
     }
     if (!error) return 1;
@@ -145,7 +146,7 @@ extern "C" int32_t kinoko_read_csv(struct SQVM* vm, void* window, const char *pa
 // Original 403000: ReadCSV receives the path and a by-value SqPlus object.
 // Keep the three-word object and borrowed primary VM/window at this boundary.
 extern "C" int32_t kinoko_script_read_csv(const char* path, const void* vtable,
-    int32_t type, int32_t data) {
-    int32_t object[3] = {static_cast<int32_t>(reinterpret_cast<uintptr_t>(vtable)), type, data};
-    return kinoko_read_csv((struct SQVM*)(uintptr_t)(static_cast<int32_t>(reinterpret_cast<uintptr_t>(kinoko_primary_vm))), (void*)(uintptr_t)(static_cast<int32_t>(reinterpret_cast<uintptr_t>(kinoko_game_window_slot))), path, object, kinoko_packed_assets != 0);
+    int32_t type, intptr_t data) {
+    kinoko::script::ObjectStorage object{vtable, kinoko::script::borrowed_value(type, data)};
+    return kinoko_read_csv(kinoko_primary_vm, kinoko_game_window_slot, path, reinterpret_cast<int32_t*>(&object), kinoko_packed_assets != 0);
 }

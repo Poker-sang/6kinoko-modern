@@ -51,7 +51,7 @@ void trace_error(HSQUIRRELVM vm) {
     sq_getlasterror(vm);
     const SQChar* message = nullptr;
     if (SQ_SUCCEEDED(sq_getstring(vm, -1, &message)) && message)
-        kinoko_trace_squirrel_name("402d40:error", diagnostic_address(message));
+        diagnostic_name("402d40:error", message);
 }
 class Reference final {
 public:
@@ -112,7 +112,7 @@ extern "C" int32_t kinoko_script_load_file(const char* path, const void* environ
     kinoko_trace("402d40:entry");
     kinoko_trace_i32("402d40:archives", kinoko_archive_count);
     if (!path) return 0;
-    kinoko_trace_squirrel_name("402d40:file", diagnostic_address(path));
+    diagnostic_name("402d40:file", path);
     const char* lookup = path;
     char packed_lookup[MAX_PATH];
     if (compiled_assets()) {

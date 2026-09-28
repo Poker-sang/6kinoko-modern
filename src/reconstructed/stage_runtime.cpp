@@ -19,6 +19,7 @@ extern struct SQVM *kinoko_primary_vm;
 
 namespace {
 using kinoko::script::diagnostic_address;
+using kinoko::memory::load;
 using namespace kinoko::stage;
 using kinoko::act::RuntimeRecord;
 using kinoko::native::RecordView;

@@ -24,11 +24,11 @@ namespace {
 std::map<std::string, uint32_t> script_schema{{"compiled",2}, {"filePath",3}};
 // 4175F0's stream has a vtable at +0, transfer at slot +12 and seek at +20.
 bool transfer(KinokoArchiveReader* stream, void* bytes, uint32_t size) {
-    return stream && (stream->methods->transfer(stream,bytes,size)&0xff)!=0;
+    return stream && (stream->methods->transfer(stream, nullptr,bytes,size)&0xff)!=0;
 }
 template<class T> bool transfer(KinokoArchiveReader* stream, T& value) { return transfer(stream, &value, sizeof(value)); }
 int32_t seek(KinokoArchiveReader* writer, int32_t offset, int32_t origin) {
-    return static_cast<int32_t>(writer->methods->seek(writer,offset,origin));
+    return static_cast<int32_t>(writer->methods->seek(writer, nullptr,offset,origin));
 }
 bool read_string(KinokoArchiveReader* reader, std::string& value, uint32_t maximum) {
     uint32_t length = 0;

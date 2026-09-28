@@ -31,6 +31,14 @@ struct RefTable {
 	};
 	RefTable();
 	~RefTable();
+	// Read-only diagnostic observer; does not create reference nodes.
+    SQUnsignedInteger DiagnosticRefs(const SQObject& object) const {
+        for (SQUnsignedInteger i = 0; i < _numofslots; ++i)
+            for (const RefNode* node = _buckets[i]; node; node = node->next)
+                if (type(node->obj) == type(object) && _rawval(node->obj) == _rawval(object))
+                    return node->refs;
+        return 0;
+    }
 	void AddRef(SQObject &obj);
 	SQBool Release(SQObject &obj);
 #ifndef NO_GARBAGE_COLLECTOR

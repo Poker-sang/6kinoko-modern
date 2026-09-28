@@ -55,19 +55,19 @@ extern int32_t  kinoko_script_void_result_identity;
 extern int32_t  kinoko_null_object_type;
 extern int32_t  kinoko_null_object_value;
 extern struct SQSharedState* kinoko_primary_shared_state;
-extern int32_t kinoko_release_watch_data[8];
+extern intptr_t kinoko_release_watch_data[8];
 extern int32_t kinoko_release_watch_count;
 
 int32_t _3f__3f_2_40_YAPAXI_40_Z(int32_t size);
 int32_t __fastcall kinoko_act_layer_associate_method(KinokoActLayer* receiver, void* unused_edx);
 intptr_t kinoko_sqrat_call_integer0(struct SQVM* a1);
 intptr_t kinoko_sqrat_call_integer1(struct SQVM* a1);
-int32_t kinoko_is_release_watch_data(int32_t data);
+int32_t kinoko_is_release_watch_data(intptr_t data);
 int32_t kinoko_load_act_texture(const char *texture_name);
 __declspec(noinline) void kinoko_trace_i32(const char *label,
                                                   int32_t value);
-void kinoko_trace_ref_watch(const char *label, int32_t shared_state,
-                                   int32_t type, int32_t data);
+void kinoko_trace_ref_watch(const char *label, struct SQSharedState* shared_state,
+                                   int32_t type, intptr_t data);
 void kinoko_trace_squirrel_name(const char *label, int32_t name_ptr);
 #ifdef __cplusplus
 }

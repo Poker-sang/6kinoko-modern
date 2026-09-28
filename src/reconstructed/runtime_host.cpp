@@ -40,11 +40,11 @@ static_assert(sizeof(global_callback)==sizeof(void*)+2*sizeof(KinokoOwnedObjectW
 
 struct SQSharedState* kinoko_primary_shared_state;
 
-int32_t kinoko_release_watch_data[8];
+intptr_t kinoko_release_watch_data[8];
 
 int32_t kinoko_release_watch_count;
 
-int32_t kinoko_is_release_watch_data(int32_t data) {
+int32_t kinoko_is_release_watch_data(intptr_t data) {
     int32_t index;
 
     if (data == 0)

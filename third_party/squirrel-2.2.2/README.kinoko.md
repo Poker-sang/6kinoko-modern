@@ -22,3 +22,13 @@ This README is project documentation, not an upstream source file. On
 the supplied source tree and squirrel_2.2.2_stable.tar.gz: no differences.
 Per-file SHA256 results are in
 analysis/function-inventory-20260917/squirrel-source-verification.json.
+
+## Native-width / original bytecode boundary (2026-09-28)
+
+sqobject.cpp retains native VM integers and pointer-sized hashing in memory but
+reads/writes Kinoko CV4 closure tags, counts, integer literals, local-variable
+indices, line information, default parameters and stack size as explicit 32-bit
+little-endian wire values. Float, boolean and fixed opcode encodings are unchanged.
+Out-of-range integer serialization and invalid negative/oversized section counts
+fail with a VM error. RefTable exposes a read-only diagnostic reference-count query
+so table diagnostics no longer traverse hardcoded x86 offsets.

@@ -125,7 +125,7 @@ uint32_t record_count(KinokoActLayout* layout) {
     return (end-begin)/32;
 }
 bool transfer(KinokoArchiveReader* stream, void* bytes, uint32_t size) {
-    return stream && (stream->methods->transfer(stream,bytes,size)&0xff)!=0;
+    return stream && (stream->methods->transfer(stream, nullptr,bytes,size)&0xff)!=0;
 }
 template<class T> bool transfer(KinokoArchiveReader* stream, T& value) {
     return transfer(stream, &value, sizeof(value));

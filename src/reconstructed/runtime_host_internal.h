@@ -120,7 +120,7 @@ extern int32_t kinoko_script_assets_packed(void);
 
 extern struct SQSharedState* kinoko_primary_shared_state;
 
-extern int32_t kinoko_release_watch_data[8];
+extern intptr_t kinoko_release_watch_data[8];
 
 extern int32_t kinoko_release_watch_count;
 
