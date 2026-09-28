@@ -292,7 +292,7 @@ extern "C" SQObjectPtr* kinoko_sq_assign_nullable_float(SQObjectPtr* destination
 extern "C" void* kinoko_sq_raise_object_error(SQVM* machine, SQObjectPtr* error_value) {
     if (!machine || !error_value) return machine;
     auto& value = *error_value;
-    void* result = ISREFCOUNTED(type(value)) ? static_cast<void*>(_refcounted(value)) : static_cast<void*>(machine);
+    void* result = ISREFCOUNTED(sq_type(value)) ? static_cast<void*>(_refcounted(value)) : static_cast<void*>(machine);
     machine->Raise_Error(value);
     return result;
 }

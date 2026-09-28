@@ -14,7 +14,7 @@
 
 inline SQHash HashObj(const SQObjectPtr &key)
 {
-	switch(type(key)) {
+	switch(sq_type(key)) {
 		case OT_STRING:		return _string(key)->_hash;
 		case OT_FLOAT:		return (SQHash)((SQInteger)_float(key));
 		case OT_BOOL: case OT_INTEGER:	return (SQHash)((SQInteger)_integer(key));
@@ -66,7 +66,7 @@ public:
 	{
 		_HashNode *n = &_nodes[hash];
 		do{
-			if(_rawval(n->key) == _rawval(key) && type(n->key) == type(key)){
+			if(_rawval(n->key) == _rawval(key) && sq_type(n->key) == sq_type(key)){
 				return n;
 			}
 		}while((n = n->next));

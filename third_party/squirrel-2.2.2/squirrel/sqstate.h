@@ -35,7 +35,7 @@ struct RefTable {
     SQUnsignedInteger DiagnosticRefs(const SQObject& object) const {
         for (SQUnsignedInteger i = 0; i < _numofslots; ++i)
             for (const RefNode* node = _buckets[i]; node; node = node->next)
-                if (type(node->obj) == type(object) && _rawval(node->obj) == _rawval(object))
+                if (sq_type(node->obj) == sq_type(object) && _rawval(node->obj) == _rawval(object))
                     return node->refs;
         return 0;
     }

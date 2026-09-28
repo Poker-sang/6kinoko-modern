@@ -69,7 +69,7 @@ extern "C" int32_t  kinoko_sqplus_find_table_variable(void** output, const void*
     // This path intentionally uses source SQTable::Get rather than sq_rawget:
     // a missing table setter must NOT replace the VM's existing last error.
     SQObjectPtr value;
-    if (!_table(object)->Get(key, value) || type(value) != OT_USERDATA ||
+    if (!_table(object)->Get(key, value) || sq_type(value) != OT_USERDATA ||
         _userdata(value)->_size < static_cast<SQInteger>(sizeof(Variable))) return -1;
     if (output) *output = _userdataval(value);
     return 0;

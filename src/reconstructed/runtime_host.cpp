@@ -383,7 +383,7 @@ KINOKO_NOINLINE struct SQVM* kinoko_stack_vm(void) {
             kinoko_trace_i32("stack-vm-top", stack.top);
             kinoko_trace_i32("stack-vm-base", stack.base);
             kinoko_trace_i32("stack-vm-caller",
-                             (int32_t)(uintptr_t)_ReturnAddress());
+                             (int32_t)(uintptr_t)KINOKO_RETURN_ADDRESS());
             ++null_stack_trace_count;
         }
         return vm;
@@ -418,7 +418,7 @@ static KINOKO_NOINLINE void kinoko_watch_map_binding(void) {
         std::snprintf(message,sizeof(message),
                   "watch:g594=0x%08lX caller=0x%08lX",
                   (unsigned long)current,
-                  (unsigned long)(uintptr_t)_ReturnAddress());
+                  (unsigned long)(uintptr_t)KINOKO_RETURN_ADDRESS());
         kinoko_trace(message);
         kinoko_map_binding_watch_value = current;
         kinoko_map_binding_watch_initialized = 1;
@@ -439,7 +439,7 @@ static KINOKO_NOINLINE void kinoko_watch_primary_vm(void) {
         std::snprintf(message,sizeof(message),
                   "watch:g644=0x%08lX caller=0x%08lX",
                   (unsigned long)current,
-                  (unsigned long)(uintptr_t)_ReturnAddress());
+                  (unsigned long)(uintptr_t)KINOKO_RETURN_ADDRESS());
         kinoko_trace(message);
         kinoko_primary_vm_watch_value = current;
         kinoko_primary_vm_watch_initialized = 1;

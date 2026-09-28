@@ -59,7 +59,6 @@
 #include "kinoko/squirrel_host_object.hpp"
 
 
-#include <mmsystem.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -927,11 +926,11 @@ int32_t kinoko_publish_acting_player(SQVM* vm,
     instance_slot = kinoko_sq_get_up(vm, -1);
     kinoko_trace_i32("act:acting-instance-slot", kinoko::script::diagnostic_address(instance_slot));
     kinoko_trace_i32("act:acting-instance-type",
-                     instance_slot != 0 ? static_cast<int32_t>(type(*instance_slot)) : 0);
+                     instance_slot != 0 ? static_cast<int32_t>(sq_type(*instance_slot)) : 0);
     kinoko_trace_i32("act:acting-instance-data",
                      instance_slot != 0 ? kinoko::script::data_bits(*instance_slot) : 0);
     if (instance_slot != 0 &&
-        type(*instance_slot) == OT_INSTANCE &&
+        sq_type(*instance_slot) == OT_INSTANCE &&
         _instance(*instance_slot) != nullptr) {
         auto* instance = _instance(*instance_slot);
         kinoko_trace_i32("act:acting-instance-class",
@@ -944,7 +943,7 @@ int32_t kinoko_publish_acting_player(SQVM* vm,
         return 0;
     }
     if (instance_slot != 0 &&
-        type(*instance_slot) == OT_INSTANCE &&
+        sq_type(*instance_slot) == OT_INSTANCE &&
         _instance(*instance_slot) != nullptr) {
         auto* instance = _instance(*instance_slot);
         kinoko_trace_i32("act:acting-instance-class-after",

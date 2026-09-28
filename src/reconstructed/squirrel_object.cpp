@@ -32,7 +32,7 @@ extern "C" void* kinoko_squirrel_object_destroy(void* object, SQVM* vm_address, 
     const auto value = destination.value();
     kinoko_trace("4a9d70:begin");
     kinoko_trace_i32("4a9d70:this", diagnostic_address(object));
-    kinoko_trace_i32("4a9d70:caller", diagnostic_address(_ReturnAddress()));
+    kinoko_trace_i32("4a9d70:caller", diagnostic_address(KINOKO_RETURN_ADDRESS()));
     kinoko_trace_i32("4a9d70:type", value._type);
     kinoko_trace_i32("4a9d70:data", data_bits(value));
     destination.set_vtable(vtable);

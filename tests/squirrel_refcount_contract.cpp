@@ -26,7 +26,7 @@ void base_destructor(int flags) {
     require(kinoko_call_thiscall1_result(value,
         reinterpret_cast<void*>(&kinoko_sq_delete_refcounted), flags) == receiver,
         "base destructor receiver/result");
-    require(type(weak->_obj) == OT_NULL && weak->_obj._unVal.pRefCounted == nullptr,
+    require(sq_type(weak->_obj) == OT_NULL && weak->_obj._unVal.pRefCounted == nullptr,
         "source destructor must invalidate weak reference");
     weak->Release();
     if (!(flags & 1)) sq_free(storage, sizeof(BaseProbe));

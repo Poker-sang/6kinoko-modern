@@ -45,7 +45,7 @@ const SQChar *IdType2Name(SQObjectType type)
 
 const SQChar *GetTypeName(const SQObjectPtr &obj1)
 {
-	return IdType2Name(type(obj1));	
+	return IdType2Name(sq_type(obj1));	
 }
 
 SQString *SQString::Create(SQSharedState *ss,const SQChar *s,SQInteger len)
@@ -75,7 +75,7 @@ SQInteger SQString::Next(const SQObjectPtr &refpos, SQObjectPtr &outkey, SQObjec
 
 SQUnsignedInteger TranslateIndex(const SQObjectPtr &idx)
 {
-	switch(type(idx)){
+	switch(sq_type(idx)){
 		case OT_NULL:
 			return 0;
 		case OT_INTEGER:
@@ -186,7 +186,7 @@ bool SQGenerator::Resume(SQVM *v,SQInteger target)
 	v->ci->_prevtop = (SQInt32)prevtop;
 	v->ci->_prevstkbase = (SQInt32)(v->_stackbase - oldstackbase);
 	_state=eRunning;
-	if (type(v->_debughook) != OT_NULL && _rawval(v->_debughook) != _rawval(v->ci->_closure))
+	if (sq_type(v->_debughook) != OT_NULL && _rawval(v->_debughook) != _rawval(v->ci->_closure))
 		v->CallDebugHook(_SC('c'));
 
 	return true;
@@ -292,8 +292,8 @@ bool CheckTag(HSQUIRRELVM v,SQWRITEFUNC read,SQUserPointer up,SQInteger tag)
 
 bool WriteObject(HSQUIRRELVM v,SQUserPointer up,SQWRITEFUNC write,SQObjectPtr &o)
 {
-	_CHECK_IO(SafeWrite(v,write,up,&type(o),sizeof(SQObjectType)));
-	switch(type(o)){
+	_CHECK_IO(SafeWrite(v,write,up,&sq_type(o),sizeof(SQObjectType)));
+	switch(sq_type(o)){
 	case OT_STRING:
 		_CHECK_IO(WriteWire32(v,write,up,_string(o)->_len));
 		_CHECK_IO(SafeWrite(v,write,up,_stringval(o),rsl(_string(o)->_len)));

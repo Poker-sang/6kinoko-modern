@@ -83,7 +83,7 @@ struct WrapperOwner {
 extern "C" int32_t kinoko_csv_populate(struct SQVM* address, const char *text, const int32_t object[2]) {
     SQVM &vm = *address;
     SQObjectPtr table = *reinterpret_cast<const SQObject *>(object);
-    if (type(table) != OT_TABLE) return 1;
+    if (sq_type(table) != OT_TABLE) return 1;
     const auto rows = parse(text);
     std::vector<SQObjectPtr> columns;
     std::vector<char> types;

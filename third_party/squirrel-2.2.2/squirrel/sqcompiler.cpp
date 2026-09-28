@@ -181,7 +181,7 @@ public:
 		}
 		else {
 			if(_raiseerror && _ss(_vm)->_compilererrorhandler) {
-				_ss(_vm)->_compilererrorhandler(_vm, compilererror, type(_sourcename) == OT_STRING?_stringval(_sourcename):_SC("unknown"),
+				_ss(_vm)->_compilererrorhandler(_vm, compilererror, sq_type(_sourcename) == OT_STRING?_stringval(_sourcename):_SC("unknown"),
 					_lex._currentline, _lex._currentcolumn);
 			}
 			_vm->_lasterror = SQString::Create(_ss(_vm), compilererror, -1);
@@ -634,7 +634,7 @@ public:
 					else if(_fs->IsConstant(id,constant)) { //line 634
 						SQObjectPtr constval;
 						SQObject constid;
-						if(type(constant) == OT_TABLE) {
+						if(sq_type(constant) == OT_TABLE) {
 							Expect('.'); constid = Expect(TK_IDENTIFIER);
 							if(!_table(constant)->Get(constid,constval)) {
 								constval.Null();
@@ -645,7 +645,7 @@ public:
 							constval = constant;
 						}
 						_exst._deref = _fs->PushTarget();
-						SQObjectType ctype = type(constval);
+						SQObjectType ctype = sq_type(constval);
 						if(ctype == OT_INTEGER && (_integer(constval) & (~0x7FFFFFFF)) == 0) {
 							_fs->AddInstruction(_OP_LOADINT, _exst._deref,_integer(constval));
 						}

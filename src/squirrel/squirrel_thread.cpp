@@ -40,7 +40,7 @@ extern "C" int32_t kinoko_sq_wakeup(SQVM* vm, int32_t wakeupret,
 extern "C" int32_t kinoko_sq_thread_call(SQVM* vm) {
     auto *v = vm;
     SQObjectPtr object = stack_get(v, 1);
-    if (type(object) != OT_THREAD) return sq_throwerror(v, _SC("wrong parameter"));
+    if (sq_type(object) != OT_THREAD) return sq_throwerror(v, _SC("wrong parameter"));
     auto *thread = _thread(object);
     const auto nargs = sq_gettop(v);
     thread->Push(thread->_roottable);
@@ -58,7 +58,7 @@ extern "C" int32_t kinoko_sq_thread_call(SQVM* vm) {
 extern "C" int32_t kinoko_sq_thread_wakeup(SQVM* vm) {
     auto *v = vm;
     SQObjectPtr object = stack_get(v, 1);
-    if (type(object) != OT_THREAD) return sq_throwerror(v, _SC("wrong parameter"));
+    if (sq_type(object) != OT_THREAD) return sq_throwerror(v, _SC("wrong parameter"));
     auto *thread = _thread(object);
     const auto state = sq_getvmstate(thread);
     if (state == SQ_VMSTATE_IDLE)

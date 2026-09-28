@@ -54,14 +54,14 @@ bool SQClass::NewSlot(SQSharedState *ss,const SQObjectPtr &key,const SQObjectPtr
 		_defaultvalues[_member_idx(temp)].val = val;
 		return true;
 	}
-	if(type(val) == OT_CLOSURE || type(val) == OT_NATIVECLOSURE || bstatic) {
+	if(sq_type(val) == OT_CLOSURE || sq_type(val) == OT_NATIVECLOSURE || bstatic) {
 		SQInteger mmidx;
-		if((type(val) == OT_CLOSURE || type(val) == OT_NATIVECLOSURE) && 
+		if((sq_type(val) == OT_CLOSURE || sq_type(val) == OT_NATIVECLOSURE) && 
 			(mmidx = ss->GetMetaMethodIdxByName(key)) != -1) {
 			_metamethods[mmidx] = val;
 		} 
 		else {
-			if(type(temp) == OT_NULL) {
+			if(sq_type(temp) == OT_NULL) {
 				SQClassMember m;
 				m.val = val;
 				_members->NewSlot(key,SQObjectPtr(_make_method_idx(_methods.size())));
@@ -175,7 +175,7 @@ SQInstance::~SQInstance()
 
 bool SQInstance::GetMetaMethod(SQVM *v,SQMetaMethod mm,SQObjectPtr &res)
 {
-	if(type(_class->_metamethods[mm]) != OT_NULL) {
+	if(sq_type(_class->_metamethods[mm]) != OT_NULL) {
 		res = _class->_metamethods[mm];
 		return true;
 	}

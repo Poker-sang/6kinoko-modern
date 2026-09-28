@@ -19,7 +19,7 @@ private:
     }
 };
 template<int Id> int32_t* native_type(CopyEntry copy) {
-    static NativeDescriptor<Id> type(copy);
+    static NativeDescriptor<Id> sq_type(copy);
     return reinterpret_cast<int32_t*>(&type);
 }
 }

@@ -69,7 +69,7 @@ struct SQWeakRef : SQRefCounted
 	SQObject _obj;
 };
 
-#define _realval(o) (type((o)) != OT_WEAKREF?(SQObject)o:_weakref(o)->_obj)
+#define _realval(o) (sq_type((o)) != OT_WEAKREF?(SQObject)o:_weakref(o)->_obj)
 
 struct SQObjectPtr;
 
@@ -96,8 +96,8 @@ struct SQObjectPtr;
 	(obj)->_uiRef++; \
 }
 
-#define type(obj) ((obj)._type)
-#define is_delegable(t) (type(t)&SQOBJECT_DELEGABLE)
+#define sq_type(obj) ((obj)._type)
+#define is_delegable(t) (sq_type(t)&SQOBJECT_DELEGABLE)
 #define raw_type(obj) _RAW_TYPE((obj)._type)
 
 #define _integer(obj) ((obj)._unVal.nInteger)
@@ -122,8 +122,8 @@ struct SQObjectPtr;
 #define _stringval(obj) (obj)._unVal.pString->_val
 #define _userdataval(obj) (obj)._unVal.pUserData->_val
 
-#define tofloat(num) ((type(num)==OT_INTEGER)?(SQFloat)_integer(num):_float(num))
-#define tointeger(num) ((type(num)==OT_FLOAT)?(SQInteger)_float(num):_integer(num))
+#define tofloat(num) ((sq_type(num)==OT_INTEGER)?(SQFloat)_integer(num):_float(num))
+#define tointeger(num) ((sq_type(num)==OT_FLOAT)?(SQInteger)_float(num):_integer(num))
 /////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
 struct SQObjectPtr : public SQObject

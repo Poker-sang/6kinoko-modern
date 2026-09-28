@@ -18,3 +18,10 @@
 #else
 #define KINOKO_NOINLINE __attribute__((noinline))
 #endif
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+#define KINOKO_RETURN_ADDRESS() _ReturnAddress()
+#else
+#define KINOKO_RETURN_ADDRESS() __builtin_return_address(0)
+#endif
