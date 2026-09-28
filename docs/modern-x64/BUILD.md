@@ -1,5 +1,46 @@
 # x64 preparation build evidence
 
+## Native script bindings and ACT document/layer ownership
+
+Build source: `f32f24c6108ee1d42be9477d1432f4457ba9a197` (documentation follows
+implementation commit `91ad7c97bd6279db92cc349378784286d2ce092e`).
+
+- `modern-binding-act-08`: complete Win32 Release no-trace game and 77 contract
+  executables compiled. Three DAT staged beside the EXE and size/SHA256 checked.
+- Game: `runtime-builds/modern-binding-act-08/kinoko_modern_gpu.exe`.
+  Static PE inspection confirms I386. Keep adjacent shaders and DAT files.
+- EXE SHA256: `4B7E2DD52121F546354995874A97826263B92C1DBB0542EE81AFFB007B92E3B6`.
+- D3D9 static audit passed: 118 compiler / 87 linker dependency logs, no violations.
+- `modern-binding-act-x64-07`, source `91ad7c97bd6279db92cc349378784286d2ce092e`:
+  30 actual production translation units plus one layout/signature assertion
+  translation unit compiled. Static COFF inspection confirms all 31 objects are
+  AMD64. This target is an object compilation, not a linked x64 game.
+- Actual source coverage: common SqPlus class/property/argument/method adapters,
+  global registration and game closure adapters, source SqPlus metadata/type
+  lookup, Sqrat/host object bridges, VM bootstrap/value/GC, ACT document/layer
+  construction/clone/lifetime, script IO/lifetime, association, frame update and
+  runtime lifetime. Native SQFUNCTION signatures and storage ties are checked.
+- `modern-full-x64-12`: actual complete game graph configured but remains blocked
+  before linking. Guards enabled. 133 unique diagnostics versus the preceding
+  batch's 438; counts include cascades and are not independent tasks or a progress
+  percentage. Main remaining clusters are map/collision/input/application,
+  bitmap/file services, ACT layout/draw and remaining VM bridge consumers.
+- User reports modern-actor-native-03 normal. No game, preview, CTest or contract
+  executable was executed by the agent in this batch. Runtime assertions are
+  compiled only; x64 bytecode/save-format compatibility is still pending.
+- Retained attempts: binding-act-01/x64-01 (header boundary/scalar issues),
+  binding-act-02/x64-02 (standard VM include order), binding-act-03 (old fixture
+  address helpers), binding-act-04/05 (successful intermediate Win32/x64 builds),
+  binding-act-06 (successful Win32; x64-06 exposed an unnecessary input-layout
+  include). Earlier full-x64-06..10 probes/logs are retained. The staged-07 and
+  full-x64-11 commands stopped before building because documentation needed a
+  commit; final attempts used fresh names. No artifacts were deleted/overwritten.
+- Evidence: `binding-act-08-artifacts.json`, `binding-act-08-d3d9-audit.json`,
+  `binding-act-x64-07-artifacts.json`, `full-x64-12-artifacts.json`,
+  `full-x64-12-blockers.json`. [Detailed scope](binding-act-native.md).
+
+
+
 ## Native actor/camera ownership and foundational containers
 
 Source: `91fd8d7c4325b2fa4c0b3d3149ac0e99f6d230cb`.

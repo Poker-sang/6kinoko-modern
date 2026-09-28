@@ -39,7 +39,7 @@ ownership. Acquire/release order and selective initialization remain unchanged.
 
 ## Evidence and limits
 
-The isolated width target compiles actual production sources, including the
+The isolated width target compiles 30 actual production translation units, including the
 source-backed SqPlus implementation, plus one layout/signature assertion file.
 PE/COFF inspection confirms AMD64 objects. The full Win32 build compiles all
 active contracts, but neither contracts nor the game are executed by the agent.

@@ -1,0 +1,164 @@
+{
+  "source_commit": "91ad7c97bd6279db92cc349378784286d2ce092e",
+  "executed_built_code": false,
+  "full_game": false,
+  "production_translation_units": 30,
+  "compile_assertion_translation_units": 1,
+  "artifacts": [
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_document_association.obj",
+      "machine": "AMD64",
+      "sha256": "022b49234f94a125bfa8282e487db4f6afcbac0f6e25fed0c7b98476b2aa2402"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_document_clone.obj",
+      "machine": "AMD64",
+      "sha256": "35919546c588b9a2b00344599adcfb836d94c54c0332d5ff2cb4570d3c7a9b06"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_document_io.obj",
+      "machine": "AMD64",
+      "sha256": "081e749f40d740c9a6e8934354eaf74607463abe2b063672e67b3dc4c7bcbd17"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_frame_update.obj",
+      "machine": "AMD64",
+      "sha256": "e0acceafbee82e60354c35781812fcf91f8ad2755bde296bc49ea231c3facaa6"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_layer_access.obj",
+      "machine": "AMD64",
+      "sha256": "f10814f605b853cbc236efcc207c8ffd80abad6aa452fe67d985479de6aa9f92"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_layer_clone.obj",
+      "machine": "AMD64",
+      "sha256": "7bed37e6910e38b4aeb0cabe86c1601179b27d0ecb43023e711f45f484d78266"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_layer_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "a261b966954b006615bc9b1cd76671a7ad5e2b18f0f645f930eec3f39bb3dfbb"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_runtime_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "37ab3cee5068b70d2b0b25f06c30d123ad9f5daa60758872b5e9a5a7810ae0ec"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_script_io.obj",
+      "machine": "AMD64",
+      "sha256": "10454b7be772ffb9ac536669b1506dbed7e286f1c1704a5ab4095f68c4ceedbb"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/act_script_lifecycle.obj",
+      "machine": "AMD64",
+      "sha256": "e5efc7fff26f7e4d99c6e4d20e4c6181eddcac43b009dc28074027bf926513ba"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/actor_registration.obj",
+      "machine": "AMD64",
+      "sha256": "5dc51ce8258950032258e144abd380c4b19abcaad94d0ae1957daa6af77b659a"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/binding_act_width_compile.obj",
+      "machine": "AMD64",
+      "sha256": "17fd825d9aadcfdc6cfcc84811739178bd544fbf9bb2f202723977ada929a633"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/game_script_entries.obj",
+      "machine": "AMD64",
+      "sha256": "49cd60947b826fe005f927601b7feb6f64e53c8d618061798c7552cc6d2cb626"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/global_registration.obj",
+      "machine": "AMD64",
+      "sha256": "5f7a4c1aaeea7a282b5741d19e166fd83253d441587eeb31b47a51c736fe92d7"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/native_property_bridge.obj",
+      "machine": "AMD64",
+      "sha256": "fb1573636daa07544f9be7a7d1cfadb8e9746abf88cc2dc86dc9f8dfcc3a93d7"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/SqPlus.obj",
+      "machine": "AMD64",
+      "sha256": "c6dbac2e68161189109c5b5583fd0d80ac53473e24fff989cb58eb5ba03a7c53"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/sqrat_object_bridge.obj",
+      "machine": "AMD64",
+      "sha256": "f80a38d58c99d38c3987dbdc16130404f64ff8219289df1cf8cb1fd05b1e3b33"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_class_binding.obj",
+      "machine": "AMD64",
+      "sha256": "88dfe57dde3fc880a05f48da5b3d9bf0aa6cbbd8f05b4d919cdbaab6d8b64f76"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_game_objects.obj",
+      "machine": "AMD64",
+      "sha256": "6b8bc338a85bb0ead35722761dc830a35363856155597199d535439fe3b590b1"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_host_compat.obj",
+      "machine": "AMD64",
+      "sha256": "37bf72e39adfb56812aa17bc6a2ebe2ec3f681e11f48ceec707e00fffcf2ebfd"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_method_dispatch.obj",
+      "machine": "AMD64",
+      "sha256": "e096a9013b896bc75b91d2c55eb478c7a95c90a781256b9eb12ca88ccb6c4974"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_native_arguments.obj",
+      "machine": "AMD64",
+      "sha256": "bb9e1744b083a3b7de11474dc120f9570bca9ad352d6d8ae23a3a5768ad6041d"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_native_calls.obj",
+      "machine": "AMD64",
+      "sha256": "759b517c734f22b8f77c0eb336ac027a2b6b5a75d51269e45dff42e3901b00aa"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_native_variables.obj",
+      "machine": "AMD64",
+      "sha256": "c7a15dde9808e8b689a56771b4883f334108506c181a9744956f96d919e70792"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_source_gc.obj",
+      "machine": "AMD64",
+      "sha256": "4757e7d3e66030720a7f0bb21a3415cacf3b40751005aa82a1bbdf2298149f5c"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_type_registry.obj",
+      "machine": "AMD64",
+      "sha256": "2b4d5906b81de0d68091f770aefd8aa7d94a606283d8f34d4082868ec6bef5ec"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_value_bridge.obj",
+      "machine": "AMD64",
+      "sha256": "f4a9ad6b6ede0aa817398f57f2c599247592693a155dcffe6f9dc9fbb755cb7e"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/squirrel_vm_bootstrap.obj",
+      "machine": "AMD64",
+      "sha256": "8f294680eb12c090ee7685e2717e9b0ea41cabaa091f83b569fbc5f0271c030b"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/SquirrelObject.obj",
+      "machine": "AMD64",
+      "sha256": "032d39f097100a369eb9f508f534893063dadb2e09db39aae5b3f9c16d4f4b07"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/upstream_sqplus.obj",
+      "machine": "AMD64",
+      "sha256": "20278daf2d5d1c98616f7c8fd49354ff1b1b3433d50907eb616831173f12ca75"
+    },
+    {
+      "path": "build-runs/modern-binding-act-x64-07/kinoko_binding_act_width_compile.dir/Release/upstream_sqplus_scalars.obj",
+      "machine": "AMD64",
+      "sha256": "339d5eb37a098ced0dbfd4c59d6441084f5b4bd04247979cdbc1b201dee7045c"
+    }
+  ]
+}
