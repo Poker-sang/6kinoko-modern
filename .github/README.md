@@ -84,3 +84,5 @@ Window controls now use SDL events, fullscreen/restoration, cursor APIs and queu
 
 
 Unused IMM/DirectInput/COM host paths are removed; game-facing input and the full audio runtime now participate in portable compilation. See [input/audio host cleanup](../docs/modern-platform/native-input-audio.md).
+
+The actual game graphics backend now builds in portable CI with project-owned fixed-width types and no native window handles in its public API. Font rasterization, application startup and cross-platform shader staging still block a complete non-Windows game. See [graphics migration](../docs/modern-platform/portable-game-graphics.md).

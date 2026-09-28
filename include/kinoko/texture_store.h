@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <windows.h>
 #include "kinoko/graphics_c_boundary.h"
 #include "kinoko/graphics_runtime.hpp"
 

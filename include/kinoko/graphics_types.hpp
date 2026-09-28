@@ -1,7 +1,14 @@
 #pragma once
 #include <cstdint>
-#include <windows.h>
 namespace kinoko::graphics {
+using Result = std::int32_t;
+inline constexpr Result error_failure = static_cast<Result>(0x80004005u);
+inline constexpr Result error_pointer = static_cast<Result>(0x80004003u);
+inline constexpr Result error_argument = static_cast<Result>(0x80070057u);
+constexpr bool failed(Result value) noexcept { return value < 0; }
+constexpr bool succeeded(Result value) noexcept { return value >= 0; }
+struct PixelRect { std::int32_t left, top, right, bottom; };
+
 // State values preserve the original game command vocabulary. These are not
 // SDK objects or serialized records. SDL GPU owns these runtime descriptions.
 using Color=std::uint32_t;
@@ -15,20 +22,20 @@ using TextureStageState=std::uint32_t;
 using Transform=std::uint32_t;
 struct Capabilities {std::uint32_t TextureCaps=0,MaxTextureWidth=0,MaxTextureHeight=0;};
 struct Presentation {
-    UINT BackBufferWidth=0,BackBufferHeight=0; Format BackBufferFormat=0;
-    UINT BackBufferCount=0; std::uint32_t MultiSampleType=0,MultiSampleQuality=0,SwapEffect=0;
-    HWND hDeviceWindow=nullptr; BOOL Windowed=FALSE,EnableAutoDepthStencil=FALSE;
-    Format AutoDepthStencilFormat=0; DWORD Flags=0;
-    UINT FullScreen_RefreshRateInHz=0,PresentationInterval=0;
+    std::uint32_t BackBufferWidth=0,BackBufferHeight=0; Format BackBufferFormat=0;
+    std::uint32_t BackBufferCount=0; std::uint32_t MultiSampleType=0,MultiSampleQuality=0,SwapEffect=0;
+    bool Windowed=false,EnableAutoDepthStencil=false;
+    Format AutoDepthStencilFormat=0; std::uint32_t Flags=0;
+    std::uint32_t FullScreen_RefreshRateInHz=0,PresentationInterval=0;
 };
-struct DisplayMode {UINT Width,Height,RefreshRate;graphics::Format Format;};
+struct DisplayMode {std::uint32_t Width,Height,RefreshRate;graphics::Format Format;};
 struct SurfaceDescription {
-    graphics::Format Format;std::uint32_t Type;DWORD Usage;graphics::Pool Pool;
-    std::uint32_t MultiSampleType;DWORD MultiSampleQuality;UINT Width,Height;
+    graphics::Format Format;std::uint32_t Type;std::uint32_t Usage;graphics::Pool Pool;
+    std::uint32_t MultiSampleType;std::uint32_t MultiSampleQuality;std::uint32_t Width,Height;
 };
-struct MappedPixels {INT Pitch;void* pBits;};
+struct MappedPixels {std::int32_t Pitch;void* pBits;};
 struct Matrix {float m[4][4];};
-struct ClearRect {LONG x1,y1,x2,y2;};
+struct ClearRect {std::int32_t x1,y1,x2,y2;};
 struct VertexElement {std::uint16_t Stream,Offset;std::uint8_t Type,Method,Usage,UsageIndex;};
 static_assert(sizeof(Matrix)==64 && sizeof(VertexElement)==8);
 inline constexpr std::uint32_t adapter_default=static_cast<std::uint32_t>(0x0u);
@@ -59,10 +66,10 @@ inline constexpr std::uint32_t semantic_position=static_cast<std::uint32_t>(0x0u
 inline constexpr std::uint32_t semantic_texcoord=static_cast<std::uint32_t>(0x5u);
 inline constexpr std::uint32_t device_hal=static_cast<std::uint32_t>(0x1u);
 inline constexpr std::uint32_t device_ref=static_cast<std::uint32_t>(0x2u);
-inline constexpr HRESULT error_devicelost=static_cast<HRESULT>(0x88760868u);
-inline constexpr HRESULT error_devicenotreset=static_cast<HRESULT>(0x88760869u);
-inline constexpr HRESULT error_invalidcall=static_cast<HRESULT>(0x8876086cu);
-inline constexpr HRESULT error_wasstilldrawing=static_cast<HRESULT>(0x8876021cu);
+inline constexpr kinoko::graphics::Result error_devicelost=static_cast<kinoko::graphics::Result>(0x88760868u);
+inline constexpr kinoko::graphics::Result error_devicenotreset=static_cast<kinoko::graphics::Result>(0x88760869u);
+inline constexpr kinoko::graphics::Result error_invalidcall=static_cast<kinoko::graphics::Result>(0x8876086cu);
+inline constexpr kinoko::graphics::Result error_wasstilldrawing=static_cast<kinoko::graphics::Result>(0x8876021cu);
 inline constexpr std::uint32_t fill_solid=static_cast<std::uint32_t>(0x3u);
 inline constexpr std::uint32_t format_a1r5g5b5=static_cast<std::uint32_t>(0x19u);
 inline constexpr std::uint32_t format_a8r8g8b8=static_cast<std::uint32_t>(0x15u);
@@ -114,7 +121,7 @@ inline constexpr std::uint32_t transform_projection=static_cast<std::uint32_t>(0
 inline constexpr std::uint32_t transform_view=static_cast<std::uint32_t>(0x2u);
 inline constexpr std::uint32_t transform_world=static_cast<std::uint32_t>(0x100u);
 inline constexpr std::uint32_t usage_rendertarget=static_cast<std::uint32_t>(0x1u);
-inline constexpr HRESULT ok=static_cast<HRESULT>(0x0u);
+inline constexpr kinoko::graphics::Result ok=static_cast<kinoko::graphics::Result>(0x0u);
 inline constexpr std::uint32_t sdk_version=static_cast<std::uint32_t>(0x20u);
 constexpr VertexElement declaration_end(){return {0xff,0,17,0,0,0};}
 }

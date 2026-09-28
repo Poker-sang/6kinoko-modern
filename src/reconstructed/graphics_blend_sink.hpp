@@ -5,7 +5,7 @@ namespace kinoko::render {
 // Non-owning adapter; scoped to a call so Reset cannot leave a cached device.
 class GraphicsBlendSink final : public BlendSink {
     kinoko::graphics::Device &device_;
-    static DWORD factor(BlendFactor value) {
+    static std::uint32_t factor(BlendFactor value) {
         switch(value) {
         case BlendFactor::zero: return kinoko::graphics::blend_zero;
         case BlendFactor::one: return kinoko::graphics::blend_one;
@@ -19,16 +19,16 @@ class GraphicsBlendSink final : public BlendSink {
 public:
     explicit GraphicsBlendSink(kinoko::graphics::Device &device) : device_(device) {}
     int32_t set_operation(BlendOperation value) override {
-        if(value==BlendOperation::unchanged) return S_OK;
+        if(value==BlendOperation::unchanged) return kinoko::graphics::ok;
         return device_.SetRenderState(kinoko::graphics::state_blendop,
             value==BlendOperation::add ? kinoko::graphics::blend_operation_add : kinoko::graphics::blend_operation_revsubtract);
     }
     int32_t set_source(BlendFactor value) override {
-        if(value==BlendFactor::unchanged) return S_OK;
+        if(value==BlendFactor::unchanged) return kinoko::graphics::ok;
         return device_.SetRenderState(kinoko::graphics::state_srcblend,factor(value));
     }
     int32_t set_destination(BlendFactor value) override {
-        if(value==BlendFactor::unchanged) return S_OK;
+        if(value==BlendFactor::unchanged) return kinoko::graphics::ok;
         return device_.SetRenderState(kinoko::graphics::state_destblend,factor(value));
     }
 };

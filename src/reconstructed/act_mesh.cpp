@@ -75,11 +75,11 @@ bool bind_mesh(Renderer &render,const Node *model) {
     // 456690 intentionally creates 16-bit indices even though the file reader
     // accepts 32-bit arrays. Preserve the existing renderer's byte count.
     bool failed=FAILED(device->CreateIndexBuffer(mesh.index_count*2,0,kinoko::graphics::format_index16,
-        kinoko::graphics::pool_managed,render.indices.put(),nullptr));
+        kinoko::graphics::pool_managed,render.indices.put()));
     const auto vertex_count=static_cast<UINT>(mesh.positions.size());
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_xyz,kinoko::graphics::pool_managed,render.positions.put(),nullptr))||failed;
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_normal,kinoko::graphics::pool_managed,render.normals.put(),nullptr))||failed;
-    failed=FAILED(device->CreateVertexBuffer(vertex_count*8,0,kinoko::graphics::vertex_tex1,kinoko::graphics::pool_managed,render.coordinates.put(),nullptr))||failed;
+    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_xyz,kinoko::graphics::pool_managed,render.positions.put()))||failed;
+    failed=FAILED(device->CreateVertexBuffer(vertex_count*12,0,kinoko::graphics::vertex_normal,kinoko::graphics::pool_managed,render.normals.put()))||failed;
+    failed=FAILED(device->CreateVertexBuffer(vertex_count*8,0,kinoko::graphics::vertex_tex1,kinoko::graphics::pool_managed,render.coordinates.put()))||failed;
     failed=FAILED(device->CreateVertexDeclaration(elements,render.declaration.put()))||failed;
     if(failed) {
         render.indices.reset();render.positions.reset();render.normals.reset();

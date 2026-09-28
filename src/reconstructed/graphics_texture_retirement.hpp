@@ -8,9 +8,9 @@ public:
     explicit GraphicsTextureRetirement(kinoko::graphics::BaseTexture* owned):owned_(owned) {}
     void unbind(kinoko::graphics::Device* device) {
         if(!device) return;
-        for(DWORD stage=0;stage<8;++stage) {
+        for(std::uint32_t stage=0;stage<8;++stage) {
             kinoko::graphics::BaseTexture* value=nullptr;
-            if(SUCCEEDED(device->GetTexture(stage,&value)) && value) {
+            if(kinoko::graphics::succeeded(device->GetTexture(stage,&value)) && value) {
                 kinoko::ComOwner<kinoko::graphics::BaseTexture> bound(value);
                 if(bound.get()==owned_.get()) device->SetTexture(stage,nullptr);
             }

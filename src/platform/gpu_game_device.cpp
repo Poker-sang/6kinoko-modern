@@ -17,7 +17,7 @@
 namespace kinoko::graphics {
 namespace {
 std::mutex errors_mutex;std::string error;Device* active=nullptr;
-HRESULT bad(const char* message){std::lock_guard<std::mutex> lock(errors_mutex);if(error.empty())error=message;return kinoko::graphics::error_invalidcall;}
+kinoko::graphics::Result bad(const char* message){std::lock_guard<std::mutex> lock(errors_mutex);if(error.empty())error=message;return kinoko::graphics::error_invalidcall;}
 std::vector<char> shader(const char* filename){
     const auto* base=SDL_GetBasePath();if(!base)throw std::runtime_error(SDL_GetError());
     std::ifstream file(std::string(base)+"shaders/"+filename,std::ios::binary);
@@ -30,46 +30,46 @@ using Pixels=std::vector<uint8_t>;
 struct Image {
     std::mutex mutex;
     uint64_t id=sequence++,generation=0;
-    UINT width,height;kinoko::graphics::Format format;bool target;
+    std::uint32_t width,height;kinoko::graphics::Format format;bool target;
     std::shared_ptr<const Pixels> pixels;
-    Image(UINT w,UINT h,kinoko::graphics::Format f,bool t):width(w),height(h),format(f),target(t){}
+    Image(std::uint32_t w,std::uint32_t h,kinoko::graphics::Format f,bool t):width(w),height(h),format(f),target(t){}
 };
-HRESULT Surface::GetDesc(kinoko::graphics::SurfaceDescription* out){if(!out)return bad("Null surface description");*out={};out->Width=image->width;out->Height=image->height;out->Format=image->format;out->Type=kinoko::graphics::resource_surface;return S_OK;}
-HRESULT Texture::LockRect(UINT level,kinoko::graphics::MappedPixels* out,const RECT* rect,DWORD flags){
+kinoko::graphics::Result Surface::GetDesc(kinoko::graphics::SurfaceDescription* out){if(!out)return bad("Null surface description");*out={};out->Width=image->width;out->Height=image->height;out->Format=image->format;out->Type=kinoko::graphics::resource_surface;return kinoko::graphics::ok;}
+kinoko::graphics::Result Texture::LockRect(std::uint32_t level,kinoko::graphics::MappedPixels* out,const kinoko::graphics::PixelRect* rect,std::uint32_t flags){
     std::lock_guard<std::mutex> lock(image->mutex);
     if(level||!out||locked||image->target||flags)return bad("Unsupported texture map request");
-    const UINT bpp=image->format==kinoko::graphics::format_a1r5g5b5?2:4;
-    RECT r=rect?*rect:RECT{0,0,LONG(image->width),LONG(image->height)};
-    if(r.left<0||r.top<0||r.right>LONG(image->width)||r.bottom>LONG(image->height)||r.left>=r.right||r.top>=r.bottom)return bad("Invalid texture map region");
+    const std::uint32_t bpp=image->format==kinoko::graphics::format_a1r5g5b5?2:4;
+    kinoko::graphics::PixelRect r=rect?*rect:kinoko::graphics::PixelRect{0,0,std::int32_t(image->width),std::int32_t(image->height)};
+    if(r.left<0||r.top<0||r.right>std::int32_t(image->width)||r.bottom>std::int32_t(image->height)||r.left>=r.right||r.top>=r.bottom)return bad("Invalid texture map region");
     staging=image->pixels?*image->pixels:Pixels(size_t(image->width)*image->height*bpp);
-    out->Pitch=INT(image->width*bpp);out->pBits=staging.data()+(size_t(r.top)*image->width+r.left)*bpp;locked=true;return S_OK;
+    out->Pitch=std::int32_t(image->width*bpp);out->pBits=staging.data()+(size_t(r.top)*image->width+r.left)*bpp;locked=true;return kinoko::graphics::ok;
 }
-HRESULT Texture::UnlockRect(UINT level){std::lock_guard<std::mutex> lock(image->mutex);if(level||!locked)return bad("Unbalanced texture unmap");image->pixels=std::make_shared<const Pixels>(std::move(staging));++image->generation;locked=false;return S_OK;}
-HRESULT Texture::GetSurfaceLevel(UINT level,Surface** out){if(level||!out)return bad("Unsupported texture surface level");*out=new Surface(image);return S_OK;}
-HRESULT Buffer::Lock(UINT offset,UINT size,void** out,DWORD flags){if(!out||flags||offset>bytes.size()||(size&&size>bytes.size()-offset))return bad("Invalid mesh buffer map");*out=bytes.data()+offset;return S_OK;}
+kinoko::graphics::Result Texture::UnlockRect(std::uint32_t level){std::lock_guard<std::mutex> lock(image->mutex);if(level||!locked)return bad("Unbalanced texture unmap");image->pixels=std::make_shared<const Pixels>(std::move(staging));++image->generation;locked=false;return kinoko::graphics::ok;}
+kinoko::graphics::Result Texture::GetSurfaceLevel(std::uint32_t level,Surface** out){if(level||!out)return bad("Unsupported texture surface level");*out=new Surface(image);return kinoko::graphics::ok;}
+kinoko::graphics::Result Buffer::Lock(std::uint32_t offset,std::uint32_t size,void** out,std::uint32_t flags){if(!out||flags||offset>bytes.size()||(size&&size>bytes.size()-offset))return bad("Invalid mesh buffer map");*out=bytes.data()+offset;return kinoko::graphics::ok;}
 struct Snapshot {std::shared_ptr<Image> image;std::shared_ptr<const Pixels> pixels;uint64_t generation=0;};
 struct RecordedPass {std::shared_ptr<Image> target;gpu::Pass pass;std::vector<Snapshot> textures;};
 struct Device::State {
     std::recursive_mutex cpu_mutex;
-    UINT width,height;bool scene=false,closed=false,reported=false,mesh_decl=false;
+    std::uint32_t width,height;bool scene=false,closed=false,reported=false,mesh_decl=false;
     std::unique_ptr<gpu::Renderer> renderer;
     Surface *back=nullptr,*depth=nullptr,*target=nullptr;
-    std::array<DWORD,256> states{};std::array<std::array<DWORD,16>,8> samplers{};
+    std::array<std::uint32_t,256> states{};std::array<std::array<std::uint32_t,16>,8> samplers{};
     std::array<Texture*,8> textures{};
-    std::array<Buffer*,3> streams{};std::array<UINT,3> offsets{},strides{};Buffer* indices=nullptr;
-    DWORD fvf=kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse|kinoko::graphics::vertex_tex1;
+    std::array<Buffer*,3> streams{};std::array<std::uint32_t,3> offsets{},strides{};Buffer* indices=nullptr;
+    std::uint32_t fvf=kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse|kinoko::graphics::vertex_tex1;
     math::Matrix world=math::identity(),view=math::identity(),projection=math::identity();
     std::vector<RecordedPass> recording;std::mutex queue_mutex;std::deque<std::vector<RecordedPass>> queue;
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
-    State(UINT x,UINT y):width(x),height(y) {
+    State(std::uint32_t x,std::uint32_t y):width(x),height(y) {
         const auto vs=shader("sprite.vert.dxbc"),fs=shader("sprite.frag.dxbc");
         renderer=std::make_unique<gpu::Renderer>(platform::host().window(),gpu::ShaderEncoding::dxbc,gpu::ShaderCode{vs.data(),vs.size()},gpu::ShaderCode{fs.data(),fs.size()});
         auto screen=std::make_shared<Image>(x,y,kinoko::graphics::format_a8r8g8b8,true);screen->id=0;
         back=new Surface(screen);depth=new Surface(screen);target=back;target->AddRef();
-        states[kinoko::graphics::state_zenable]=states[kinoko::graphics::state_zwriteenable]=TRUE;states[kinoko::graphics::state_zfunc]=kinoko::graphics::compare_lessequal;
+        states[kinoko::graphics::state_zenable]=states[kinoko::graphics::state_zwriteenable]=true;states[kinoko::graphics::state_zfunc]=kinoko::graphics::compare_lessequal;
         states[kinoko::graphics::state_alphafunc]=kinoko::graphics::compare_always;states[kinoko::graphics::state_srcblend]=kinoko::graphics::blend_one;states[kinoko::graphics::state_destblend]=kinoko::graphics::blend_zero;
-        states[kinoko::graphics::state_blendop]=kinoko::graphics::blend_operation_add;states[kinoko::graphics::state_cullmode]=kinoko::graphics::cull_ccw;states[kinoko::graphics::state_lighting]=TRUE;
+        states[kinoko::graphics::state_blendop]=kinoko::graphics::blend_operation_add;states[kinoko::graphics::state_cullmode]=kinoko::graphics::cull_ccw;states[kinoko::graphics::state_lighting]=true;
         for(auto& s:samplers){s[kinoko::graphics::sampler_addressu]=s[kinoko::graphics::sampler_addressv]=kinoko::graphics::address_wrap;s[kinoko::graphics::sampler_magfilter]=s[kinoko::graphics::sampler_minfilter]=kinoko::graphics::filter_point;}
     }
     ~State(){for(auto* t:textures)if(t)t->Release();for(auto* b:streams)if(b)b->Release();if(indices)indices->Release();if(target)target->Release();if(back)back->Release();if(depth)depth->Release();}
@@ -84,7 +84,7 @@ struct Device::State {
         }
         return recording.back();
     }
-    static render::BlendFactor blend(DWORD value){
+    static render::BlendFactor blend(std::uint32_t value){
         switch(value){case kinoko::graphics::blend_zero:return render::BlendFactor::zero;case kinoko::graphics::blend_one:return render::BlendFactor::one;
         case kinoko::graphics::blend_srccolor:return render::BlendFactor::source_color;case kinoko::graphics::blend_destcolor:return render::BlendFactor::destination_color;
         case kinoko::graphics::blend_srcalpha:return render::BlendFactor::source_alpha;case kinoko::graphics::blend_invsrcalpha:return render::BlendFactor::inverse_source_alpha;
@@ -103,7 +103,7 @@ struct Device::State {
         auto* t=textures[0];Snapshot snap;if(t){std::lock_guard<std::mutex> lock(t->image->mutex);snap={t->image,t->image->pixels,t->image->generation};}
         auto& p=pass();p.pass.draws.push_back(std::move(draw));p.textures.push_back(std::move(snap));
     }
-    gpu::Vertex vertex(float x,float y,float z,float w,DWORD color,float u,float v,bool transform){
+    gpu::Vertex vertex(float x,float y,float z,float w,std::uint32_t color,float u,float v,bool transform){
         gpu::Vertex out{{x,y,z,w},{float((color>>16)&255)/255,float((color>>8)&255)/255,float(color&255)/255,float(color>>24)/255},{u,v}};
         if(transform){const auto m=math::multiply(math::multiply(world,view),projection);float input[4]={x,y,z,w};
             for(int j=0;j<4;++j){out.position[j]=0;for(int i=0;i<4;++i)out.position[j]+=input[i]*m.m[i][j];}}
@@ -143,43 +143,43 @@ struct Device::State {
         }
     }
 };
-Device::Device(HWND,UINT x,UINT y):state(std::make_unique<State>(x,y)){active=this;}
+Device::Device(std::uint32_t x,std::uint32_t y):state(std::make_unique<State>(x,y)){active=this;}
 Device::~Device(){if(active==this)active=nullptr;}
 void stop(){if(active){std::lock_guard<std::mutex> lock(active->state->queue_mutex);active->state->closed=true;}}
-HRESULT Device::GetDeviceCaps(kinoko::graphics::Capabilities* out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return E_POINTER;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return S_OK;}
-HRESULT Device::GetSwapChain(UINT index,SwapChain** out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!out)return bad("Unsupported swapchain index");*out=new SwapChain(this);return S_OK;}
-HRESULT Device::TestCooperativeLevel(){
+kinoko::graphics::Result Device::GetDeviceCaps(kinoko::graphics::Capabilities* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return kinoko::graphics::error_pointer;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::GetSwapChain(std::uint32_t index,SwapChain** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!out)return bad("Unsupported swapchain index");*out=new SwapChain(this);return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::TestCooperativeLevel(){
     try{state->poll();}catch(const std::exception& e){bad(e.what());}
     std::string message;{std::lock_guard<std::mutex> lock(errors_mutex);message=error;}
     if(!message.empty()){
         if(!state->reported){state->reported=true;SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"SDL GPU renderer error",message.c_str(),platform::host().window());SDL_Event quit{};quit.type=SDL_EVENT_QUIT;SDL_PushEvent(&quit);}return kinoko::graphics::error_devicelost;
     }return kinoko::graphics::ok;
 }
-HRESULT Device::Reset(kinoko::graphics::Presentation* p){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!p)return E_POINTER;auto* window=platform::host().window();
-    if(!SDL_SetWindowFullscreen(window,p->Windowed==FALSE)) return bad(SDL_GetError());
-    return S_OK;}
-HRESULT Device::BeginScene(){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return S_OK;}
-HRESULT Device::EndScene(){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty())s.queue.push_back(std::move(s.recording));return S_OK;}
-HRESULT Device::present(){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return S_OK;} // Submission acknowledgement; main-thread poll owns actual presentation.
-HRESULT SwapChain::Present(const RECT*,const RECT*,HWND,const RGNDATA*,DWORD){return device->present();}
-HRESULT Device::Clear(DWORD count,const kinoko::graphics::ClearRect*,DWORD flags,kinoko::graphics::Color color,float z,DWORD stencil){
+kinoko::graphics::Result Device::Reset(kinoko::graphics::Presentation* p){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!p)return kinoko::graphics::error_pointer;auto* window=platform::host().window();
+    if(!SDL_SetWindowFullscreen(window,p->Windowed==false)) return bad(SDL_GetError());
+    return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::BeginScene(){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::EndScene(){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty())s.queue.push_back(std::move(s.recording));return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::present(){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return kinoko::graphics::ok;} // Submission acknowledgement; main-thread poll owns actual presentation.
+kinoko::graphics::Result SwapChain::Present(){return device->present();}
+kinoko::graphics::Result Device::Clear(std::uint32_t count,const kinoko::graphics::ClearRect*,std::uint32_t flags,kinoko::graphics::Color color,float z,std::uint32_t stencil){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     if(count||z!=1||stencil!=0)return bad("Unsupported partial or nondefault GPU clear");
-    auto& s=*state;if(!s.scene)return S_OK;auto* p=&s.pass();
+    auto& s=*state;if(!s.scene)return kinoko::graphics::ok;auto* p=&s.pass();
     if(!p->pass.draws.empty()){RecordedPass next;next.target=p->target;next.pass.logical_width=p->pass.logical_width;next.pass.logical_height=p->pass.logical_height;next.pass.clear=false;next.pass.clear_depth=false;next.pass.clear_stencil=false;s.recording.push_back(std::move(next));p=&s.recording.back();}
     if(flags&kinoko::graphics::clear_target){p->pass.clear=true;p->pass.clear_color={float((color>>16)&255)/255,float((color>>8)&255)/255,float(color&255)/255,float(color>>24)/255};}
     if(flags&kinoko::graphics::clear_zbuffer)p->pass.clear_depth=true;
-    if(flags&kinoko::graphics::clear_stencil)p->pass.clear_stencil=true;return S_OK;
+    if(flags&kinoko::graphics::clear_stencil)p->pass.clear_stencil=true;return kinoko::graphics::ok;
 }
-HRESULT Device::GetRenderState(kinoko::graphics::RenderState type,DWORD* out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||UINT(type)>=state->states.size())return bad("Invalid render state query");*out=state->states[type];return S_OK;}
-HRESULT Device::SetRenderState(kinoko::graphics::RenderState type,DWORD value){
+kinoko::graphics::Result Device::GetRenderState(kinoko::graphics::RenderState type,std::uint32_t* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||std::uint32_t(type)>=state->states.size())return bad("Invalid render state query");*out=state->states[type];return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetRenderState(kinoko::graphics::RenderState type,std::uint32_t value){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     switch(type){
     case kinoko::graphics::state_zenable:if(value>1)return bad("W-buffering is unsupported");break;
@@ -191,62 +191,62 @@ HRESULT Device::SetRenderState(kinoko::graphics::RenderState type,DWORD value){
     case kinoko::graphics::state_alpharef:case kinoko::graphics::state_stencilmask:break;
     case kinoko::graphics::state_fillmode:if(value!=kinoko::graphics::fill_solid)return bad("Only solid mesh fill is implemented");break;
     default:return bad("Unimplemented render state requested");
-    }state->states[type]=value;return S_OK;
+    }state->states[type]=value;return kinoko::graphics::ok;
 }
-HRESULT Device::GetSamplerState(DWORD stage,kinoko::graphics::SamplerState type,DWORD* out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||UINT(type)>=16||!out)return bad("Invalid sampler query");*out=state->samplers[stage][type];return S_OK;}
-HRESULT Device::SetSamplerState(DWORD stage,kinoko::graphics::SamplerState type,DWORD value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage||UINT(type)>=16)return bad("Unsupported sampler stage");
+kinoko::graphics::Result Device::GetSamplerState(std::uint32_t stage,kinoko::graphics::SamplerState type,std::uint32_t* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||std::uint32_t(type)>=16||!out)return bad("Invalid sampler query");*out=state->samplers[stage][type];return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetSamplerState(std::uint32_t stage,kinoko::graphics::SamplerState type,std::uint32_t value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage||std::uint32_t(type)>=16)return bad("Unsupported sampler stage");
     if(type==kinoko::graphics::sampler_addressu||type==kinoko::graphics::sampler_addressv){if(value!=kinoko::graphics::address_wrap&&value!=kinoko::graphics::address_clamp)return bad("Unsupported addressing");}
     else if(type==kinoko::graphics::sampler_minfilter||type==kinoko::graphics::sampler_magfilter||type==kinoko::graphics::sampler_mipfilter){if(value!=kinoko::graphics::filter_point&&value!=kinoko::graphics::filter_linear)return bad("Unsupported filtering");}
-    else return bad("Unsupported sampler property");state->samplers[stage][type]=value;return S_OK;}
-HRESULT Device::SetTextureStageState(DWORD stage,kinoko::graphics::TextureStageState type,DWORD value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return !stage&&type==kinoko::graphics::texture_stage_alphaop&&value==kinoko::graphics::texture_operation_modulate?S_OK:bad("Unsupported texture-stage operation");}
-HRESULT Device::GetTexture(DWORD stage,Texture** out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||!out)return E_INVALIDARG;*out=state->textures[stage];if(*out)(*out)->AddRef();return S_OK;}
-HRESULT Device::SetTexture(DWORD stage,Texture* value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||(stage&&value))return bad("Unsupported texture stage");if(value)value->AddRef();auto*& current=state->textures[stage];if(current)current->Release();current=value;return S_OK;}
-HRESULT Device::GetRenderTarget(DWORD index,Surface** out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!out)return E_INVALIDARG;*out=state->target;(*out)->AddRef();return S_OK;}
-HRESULT Device::SetRenderTarget(DWORD index,Surface* value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!value||!value->image->target)return bad("Invalid render target");value->AddRef();state->target->Release();state->target=value;return S_OK;}
-HRESULT Device::GetDepthStencilSurface(Surface** out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return E_POINTER;*out=state->depth;(*out)->AddRef();return S_OK;}
-HRESULT Device::GetTransform(kinoko::graphics::Transform type,kinoko::graphics::Matrix* out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return E_POINTER;auto& s=*state;const auto* m=type==kinoko::graphics::transform_world?&s.world:type==kinoko::graphics::transform_view?&s.view:type==kinoko::graphics::transform_projection?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(out,m,sizeof(*m));return S_OK;}
-HRESULT Device::SetTransform(kinoko::graphics::Transform type,const kinoko::graphics::Matrix* in){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!in)return E_POINTER;auto& s=*state;auto* m=type==kinoko::graphics::transform_world?&s.world:type==kinoko::graphics::transform_view?&s.view:type==kinoko::graphics::transform_projection?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(m,in,sizeof(*m));return S_OK;}
-HRESULT Device::SetFVF(DWORD value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(value!=324&&value!=0x4142&&value!=(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse))return bad("Unsupported vertex layout");state->fvf=value;state->mesh_decl=false;return S_OK;}
-HRESULT Device::DrawPrimitiveUP(kinoko::graphics::Primitive type,UINT primitives,const void* data,UINT stride){
+    else return bad("Unsupported sampler property");state->samplers[stage][type]=value;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetTextureStageState(std::uint32_t stage,kinoko::graphics::TextureStageState type,std::uint32_t value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return !stage&&type==kinoko::graphics::texture_stage_alphaop&&value==kinoko::graphics::texture_operation_modulate?kinoko::graphics::ok:bad("Unsupported texture-stage operation");}
+kinoko::graphics::Result Device::GetTexture(std::uint32_t stage,Texture** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||!out)return kinoko::graphics::error_argument;*out=state->textures[stage];if(*out)(*out)->AddRef();return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetTexture(std::uint32_t stage,Texture* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(stage>=8||(stage&&value))return bad("Unsupported texture stage");if(value)value->AddRef();auto*& current=state->textures[stage];if(current)current->Release();current=value;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::GetRenderTarget(std::uint32_t index,Surface** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!out)return kinoko::graphics::error_argument;*out=state->target;(*out)->AddRef();return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetRenderTarget(std::uint32_t index,Surface* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(index||!value||!value->image->target)return bad("Invalid render target");value->AddRef();state->target->Release();state->target=value;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::GetDepthStencilSurface(Surface** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return kinoko::graphics::error_pointer;*out=state->depth;(*out)->AddRef();return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::GetTransform(kinoko::graphics::Transform type,kinoko::graphics::Matrix* out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return kinoko::graphics::error_pointer;auto& s=*state;const auto* m=type==kinoko::graphics::transform_world?&s.world:type==kinoko::graphics::transform_view?&s.view:type==kinoko::graphics::transform_projection?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(out,m,sizeof(*m));return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetTransform(kinoko::graphics::Transform type,const kinoko::graphics::Matrix* in){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!in)return kinoko::graphics::error_pointer;auto& s=*state;auto* m=type==kinoko::graphics::transform_world?&s.world:type==kinoko::graphics::transform_view?&s.view:type==kinoko::graphics::transform_projection?&s.projection:nullptr;if(!m)return bad("Unknown transform");std::memcpy(m,in,sizeof(*m));return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetFVF(std::uint32_t value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(value!=324&&value!=0x4142&&value!=(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse))return bad("Unsupported vertex layout");state->fvf=value;state->mesh_decl=false;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::DrawPrimitiveUP(kinoko::graphics::Primitive type,std::uint32_t primitives,const void* data,std::uint32_t stride){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     if(type!=kinoko::graphics::primitive_trianglestrip||!data||primitives<1||primitives>2||stride<(state->fvf==(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse)?20u:28u))return bad("Unsupported immediate primitive");
     try{gpu::Draw draw;draw.clip_space=state->fvf==0x4142;const auto* bytes=static_cast<const uint8_t*>(data);
         const unsigned order[]={0,1,2,2,1,3};
         for(unsigned i=0;i<primitives*3;++i){KinokoSpriteVertex v{};std::memcpy(&v,bytes+order[i]*stride,state->fvf==(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse)?20:28);
             draw.triangles.push_back(state->vertex(v.x,v.y,v.z,v.rhw,v.color,v.u,v.v,draw.clip_space));}
-        state->draw(std::move(draw));return S_OK;
+        state->draw(std::move(draw));return kinoko::graphics::ok;
     }catch(const std::exception& e){return bad(e.what());}
 }
-HRESULT Device::CreateIndexBuffer(UINT bytes,DWORD usage,kinoko::graphics::Format format,kinoko::graphics::Pool,Buffer** out,HANDLE*){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||usage||format!=kinoko::graphics::format_index16)return bad("Unsupported index buffer");*out=new Buffer(bytes);return S_OK;}
-HRESULT Device::CreateVertexBuffer(UINT bytes,DWORD usage,DWORD,kinoko::graphics::Pool,Buffer** out,HANDLE*){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||usage)return bad("Unsupported vertex buffer");*out=new Buffer(bytes);return S_OK;}
-HRESULT Device::CreateVertexDeclaration(const kinoko::graphics::VertexElement* elements,Declaration** out){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!elements||!out)return E_POINTER;
+kinoko::graphics::Result Device::CreateIndexBuffer(std::uint32_t bytes,std::uint32_t usage,kinoko::graphics::Format format,kinoko::graphics::Pool,Buffer** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||usage||format!=kinoko::graphics::format_index16)return bad("Unsupported index buffer");*out=new Buffer(bytes);return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::CreateVertexBuffer(std::uint32_t bytes,std::uint32_t usage,std::uint32_t,kinoko::graphics::Pool,Buffer** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out||usage)return bad("Unsupported vertex buffer");*out=new Buffer(bytes);return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::CreateVertexDeclaration(const kinoko::graphics::VertexElement* elements,Declaration** out){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!elements||!out)return kinoko::graphics::error_pointer;
     const kinoko::graphics::VertexElement expected[]={
         {0,0,kinoko::graphics::element_float3,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_position,0},
         {1,0,kinoko::graphics::element_float3,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_normal,0},
         {2,0,kinoko::graphics::element_float2,kinoko::graphics::declaration_method_default,kinoko::graphics::semantic_texcoord,0},kinoko::graphics::declaration_end()};
     if(std::memcmp(elements,expected,sizeof(expected)))return bad("Unknown mesh vertex declaration");
-    *out=new Declaration;return S_OK;}
-HRESULT Device::SetVertexDeclaration(Declaration* value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!value)return bad("Missing mesh declaration");state->mesh_decl=true;return S_OK;}
-HRESULT Device::SetStreamSource(UINT slot,Buffer* value,UINT offset,UINT stride){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(slot>=3||!value||offset>value->bytes.size())return bad("Invalid mesh stream");value->AddRef();auto*& old=state->streams[slot];if(old)old->Release();old=value;state->offsets[slot]=offset;state->strides[slot]=stride;return S_OK;}
-HRESULT Device::SetIndices(Buffer* value){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!value)return bad("Missing mesh indices");value->AddRef();if(state->indices)state->indices->Release();state->indices=value;return S_OK;}
-HRESULT Device::DrawIndexedPrimitive(kinoko::graphics::Primitive type,INT base,UINT minimum,UINT count,UINT start,UINT primitives){
+    *out=new Declaration;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetVertexDeclaration(Declaration* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!value)return bad("Missing mesh declaration");state->mesh_decl=true;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetStreamSource(std::uint32_t slot,Buffer* value,std::uint32_t offset,std::uint32_t stride){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(slot>=3||!value||offset>value->bytes.size())return bad("Invalid mesh stream");value->AddRef();auto*& old=state->streams[slot];if(old)old->Release();old=value;state->offsets[slot]=offset;state->strides[slot]=stride;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::SetIndices(Buffer* value){
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!value)return bad("Missing mesh indices");value->AddRef();if(state->indices)state->indices->Release();state->indices=value;return kinoko::graphics::ok;}
+kinoko::graphics::Result Device::DrawIndexedPrimitive(kinoko::graphics::Primitive type,std::int32_t base,std::uint32_t minimum,std::uint32_t count,std::uint32_t start,std::uint32_t primitives){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     auto& s=*state;if(type!=kinoko::graphics::primitive_trianglelist||!s.mesh_decl||!s.indices||!s.streams[0]||!s.streams[2]||uint64_t(start+uint64_t(primitives)*3)*2>s.indices->bytes.size())return bad("Invalid indexed mesh draw");
     try{gpu::Draw draw;draw.clip_space=true;
@@ -256,18 +256,18 @@ HRESULT Device::DrawIndexedPrimitive(kinoko::graphics::Primitive type,INT base,U
             const auto read=[&](unsigned stream,void* out,size_t n){const auto offset=s.offsets[stream]+vertex*s.strides[stream];if(offset+n>s.streams[stream]->bytes.size())throw std::runtime_error("Mesh stream bounds");std::memcpy(out,s.streams[stream]->bytes.data()+offset,n);};
             read(0,xyz,sizeof(xyz));read(2,uv,sizeof(uv));
             // Default fixed-function lighting has no active lights or ambient.
-            const DWORD color=s.states[kinoko::graphics::state_lighting]?0xff000000u:0xffffffffu;
+            const std::uint32_t color=s.states[kinoko::graphics::state_lighting]?0xff000000u:0xffffffffu;
             draw.triangles.push_back(s.vertex(xyz[0],xyz[1],xyz[2],1,color,uv[0],uv[1],true));
-        }s.draw(std::move(draw));return S_OK;
+        }s.draw(std::move(draw));return kinoko::graphics::ok;
     }catch(const std::exception& e){return bad(e.what());}
 }
-HRESULT Factory::GetAdapterDisplayMode(UINT adapter,kinoko::graphics::DisplayMode* out){if(adapter||!out)return E_INVALIDARG;*out={640,480,60,kinoko::graphics::format_x8r8g8b8};return S_OK;}
-HRESULT Factory::CreateDevice(UINT adapter,kinoko::graphics::DeviceKind,HWND window,DWORD,kinoko::graphics::Presentation* p,Device** out){if(adapter||!p||!out)return E_INVALIDARG;
-    try{*out=new Device(window,p->BackBufferWidth,p->BackBufferHeight);return S_OK;}catch(const std::exception& e){return bad(e.what());}}
-Factory* create_factory(UINT){std::lock_guard<std::mutex> lock(errors_mutex);error.clear();return new Factory;}
+kinoko::graphics::Result Factory::GetAdapterDisplayMode(std::uint32_t adapter,kinoko::graphics::DisplayMode* out){if(adapter||!out)return kinoko::graphics::error_argument;*out={640,480,60,kinoko::graphics::format_x8r8g8b8};return kinoko::graphics::ok;}
+kinoko::graphics::Result Factory::CreateDevice(std::uint32_t adapter,kinoko::graphics::DeviceKind,std::uint32_t,kinoko::graphics::Presentation* p,Device** out){if(adapter||!p||!out)return kinoko::graphics::error_argument;
+    try{*out=new Device(p->BackBufferWidth,p->BackBufferHeight);return kinoko::graphics::ok;}catch(const std::exception& e){return bad(e.what());}}
+Factory* create_factory(std::uint32_t){std::lock_guard<std::mutex> lock(errors_mutex);error.clear();return new Factory;}
 }
-HRESULT kinoko::graphics::create_texture(kinoko::graphics::Device*,UINT width,UINT height,UINT levels,DWORD usage,kinoko::graphics::Format format,kinoko::graphics::Pool,kinoko::graphics::Texture** out){
+kinoko::graphics::Result kinoko::graphics::create_texture(kinoko::graphics::Device*,std::uint32_t width,std::uint32_t height,std::uint32_t levels,std::uint32_t usage,kinoko::graphics::Format format,kinoko::graphics::Pool,kinoko::graphics::Texture** out){
     using namespace kinoko::graphics;
-    if(!out||!width||!height||width>16384||height>16384||levels!=1||(format!=kinoko::graphics::format_a1r5g5b5&&format!=kinoko::graphics::format_a8r8g8b8)||(usage&&usage!=kinoko::graphics::usage_rendertarget))return E_INVALIDARG;
-    *out=new Texture(std::make_shared<Image>(width,height,format,usage==kinoko::graphics::usage_rendertarget));return S_OK;
+    if(!out||!width||!height||width>16384||height>16384||levels!=1||(format!=kinoko::graphics::format_a1r5g5b5&&format!=kinoko::graphics::format_a8r8g8b8)||(usage&&usage!=kinoko::graphics::usage_rendertarget))return kinoko::graphics::error_argument;
+    *out=new Texture(std::make_shared<Image>(width,height,format,usage==kinoko::graphics::usage_rendertarget));return kinoko::graphics::ok;
 }

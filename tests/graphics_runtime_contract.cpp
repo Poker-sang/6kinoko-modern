@@ -2,12 +2,18 @@
 #include <cstddef>
 #include <type_traits>
 #include <vector>
-#ifdef _WIN32
-// Compile the actual public game declarations on both Win32 and x64 too.
+// Compile the actual public game declarations on every portable host.
 #include "kinoko/renderer.h"
 #include "kinoko/texture_store.h"
-#endif
 
+// LLP64 (Windows) and LP64 (Linux/macOS) must agree on command/status widths.
+static_assert(sizeof(kinoko::graphics::Result) == 4);
+static_assert(sizeof(kinoko::graphics::PixelRect) == 16);
+static_assert(sizeof(kinoko::graphics::MappedPixels::Pitch) == 4);
+static_assert(sizeof(kinoko::graphics::SurfaceDescription::Usage) == 4);
+static_assert(kinoko::graphics::failed(kinoko::graphics::error_invalidcall));
+static_assert(kinoko::graphics::succeeded(kinoko::graphics::ok));
+static_assert(kinoko::graphics::succeeded(1));
 static_assert(std::is_standard_layout_v<KinokoRenderer>);
 static_assert(std::is_same_v<decltype(KinokoTextureSlot::texture), kinoko::graphics::Texture*>);
 static_assert(std::is_same_v<decltype(KinokoDeviceListener::context), void*>);

@@ -1,5 +1,4 @@
 #pragma once
-#include <windows.h>
 #include "kinoko/graphics_types.hpp"
 #include <atomic>
 #include <memory>
@@ -9,74 +8,74 @@ namespace kinoko::graphics {
 // audited game call surface exists; all rendering is recorded for SDL GPU.
 struct Image;
 struct Ref {
-    std::atomic<ULONG> refs{1};
+    std::atomic<std::uint32_t> refs{1};
     virtual ~Ref()=default;
-    virtual ULONG AddRef(){return ++refs;}
-    virtual ULONG Release(){const auto n=--refs;if(!n)delete this;return n;}
+    virtual std::uint32_t AddRef(){return ++refs;}
+    virtual std::uint32_t Release(){const auto n=--refs;if(!n)delete this;return n;}
 };
 struct Surface:Ref {
     std::shared_ptr<Image> image;
     explicit Surface(std::shared_ptr<Image> value):image(std::move(value)){}
-    HRESULT GetDesc(kinoko::graphics::SurfaceDescription*);
+    kinoko::graphics::Result GetDesc(kinoko::graphics::SurfaceDescription*);
 };
 struct Texture:Ref {
     std::shared_ptr<Image> image;
     bool locked=false;
     std::vector<uint8_t> staging;
     explicit Texture(std::shared_ptr<Image> value):image(std::move(value)){}
-    HRESULT LockRect(UINT,kinoko::graphics::MappedPixels*,const RECT*,DWORD);
-    HRESULT UnlockRect(UINT);
-    HRESULT GetSurfaceLevel(UINT,Surface**);
+    kinoko::graphics::Result LockRect(std::uint32_t,kinoko::graphics::MappedPixels*,const kinoko::graphics::PixelRect*,std::uint32_t);
+    kinoko::graphics::Result UnlockRect(std::uint32_t);
+    kinoko::graphics::Result GetSurfaceLevel(std::uint32_t,Surface**);
 };
 struct Buffer:Ref {
     std::vector<uint8_t> bytes;
-    explicit Buffer(UINT size):bytes(size){}
-    HRESULT Lock(UINT offset,UINT size,void** out,DWORD);
-    HRESULT Unlock(){return S_OK;}
+    explicit Buffer(std::uint32_t size):bytes(size){}
+    kinoko::graphics::Result Lock(std::uint32_t offset,std::uint32_t size,void** out,std::uint32_t);
+    kinoko::graphics::Result Unlock(){return kinoko::graphics::ok;}
 };
 struct Declaration:Ref {};
 struct Device;
 struct SwapChain:Ref {
     Device* device;
     explicit SwapChain(Device* value):device(value){}
-    HRESULT Present(const RECT*,const RECT*,HWND,const RGNDATA*,DWORD);
+    kinoko::graphics::Result Present();
 };
 struct Device:Ref {
     struct State;std::unique_ptr<State> state;
-    Device(HWND,UINT,UINT);~Device() override;
-    HRESULT GetDeviceCaps(kinoko::graphics::Capabilities*);
-    HRESULT GetSwapChain(UINT,SwapChain**);
-    HRESULT TestCooperativeLevel();HRESULT Reset(kinoko::graphics::Presentation*);
-    HRESULT BeginScene();HRESULT EndScene();HRESULT present();
-    HRESULT Clear(DWORD,const kinoko::graphics::ClearRect*,DWORD,kinoko::graphics::Color,float,DWORD);
-    HRESULT GetRenderState(kinoko::graphics::RenderState,DWORD*);
-    HRESULT SetRenderState(kinoko::graphics::RenderState,DWORD);
-    HRESULT GetSamplerState(DWORD,kinoko::graphics::SamplerState,DWORD*);
-    HRESULT SetSamplerState(DWORD,kinoko::graphics::SamplerState,DWORD);
-    HRESULT SetTextureStageState(DWORD,kinoko::graphics::TextureStageState,DWORD);
-    HRESULT GetTexture(DWORD,Texture**);HRESULT SetTexture(DWORD,Texture*);
-    HRESULT GetRenderTarget(DWORD,Surface**);HRESULT SetRenderTarget(DWORD,Surface*);
-    HRESULT GetDepthStencilSurface(Surface**);
-    HRESULT GetTransform(kinoko::graphics::Transform,kinoko::graphics::Matrix*);
-    HRESULT SetTransform(kinoko::graphics::Transform,const kinoko::graphics::Matrix*);
-    HRESULT SetFVF(DWORD);
-    HRESULT DrawPrimitiveUP(kinoko::graphics::Primitive,UINT,const void*,UINT);
-    HRESULT CreateIndexBuffer(UINT,DWORD,kinoko::graphics::Format,kinoko::graphics::Pool,Buffer**,HANDLE*);
-    HRESULT CreateVertexBuffer(UINT,DWORD,DWORD,kinoko::graphics::Pool,Buffer**,HANDLE*);
-    HRESULT CreateVertexDeclaration(const kinoko::graphics::VertexElement*,Declaration**);
-    HRESULT SetVertexDeclaration(Declaration*);
-    HRESULT SetStreamSource(UINT,Buffer*,UINT,UINT);
-    HRESULT SetIndices(Buffer*);
-    HRESULT DrawIndexedPrimitive(kinoko::graphics::Primitive,INT,UINT,UINT,UINT,UINT);
+    Device(std::uint32_t,std::uint32_t);~Device() override;
+    kinoko::graphics::Result GetDeviceCaps(kinoko::graphics::Capabilities*);
+    kinoko::graphics::Result GetSwapChain(std::uint32_t,SwapChain**);
+    kinoko::graphics::Result TestCooperativeLevel();kinoko::graphics::Result Reset(kinoko::graphics::Presentation*);
+    kinoko::graphics::Result BeginScene();kinoko::graphics::Result EndScene();kinoko::graphics::Result present();
+    kinoko::graphics::Result Clear(std::uint32_t,const kinoko::graphics::ClearRect*,std::uint32_t,kinoko::graphics::Color,float,std::uint32_t);
+    kinoko::graphics::Result GetRenderState(kinoko::graphics::RenderState,std::uint32_t*);
+    kinoko::graphics::Result SetRenderState(kinoko::graphics::RenderState,std::uint32_t);
+    kinoko::graphics::Result GetSamplerState(std::uint32_t,kinoko::graphics::SamplerState,std::uint32_t*);
+    kinoko::graphics::Result SetSamplerState(std::uint32_t,kinoko::graphics::SamplerState,std::uint32_t);
+    kinoko::graphics::Result SetTextureStageState(std::uint32_t,kinoko::graphics::TextureStageState,std::uint32_t);
+    kinoko::graphics::Result GetTexture(std::uint32_t,Texture**);kinoko::graphics::Result SetTexture(std::uint32_t,Texture*);
+    kinoko::graphics::Result GetRenderTarget(std::uint32_t,Surface**);kinoko::graphics::Result SetRenderTarget(std::uint32_t,Surface*);
+    kinoko::graphics::Result GetDepthStencilSurface(Surface**);
+    kinoko::graphics::Result GetTransform(kinoko::graphics::Transform,kinoko::graphics::Matrix*);
+    kinoko::graphics::Result SetTransform(kinoko::graphics::Transform,const kinoko::graphics::Matrix*);
+    kinoko::graphics::Result SetFVF(std::uint32_t);
+    kinoko::graphics::Result DrawPrimitiveUP(kinoko::graphics::Primitive,std::uint32_t,const void*,std::uint32_t);
+    kinoko::graphics::Result CreateIndexBuffer(std::uint32_t,std::uint32_t,kinoko::graphics::Format,kinoko::graphics::Pool,Buffer**);
+    kinoko::graphics::Result CreateVertexBuffer(std::uint32_t,std::uint32_t,std::uint32_t,kinoko::graphics::Pool,Buffer**);
+    kinoko::graphics::Result CreateVertexDeclaration(const kinoko::graphics::VertexElement*,Declaration**);
+    kinoko::graphics::Result SetVertexDeclaration(Declaration*);
+    kinoko::graphics::Result SetStreamSource(std::uint32_t,Buffer*,std::uint32_t,std::uint32_t);
+    kinoko::graphics::Result SetIndices(Buffer*);
+    kinoko::graphics::Result DrawIndexedPrimitive(kinoko::graphics::Primitive,std::int32_t,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t);
 };
 struct Factory:Ref {
-    HRESULT GetAdapterDisplayMode(UINT,kinoko::graphics::DisplayMode*);
-    HRESULT CreateDevice(UINT,kinoko::graphics::DeviceKind,HWND,DWORD,kinoko::graphics::Presentation*,Device**);
+    kinoko::graphics::Result GetAdapterDisplayMode(std::uint32_t,kinoko::graphics::DisplayMode*);
+    kinoko::graphics::Result CreateDevice(std::uint32_t,kinoko::graphics::DeviceKind,std::uint32_t,kinoko::graphics::Presentation*,Device**);
 };
-Factory* create_factory(UINT);
+Factory* create_factory(std::uint32_t);
 void stop(); // Cancels producer backpressure before the application joins workers.
 using BaseTexture=Texture;
 using VertexBuffer=Buffer;
 using IndexBuffer=Buffer;
-HRESULT create_texture(Device*,UINT,UINT,UINT,DWORD,Format,Pool,Texture**);
+kinoko::graphics::Result create_texture(Device*,std::uint32_t,std::uint32_t,std::uint32_t,std::uint32_t,Format,Pool,Texture**);
 }

@@ -330,3 +330,9 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Portable input service and audio runtime compilation targets.
 - [ ] Migrate remaining graphics/entrypoint/font Windows boundaries.
 - Details: [native-input-audio.md](native-input-audio.md).
+
+## Portable game graphics checkpoint
+- [x] Remove Windows SDK aliases/native handles from the public graphics API.
+- [x] Share the actual game graphics backend and resource contract with portable CI.
+- [ ] Migrate fonts, entrypoint and cross-platform shader staging/selection.
+- Details: [portable-game-graphics.md](portable-game-graphics.md).

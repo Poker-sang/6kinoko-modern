@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <windows.h>
 #include "kinoko/graphics_c_boundary.h"
 #ifdef __cplusplus
 extern "C" {
@@ -14,16 +13,16 @@ typedef struct KinokoGraphics {
     KinokoGraphicsCapabilities capabilities;
     KinokoGraphicsPresentation present;
     KinokoGraphicsDisplayMode display;
-    HRESULT cooperative_status;
+    kinoko::graphics::Result cooperative_status;
     int32_t unknown_state;
 } KinokoGraphics;
 extern KinokoGraphics kinoko_graphics;
 void kinoko_graphics_initialize_runtime(void);
-int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t height);
+int32_t kinoko_graphics_create(int32_t width,int32_t height);
 int32_t kinoko_graphics_release(void);
 int32_t kinoko_graphics_reset(void);
 int32_t kinoko_graphics_toggle_window(void);
-HRESULT kinoko_graphics_poll(void);
+kinoko::graphics::Result kinoko_graphics_poll(void);
 int32_t kinoko_graphics_begin_scene(void);
 int32_t kinoko_graphics_end_scene(void);
 int32_t kinoko_graphics_present(void);

@@ -17,7 +17,7 @@ namespace {
 int32_t diagnostic_address(const void* value) { return static_cast<int32_t>(reinterpret_cast<intptr_t>(value)); }
 }
 
-extern "C" HRESULT kinoko_texture_load_image(const char* path, kinoko::graphics::Texture** output,
+extern "C" kinoko::graphics::Result kinoko_texture_load_image(const char* path, kinoko::graphics::Texture** output,
     uint32_t* width, uint32_t* height) {
     if (!path || !output || !kinoko_graphics.device) return kinoko::graphics::error_invalidcall;
     const auto length = std::strlen(path);
@@ -43,22 +43,22 @@ extern "C" HRESULT kinoko_texture_load_image(const char* path, kinoko::graphics:
         allocation_width=allocation_height=(std::max)(allocation_width,allocation_height);
     const auto format = bitmap.bit_depth<=16 ? kinoko::render::PixelFormat::argb1555 : kinoko::render::PixelFormat::argb8888;
     kinoko::render::GraphicsTexture texture(kinoko_graphics.device);
-    HRESULT result;
+    kinoko::graphics::Result result;
     {
         kinoko::graphics::Lock lock;
         result=texture.create({allocation_width,allocation_height,format});
     }
     kinoko_trace_hresult("texture:create-hr",result);
     kinoko_trace_i32("texture:create-object",diagnostic_address(texture.get()));
-    if (FAILED(result) || !texture) return result;
+    if (kinoko::graphics::failed(result) || !texture) return result;
     if (!*reinterpret_cast<void***>(texture.get())) {
         kinoko_trace("texture:create-no-vtable");
         texture.detach(); // inherited invalid-interface boundary: Release is unavailable
-        return E_FAIL;
+        return kinoko::graphics::error_failure;
     }
-    const HRESULT creation_result = result;
+    const kinoko::graphics::Result creation_result = result;
     kinoko::render::PixelMapping locked{};
-    const HRESULT lock_result = texture.map(locked);
+    const kinoko::graphics::Result lock_result = texture.map(locked);
     kinoko_trace_hresult("texture:lock-hr",lock_result);
     kinoko_trace_i32("texture:lock-object",diagnostic_address(texture.get()));
     kinoko_trace_i32("texture:lock-bits",diagnostic_address(locked.pixels));
@@ -72,15 +72,15 @@ extern "C" HRESULT kinoko_texture_load_image(const char* path, kinoko::graphics:
     if (!locked.pixels || locked.pitch<=0) {
         kinoko_trace("texture:lock-invalid-surface");
         texture.unmap();
-        return E_FAIL;
+        return kinoko::graphics::error_failure;
     }
     if (!kinoko::render::copy_surface({bitmap.bit_depth,bitmap.width,bitmap.height,
             bitmap.encoded_size,bitmap.palette,bitmap.pixels},source_pitch,locked)) {
         texture.unmap();
-        return E_FAIL;
+        return kinoko::graphics::error_failure;
     }
     kinoko_trace_i32("texture:unlock-object",diagnostic_address(texture.get()));
-    texture.unmap(); // 40E815 ignores this HRESULT.
+    texture.unmap(); // 40E815 ignores this kinoko::graphics::Result.
     *output=texture.detach();
     return creation_result;
 }

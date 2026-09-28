@@ -79,3 +79,5 @@ ACT 文件枚举和 EXE 所在目录初始化已接入跨平台服务。平台�
 
 
 已删除闲置 IMM/DirectInput/COM 宿主路径，游戏输入服务及完整音频运行时纳入跨平台编译。详见[输入音频宿主清理](../docs/modern-platform/native-input-audio.md)。
+
+实际游戏图形后端已纳入跨平台 CI 构建，公开接口使用项目自有定宽类型，不再携带原生窗口句柄。字体栅格化、应用启动和跨平台着色器部署仍阻塞完整非 Windows 游戏。详见[图形迁移记录](../docs/modern-platform/portable-game-graphics.md)。

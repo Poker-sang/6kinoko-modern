@@ -31,10 +31,10 @@ const char* kinoko_application_error() { return "fixture"; }
 void kinoko_seed_random(uint32_t) {}
 int32_t kinoko_audio_initialize_device() { device_calls.push_back(5); return audio_result; }
 int32_t kinoko_audio_shutdown_device() { return 0; }
-int32_t kinoko_graphics_create(HWND, int32_t, int32_t) { return 0; }
+int32_t kinoko_graphics_create(int32_t, int32_t) { return 0; }
 int32_t kinoko_graphics_release() { return 0; }
 int32_t kinoko_graphics_toggle_window() { return 0; }
-HRESULT kinoko_graphics_poll() { return S_OK; }
+kinoko::graphics::Result kinoko_graphics_poll() { return S_OK; }
 int32_t kinoko_graphics_present() { return 0; }
 int32_t kinoko_renderer_initialize() { return 0; }
 int32_t kinoko_renderer_before_reset(KinokoRenderer*) { return 0; }

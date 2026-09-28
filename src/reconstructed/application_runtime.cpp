@@ -110,7 +110,7 @@ bool initialize(const Configuration& configuration) {
     if (!configuration.show_cursor) SDL_HideCursor();
     state.running.store(true);
     if (configuration.graphics) {
-        if (!kinoko_graphics_create(configuration.window, configuration.width, configuration.height)) return false;
+        if (!kinoko_graphics_create(configuration.width, configuration.height)) return false;
         state.graphics_initialized = true;
         kinoko_renderer_initialize();
         state.renderer_initialized = true;

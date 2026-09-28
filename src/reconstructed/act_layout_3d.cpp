@@ -50,7 +50,7 @@ int32_t draw_layout_3d(Layout3DRecord *layout) {
     auto *resource=owner.view(&LayerStorageRecord::association).get(&LayerAssociationRecord::resource);
     if (!resource) return E_FAIL;
     auto *device=kinoko_graphics.device;
-    DWORD depth{},write_depth{},alpha{};
+    std::uint32_t depth{},write_depth{},alpha{};
     kinoko::graphics::Matrix previous{},world{};
     device->GetRenderState(kinoko::graphics::state_zenable,&depth);
     device->GetRenderState(kinoko::graphics::state_zwriteenable,&write_depth);

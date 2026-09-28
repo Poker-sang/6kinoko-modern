@@ -18,7 +18,7 @@ extern "C" int32_t kinoko_renderer_initialize(void) {
     kinoko::graphics::Device *device;
     kinoko::graphics::Surface *render_target = NULL;
     kinoko::graphics::Surface *depth_stencil = NULL;
-    HRESULT hr;
+    kinoko::graphics::Result hr;
 
     if (kinoko_renderer.device != 0) {
         return 0;
@@ -35,21 +35,21 @@ extern "C" int32_t kinoko_renderer_initialize(void) {
     kinoko_renderer.present_pending = 0;
     kinoko_trace("401ae0:pre-clear-1");
     hr = device->Clear(0, NULL, kinoko::graphics::clear_target|kinoko::graphics::clear_zbuffer, 0, 1.0f, 0);
-    kinoko_trace(FAILED(hr) ? "401ae0:clear-1-failed" :
+    kinoko_trace(kinoko::graphics::failed(hr) ? "401ae0:clear-1-failed" :
                  "401ae0:clear-1-ok");
     hr = device->SetRenderState(kinoko::graphics::state_stencilmask, 255);
-    kinoko_trace(FAILED(hr) ? "401ae0:set-render-state-failed" :
+    kinoko_trace(kinoko::graphics::failed(hr) ? "401ae0:set-render-state-failed" :
                  "401ae0:set-render-state-ok");
     hr = device->Clear(0, NULL, kinoko::graphics::clear_stencil, 0, 1.0f, 0);
-    kinoko_trace(FAILED(hr) ? "401ae0:clear-2-failed" :
+    kinoko_trace(kinoko::graphics::failed(hr) ? "401ae0:clear-2-failed" :
                  "401ae0:clear-2-ok");
     hr = device->GetRenderTarget(0, &render_target);
     kinoko_renderer.backbuffer = render_target;
-    kinoko_trace(FAILED(hr) ? "401ae0:get-render-target-failed" :
+    kinoko_trace(kinoko::graphics::failed(hr) ? "401ae0:get-render-target-failed" :
                  "401ae0:get-render-target-ok");
     hr = device->GetDepthStencilSurface(&depth_stencil);
     kinoko_renderer.depth_stencil = depth_stencil;
-    kinoko_trace(FAILED(hr) ? "401ae0:get-depth-stencil-failed" :
+    kinoko_trace(kinoko::graphics::failed(hr) ? "401ae0:get-depth-stencil-failed" :
                  "401ae0:get-depth-stencil-ok");
     return 1;
 }

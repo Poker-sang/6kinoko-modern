@@ -7,7 +7,7 @@ namespace kinoko::render {
 class GraphicsDrawState final : public SavedDrawState {
     kinoko::graphics::Device* device_;
     ScopeKind kind_;
-    DWORD u_=0,v_=0,blend_[4]{};
+    std::uint32_t u_=0,v_=0,blend_[4]{};
     inline static constexpr kinoko::graphics::RenderState types_[4]={
         kinoko::graphics::state_srcblend,kinoko::graphics::state_destblend,kinoko::graphics::state_blendop,kinoko::graphics::state_alphablendenable};
 public:
@@ -23,7 +23,7 @@ public:
         }
         if(kind_!=ScopeKind::map_wrap) {
             for(int i=0;i<4;++i) device_->GetRenderState(types_[i],&blend_[i]);
-            device_->SetRenderState(kinoko::graphics::state_alphablendenable,TRUE);
+            device_->SetRenderState(kinoko::graphics::state_alphablendenable,true);
         }
     }
     void restore() override {

@@ -168,7 +168,7 @@ extern "C" void kinoko_string_font_upload(Renderer* r,int32_t handle,const char*
     kinoko::graphics::Surface* value=nullptr;
     if(FAILED(texture->GetSurfaceLevel(0,&value))) return;
     surface.reset(value);kinoko::graphics::SurfaceDescription description{};value->GetDesc(&description);surface.reset();
-    RECT region{x,y,static_cast<LONG>(description.Width),static_cast<LONG>(description.Height)};
+    kinoko::graphics::PixelRect region{x,y,static_cast<LONG>(description.Width),static_cast<LONG>(description.Height)};
     kinoko::graphics::MappedPixels rect{};
     if(FAILED(texture->LockRect(0,&rect,&region,0))) return;
     try {

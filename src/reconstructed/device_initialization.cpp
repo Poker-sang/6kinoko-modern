@@ -9,8 +9,8 @@
 extern "C" void kinoko_trace_i32(const char *,int32_t);
 
 // 4011B0: preserve the original HAL/HW -> HAL/SW -> REF/SW fallback order.
-extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t height) {
-    if (!window) return 0; // inherited invalid-window boundary
+extern "C" int32_t kinoko_graphics_create(int32_t width,int32_t height) {
+    if (!kinoko::platform::host().window()) return 0; // inherited invalid-window boundary
     auto &state=kinoko_graphics;
     kinoko_trace("4011b0:pre-d3d-create");
     state.factory=kinoko::graphics::create_factory(kinoko::graphics::sdk_version);
@@ -18,7 +18,7 @@ extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t heig
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Graphics error","Graphics initialization failed",kinoko::platform::host().window());return 0;
     }
     state.display={};
-    if (FAILED(state.factory->GetAdapterDisplayMode(kinoko::graphics::adapter_default,&state.display))) {
+    if (kinoko::graphics::failed(state.factory->GetAdapterDisplayMode(kinoko::graphics::adapter_default,&state.display))) {
         // Retain the inherited startup-failure cleanup boundary.
         state.factory->Release();state.factory=nullptr;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Graphics error","Cannot query the display mode",kinoko::platform::host().window());return 0;
@@ -36,28 +36,27 @@ extern "C" int32_t kinoko_graphics_create(HWND window,int32_t width,int32_t heig
     parameters.BackBufferCount=1;
     parameters.MultiSampleType=kinoko::graphics::multisample_none;
     parameters.SwapEffect=kinoko::graphics::swap_discard;
-    parameters.hDeviceWindow=window;
-    parameters.Windowed=TRUE;
-    parameters.EnableAutoDepthStencil=TRUE;
+    parameters.Windowed=true;
+    parameters.EnableAutoDepthStencil=true;
     parameters.AutoDepthStencilFormat=kinoko::graphics::format_d24s8;
     parameters.Flags=kinoko::graphics::presentation_flag_discard_depthstencil;
     parameters.PresentationInterval=kinoko::graphics::presentation_interval_one;
     kinoko_trace_i32("4011b0:client-width",width);
     kinoko_trace_i32("4011b0:client-height",height);
-    struct Attempt { kinoko::graphics::DeviceKind type; DWORD behavior; };
+    struct Attempt { kinoko::graphics::DeviceKind type; std::uint32_t behavior; };
     constexpr Attempt attempts[]={
         {kinoko::graphics::device_hal,kinoko::graphics::creation_hardware_vertexprocessing|kinoko::graphics::creation_multithreaded},
         {kinoko::graphics::device_hal,kinoko::graphics::creation_software_vertexprocessing|kinoko::graphics::creation_multithreaded},
         {kinoko::graphics::device_ref,kinoko::graphics::creation_software_vertexprocessing|kinoko::graphics::creation_multithreaded}
     };
-    HRESULT status=E_FAIL;
+    kinoko::graphics::Result status=kinoko::graphics::error_failure;
     for (const auto attempt:attempts) {
-        status=state.factory->CreateDevice(kinoko::graphics::adapter_default,attempt.type,window,
+        status=state.factory->CreateDevice(kinoko::graphics::adapter_default,attempt.type,
             attempt.behavior,&parameters,&state.device);
         kinoko_trace_hresult("4011b0:create-device-hr",status);
-        if (SUCCEEDED(status)) break;
+        if (kinoko::graphics::succeeded(status)) break;
     }
-    if (FAILED(status) || !state.device) {
+    if (kinoko::graphics::failed(status) || !state.device) {
         state.factory->Release();state.factory=nullptr;state.device=nullptr;
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Graphics error","Cannot create the graphics device",kinoko::platform::host().window());return 0;
     }
@@ -74,7 +73,7 @@ extern "C" int32_t kinoko_graphics_release(void) {
     auto &state=kinoko_graphics;
     if (state.swap_chain) { state.swap_chain->Release();state.swap_chain=nullptr; }
     if (state.device) { state.device->Release();state.device=nullptr; }
-    ULONG result=0;
+    std::uint32_t result=0;
     if (state.factory) { result=state.factory->Release();state.factory=nullptr; }
     return static_cast<int32_t>(result);
 }

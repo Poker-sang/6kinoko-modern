@@ -15,13 +15,13 @@ extern "C" int32_t kinoko_graphics_reset(void) {
     kinoko::graphics::Lock lock;
     kinoko_notify_device_listeners(KINOKO_DEVICE_BEFORE_RESET);
     if (state.swap_chain) { state.swap_chain->Release();state.swap_chain=nullptr; }
-    if (FAILED(state.device->Reset(&state.present))) return 0;
+    if (kinoko::graphics::failed(state.device->Reset(&state.present))) return 0;
     state.device->GetSwapChain(0,&state.swap_chain);
     kinoko_notify_device_listeners(KINOKO_DEVICE_AFTER_RESET);
     return 1;
 }
 
-extern "C" HRESULT kinoko_graphics_poll(void) {
+extern "C" kinoko::graphics::Result kinoko_graphics_poll(void) {
     auto &state=kinoko_graphics;
     if (state.device) state.cooperative_status=state.device->TestCooperativeLevel();
     if (state.cooperative_status==kinoko::graphics::error_devicenotreset) kinoko_graphics_reset();
@@ -44,7 +44,7 @@ extern "C" int32_t kinoko_graphics_begin_scene(void) {
     const auto status=device->BeginScene();
     static std::atomic<int32_t> traces{0};
     if (++traces<=5) kinoko_trace_hresult("401760:beginscene-hr",status);
-    // 40177D compares exactly against zero, not merely SUCCEEDED(status).
+    // 40177D compares exactly against zero, not merely kinoko::graphics::succeeded(status).
     if (status!=kinoko::graphics::ok) { kinoko_graphics_lock.native->unlock();return 0; }
     return 1;
 }
@@ -59,8 +59,8 @@ extern "C" int32_t kinoko_graphics_present(void) {
     auto *swap_chain=kinoko_graphics.swap_chain;
     // Retain the existing null-swap-chain startup boundary. The normal path
     // clears pending only on kinoko::graphics::ok, retaining it on WASSTILLDRAWING/failure.
-    HRESULT status=kinoko::graphics::ok;
-    if (swap_chain) status=swap_chain->Present(nullptr,nullptr,nullptr,nullptr,kinoko::graphics::presentation_donotwait);
+    kinoko::graphics::Result status=kinoko::graphics::ok;
+    if (swap_chain) status=swap_chain->Present();
     static std::atomic<int32_t> traces{0};
     if (++traces<=5) kinoko_trace_hresult("4017b0:present-hr",status);
     if (status==kinoko::graphics::ok) kinoko_renderer.present_pending=0;
