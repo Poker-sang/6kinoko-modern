@@ -1,5 +1,27 @@
 # x64 preparation build evidence
 
+
+## Native string layout, glyph queue and shared atlas ownership
+
+Source: `cde7471da6dda604c4d0e935a3aae2dafdb97963`.
+
+- `modern-string-native-01`: complete Win32 Release no-trace game and 74
+  contract executables compiled successfully. Three DAT copied beside the EXE
+  and size/SHA256 checked; retain the adjacent shaders directory.
+- Game: `runtime-builds/modern-string-native-01/kinoko_modern_gpu.exe`.
+- EXE SHA256: `A39DA4D7D214C97342C490028D7664A8909A9DBFB4B66DF68EFA5AB21B176A5D`.
+- Static D3D9 audit passed: 110 compiler / 84 linker dependency logs, no violations.
+- `modern-string-native-x64-01`: actual native string ownership/clone code and
+  texture/chip/mesh resource contracts compiled and linked. All four PE headers
+  identify AMD64. These are independent contracts, not a full x64 game.
+- Runtime assertions cover page stability, replication/source destruction, clone
+  state, embedded NULs, release and constructor rollback; compiled, not executed.
+- No game, preview, CTest or contract executable was run. User reports the previous
+  `modern-mesh-native-01` normal; this is user feedback only.
+- All artifacts/logs retained. Evidence: `string-native-01-artifacts.json`,
+  `string-native-01-d3d9-audit.json`, `string-native-x64-01-artifacts.json`.
+  See [scope and preserved behavior](string-native.md).
+
 ## Native mesh resource/render chain and portable decoder
 
 Source: `3d4ecbec275239df9816a2df1c86a5382fcbc016`.

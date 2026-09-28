@@ -51,6 +51,13 @@ and [chip/method scope](../docs/modern-x64/act-chip-methods.md).
 The user reports `modern-act-chip-02` normal; this is user runtime feedback.
 See [mesh migration scope](../docs/modern-x64/mesh-native.md).
 
+String layouts and glyph queues now use native C++ storage throughout factories,
+ACT/script properties, cloning, rendering and destruction. Stable shared atlas
+pages survive vector growth and source-layout destruction after text replication.
+The native ownership contract compiles separately at Windows x64 (not executed).
+The user reports `modern-mesh-native-01` normal; this is user runtime feedback.
+See [string migration scope](../docs/modern-x64/string-native.md).
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).

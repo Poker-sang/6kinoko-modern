@@ -82,11 +82,10 @@ factory now constructs a native `TextureResource`; its explicit method table
 and shared publication prefix retain the x86 adapter boundary.
 The texture handle remains a 32-bit registry index.
 
-Glyph queue allocation and clone ranges derive from `StringGlyphRecord` fields
-instead of literal 256/20/24/232 byte ranges. The outer string and glyph records
-still have their original 260/256-byte x86 layout. Their property schema uses
-field offsets; changing the objects requires migrating serialization and all
-virtual/quad callers together.
+Outer string layouts and glyphs now use native C++ storage; their property schema,
+script aliases, factories, clones, lifetime and draw consumers migrated together.
+Shared stable atlas pages replace borrowed pointers into a relocatable vector.
+Glyph geometry no longer carries a fake vtable. See [string scope](string-native.md).
 
 The shared 24-byte string boundary can now place its two owner pointers in the
 16-byte inline area at either Windows pointer width. SqPlus object storage can
@@ -124,3 +123,11 @@ byte-source callback; the existing archive service is a separate adapter. Actual
 resource lifetime and decoder code compile in independent Windows x64 contracts.
 See [scope and retained behavior](mesh-native.md). GPU execution, the mesh-manager
 ABI and complete game portability are not established by these compile checks.
+
+## Native string layout and glyph queues
+
+The portable string contract compiles real storage/lifetime code, clone semantics,
+page stability and cross-layout ownership at Windows x64. The full game still
+uses GDI and Windows byte-character traversal, x86 layer/script records and the
+legacy method adapter. Compilation does not establish runtime text equivalence.
+User reports modern-mesh-native-01 normal; this is user feedback only.

@@ -44,6 +44,12 @@ ACT 调用统一为具名类型接口，旧方法表保留在明确的适配边�
 用户反馈 `modern-act-chip-02` 正常，这是用户运行验证。
 详见[网格迁移范围](../docs/modern-x64/mesh-native.md)。
 
+字符串布局和字形队列的创建、ACT/脚本属性、克隆、渲染与销毁已统一为原生 C++ 存储。
+图集使用地址稳定的共享所有权，容器扩容或复制文字后销毁源布局不再使字形引用失效。
+原生所有权契约已独立通过 Windows x64 编译（未执行）。
+用户反馈 `modern-mesh-native-01` 正常，这是用户运行反馈。
+详见[字符串迁移范围](../docs/modern-x64/string-native.md)。
+
 ## Documentation / 文档
 
 [Migration details and remaining work](../docs/modern-platform/README.md) · [Dependency provenance](../docs/modern-platform/dependencies.json).

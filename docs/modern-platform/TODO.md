@@ -196,17 +196,20 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Separate texture/chip resource storage and ownership from original byte layouts.
 - [x] Migrate mesh resource/controller/render ownership and the 3D draw consumer; remove the 248-byte overlay and +236 list lookup.
 - [x] Separate MSH/MAT decoding from the Windows archive adapter; compile the actual decoder and mesh-resource lifetime at native pointer width.
-- [ ] Migrate the separate mesh-manager child/update ABI and outer string/glyph layouts.
+- [ ] Migrate the separate mesh-manager child/update ABI.
 - [ ] Migrate Squirrel wrapper addresses and original method ABI before lifting full-game Win32 restriction.
 - [x] Use a typed ACT texture render snapshot at draw/layout/target callers; remove the duplicate fixed prefix.
 - [x] Store cloned texture references by retained handle; the initial pointer-keyed table has been replaced by per-object ownership.
-- [x] Derive glyph storage and clone copy ranges from record fields; keep the original x86 layout and virtual identity.
+- [x] Replace byte-backed glyph storage with native geometry and shared atlas ownership.
 - [x] Compile the shared string owner and Squirrel object storage at native Windows x64 pointer width; return payload references directly as pointers.
 - [x] Replace texture/render-target fixed allocation, clone/retain ownership, property offsets and render access with native texture objects.
 - [x] Migrate chip factories, shared MCD lifecycle, map/script consumers and property serialization.
 - [x] Centralize ACT resource/document/layer/layout/key operations in named typed method interfaces; preserve real virtual callback ordering.
 - [x] Replace texture/chip scalar/array allocation cookies with aligned native metadata and reverse C++ destruction.
 - [ ] Retire the remaining method-table ABI adapter and non-resource x86 layouts/allocators as their implementations migrate; current adapters do not enable a full x64 game.
-- [ ] Replace the 260-byte outer string layout and 256-byte glyph record after their serialization and quad/virtual callers migrate.
+- [x] Replace the 260-byte outer string layout and 256-byte glyph record together with factories, serialization, script properties, clone, draw and destruction.
+- [x] Keep atlas addresses stable and retain shared pages across ReplicateText/source destruction.
+- [x] Compile native string lifetime/clone and exception-safe allocation contracts at Windows x64; do not execute.
+- [x] Record user feedback: modern-mesh-native-01 normal (not agent-run validation).
 - [ ] Replace remaining integer-address Squirrel bindings and x86 fastcall/thiscall adapters; then attempt a full x64 game link.
 - Audit scope and remaining blockers: `../modern-x64/README.md`.
