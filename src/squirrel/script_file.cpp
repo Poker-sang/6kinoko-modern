@@ -7,6 +7,7 @@
 #include "kinoko/squirrel_game_objects.h"
 #include "kinoko/squirrel_source_runtime.h"
 #include "kinoko/squirrel_vm_bootstrap.h"
+#include <windows.h> // Script error window; no longer inherited from file I/O.
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>

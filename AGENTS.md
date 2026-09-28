@@ -144,3 +144,10 @@ The old comparison target and -LegacyComparison/-ModernOnly switches are removed
 COM fixture evidence lives in docs/legacy-render-contracts and is not built.
 SDL's D3D9 backend/loader are disabled; local vendor changes are documented in
 third_party/SDL3-3.4.16/KINOKO_PATCHES.md. Preserve these when updating SDL.
+
+## User update: obsolete 32-bit logic (2026-09-28)
+
+Remove unused 32-bit-only adapters/logic when migrating their callers; retaining
+obsolete code for comparison is not required. Preserve original DAT/save wire
+widths and active Win32 support. User confirmed modern-x64-savedata-01 works;
+record this as user feedback, not agent-executed tests.

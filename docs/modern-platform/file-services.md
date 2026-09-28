@@ -30,4 +30,7 @@ Full Linux/macOS games remain blocked by host threading, fonts/IME, diagnostics,
 Windows-specific archive case handling and other platform dependencies. This
 is a migrated production service, not a complete cross-platform game release.
 
-Fresh game builds and compile evidence pending. Retain all artifacts.
+First builds files-01 exposed a script error-window dependency on indirectly
+included windows.h. That host source now includes its own Windows dependency;
+file-service and actual reader compilation succeeded. Failed builds are retained.
+Fresh files-02 game builds and compile evidence pending.
