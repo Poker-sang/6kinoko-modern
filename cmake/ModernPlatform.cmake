@@ -260,6 +260,10 @@ if(WIN32)
         src/reconstructed/input_keys.cpp
         src/reconstructed/input_runtime.cpp
         src/squirrel/input_registration.cpp
+        src/reconstructed/application_runtime.cpp
+        src/reconstructed/scene_queue.cpp
+        src/reconstructed/game_runtime.cpp
+        src/reconstructed/ime_input.cpp
         tests/input_audio_width_compile.cpp)
     target_include_directories(kinoko_input_audio_width_compile PRIVATE include
         "${CMAKE_CURRENT_SOURCE_DIR}/third_party/squirrel-2.2.2/include"

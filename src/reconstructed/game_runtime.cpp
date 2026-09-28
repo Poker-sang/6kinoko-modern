@@ -18,7 +18,6 @@
 #include "kinoko/render_queue.h"
 #include "kinoko/stage_runtime.h"
 #include "kinoko/stage_cleanup.h"
-#include "kinoko/legacy_memory.hpp"
 #include <cstdlib>
 extern "C" {
 void kinoko_trace(const char*);
@@ -109,8 +108,8 @@ extern "C" int32_t kinoko_game_draw(void) {
     render_defaults();
     if (trace_index<=3) kinoko_game_trace_map(objects.map,1);
     kinoko_game_prepare_map(objects.map,objects.camera);
-    // Legacy render queue API still accepts an address slot; no ownership transfer.
-    kinoko_draw_render_queue((struct KinokoCamera*)(uintptr_t)(kinoko::legacy::address(objects.camera)));
+    // Borrow the native camera without an intermediate integer address.
+    kinoko_draw_render_queue(objects.camera);
     if (mask & KINOKO_GAME_STAGES) { kinoko_stages_prepare_draw(); kinoko_stages_draw(); }
     return 1;
 }

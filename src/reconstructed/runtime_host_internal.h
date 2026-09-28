@@ -675,9 +675,9 @@ extern int32_t kinoko_null_object_type;
 
 extern int32_t kinoko_null_object_value;
 
-extern int32_t kinoko_ime_context_slot;
+extern HIMC kinoko_ime_context_slot;
 
-extern int32_t kinoko_ime_default_window_slot;
+extern HWND kinoko_ime_default_window_slot;
 
 extern int32_t kinoko_ime_text_limit;
 

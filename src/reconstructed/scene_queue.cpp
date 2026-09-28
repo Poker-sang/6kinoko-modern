@@ -18,7 +18,7 @@ void activate_pending_scene() {
         state.pending_scene = nullptr;
     }
     if (previous) {
-        previous->methods->leave(previous, state.requested_scene);
+        previous->methods->leave(previous, nullptr, state.requested_scene);
         {
             // Protect native list mutations, but retain original callback order.
             CriticalLock lock(&state.scene_lock);
@@ -27,7 +27,7 @@ void activate_pending_scene() {
         }
         if (state.retire_event) SetEvent(state.retire_event.get());
     }
-    if (state.scene) state.scene->methods->enter(state.scene, state.current_scene);
+    if (state.scene) state.scene->methods->enter(state.scene, nullptr, state.current_scene);
     state.current_scene = state.requested_scene;
 }
 }
@@ -44,7 +44,7 @@ extern "C" void kinoko_destroy_retired_scenes() {
             object = retired_scenes.front();
         }
         // Single consumer; deleting destructor precedes removing its queue node.
-        if (object) object->methods->destroy(object, 1);
+        if (object) object->methods->destroy(object, nullptr, 1);
         {
             kinoko::windows::CriticalLock lock(&state.scene_lock);
             retired_scenes.pop_front();

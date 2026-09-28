@@ -8,28 +8,28 @@ struct Scene;
 struct Manager;
 struct Transition;
 struct SceneMethods {
-    void* (__thiscall *destroy)(Scene*, unsigned);
-    int32_t (__thiscall *update)(Scene*);
-    int32_t (__thiscall *draw)(Scene*);
+    void* (__fastcall *destroy)(Scene*, void*, unsigned);
+    int32_t (__fastcall *update)(Scene*, void*);
+    int32_t (__fastcall *draw)(Scene*, void*);
     void *reserved;
-    int32_t (__thiscall *enter)(Scene*, int32_t);
-    int32_t (__thiscall *leave)(Scene*, int32_t);
+    int32_t (__fastcall *enter)(Scene*, void*, int32_t);
+    int32_t (__fastcall *leave)(Scene*, void*, int32_t);
 };
 struct Scene { const SceneMethods *methods; };
 struct ManagerMethods {
-    int32_t (__thiscall *initialize)(Manager*);
-    int32_t (__thiscall *shutdown)(Manager*);
-    int32_t (__thiscall *update)(Manager*);
-    int32_t (__thiscall *draw)(Manager*);
-    Scene* (__thiscall *create_scene)(Manager*, int32_t);
+    int32_t (__fastcall *initialize)(Manager*, void*);
+    int32_t (__fastcall *shutdown)(Manager*, void*);
+    int32_t (__fastcall *update)(Manager*, void*);
+    int32_t (__fastcall *draw)(Manager*, void*);
+    Scene* (__fastcall *create_scene)(Manager*, void*, int32_t);
 };
 struct Manager { const ManagerMethods *methods; };
 struct TransitionMethods {
-    int32_t (__thiscall *initialize)(Transition*);
-    int32_t (__thiscall *shutdown)(Transition*);
-    int32_t (__thiscall *update)(Transition*);
-    uint8_t (__thiscall *ready)(Transition*);
-    int32_t (__thiscall *draw)(Transition*);
+    int32_t (__fastcall *initialize)(Transition*, void*);
+    int32_t (__fastcall *shutdown)(Transition*, void*);
+    int32_t (__fastcall *update)(Transition*, void*);
+    uint8_t (__fastcall *ready)(Transition*, void*);
+    int32_t (__fastcall *draw)(Transition*, void*);
 };
 struct Transition { const TransitionMethods *methods; };
 // Original 40D790 copies exactly 40 bytes to application+8.
@@ -43,12 +43,15 @@ struct Configuration {
     uint8_t graphics = 1, input = 1, audio = 1, ime = 0;
     uint8_t show_cursor = 1, separate_draw = 0, show_fps = 0, archives = 1;
 };
+#if INTPTR_MAX == INT32_MAX
 static_assert(sizeof(Configuration) == 40);
 static_assert(offsetof(Configuration, manager) == 20);
 static_assert(offsetof(Configuration, graphics) == 32);
 static_assert(offsetof(Configuration, archives) == 39);
-static_assert(offsetof(SceneMethods, enter) == 16);
-static_assert(offsetof(ManagerMethods, create_scene) == 16);
+#endif
+static_assert(offsetof(Configuration, archives) == offsetof(Configuration, graphics) + 7);
+static_assert(offsetof(SceneMethods, enter) == 4*sizeof(void*));
+static_assert(offsetof(ManagerMethods, create_scene) == 4*sizeof(void*));
 
 // Native owner, no longer overlaid on the split RetDec globals or byte block.
 struct State {

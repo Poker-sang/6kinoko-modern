@@ -13,5 +13,5 @@ int32_t kinoko_game_release_map_state(void);
 void kinoko_game_split_path(const char *path, char *directory);
 #ifdef __cplusplus
 }
-static_assert(sizeof(KinokoScriptCallback)==28);
+static_assert(sizeof(KinokoScriptCallback)==sizeof(void*)+2*sizeof(KinokoOwnedObjectWords));
 #endif

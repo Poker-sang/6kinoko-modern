@@ -6,13 +6,15 @@
 #include <cstring>
 
 extern "C" {
-extern int32_t kinoko_ime_context_slot, kinoko_ime_default_window_slot, kinoko_ime_text_limit, kinoko_ime_commit_pending, kinoko_ime_cursor;
+extern HIMC kinoko_ime_context_slot;
+extern HWND kinoko_ime_default_window_slot;
+extern int32_t kinoko_ime_text_limit, kinoko_ime_commit_pending, kinoko_ime_cursor;
 extern char *kinoko_game_window_slot;
 extern char kinoko_ime_text_changed, kinoko_ime_composition_changed, kinoko_ime_enabled;
 }
 namespace {
-inline int32_t& input_context_slot = kinoko_ime_context_slot;
-inline int32_t& default_window_slot = kinoko_ime_default_window_slot;
+inline HIMC& input_context_slot = kinoko_ime_context_slot;
+inline HWND& default_window_slot = kinoko_ime_default_window_slot;
 inline int32_t& text_limit_slot = kinoko_ime_text_limit;
 inline int32_t& commit_pending_slot = kinoko_ime_commit_pending;
 inline char& text_changed_slot = kinoko_ime_text_changed;
@@ -24,8 +26,8 @@ inline char*& game_window_slot = kinoko_game_window_slot;
 // gives those borrowed slots field names while this module owns the text,
 // composition and attribute buffers below.
 struct ImeControl {
-    int32_t& input_context() const { return input_context_slot; }
-    int32_t& default_window() const { return default_window_slot; }
+    HIMC& input_context() const { return input_context_slot; }
+    HWND& default_window() const { return default_window_slot; }
     int32_t& text_limit() const { return text_limit_slot; }
     int32_t& commit_pending() const { return commit_pending_slot; }
     char& text_changed() const { return text_changed_slot; }
@@ -46,7 +48,7 @@ void terminate_text() {
     if (lead(static_cast<unsigned char>(text[control.text_limit() - 1]))) text[control.text_limit() - 1] = 0;
     text[control.text_limit()] = 0;
 }
-HIMC context() { return reinterpret_cast<HIMC>(static_cast<intptr_t>(control.input_context())); }
+HIMC context() { return control.input_context(); }
 LONG read_composition(DWORD kind) {
     const LONG count = ImmGetCompositionStringA(context(), kind, composition.data(), 255);
     // IMM_ERROR_NODATA/GENERAL are signed errors, never buffer indices.
@@ -125,8 +127,8 @@ void commit() {
 extern "C" int32_t kinoko_ime_initialize(void) {
     const auto window=control.game_window();
     const auto input=ImmGetContext(window);
-    control.input_context()=static_cast<int32_t>(reinterpret_cast<intptr_t>(input));
-    control.default_window()=static_cast<int32_t>(reinterpret_cast<intptr_t>(ImmGetDefaultIMEWnd(window)));
+    control.input_context()=input;
+    control.default_window()=ImmGetDefaultIMEWnd(window);
     RECT bounds{};
     GetWindowRect(window,&bounds);
     CANDIDATEFORM candidate{};
@@ -138,8 +140,8 @@ extern "C" int32_t kinoko_ime_initialize(void) {
 extern "C" void kinoko_ime_release(HWND window) {
     ImmReleaseContext(window, context());
 }
-extern "C" int32_t kinoko_ime_dispatch(int32_t window, uint32_t message,
-                                      uint32_t key, int32_t parameter) {
+extern "C" int32_t kinoko_ime_dispatch(HWND window, UINT message,
+                                      WPARAM key, LPARAM parameter) {
     if (control.enabled() == 0) return false;
     switch (message) {
     case WM_IME_STARTCOMPOSITION:
@@ -148,7 +150,7 @@ extern "C" int32_t kinoko_ime_dispatch(int32_t window, uint32_t message,
         return true;
     case WM_IME_ENDCOMPOSITION: result_string(); return true;
     case WM_IME_SETCONTEXT:
-        DefWindowProcA(reinterpret_cast<HWND>(static_cast<intptr_t>(window)),
+        DefWindowProcA(window,
             message, key, parameter & 0x3ffffff0);
         return true;
     case WM_IME_NOTIFY: return key != 0 && key <= 5;
@@ -163,7 +165,7 @@ extern "C" int32_t kinoko_ime_dispatch(int32_t window, uint32_t message,
         case VK_DELETE: delete_character(); return true;
         default: {
             std::array<WORD, 10> translated{};
-            return ToAscii(key, parameter >> 16, nullptr, translated.data(), 1) <= 0;
+            return ToAscii(static_cast<UINT>(key), static_cast<UINT>(parameter >> 16), nullptr, translated.data(), 1) <= 0;
         }
         }
     case WM_CHAR:

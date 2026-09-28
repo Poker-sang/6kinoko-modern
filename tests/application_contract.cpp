@@ -19,7 +19,7 @@ extern "C" {
 KinokoRenderer kinoko_renderer{};
 KinokoCriticalSection kinoko_graphics_lock{};
 KinokoGraphics kinoko_graphics{};
-int32_t kinoko_ime_context_slot = 0;
+HIMC kinoko_ime_context_slot = 0;
 char kinoko_packed_assets = 0;
 // Isolated host/device ports. No game startup, timer or device is invoked by
 // this contract; only the callback/state functions below are under examination.
@@ -40,7 +40,7 @@ int32_t kinoko_graphics_present() { return 0; }
 int32_t kinoko_renderer_initialize() { return 0; }
 int32_t kinoko_renderer_before_reset(KinokoRenderer*) { return 0; }
 void kinoko_remove_device_listener(KinokoDeviceListener*) {}
-int32_t kinoko_ime_dispatch(int32_t, uint32_t, uint32_t, int32_t) { return 0; }
+int32_t kinoko_ime_dispatch(HWND, UINT, WPARAM, LPARAM) { return 0; }
 unsigned long kinoko_run_game_math(unsigned long (__stdcall *)(void*), void*) noexcept(false) { return 0; }
 int32_t kinoko_process_initialize(HINSTANCE, HWND) { return 0; }
 int32_t kinoko_input_initialize(HWND, HINSTANCE) { device_calls.push_back(1); return input_result; }

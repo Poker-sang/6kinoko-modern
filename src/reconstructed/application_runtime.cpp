@@ -13,7 +13,6 @@
 #include "kinoko/ime_input.h"
 #include "kinoko/archive_random.h"
 #include "kinoko/game_math.h"
-#include "kinoko/legacy_memory.hpp"
 #include "../platform/resources/resource.h"
 #include <mmsystem.h>
 #include <objbase.h>
@@ -32,7 +31,6 @@ State state;
 namespace {
 using kinoko::windows::CriticalLock;
 using kinoko::windows::HandleOwner;
-using kinoko::legacy::address;
 struct ComScope {
     HRESULT status = CoInitialize(nullptr);
     ~ComScope() { if (SUCCEEDED(status)) CoUninitialize(); }
@@ -47,7 +45,7 @@ DWORD WINAPI load_scene_worker(void*) {
     ComScope com;
     if (com && state.config.manager) {
         auto* next = state.config.manager->methods->create_scene(
-            state.config.manager, state.requested_scene);
+            state.config.manager, nullptr, state.requested_scene);
         CriticalLock lock(&state.scene_lock);
         state.pending_scene = next;
     }
@@ -136,12 +134,12 @@ bool initialize(const Configuration& configuration) {
     if (!initialize_input_audio(configuration)) return false;
     if (configuration.ime) { kinoko_ime_initialize(); state.ime_initialized = true; }
     state.statistics_time = timeGetTime();
-    if (configuration.manager) configuration.manager->methods->initialize(configuration.manager);
-    if (configuration.transition) configuration.transition->methods->initialize(configuration.transition);
+    if (configuration.manager) configuration.manager->methods->initialize(configuration.manager, nullptr);
+    if (configuration.transition) configuration.transition->methods->initialize(configuration.transition, nullptr);
     state.requested_scene = configuration.initial_scene;
     state.current_scene = -1;
     state.pending_scene = configuration.manager
-        ? configuration.manager->methods->create_scene(configuration.manager, configuration.initial_scene) : nullptr;
+        ? configuration.manager->methods->create_scene(configuration.manager, nullptr, configuration.initial_scene) : nullptr;
     // Publish wake events before starting workers: shutdown must never signal a
     // null slot while its worker is just about to create and wait on that event.
     state.retire_event.reset(CreateEventA(nullptr, FALSE, FALSE, nullptr));
@@ -225,13 +223,13 @@ void update_frame() {
     kinoko_math_checkpoint("input-done", 0);
     auto* manager = state.config.manager;
     auto* transition = state.config.transition;
-    if (manager) manager->methods->update(manager);
+    if (manager) manager->methods->update(manager, nullptr);
     if (state.current_scene != state.requested_scene) {
-        if (!transition || transition->methods->ready(transition)) activate_pending_scene();
+        if (!transition || transition->methods->ready(transition, nullptr)) activate_pending_scene();
     } else {
-        if (transition) transition->methods->update(transition);
+        if (transition) transition->methods->update(transition, nullptr);
         if (state.scene) {
-            state.requested_scene = state.scene->methods->update(state.scene);
+            state.requested_scene = state.scene->methods->update(state.scene, nullptr);
             if (state.requested_scene == -1) InterlockedExchange(&state.running, 0);
             else ++state.frame_count;
         }
@@ -245,9 +243,9 @@ void update_frame() {
 bool draw_frame() {
     { kinoko::graphics::Lock lock; kinoko_renderer.present_pending = 0; }
     int32_t ready = 1;
-    if (state.scene) ready = state.scene->methods->draw(state.scene) & 1;
-    if (state.config.manager) ready &= state.config.manager->methods->draw(state.config.manager);
-    if (state.config.transition) ready &= state.config.transition->methods->draw(state.config.transition);
+    if (state.scene) ready = state.scene->methods->draw(state.scene, nullptr) & 1;
+    if (state.config.manager) ready &= state.config.manager->methods->draw(state.config.manager, nullptr);
+    if (state.config.transition) ready &= state.config.transition->methods->draw(state.config.transition, nullptr);
     if (ready) {
         { kinoko::graphics::Lock lock; kinoko_renderer.present_pending = 1; }
         if (!state.config.separate_draw && state.display_event) SetEvent(state.display_event.get());
@@ -255,8 +253,7 @@ bool draw_frame() {
     return ready != 0;
 }
 LRESULT dispatch_message(HWND window, UINT message, WPARAM key, LPARAM parameter) {
-    if (state.config.ime && static_cast<uint8_t>(kinoko_ime_dispatch(address(window), message,
-            static_cast<uint32_t>(key), static_cast<int32_t>(parameter)))) return 0;
+    if (state.config.ime && static_cast<uint8_t>(kinoko_ime_dispatch(window, message, key, parameter))) return 0;
     switch (message) {
     case WM_SYSKEYDOWN:
         if (key == VK_RETURN) {
@@ -300,16 +297,16 @@ extern "C" void kinoko_application_shutdown() {
     state.retire_event.reset(); state.display_event.reset();
     {
         kinoko::windows::CriticalLock lock(&state.scene_lock);
-        if (state.scene) state.scene->methods->destroy(state.scene, 1);
+        if (state.scene) state.scene->methods->destroy(state.scene, nullptr, 1);
         state.scene = nullptr;
-        if (state.pending_scene) state.pending_scene->methods->destroy(state.pending_scene, 1);
+        if (state.pending_scene) state.pending_scene->methods->destroy(state.pending_scene, nullptr, 1);
         state.pending_scene = nullptr;
     }
     if (auto* manager = state.config.manager) {
-        manager->methods->shutdown(manager); std::free(manager); state.config.manager = nullptr;
+        manager->methods->shutdown(manager, nullptr); std::free(manager); state.config.manager = nullptr;
     }
     if (auto* transition = state.config.transition) {
-        transition->methods->shutdown(transition); std::free(transition); state.config.transition = nullptr;
+        transition->methods->shutdown(transition, nullptr); std::free(transition); state.config.transition = nullptr;
     }
     if (state.ime_initialized) { kinoko_ime_release(state.config.window); state.ime_initialized = false; }
     kinoko_audio_shutdown_device();

@@ -67,9 +67,9 @@ int32_t kinoko_null_object_type = 0x01000001;
 
 int32_t kinoko_null_object_value = 0;
 
-int32_t kinoko_ime_context_slot = 0;
+HIMC kinoko_ime_context_slot = 0;
 
-int32_t kinoko_ime_default_window_slot = 0;
+HWND kinoko_ime_default_window_slot = 0;
 
 int32_t kinoko_ime_text_limit = 1023;
 

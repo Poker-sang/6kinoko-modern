@@ -13,3 +13,7 @@ static_assert(offsetof(KinokoKeyTracker, shift) == 1024 + sizeof(void*) + 12);
 static_assert(offsetof(KinokoInputCluster, active_device) == offsetof(KinokoInputCluster, devices) + sizeof(void*) + 16);
 static_assert(sizeof(kinoko::audio::BufferRecord::successor) == sizeof(uint32_t));
 static_assert(sizeof(kinoko::audio::BufferRecord::predecessor) == sizeof(uint32_t));
+
+#include "kinoko/application_runtime.hpp"
+#include "kinoko/ime_input.h"
+static_assert(std::is_same_v<decltype(&kinoko_ime_dispatch), int32_t (*)(HWND, UINT, WPARAM, LPARAM)>);

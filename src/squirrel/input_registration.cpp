@@ -5,6 +5,7 @@
 #include "kinoko/input_devices.h"
 #include "kinoko/direct_input.h"
 #include "kinoko/script_diagnostics.hpp"
+#include "kinoko/squirrel_pair.hpp"
 
 namespace {
 using namespace kinoko::script;
