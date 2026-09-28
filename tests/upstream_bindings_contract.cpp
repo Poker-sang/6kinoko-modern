@@ -1,3 +1,6 @@
+#include "sqpcheader.h"
+#include "sqvm.h"
+#include "sqtable.h"
 #include "kinoko/upstream_bindings.hpp"
 #include "kinoko/squirrel_binding.h"
 #include "kinoko/sqplus_source_entries.hpp"
@@ -474,6 +477,24 @@ void source_class_initialization(HSQUIRRELVM vm) {
     up::sqrat_release(vm, replacement); up::sqrat_release(vm, get);
     up::sqrat_release(vm, set); up::sqrat_release(vm, type);
 }
+// Reuse a register containing dirty upper bits, as LOADFLOAT/arithmetic do.
+void native_float_values(HSQUIRRELVM vm) {
+    SQObjectPtr reused(static_cast<SQInteger>(-1));
+    reused = SQFloat(3.5f);
+    SQObjectPtr canonical(SQFloat(3.5f));
+    bool equal = false;
+    require(vm->IsEqual(reused, canonical, equal) && equal,
+        "equal float after wide register reuse");
+    SQObjectPtr table(SQTable::Create(vm->_sharedstate, 4)), result;
+    _table(table)->NewSlot(reused, SQObjectPtr(SQInteger(42)));
+    require(_table(table)->Get(canonical, result) && _integer(result) == 42,
+        "float table lookup after register reuse");
+    reused = static_cast<SQInteger>(-1);
+    reused = SQFloat(0.0f);
+    SQObjectPtr zero(SQFloat(0.0f));
+    require(vm->IsEqual(reused, zero, equal) && equal && vm->IsFalse(reused),
+        "float zero retains equality and truth behavior");
+}
 void native_integer_arguments(HSQUIRRELVM vm) {
     const auto base = sq_gettop(vm);
     const SQInteger wide = sizeof(SQInteger) > 4
@@ -502,6 +523,7 @@ void native_integer_arguments(HSQUIRRELVM vm) {
 void cycle() {
     Machine root, independent;
     native_integer_arguments(root.vm);
+    native_float_values(root.vm);
     objects(root.vm, independent.vm);
     classes(root.vm);
     source_class_initialization(root.vm);
@@ -514,6 +536,7 @@ void cycle() {
     auto child = sq_newthread(root.vm, 32);
     require(child != nullptr, "child VM");
     native_integer_arguments(child);
+    native_float_values(child);
     objects(child, root.vm);
     slot_lifetime(child);
     object_operations(child);

@@ -178,7 +178,7 @@ void callback(HSQUIRRELVM vm) {
     require(SQ_SUCCEEDED(sq_compilebuffer(vm, "bridge_callback <- 123;", static_cast<SQInteger>(std::strlen("bridge_callback <- 123;")), "callback", SQFalse)), "compile callback");
     closure.capture();
     std::array<int32_t, 5> words{address(vm), environment.words[0], environment.words[1], closure.words[0], closure.words[1]};
-    require(kinoko_sqrat_invoke_callback((const void *)(words.data())) == address(vm), "call helper returns VM");
+    require(kinoko_sqrat_invoke_callback((const void *)(words.data())) == SQ_OK, "call helper returns stable success");
     top(vm, base, "successful callback stack");
     evaluate(vm, "if (bridge_callback != 123) throw \"callback env\";");
     const char* script = "throw \"callback-failure\";";
@@ -187,7 +187,7 @@ void callback(HSQUIRRELVM vm) {
     sq_newclosure(vm, handler, 0); sq_seterrorhandler(vm);
     const int errors = error_handler_calls;
     kinoko_sqrat_trace_enabled = 0;
-    require(kinoko_sqrat_invoke_callback((const void *)(words.data())) == address(vm), "failing call still returns VM");
+    require(kinoko_sqrat_invoke_callback((const void *)(words.data())) == SQ_OK, "Sqrat intentionally ignores script failure");
     require(error_handler_calls == errors, "zero error handler flag");
     sq_getlasterror(vm); require(get_string(vm) == "callback-failure", "failed callback preserves source error"); sq_pop(vm, 1);
     kinoko_sqrat_trace_enabled = 1; kinoko_sqrat_invoke_callback((const void *)(words.data())); kinoko_sqrat_trace_enabled = 0;

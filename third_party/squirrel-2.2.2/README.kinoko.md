@@ -32,3 +32,11 @@ little-endian wire values. Float, boolean and fixed opcode encodings are unchang
 Out-of-range integer serialization and invalid negative/oversized section counts
 fail with a VM error. RefTable exposes a read-only diagnostic reference-count query
 so table diagnostics no longer traverse hardcoded x86 offsets.
+
+## Native float canonicalization (2026-09-28)
+
+sqobject.h clears the complete value union before assigning SQFloat, matching its
+float constructor. On x64, a reused register otherwise retains upper bytes from a
+pointer/integer; IsEqual and table lookup compare the complete raw union.
+sqcompiler.cpp zero-initializes scalar constant objects for the same reason.
+The original float bit equality (including signed zero) is not changed.

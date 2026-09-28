@@ -276,6 +276,8 @@ struct SQObjectPtr : public SQObject
 	inline SQObjectPtr& operator=(SQFloat f)
 	{ 
 		__Release(_type,_unVal);
+		// Float keys/equality compare the entire native union, including on x64.
+		_unVal.pUserPointer = NULL;
 		_unVal.fFloat = f;
 		_type = OT_FLOAT;
 		return *this;

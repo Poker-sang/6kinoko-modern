@@ -1,14 +1,14 @@
 #include "kinoko/sprite.h"
+#include "kinoko/method_entry.hpp"
 #include "kinoko/texture_store.h"
 
 // 404610 dispatches slot 4, supplying zero pivots; keep virtual dispatch for
 // derived sprites instead of replacing it with a direct concrete call.
 extern "C" int32_t __fastcall kinoko_sprite_set_rect(KinokoSprite* sprite, void*,
     int32_t texture, int32_t x, int32_t y, int32_t width, int32_t height) {
-    using SetRect = int32_t (__thiscall*)(KinokoSprite*, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t);
     const auto table = static_cast<void**>(sprite->vtable);
-    return reinterpret_cast<SetRect>(table[4])(sprite, texture, x, y, width, height, 0, 0);
+    return kinoko::method::invoke<int32_t>(sprite, table[4],
+        texture, x, y, width, height, int32_t{0}, int32_t{0});
 }
 
 // 404640: the last two arguments are pivots, not texture dimensions. 405EA0

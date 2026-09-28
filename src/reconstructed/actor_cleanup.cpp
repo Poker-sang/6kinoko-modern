@@ -17,16 +17,6 @@ extern int32_t kinoko_color_methods_storage;
 
 namespace {
 using namespace kinoko::actor;
-using kinoko::native::RecordView;
-
-template <typename T>
-T *pointer(int32_t address) {
-    return reinterpret_cast<T *>(static_cast<uintptr_t>(static_cast<uint32_t>(address)));
-}
-int32_t address(const void *value) {
-    return static_cast<int32_t>(reinterpret_cast<uintptr_t>(value));
-}
-
 }
 
 // 464E20: texture handles, live actors, nonowning lookup, owning animations,
@@ -42,8 +32,8 @@ extern "C" KinokoActor **kinoko_actor_manager_clear_resources(KinokoActorManager
     const auto actors = state.view(&ManagerPrefix::actors);
     kinoko_actor_manager_clear_actors(manager);
     kinoko_animation_lookup_clear(manager);
-    kinoko_clear_animation_list((void*)(uintptr_t)(address(state.bytes(&ManagerPrefix::animations))));
-    kinoko_priority_clear((void *)(intptr_t)(address(actors.data())));
+    kinoko_clear_animation_list(state.bytes(&ManagerPrefix::animations));
+    kinoko_priority_clear(actors.data());
     const auto iteration = state.view(&ManagerPrefix::iteration);
     const auto iteration_begin = iteration.get(&ActorIterationBuffer::begin);
     iteration.set(&ActorIterationBuffer::end, iteration_begin);

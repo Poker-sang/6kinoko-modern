@@ -1088,7 +1088,7 @@ public:
 	}
 	SQObject ExpectScalar()
 	{
-		SQObject val;
+		SQObject val = {};
 		switch(_token) {
 			case TK_INTEGER:
 				val._type = OT_INTEGER;
@@ -1118,7 +1118,7 @@ public:
 		SQInteger nval = 0;
 		while(_token != _SC('}')) {
 			SQObject key = Expect(TK_IDENTIFIER);
-			SQObject val;
+			SQObject val = {};
 			if(_token == _SC('=')) {
 				Lex();
 				val = ExpectScalar();

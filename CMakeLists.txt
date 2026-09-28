@@ -487,6 +487,10 @@ add_executable(kinoko_legacy_abi_contract tests/legacy_abi_contract.cpp)
 target_link_libraries(kinoko_legacy_abi_contract PRIVATE kinoko_legacy_abi)
 add_test(NAME legacy_abi_contract COMMAND kinoko_legacy_abi_contract)
 
+add_executable(kinoko_sprite_rect_contract tests/sprite_rect_contract.cpp src/reconstructed/sprite_rect.cpp)
+target_include_directories(kinoko_sprite_rect_contract PRIVATE include)
+add_test(NAME sprite_rect_contract COMMAND kinoko_sprite_rect_contract)
+
 add_executable(kinoko_bitmap_contract tests/bitmap_contract.cpp src/reconstructed/bitmap.cpp)
 target_include_directories(kinoko_bitmap_contract PRIVATE include)
 add_test(NAME bitmap_contract COMMAND kinoko_bitmap_contract)
@@ -496,7 +500,7 @@ target_link_libraries(kinoko_diagnostics_capture PRIVATE kinoko_diagnostics dbgh
 add_test(NAME diagnostics_capture COMMAND kinoko_diagnostics_capture)
 
 add_executable(kinoko_upstream_bindings_contract tests/upstream_bindings_contract.cpp)
-target_include_directories(kinoko_upstream_bindings_contract PRIVATE "${KINOKO_SQPLUS_DIR}"
+target_include_directories(kinoko_upstream_bindings_contract PRIVATE "${KINOKO_SQUIRREL2_ROOT}/squirrel" "${KINOKO_SQPLUS_DIR}"
     "${KINOKO_BINDING_ROOT}/third_party/sqrat-0.8.1/include")
 target_link_libraries(kinoko_upstream_bindings_contract PRIVATE kinoko_squirrel_cpp_vm)
 add_test(NAME upstream_bindings_contract COMMAND kinoko_upstream_bindings_contract)
@@ -834,7 +838,7 @@ set(KINOKO_TOOL_TARGETS
     kinoko_stage_owner_contract
     kinoko_act_document_contract
     kinoko_boost_control_contract
-    kinoko_upstream_bindings_contract
+    kinoko_upstream_bindings_contract kinoko_sprite_rect_contract
     kinoko_vorbis_decoder_contract
     kinoko_native_control_contract
     kinoko_legacy_string_contract

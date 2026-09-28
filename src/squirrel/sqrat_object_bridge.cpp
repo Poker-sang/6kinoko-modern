@@ -184,7 +184,7 @@ extern "C" int32_t kinoko_sqrat_bind_bool(struct SQVM * vm, const int32_t* objec
 extern "C" int32_t kinoko_sqrat_raw_set_int(struct SQVM * vm, const int32_t* object, const char* name, int32_t value) { return set_value(vm, object, name, integer(value), true); }
 extern "C" int32_t kinoko_sqrat_raw_set_bool(struct SQVM * vm, const int32_t* object, const char* name, int32_t value) { return set_value(vm, object, name, boolean(value), true); }
 extern "C" int32_t kinoko_sqrat_raw_set_float(struct SQVM * vm, const int32_t* object, const char* name, float value) {
-    HSQOBJECT o; o._type = OT_FLOAT; o._unVal.fFloat = value;
+    HSQOBJECT o{}; o._type = OT_FLOAT; o._unVal.fFloat = value;
     return set_value(vm, object, name, o, true);
 }
 extern "C" int32_t kinoko_sqrat_bind_string(struct SQVM * vm, const int32_t* object, const char* name, const char* value) { return set_string(vm, object, name, value, false); }
@@ -303,5 +303,7 @@ extern "C" int32_t kinoko_sqrat_invoke_callback(const void * storage) {
         [](HSQUIRRELVM vm, SQInteger count, SQBool result, SQBool errors) -> SQRESULT {
             return kinoko_sq_call(vm, count, result, errors);
         });
-    return diagnostic_address(callback.vm);
+    // Sqrat Execute intentionally ignores the script result. Its former VM
+    // address residue is not a status: a negative low word aborts ACT layers.
+    return SQ_OK;
 }
