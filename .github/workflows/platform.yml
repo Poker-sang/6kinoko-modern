@@ -77,7 +77,7 @@ jobs:
         run: |
           set -o pipefail
           git rev-parse HEAD > build-runs/native/source-commit.txt
-          cmake --build build-runs/native --target kinoko_modern_gpu --parallel 4 2>&1 | tee build-runs/native/build.log
+          cmake --build build-runs/native --target kinoko_modern_gpu --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

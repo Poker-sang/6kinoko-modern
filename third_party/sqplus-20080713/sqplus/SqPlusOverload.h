@@ -8,7 +8,7 @@
 #undef SQPLUS_OVERLOAD_RELEASE_HOOK
 
     // These end up int ClassType<T> now
-    static inline int destruct(SQUserPointer up, SQInteger size) {
+    static inline SQInteger destruct(SQUserPointer up, SQInteger size) {
         if (up) {
             static_cast<T*>(up)->~T();
             sq_free(up, size);

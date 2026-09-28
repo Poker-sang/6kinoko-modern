@@ -731,7 +731,6 @@ extern KinokoCriticalSection kinoko_graphics_lock;
 
 extern int32_t kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
 
-extern char * kinoko_game_window_slot;
 
 extern unsigned char kinoko_keyboard_state[256];
 

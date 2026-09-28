@@ -19,7 +19,6 @@
 
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
-extern char* kinoko_game_window_slot;
 extern char kinoko_packed_assets;
 extern struct SQVM* kinoko_act_vm;
 extern int32_t kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)];
@@ -35,7 +34,6 @@ using namespace kinoko::script;
 inline SQVM*& bytecode_vm_slot = kinoko_act_vm;
 inline SQVM*& primary_vm_slot = kinoko_primary_vm;
 inline char& compiled_assets_slot = kinoko_packed_assets;
-inline char*& debug_window_slot = kinoko_game_window_slot;
 inline auto& script_root_slot = kinoko_script_root_storage;
 // Separate VM slots are intentional: compiled LocalScript bytecode uses the
 // Sqrat VM captured at root registration; plain scripts use SqPlus's VM.

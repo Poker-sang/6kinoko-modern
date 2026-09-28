@@ -16,7 +16,6 @@
 
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
-extern char *kinoko_game_window_slot;
 extern char kinoko_packed_assets;
 void*  kinoko_sqplus_object_destroy(void * object);
 int32_t kinoko_csv_load_bytes(const char *path, char **bytes);
@@ -151,5 +150,5 @@ extern "C" int32_t kinoko_read_csv(struct SQVM* vm, void* window, const char *pa
 extern "C" int32_t kinoko_script_read_csv(const char* path, const void* vtable,
     int32_t type, intptr_t data) {
     kinoko::script::ObjectStorage object{vtable, kinoko::script::borrowed_value(type, data)};
-    return kinoko_read_csv(kinoko_primary_vm, kinoko_game_window_slot, path, reinterpret_cast<int32_t*>(&object), kinoko_packed_assets != 0);
+    return kinoko_read_csv(kinoko_primary_vm, nullptr, path, reinterpret_cast<int32_t*>(&object), kinoko_packed_assets != 0);
 }

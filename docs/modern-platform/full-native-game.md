@@ -26,3 +26,9 @@ All builds must record committed source, use fresh directories and retain logs.
 No game or contract is executed by the agent. CI packages must not redistribute
 original game DAT; users copy their three DAT beside the packaged executable.
 Full build success alone does not establish gameplay correctness.
+
+The legacy missing-length string scanner retains its Windows VirtualQuery guard
+for historical invalid-pointer contracts. Native portable callers require valid
+terminated string storage and retain the one-MiB cap; arbitrary address probing
+has no standard/SDL equivalent. This is an explicit legacy compatibility boundary.
+SqPlus release hooks use SQInteger return width on LP64, matching SQRELEASEHOOK.

@@ -135,7 +135,6 @@ KinokoCriticalSection kinoko_graphics_lock = { 0 };
 
 int32_t kinoko_script_root_storage[sizeof(KinokoOwnedObjectWords)/sizeof(int32_t)] = { 0, 0, 0 };
 
-char * kinoko_game_window_slot;
 
 unsigned char kinoko_keyboard_state[256];
 
