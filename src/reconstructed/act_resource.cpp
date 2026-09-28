@@ -1,3 +1,4 @@
+#include "kinoko/runtime_clock.h"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_resource.h"
 #include "kinoko/act_resource_records.hpp"
@@ -96,7 +97,7 @@ public:
 
     int32_t sleep_to(int32_t milliseconds) const {
         // The OS clock is sampled even for a null receiver, as in the baseline.
-        const uint32_t deadline = timeGetTime() + static_cast<uint32_t>(milliseconds);
+        const uint32_t deadline = kinoko_clock_milliseconds() + static_cast<uint32_t>(milliseconds);
         if (storage_) record_.set(&RuntimeRecord::wake_time, deadline);
         return kinoko::memory::load<int32_t>(&deadline);
     }
@@ -136,7 +137,7 @@ extern "C" int32_t __fastcall kinoko_act_end_stage(KinokoActRuntime *resource, v
 
 // 451590/4515A0: blocking sleep and deferred wake time stay distinct.
 extern "C" int32_t __fastcall kinoko_act_sleep(KinokoActRuntime *, void *, int32_t milliseconds) {
-    Sleep(static_cast<DWORD>(milliseconds));
+    kinoko_clock_delay(static_cast<DWORD>(milliseconds));
     return 0;
 }
 extern "C" int32_t __fastcall kinoko_act_sleep_to(KinokoActRuntime *resource, void *, int32_t milliseconds) {

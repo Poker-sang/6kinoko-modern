@@ -69,3 +69,6 @@ Next: user x64 runtime acceptance and remaining Windows service migration
 [SDL GPU game integration / 游戏渲染迁移](../docs/modern-gpu/GAME.md).
 
 [Runtime graphics width audit / 图形运行时宽度审计](../docs/modern-x64/README.md).
+
+
+Portable application/audio worker, event and clock migration: [runtime services](../docs/modern-platform/runtime-services.md). Windows files-02 was accepted by the user; full Linux/macOS games remain blocked by host/font services.

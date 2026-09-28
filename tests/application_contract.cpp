@@ -51,9 +51,9 @@ int32_t kinoko_input_open_mouse() { device_calls.push_back(4); return mouse_resu
 int32_t kinoko_input_poll() { return 0; }
 int32_t kinoko_ime_initialize() { return 0; }
 void kinoko_ime_release(HWND) {}
-HANDLE kinoko_frame_timer_register() { return nullptr; }
-void kinoko_frame_timer_wait(HANDLE) {}
-int32_t kinoko_frame_timer_unregister(HANDLE) { return 0; }
+KinokoFrameEvent* kinoko_frame_timer_register() { return nullptr; }
+void kinoko_frame_timer_wait(KinokoFrameEvent*) {}
+int32_t kinoko_frame_timer_unregister(KinokoFrameEvent*) { return 0; }
 }
 namespace {
 using namespace kinoko::application;
@@ -110,7 +110,7 @@ int main() {
     state.config.input = 0;
     state.config.manager = &manager; state.config.transition = &transition;
     state.current_scene = state.requested_scene = 7; state.scene = &first;
-    InterlockedExchange(&state.running, 1);
+    state.running.store(true);
     update_frame();
     CHECK((calls == std::vector<int>{1, 2, 3}));
     CHECK(state.frame_count == 1 && state.requested_scene == 7);

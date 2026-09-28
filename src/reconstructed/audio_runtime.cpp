@@ -5,7 +5,9 @@
 #include "kinoko/audio_output.hpp"
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
-#include "kinoko/windows_owner.hpp"
+#include "kinoko/runtime_sync.hpp"
+#include "kinoko/runtime_clock.h"
+#include <atomic>
 #include <mmsystem.h>
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -23,7 +25,8 @@
 using float32_t = float;
 using float80_t = long double;
 using namespace kinoko::audio;
-using kinoko::windows::CriticalLock;
+using CriticalLock = kinoko::runtime::Lock;
+using namespace kinoko::runtime;
 
 static int32_t run_audio_update_worker();
 static int32_t run_audio_loader_worker();
@@ -113,20 +116,21 @@ inline char& packed_assets_slot = kinoko_packed_assets;
 // Own both workers, their wake events and the lock protecting playback state.
 // Events and the lock outlive the joined workers, including partial startup.
 struct AudioWorkers {
-    kinoko::windows::HandleOwner queue_event, stop_event, update_thread, loader_thread;
-    volatile LONG running = 0;
+    EventOwner queue_event, stop_event;
+    Thread update_thread, loader_thread;
+    std::atomic<bool> running{false};
     bool initialized = false;
-    CRITICAL_SECTION lock{};
-    AudioWorkers() { InitializeCriticalSection(&lock); }
-    bool is_running() { return InterlockedCompareExchange(&running, 0, 0) != 0; }
-    void notify_loader() { if (queue_event) SetEvent(queue_event.get()); }
+    std::recursive_mutex lock;
+    AudioWorkers() = default;
+    bool is_running() { return running.load(); }
+    void notify_loader() { if (queue_event) kinoko::runtime::signal(queue_event.get()); }
     void stop_and_join() {
-        InterlockedExchange(&running, 0);
-        if (stop_event) SetEvent(stop_event.get());
+        running.store(false);
+        if (stop_event) kinoko::runtime::signal(stop_event.get());
         notify_loader();
         for (auto* thread : {&update_thread, &loader_thread}) {
             if (*thread) {
-                WaitForSingleObject(thread->get(), INFINITE);
+                
                 thread->reset();
             }
         }
@@ -134,7 +138,7 @@ struct AudioWorkers {
         stop_event.reset();
         initialized = false;
     }
-    ~AudioWorkers() { stop_and_join(); DeleteCriticalSection(&lock); }
+    ~AudioWorkers() { stop_and_join(); }
     AudioWorkers(const AudioWorkers&) = delete;
     AudioWorkers& operator=(const AudioWorkers&) = delete;
 } audio_workers;
@@ -931,7 +935,7 @@ static void update_track_fade(BgmTrack& track, DWORD now) {
     }
 }
 static void kinoko_bgm_update_fade_locked(void) {
-    const DWORD now = timeGetTime();
+    const DWORD now = kinoko_clock_milliseconds();
     update_track_fade(g_kinoko_bgm_track, now);
     for (auto& track : fading_tracks) update_track_fade(track, now);
 }
@@ -957,7 +961,7 @@ static void kinoko_bgm_begin_fade_locked(BgmTrack *track,
     track->retire_after_fade = retire_after_fade;
     track->fade_from = track->volume;
     track->fade_to = target;
-    track->fade_started = timeGetTime() + start_delay;
+    track->fade_started = kinoko_clock_milliseconds() + start_delay;
     track->fade_duration = duration;
 }
 
@@ -1236,7 +1240,7 @@ static void kinoko_bgm_service_track(BgmTrack *track)
         return;
     }
     if (!track->started) {
-        const DWORD now = timeGetTime();
+        const DWORD now = kinoko_clock_milliseconds();
         if (track->start_time == 0 || now > track->start_time) {
             kinoko_bgm_start_track(track);
             track->start_time = 0;
@@ -1472,7 +1476,7 @@ static int32_t prepare_playback_request(ManagerRecord* this_ptr,
         kinoko_audio_list_push(
             g_kinoko_audio_manager_state.pending.head, handle);
         if (audio_workers.queue_event.get() != NULL)
-            SetEvent(audio_workers.queue_event.get());
+            kinoko::runtime::signal(audio_workers.queue_event.get());
         return 1;
     }
 
@@ -1517,7 +1521,7 @@ static int32_t schedule_playback_start(ManagerRecord* this_ptr,
     track = kinoko_bgm_find_track((uint32_t)handle);
     buffer->playback_state = 0;
     if (delay != 0) {
-        start_time = timeGetTime() + (uint32_t)delay;
+        start_time = kinoko_clock_milliseconds() + (uint32_t)delay;
         buffer->start_time = start_time;
         if (track != NULL)
             track->start_time = start_time;
@@ -1527,7 +1531,7 @@ static int32_t schedule_playback_start(ManagerRecord* this_ptr,
             track->start_time = 0;
             kinoko_bgm_start_track(track);
         } else {
-            start_time = timeGetTime();
+            start_time = kinoko_clock_milliseconds();
             buffer->start_time = start_time;
         }
     }
@@ -1551,38 +1555,26 @@ static int32_t fade_out_playback(ManagerRecord* this_ptr,
 }
 
 
-HANDLE kinoko_audio_start_workers(void) {
-    if (audio_workers.initialized)
-        return audio_workers.queue_event.get();
-    audio_workers.queue_event.reset(CreateEventA(NULL, FALSE, FALSE, NULL));
-    audio_workers.stop_event.reset(CreateEventA(NULL, TRUE, FALSE, NULL));
-    if (audio_workers.queue_event.get() == NULL ||
-        audio_workers.stop_event.get() == NULL) {
-        if (audio_workers.queue_event.get() != NULL)
-            audio_workers.queue_event.reset();
-        if (audio_workers.stop_event.get() != NULL)
-            audio_workers.stop_event.reset();
-        audio_workers.queue_event.reset(NULL);
-        audio_workers.stop_event.reset(NULL);
+int32_t kinoko_audio_start_workers(void) {
+    if (audio_workers.initialized) return 1;
+    audio_workers.queue_event.reset(make_event());
+    audio_workers.stop_event.reset(make_event(true));
+    if (!audio_workers.queue_event || !audio_workers.stop_event) {
+        audio_workers.stop_and_join();
         kinoko_trace("40a3d0:audio-events-failed");
         return 0;
     }
-    InterlockedExchange(&audio_workers.running, 1);
-    audio_workers.update_thread.reset(CreateThread(
-        NULL, 0, audio_update_worker, NULL, 0, NULL));
-    if (audio_workers.update_thread.get() != NULL)
-        SetThreadPriority(audio_workers.update_thread.get(), 15);
-    audio_workers.loader_thread.reset(CreateThread(
-        NULL, 0, audio_loader_worker, NULL, 0, NULL));
-    if (audio_workers.update_thread.get() == NULL ||
-        audio_workers.loader_thread.get() == NULL) {
+    audio_workers.running.store(true);
+    audio_workers.update_thread.start(audio_update_worker, nullptr, Priority::time_critical);
+    audio_workers.loader_thread.start(audio_loader_worker);
+    if (!audio_workers.update_thread || !audio_workers.loader_thread) {
         audio_workers.stop_and_join();
         kinoko_trace("40a3d0:audio-threads-failed");
         return 0;
     }
-    audio_workers.initialized = 1;
+    audio_workers.initialized = true;
     kinoko_trace("40a3d0:audio-threads-ready");
-    return audio_workers.queue_event.get();
+    return 1;
 }
 
 int32_t kinoko_audio_stop_workers(void) {
@@ -1611,10 +1603,9 @@ int32_t kinoko_audio_set_bgm_volume(float gain) {
 }
 
 int32_t run_audio_update_worker(void) {
-    while (InterlockedCompareExchange(&audio_workers.running, 0, 0)) {
+    while (audio_workers.is_running()) {
         if (audio_workers.stop_event.get() == NULL ||
-            WaitForSingleObject(audio_workers.stop_event.get(), 16) ==
-                WAIT_OBJECT_0)
+            wait(audio_workers.stop_event.get(), 16) != wait_timeout)
             break;
         service_audio_tick();
     }
@@ -1622,17 +1613,8 @@ int32_t run_audio_update_worker(void) {
 }
 
 int32_t run_audio_loader_worker(void) {
-    while (InterlockedCompareExchange(&audio_workers.running, 0, 0)) {
-        HANDLE handles[2];
-        DWORD wait_result;
-
-        handles[0] = audio_workers.queue_event.get();
-        handles[1] = audio_workers.stop_event.get();
-        if (handles[0] == NULL || handles[1] == NULL)
-            break;
-        wait_result = WaitForMultipleObjects(2, handles, FALSE,
-                                             INFINITE);
-        if (wait_result != WAIT_OBJECT_0)
+    while (audio_workers.is_running()) {
+        if (wait_any({audio_workers.queue_event.get(), audio_workers.stop_event.get()}) != 0)
             break;
         CriticalLock lock(&audio_workers.lock);
         if (audio_workers.is_running()) {
@@ -1645,7 +1627,7 @@ int32_t run_audio_loader_worker(void) {
 }
 
 int32_t service_audio_tick(void) {
-    if (!InterlockedCompareExchange(&audio_workers.running, 0, 0))
+    if (!audio_workers.is_running())
         return 0;
     CriticalLock lock(&audio_workers.lock);
     kinoko_bgm_service_all_locked();

@@ -1,90 +1,67 @@
 #include "kinoko/timer_events.h"
-#include <mmsystem.h>
+#include "kinoko/runtime_sync.hpp"
+#include "kinoko/runtime_clock.h"
 #include <list>
 #include <algorithm>
 #include <atomic>
 #include <cstdlib>
 #include <new>
+struct KinokoFrameEvent { kinoko::runtime::EventHandle event; };
 namespace {
+using namespace kinoko::runtime;
 struct FrameTimer {
-    CRITICAL_SECTION lock{};
-    HANDLE thread{};
-    DWORD thread_id{};
-    DWORD period_ms{16};
-    DWORD extra_delay_ms{};
+    std::recursive_mutex lock;
+    Thread thread;
     std::atomic<bool> running{false};
-    bool initialized{}, period_requested{};
-    std::list<HANDLE> events;
+    bool initialized=false, period_requested=false;
+    std::list<std::unique_ptr<KinokoFrameEvent>> events;
 };
 FrameTimer timer;
-struct Lock {
-    Lock() { EnterCriticalSection(&timer.lock); }
-    ~Lock() { LeaveCriticalSection(&timer.lock); }
-};
-DWORD WINAPI timer_worker(void*) {
-    const HANDLE delay = CreateEventA(nullptr, FALSE, FALSE, nullptr);
-    while (timer.running.load()) {
-        const DWORD timeout = timer.period_ms + timer.extra_delay_ms;
-        if (delay) WaitForSingleObject(delay, timeout);
-        else Sleep(timeout); // Native allocation-failure guard, avoids spinning.
-        timer.extra_delay_ms = 0;
-        Lock lock;
-        for (HANDLE event : timer.events) SetEvent(event);
+void timer_worker(void*) {
+    while(timer.running.load()) {
+        kinoko_clock_delay(16);
+        Lock lock(&timer.lock);
+        for(const auto& event:timer.events) signal(event->event);
     }
-    if (delay) CloseHandle(delay);
-    return 0;
 }
 void shutdown() {
-    if (!timer.initialized) return;
+    if(!timer.initialized) return;
     timer.running.store(false);
-    if (timer.thread) {
-        SetThreadPriority(timer.thread, THREAD_PRIORITY_TIME_CRITICAL);
-        WaitForSingleObject(timer.thread, INFINITE);
-        CloseHandle(timer.thread); timer.thread = nullptr;
-    }
-    {
-        Lock lock;
-        for (HANDLE event : timer.events) { SetEvent(event); CloseHandle(event); }
-        timer.events.clear();
-    }
-    DeleteCriticalSection(&timer.lock);
-    if (timer.period_requested) timeEndPeriod(1);
-    timer.initialized = timer.period_requested = false;
+    timer.thread.reset();
+    { Lock lock(&timer.lock); for(const auto& event:timer.events) close_event(event->event); timer.events.clear(); }
+    if(timer.period_requested) kinoko_clock_release_resolution();
+    timer.initialized=timer.period_requested=false;
 }
 }
-extern "C" void kinoko_frame_timer_initialize(void) noexcept(false) {
-    if (timer.initialized) return;
-    InitializeCriticalSection(&timer.lock);
-    if (std::atexit(shutdown) != 0) { DeleteCriticalSection(&timer.lock); throw std::bad_alloc(); }
-    timer.initialized = true;
-    timer.period_requested = timeBeginPeriod(1) == TIMERR_NOERROR;
+extern "C" void kinoko_frame_timer_initialize() noexcept(false) {
+    if(timer.initialized) return;
+    if(std::atexit(shutdown)!=0) throw std::bad_alloc();
+    timer.initialized=true;
+    timer.period_requested=kinoko_clock_request_resolution()!=0;
     timer.running.store(true);
-    timer.thread = CreateThread(nullptr, 0, timer_worker, nullptr, 0, &timer.thread_id);
-    if (timer.thread) SetThreadPriority(timer.thread, THREAD_PRIORITY_TIME_CRITICAL);
+    if(!timer.thread.start(timer_worker,nullptr,Priority::time_critical)) timer.running.store(false);
 }
-extern "C" HANDLE kinoko_frame_timer_register(void) {
-    if (!timer.initialized || !timer.thread) return nullptr;
-    Lock lock;
-    // 412BA6 inserts a null node before creating its auto-reset event.
-    timer.events.push_back(nullptr);
-    timer.events.back() = CreateEventA(nullptr, FALSE, FALSE, nullptr);
-    return timer.events.back();
+extern "C" KinokoFrameEvent* kinoko_frame_timer_register() {
+    if(!timer.initialized || !timer.thread) return nullptr;
+    Lock lock(&timer.lock);
+    auto event=make_event();
+    if(!event) return nullptr;
+    auto token=std::make_unique<KinokoFrameEvent>(); token->event=std::move(event);
+    auto* result=token.get(); timer.events.push_back(std::move(token)); return result;
 }
-extern "C" int32_t kinoko_frame_timer_unregister(HANDLE event) {
-    if (!timer.initialized) return 0;
-    Lock lock;
-    const auto found = std::find(timer.events.begin(), timer.events.end(), event);
-    if (found == timer.events.end()) return 0;
-    SetEvent(*found);
-    const BOOL closed = CloseHandle(*found);
-    timer.events.erase(found);
-    return closed ? 1 : 0;
+extern "C" int32_t kinoko_frame_timer_unregister(KinokoFrameEvent* token) {
+    if(!timer.initialized) return 0;
+    Lock lock(&timer.lock);
+    const auto found=std::find_if(timer.events.begin(),timer.events.end(),[=](const auto& event){return event.get()==token;});
+    if(found==timer.events.end()) return 0;
+    close_event((*found)->event); timer.events.erase(found); return 1;
 }
-extern "C" void kinoko_frame_timer_wait(HANDLE event) {
-    // 40DECD: skip the wait when the registry is locked or the event is absent.
-    // The update thread owns this registration; shutdown joins it before CRT teardown.
-    if (!timer.initialized || !TryEnterCriticalSection(&timer.lock)) return;
-    const bool registered = std::find(timer.events.begin(), timer.events.end(), event) != timer.events.end();
-    LeaveCriticalSection(&timer.lock);
-    if (registered) WaitForSingleObject(event, INFINITE);
+extern "C" void kinoko_frame_timer_wait(KinokoFrameEvent* token) {
+    // Preserve the original skip-on-busy registry rule. A copied shared event
+    // keeps a concurrent unregister safe and wakes this waiter on closure.
+    if(!timer.initialized || !timer.lock.try_lock()) return;
+    EventHandle event;
+    for(const auto& entry:timer.events) if(entry.get()==token) { event=entry->event; break; }
+    timer.lock.unlock();
+    if(event) wait(event);
 }

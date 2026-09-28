@@ -64,3 +64,6 @@ ACT/资源、角色/相机、地图/碰撞、输入/音频/应用与 VM 桥接�
 [SDL GPU game integration / 游戏渲染迁移](../docs/modern-gpu/GAME.md).
 
 [Runtime graphics width audit / 图形运行时宽度审计](../docs/modern-x64/README.md).
+
+
+应用/音频线程、事件和时钟迁移见[运行时服务](../docs/modern-platform/runtime-services.md)。用户已确认 Windows files-02 正常；完整 Linux/macOS 游戏仍受宿主和字体服务阻塞。

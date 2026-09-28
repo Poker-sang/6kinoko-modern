@@ -1,3 +1,4 @@
+#include "kinoko/runtime_clock.h"
 #include "kinoko/string_runtime.hpp"
 #include "kinoko/act_method_dispatch.hpp"
 #include "kinoko/act_texture_resource.hpp"
@@ -872,7 +873,7 @@ int32_t kinoko_publish_acting_player_class(SQVM* vm,
     kinoko_sqrat_set_native_closure(vm, class_pair, "FindNextFile", reinterpret_cast<void*>(find_by_id_native<FindOperation::Next>), nullptr, 0);
     kinoko_sqrat_set_native_closure(vm, class_pair, "FindClose", reinterpret_cast<void*>(find_by_id_native<FindOperation::Close>), nullptr, 0);
     kinoko_sqrat_set_native_closure(vm, class_pair, "GetFindFileName", reinterpret_cast<void*>(find_by_id_native<FindOperation::Name>), nullptr, 0);
-    kinoko_sqplus_register_actor_method(vm, reinterpret_cast<int32_t*>(&class_object), "timeGetTime", (void *)(timeGetTime), (void *)(kinoko_sqrat_call_integer0), 0);
+    kinoko_sqplus_register_actor_method(vm, reinterpret_cast<int32_t*>(&class_object), "timeGetTime", (void *)(kinoko_clock_milliseconds), (void *)(kinoko_sqrat_call_integer0), 0);
     kinoko_sqplus_register_actor_method(vm, reinterpret_cast<int32_t*>(&class_object), "Sleep", (void *)(kinoko_act_sleep), (void *)(kinoko_native_integer_member_callback), 0);
     kinoko_sqplus_register_actor_method(vm, reinterpret_cast<int32_t*>(&class_object), "SleepTo", (void *)(kinoko_act_sleep_to), (void *)(kinoko_native_integer_member_callback), 0);
     kinoko_sqplus_register_actor_method(vm, reinterpret_cast<int32_t*>(&class_object), "Suspend", (void *)(kinoko_act_suspend), (void *)(kinoko_native_nullary_member_callback), 0);

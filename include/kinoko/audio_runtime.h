@@ -6,7 +6,7 @@ extern "C" {
 #endif
 /* C ABI entry points only; state and resources are owned by audio_runtime.cpp. */
 void kinoko_bgm_update_fade(void);
-HANDLE kinoko_audio_start_workers(void);
+int32_t kinoko_audio_start_workers(void);
 int32_t kinoko_audio_stop_workers(void);
 int32_t kinoko_audio_set_bgm_volume(float gain);
 int32_t kinoko_audio_shutdown_resources(void);

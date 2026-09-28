@@ -6,7 +6,7 @@
 namespace kinoko::application {
 namespace {
 std::list<Scene*> retired_scenes;
-using kinoko::windows::CriticalLock;
+using CriticalLock=kinoko::runtime::Lock;
 }
 void activate_pending_scene() {
     Scene* previous;
@@ -25,7 +25,7 @@ void activate_pending_scene() {
             if (retired_scenes.size() == 0x3ffffffeu) throw std::length_error("list<T> too long");
             retired_scenes.push_back(previous);
         }
-        if (state.retire_event) SetEvent(state.retire_event.get());
+        if (state.retire_event) kinoko::runtime::signal(state.retire_event.get());
     }
     if (state.scene) state.scene->methods->enter(state.scene, nullptr, state.current_scene);
     state.current_scene = state.requested_scene;
@@ -39,14 +39,14 @@ extern "C" void kinoko_destroy_retired_scenes() {
     for (;;) {
         Scene* object;
         {
-            kinoko::windows::CriticalLock lock(&state.scene_lock);
+            kinoko::runtime::Lock lock(&state.scene_lock);
             if (retired_scenes.empty()) return;
             object = retired_scenes.front();
         }
         // Single consumer; deleting destructor precedes removing its queue node.
         if (object) object->methods->destroy(object, nullptr, 1);
         {
-            kinoko::windows::CriticalLock lock(&state.scene_lock);
+            kinoko::runtime::Lock lock(&state.scene_lock);
             retired_scenes.pop_front();
         }
     }

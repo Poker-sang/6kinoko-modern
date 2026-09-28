@@ -1,3 +1,4 @@
+#include "kinoko/windows_owner.hpp"
 #include "kinoko/base_utilities.h"
 #include "kinoko/game_runtime.h"
 #include "kinoko/direct_input.h"
@@ -14,7 +15,7 @@
 #include "kinoko/archive_random.h"
 #include "kinoko/game_math.h"
 #include "../platform/resources/resource.h"
-#include <mmsystem.h>
+#include "kinoko/runtime_clock.h"
 #include <objbase.h>
 #include "kinoko/platform.hpp"
 #include <SDL3/SDL.h>
@@ -29,16 +30,15 @@ void kinoko_trace(const char*);
 namespace kinoko::application {
 State state;
 namespace {
-using kinoko::windows::CriticalLock;
-using kinoko::windows::HandleOwner;
+using CriticalLock=kinoko::runtime::Lock;
+using namespace kinoko::runtime;
 struct ComScope {
     HRESULT status = CoInitialize(nullptr);
     ~ComScope() { if (SUCCEEDED(status)) CoUninitialize(); }
     explicit operator bool() const { return SUCCEEDED(status); }
 };
-void join(HandleOwner& thread) {
+void join(Thread& thread) {
     if (!thread) return;
-    WaitForSingleObject(thread.get(), INFINITE);
     thread.reset();
 }
 DWORD WINAPI load_scene_worker(void*) {
@@ -52,7 +52,7 @@ DWORD WINAPI load_scene_worker(void*) {
     return 0;
 }
 void update_statistics() {
-    const DWORD now = timeGetTime();
+    const DWORD now = kinoko_clock_milliseconds();
     if (!state.config.show_fps || now - state.statistics_time < 1000) return;
     state.statistics_time += 1000;
     char title[256];
@@ -63,7 +63,7 @@ void update_statistics() {
 }
 DWORD WINAPI game_loop(void*) {
     // This is a timer-registry borrow: unregister it, never close it separately.
-    const HANDLE frame_event = kinoko_frame_timer_register();
+    auto* const frame_event = kinoko_frame_timer_register();
     kinoko_trace("game:entry");
     while (state.is_running()) {
         update_statistics();
@@ -71,7 +71,7 @@ DWORD WINAPI game_loop(void*) {
         if (!state.config.separate_draw) draw_frame();
         kinoko_math_checkpoint("render-done", 0);
         if (frame_event) kinoko_frame_timer_wait(frame_event);
-        else Sleep(16); // Retained reconstruction fallback for event allocation failure.
+        else kinoko_clock_delay(16); // Retained reconstruction fallback for event allocation failure.
     }
     if (frame_event) kinoko_frame_timer_unregister(frame_event);
     kinoko_trace("game:exit");
@@ -85,22 +85,20 @@ DWORD WINAPI game_worker(void*) {
 DWORD WINAPI display_worker(void*) {
     ComScope com;
     if (!com) return 0;
-    HandleOwner retry(CreateEventA(nullptr, FALSE, FALSE, nullptr));
     while (state.is_running()) {
         if (state.config.separate_draw) {
-            if (TryEnterCriticalSection(&state.scene_lock)) {
+            if (state.scene_lock.try_lock()) {
                 if (state.scene && draw_frame() && kinoko_graphics_present()) ++state.draw_count;
-                LeaveCriticalSection(&state.scene_lock);
+                state.scene_lock.unlock();
             }
-            WaitForSingleObject(state.display_event.get(), 1);
+            wait(state.display_event.get(), 1);
         } else {
-            if (WaitForSingleObject(state.display_event.get(), INFINITE) != WAIT_OBJECT_0 ||
+            if (wait(state.display_event.get()) != 0 ||
                 !state.is_running()) break;
             // 40E090..40E0E2: retry nonblocking presentation at most eight times.
             for (unsigned attempt = 0; attempt < 8 && state.is_running(); ++attempt) {
                 if (kinoko_graphics_present()) { ++state.present_count; break; }
-                if (retry) WaitForSingleObject(retry.get(), 1);
-                else Sleep(1);
+                kinoko_clock_delay(1);
             }
         }
     }
@@ -110,7 +108,7 @@ DWORD WINAPI retire_worker(void*) {
     ComScope com;
     if (!com) return 0;
     while (state.is_running()) {
-        if (WaitForSingleObject(state.retire_event.get(), INFINITE) != WAIT_OBJECT_0) break;
+        if (wait(state.retire_event.get()) != 0) break;
         kinoko_destroy_retired_scenes();
     }
     return 0;
@@ -118,13 +116,13 @@ DWORD WINAPI retire_worker(void*) {
 bool initialize(const Configuration& configuration) {
     state.config = configuration;
     kinoko_application_set_archive_mode(configuration.archives != 0);
-    state.timer_period = timeBeginPeriod(1) == TIMERR_NOERROR;
-    kinoko_seed_random(timeGetTime());
+    state.timer_period = kinoko_clock_request_resolution()!=0;
+    kinoko_seed_random(kinoko_clock_milliseconds());
     state.com_initialized = SUCCEEDED(CoInitialize(nullptr));
     if (!state.com_initialized) return false;
     kinoko_process_initialize(configuration.instance, configuration.window);
     if (!configuration.show_cursor) ShowCursor(FALSE);
-    InterlockedExchange(&state.running, 1);
+    state.running.store(true);
     if (configuration.graphics) {
         if (!kinoko_graphics_create(configuration.window, configuration.width, configuration.height)) return false;
         state.graphics_initialized = true;
@@ -133,7 +131,7 @@ bool initialize(const Configuration& configuration) {
     }
     if (!initialize_input_audio(configuration)) return false;
     if (configuration.ime) { kinoko_ime_initialize(); state.ime_initialized = true; }
-    state.statistics_time = timeGetTime();
+    state.statistics_time = kinoko_clock_milliseconds();
     if (configuration.manager) configuration.manager->methods->initialize(configuration.manager, nullptr);
     if (configuration.transition) configuration.transition->methods->initialize(configuration.transition, nullptr);
     state.requested_scene = configuration.initial_scene;
@@ -142,15 +140,13 @@ bool initialize(const Configuration& configuration) {
         ? configuration.manager->methods->create_scene(configuration.manager, nullptr, configuration.initial_scene) : nullptr;
     // Publish wake events before starting workers: shutdown must never signal a
     // null slot while its worker is just about to create and wait on that event.
-    state.retire_event.reset(CreateEventA(nullptr, FALSE, FALSE, nullptr));
-    if (configuration.graphics) state.display_event.reset(CreateEventA(nullptr, FALSE, FALSE, nullptr));
+    state.retire_event.reset(make_event());
+    if (configuration.graphics) state.display_event.reset(make_event());
     if (!state.retire_event || (configuration.graphics && !state.display_event)) return false;
-    state.retire_thread.reset(CreateThread(nullptr, 0, retire_worker, nullptr, 0, nullptr));
-    if (state.retire_thread) SetThreadPriority(state.retire_thread.get(), THREAD_PRIORITY_IDLE);
-    state.game_thread.reset(CreateThread(nullptr, 0, game_worker, nullptr, 0, nullptr));
+    state.retire_thread.start(retire_worker,nullptr,Priority::low);
+    state.game_thread.start(game_worker);
     if (configuration.graphics) {
-        state.display_thread.reset(CreateThread(nullptr, 0, display_worker, nullptr, 0, nullptr));
-        if (state.display_thread) SetThreadPriority(state.display_thread.get(), THREAD_PRIORITY_IDLE);
+        state.display_thread.start(display_worker,nullptr,Priority::low);
     }
     return state.retire_thread && state.game_thread && (!configuration.graphics || state.display_thread);
 }
@@ -230,12 +226,12 @@ void update_frame() {
         if (transition) transition->methods->update(transition, nullptr);
         if (state.scene) {
             state.requested_scene = state.scene->methods->update(state.scene, nullptr);
-            if (state.requested_scene == -1) InterlockedExchange(&state.running, 0);
+            if (state.requested_scene == -1) state.running.store(false);
             else ++state.frame_count;
         }
         if (state.requested_scene != -1 && state.requested_scene != state.current_scene) {
             join(state.load_thread);
-            state.load_thread.reset(CreateThread(nullptr, 0, load_scene_worker, nullptr, 0, nullptr));
+            state.load_thread.start(load_scene_worker);
         }
     }
     kinoko_math_checkpoint("scene-done", 0);
@@ -248,7 +244,7 @@ bool draw_frame() {
     if (state.config.transition) ready &= state.config.transition->methods->draw(state.config.transition, nullptr);
     if (ready) {
         { kinoko::graphics::Lock lock; kinoko_renderer.present_pending = 1; }
-        if (!state.config.separate_draw && state.display_event) SetEvent(state.display_event.get());
+        if (!state.config.separate_draw && state.display_event) kinoko::runtime::signal(state.display_event.get());
     }
     return ready != 0;
 }
@@ -285,18 +281,18 @@ extern "C" int32_t kinoko_application_frame_count() {
 }
 extern "C" void kinoko_application_shutdown() {
     using namespace kinoko::application;
-    InterlockedExchange(&state.running, 0);
+    state.running.store(false);
     kinoko::graphics::stop();
     join(state.game_thread);
     join(state.load_thread);
-    if (state.retire_event) SetEvent(state.retire_event.get());
+    if (state.retire_event) kinoko::runtime::signal(state.retire_event.get());
     join(state.retire_thread);
-    if (state.display_event) SetEvent(state.display_event.get());
+    if (state.display_event) kinoko::runtime::signal(state.display_event.get());
     join(state.display_thread);
     kinoko_destroy_retired_scenes();
     state.retire_event.reset(); state.display_event.reset();
     {
-        kinoko::windows::CriticalLock lock(&state.scene_lock);
+        kinoko::runtime::Lock lock(&state.scene_lock);
         if (state.scene) state.scene->methods->destroy(state.scene, nullptr, 1);
         state.scene = nullptr;
         if (state.pending_scene) state.pending_scene->methods->destroy(state.pending_scene, nullptr, 1);
@@ -318,7 +314,7 @@ extern "C" void kinoko_application_shutdown() {
     }
     if (state.graphics_initialized) { kinoko_graphics_release(); state.graphics_initialized = false; }
     if (state.com_initialized) { CoUninitialize(); state.com_initialized = false; }
-    if (state.timer_period) { timeEndPeriod(1); state.timer_period = false; }
+    if (state.timer_period) { kinoko_clock_release_resolution(); state.timer_period = false; }
 }
 extern "C" int kinoko_application_run(HINSTANCE instance, int show_command) {
     using namespace kinoko::application;

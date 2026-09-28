@@ -1,5 +1,7 @@
 #pragma once
-#include "kinoko/windows_owner.hpp"
+#include <windows.h> // Native window/IME boundary, not thread ownership.
+#include "kinoko/runtime_sync.hpp"
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 
@@ -56,20 +58,19 @@ static_assert(offsetof(ManagerMethods, create_scene) == 4*sizeof(void*));
 // Native owner, no longer overlaid on the split RetDec globals or byte block.
 struct State {
     Configuration config;
-    kinoko::windows::HandleOwner game_thread, display_thread, retire_thread, load_thread;
-    kinoko::windows::HandleOwner display_event, retire_event;
-    CRITICAL_SECTION scene_lock{};
-    volatile LONG running = 0;
+    kinoko::runtime::Thread game_thread, display_thread, retire_thread, load_thread;
+    kinoko::runtime::EventOwner display_event, retire_event;
+    std::recursive_mutex scene_lock;
+    std::atomic<bool> running{false};
     Scene *scene = nullptr, *pending_scene = nullptr;
     int32_t requested_scene = 0, current_scene = -1;
     uint32_t frame_count = 0, draw_count = 0, present_count = 0;
-    DWORD statistics_time = 0;
+    uint32_t statistics_time = 0;
     bool com_initialized = false, timer_period = false, input_initialized = false;
     bool graphics_initialized = false, renderer_initialized = false, ime_initialized = false;
     bool constructed = false;
-    State() { InitializeCriticalSection(&scene_lock); }
-    ~State() { DeleteCriticalSection(&scene_lock); }
-    bool is_running() { return InterlockedCompareExchange(&running, 0, 0) != 0; }
+    State() = default;
+    bool is_running() { return running.load(); }
     State(const State&) = delete;
     State& operator=(const State&) = delete;
 };

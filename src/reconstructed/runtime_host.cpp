@@ -1,3 +1,4 @@
+#include "kinoko/runtime_clock.h"
 #include "kinoko/owned_script_object.h"
 #include "kinoko/memory_access.hpp"
 #include "kinoko/script_diagnostics.hpp"
@@ -300,7 +301,7 @@ int32_t kinoko_host_show_message(const char* text) {
 }
 
 static int32_t kinoko_script_sleep(DWORD milliseconds) {
-    Sleep(milliseconds);
+    kinoko_clock_delay(milliseconds);
     return (int32_t)(intptr_t)&kinoko_script_void_result_identity;
 }
 
@@ -309,7 +310,7 @@ int32_t kinoko_host_sleep(int32_t dwMilliseconds) {
 }
 
 static int32_t kinoko_script_milliseconds(void) {
-    return (int32_t)timeGetTime();
+    return (int32_t)kinoko_clock_milliseconds();
 }
 
 int32_t kinoko_host_milliseconds(void) {

@@ -293,3 +293,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] Migrate remaining ACT publication slots, map/draw/layout and script bridge dependencies.
 - [ ] Verify original VM bytecode/save numeric formats before claiming x64 DAT compatibility.
 - Scope: `../modern-x64/binding-act-native.md`.
+
+
+## Runtime services checkpoint
+- [x] Portable application/audio workers, coalescing events, frame timer and common clock.
+- [x] Record user acceptance of modern-x64-files-02.
+- [ ] Remove remaining Windows host/COM/IME/font and internal service dependencies.
+- Details: [runtime-services.md](runtime-services.md).

@@ -1,3 +1,4 @@
+#include "kinoko/runtime_clock.h"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/legacy_string.h"
 #include "kinoko/act_frame.h"
@@ -74,7 +75,7 @@ extern "C" int32_t kinoko_act_update_frame(KinokoActRuntime* self) {
     if (!resource.get(&RuntimeRecord::stage_active) || !resource.get(&RuntimeRecord::active_holder)) return E_FAIL;
     kinoko_act_commands_clear((KinokoActRuntime*)(intptr_t)(self));
     // 4516C4 is JNB: compare DWORDs, including uptime above 0x80000000.
-    if (resource.get(&RuntimeRecord::wake_time) >= timeGetTime()) {
+    if (resource.get(&RuntimeRecord::wake_time) >= kinoko_clock_milliseconds()) {
         if (trace_index <= 48) kinoko_trace("451640:skip-time");
         return 0;
     }
