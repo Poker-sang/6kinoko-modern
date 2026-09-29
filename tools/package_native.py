@@ -37,6 +37,12 @@ for relative in required:
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
 shutil.copytree(repo / "config", root / "config")
+shutil.copy2(repo / "tools/mod_session.py", root / "mod_session.py")
+shutil.copy2(repo / "docs/modern-platform/mods.md", root / "MODS.md")
+shutil.copytree(repo / "examples/mods", root / "mods")
+if windows:
+    (root / "Launch-Cursor-Mod.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_session.py" --game "%~dp0kinoko_modern_gpu.exe" --mod "%~dp0mods/cyan-title-cursor"\npause\n', encoding="ascii", newline="\r\n")
+
 shutil.copy2(repo / "docs/modern-platform/input-actions.md", root / "INPUT-ACTIONS.md")
 if windows:
     shutil.copy2(repo / "tools/replay_session.ps1", root / "replay_session.ps1")

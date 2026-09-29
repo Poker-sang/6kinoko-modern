@@ -1,4 +1,5 @@
 #include "kinoko/runtime_util.hpp"
+#include "kinoko/mod_resources.hpp"
 #include "kinoko/file_io_layout.h"
 #include "kinoko/compat/resource_rules.hpp"
 #include "kinoko/legacy_string.hpp"
@@ -84,6 +85,13 @@ extern "C" void kinoko_reader_close(KinokoArchiveReader* reader) {
 extern "C" int32_t kinoko_reader_open(KinokoArchiveReader** slot, const char* path) {
     if (!slot || !path) return 0;
     kinoko_reader_close(*slot); *slot = nullptr;
+    const auto overlay=kinoko::mods::open(path);
+    if(overlay.matched) {
+        if(!overlay.file)return 0;
+        auto* reader=static_cast<KinokoArchiveReader*>(std::calloc(1,sizeof(KinokoArchiveReader)));
+        if(!reader){kinoko_file_close(overlay.file);return 0;}
+        reader->methods=&kinoko_file_reader_methods;reader->handle=overlay.file;*slot=reader;return 1;
+    }
     if (kinoko_archive_count) {
         auto* reader = static_cast<KinokoPackageReader*>(std::calloc(1,sizeof(KinokoPackageReader)));
         if (!reader) return 0;

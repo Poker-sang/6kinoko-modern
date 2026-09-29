@@ -1,4 +1,6 @@
 #include "kinoko/runtime_paths.h"
+#include "kinoko/runtime_options.hpp"
+#include "kinoko/mod_resources.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -327,6 +329,18 @@ extern "C" int kinoko_application_run(int show_command) {
     (void)show_command;
     SDL_ShowWindow(platform.window());
 #endif
+    std::string mod_error;
+    const char* catalog=SDL_getenv("KINOKO_MOD_CATALOG");
+    if(!kinoko::mods::load(catalog && *catalog?std::filesystem::u8path(catalog):std::filesystem::path{},mod_error)) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Mod loading failed",mod_error.c_str(),nullptr);platform.close();return 1;
+    }
+    if(!kinoko::mods::active().empty()) {
+        const auto& options=kinoko::runtime::options();
+        const char* replay_mode=SDL_getenv("KINOKO_REPLAY_MODE");
+        if(options.save_dir.empty() || !options.recording.empty() || !options.playback.empty() || (replay_mode && *replay_mode)) {
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Mod session","Use the Mod launcher with an isolated save directory. Mod replay integration is not available yet.",nullptr);platform.close();return 1;
+        }
+    }
     if(!kinoko_replay_start()) {kinoko_replay_finish();platform.close();return 1;}
     Configuration config;
     config.manager = kinoko::game::create_manager();

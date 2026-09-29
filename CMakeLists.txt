@@ -973,3 +973,5 @@ include(cmake/GameRenderer.cmake)
 foreach(target kinoko_native_methods kinoko_squirrel_cpp_vm kinoko_audio_runtime kinoko_application_contract kinoko_audio_runtime_contract)
     target_link_libraries(${target} PUBLIC kinoko_runtime_services)
 endforeach()
+
+include(cmake/Mods.cmake)

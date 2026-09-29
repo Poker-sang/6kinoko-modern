@@ -1,5 +1,7 @@
-#include "kinoko/file_io_layout.h"
+#include "kinoko/mod_resources.hpp"
 #include "retained_fixture.hpp"
+#include <fstream>
+#include "kinoko/file_io_layout.h"
 #include "kinoko/archive_random.h"
 #include "kinoko/legacy_string.hpp"
 #include <array>
@@ -102,6 +104,16 @@ int main() {
     CHECK(kinoko_reader_open(&reader,"./DATA\\FIXTURE.BIN"));
     CHECK(kinoko_reader_read(reader,bytes,5) && std::memcmp(bytes,"HELLO",5)==0);
     CHECK(!kinoko_reader_open(&reader,"data/missing.bin") && reader==nullptr);
+    auto mod=retained_fixture("mod-archive");std::filesystem::create_directories(mod/"assets/data");
+    std::ofstream(mod/"assets/data/fixture.bin",std::ios::binary)<<"MOD";
+    std::ofstream(mod/"catalog.tsv",std::ios::binary)<<"KINOKOMODS1\nM\ttest\t1\t"<<kinoko::mods::sha256("test")<<"\nF\tdata/fixture.bin\t"<<kinoko::mods::sha256("MOD")<<"\n";
+    std::string error;CHECK(kinoko::mods::load(mod/"catalog.tsv",error));
+    CHECK(kinoko_reader_open(&reader,"data/fixture.bin") && kinoko_reader_size(reader)==3);
+    CHECK(kinoko_reader_read_exact(reader,bytes,3) && std::memcmp(bytes,"MOD",3)==0);
+    kinoko_reader_close(reader);reader=nullptr;kinoko::mods::clear();
+    CHECK(kinoko_reader_open(&reader,"data/fixture.bin"));
+    CHECK(kinoko_reader_read_exact(reader,bytes,5) && std::memcmp(bytes,"HELLO",5)==0);
+    kinoko_reader_close(reader);reader=nullptr;
     kinoko_archive_initialize();
     return 0;
 }
