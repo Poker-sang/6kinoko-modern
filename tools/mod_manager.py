@@ -29,8 +29,12 @@ def pack(directory,destination):
     original=json.loads((directory/'mod.json').read_text(encoding='utf-8-sig'))
     manifest={**original,'files':sorted(assets)}
     contents={'mod.json':mods.canonical(manifest)+b'\n'}
+    total=sum(map(len,contents.values()))
     for name,(source,expected) in assets.items():
+        if total+source.stat().st_size>MAX_TOTAL:raise ValueError('Package exceeds 512 MiB')
         data=source.read_bytes()
+        total+=len(data)
+        if total>MAX_TOTAL:raise ValueError('Package exceeds 512 MiB')
         if mods.digest(data)!=expected:raise ValueError('Source changed during pack: '+name)
         contents[name]=data
     if sum(map(len,contents.values()))>MAX_TOTAL:raise ValueError('Package exceeds 512 MiB')
