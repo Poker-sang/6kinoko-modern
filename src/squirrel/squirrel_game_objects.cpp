@@ -8,6 +8,8 @@
 #include "kinoko/sqrat_object_bridge.h"
 #include "kinoko/upstream_bindings.hpp"
 #include <algorithm>
+#include <stdexcept>
+#include "kinoko/input_script_adapter.hpp"
 
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
@@ -177,6 +179,9 @@ static int32_t execute_embedded_act_script(struct SQVM* id, void* script, const 
     const auto load = sq_readclosure(vm, read_bytecode, &reader);
     kinoko_trace_i32("act-script:readclosure-result", load);
     if (SQ_FAILED(load) || sq_gettop(vm) <= restore.top()) return 0;
+    std::string adaptation_error;
+    if (!kinoko_adapt_input_script(vm, adaptation_error))
+        throw std::runtime_error(adaptation_error);
     HSQOBJECT closure = empty(); sq_getstackobj(vm, -1, &closure);
     if (closure._type != OT_CLOSURE || !data_bits(closure)) return 0;
     // Source LocalScript::Run leaves the read closure below its own call pair.

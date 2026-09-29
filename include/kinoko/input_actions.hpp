@@ -8,11 +8,11 @@
 namespace kinoko::input {
 // Stable IDs. Append new actions; never renumber recorded frames.
 enum Action { Left, Right, Up, Down, Jump, Attack, Run, Carry, Door, PipeUp,
-    PipeDown, Confirm, MenuBack, Pause, UseItem, MenuLeft, MenuRight, MenuUp,
+    PipeDown, Confirm, MenuAcceptAlt, Pause, UseItem, MenuLeft, MenuRight, MenuUp,
     MenuDown, Count };
 inline constexpr const char* names[] = {"moveLeft", "moveRight", "moveUp", "moveDown",
     "jump", "attack", "run", "carry", "door", "pipeUp", "pipeDown", "confirm",
-    "menuBack", "pause", "useItem", "menuLeft", "menuRight", "menuUp", "menuDown"};
+    "menuAcceptAlt", "pause", "useItem", "menuLeft", "menuRight", "menuUp", "menuDown"};
 struct Frame { int32_t held[Count]{}; uint8_t released[Count]{}; };
 enum class Source { Legacy, Scan, Pad };
 struct Binding { Source source; int index; };

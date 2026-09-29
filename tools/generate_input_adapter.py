@@ -25,7 +25,7 @@ def mapping(src,name,key,i,ins):
     if key in ('b1','k1'):
         if src=='data/script/global.nut' and name=='UpdateGlobal':return 'pause'
         if src.startswith('data/worldmap/'):return 'pause'
-        if '/pause/' in src and name=='Update':return 'menuBack'
+        if '/pause/' in src and name=='Update':return 'menuAcceptAlt'
     if key=='b3':
         if src=='data/script/enemy/base.nut':return 'carry'
         if player:
@@ -53,7 +53,7 @@ for p in Path(sys.argv[1]).glob('*.cv4.json'):
             if ins[j][1]==45:j+=1
             if ins[j][1]!=13:raise ValueError((src,name,i))
             targets={'x':['moveX','menuX'],'y':['moveY','menuY','door','pipeUp','pipeDown'],
-                     'b0':['jump','confirm'],'k0':['confirm'], 'b1':['pause','menuBack'],
+                     'b0':['jump','confirm'],'k0':['confirm'], 'b1':['pause','menuAcceptAlt'],
                      'b2':['useItem'],'b3':['attack','run','carry']}.get(key,[])
             for target in targets:writes.append((j,target))
     if 'input' in lit:

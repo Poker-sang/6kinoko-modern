@@ -28,5 +28,12 @@ int main() {
     // Existing keyconfig changes take effect live for inherited actions only.
     sample.buttons[3]=1;advance(bindings,sample,frame);
     CHECK(frame.held[Run]==1 && frame.held[Attack]==0);
+    CHECK(parse_bindings("version=1\nmenuAcceptAlt=scan:1\npause=scan:30",bindings,error,nullptr));
+    sample={};frame={};sample.keys[1]=true;advance(bindings,sample,frame);
+    CHECK(frame.held[MenuAcceptAlt]==1 && frame.held[Pause]==0);
+    sample.keys[1]=false;sample.keys[30]=true;advance(bindings,sample,frame);
+    CHECK(frame.held[MenuAcceptAlt]==0 && frame.held[Pause]==1);
+    CHECK(parse_bindings("version=1\nmenuBack=scan:1",bindings,error,nullptr));
+    CHECK(!parse_bindings("version=1\nmenuBack=scan:1\nmenuAcceptAlt=scan:30",bindings,error,nullptr));
     std::puts("input actions passed");return 0;
 }

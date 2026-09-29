@@ -17,7 +17,7 @@ int32_t legacy_count(Action a,const Sample& s) {
     case Down: case PipeDown: case MenuDown: return s.y>0 ? s.y:0;
     case Jump: case Confirm: return s.buttons[0];
     case Attack: case Run: case Carry: return s.buttons[3];
-    case MenuBack: case Pause: return s.buttons[1];
+    case MenuAcceptAlt: case Pause: return s.buttons[1];
     case UseItem: return s.buttons[2];
     default:return 0;
     }
@@ -44,6 +44,8 @@ std::string trim(std::string s) {
     return first==s.npos?std::string():s.substr(first,s.find_last_not_of(" \t\r\n")-first+1);
 }
 int action(const std::string& s) {
+    // Compatibility with the first split preset; canonical name is explicit.
+    if(s=="menuBack")return MenuAcceptAlt;
     for(int i=0;i<Count;++i) if(s==names[i]) return i;
     return -1;
 }

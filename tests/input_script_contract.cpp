@@ -1,4 +1,6 @@
 #include "kinoko/input_script_adapter.hpp"
+#include "kinoko/act_script_storage.hpp"
+#include "kinoko/squirrel_game_objects.h"
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
@@ -11,6 +13,10 @@ extern "C" void kinoko_trace_i32(const char*, int32_t) {}
 SQInteger kinoko_squirrel_invoke_native(HSQUIRRELVM v,SQFUNCTION f){return f(v);}
 #endif
 namespace {
+SQInteger write(SQUserPointer user,SQUserPointer bytes,SQInteger count) {
+    auto& out=*static_cast<std::vector<unsigned char>*>(user);
+    auto* first=static_cast<unsigned char*>(bytes);out.insert(out.end(),first,first+count);return count;
+}
 bool run(HSQUIRRELVM vm,const char* source,const char* file,bool adapt=false) {
     if(SQ_FAILED(sq_compilebuffer(vm,source,static_cast<SQInteger>(strlen(source)),file,SQTrue)))return false;
     std::string error;
@@ -37,6 +43,21 @@ door=-1,pipeUp=-2,pipeDown=2,jump=1,confirm=2,useItem=3,attack=4,run=5,carry=6}
 DisableInput();
 foreach(k,v in input) { if(v != 0) throw k; }
 )","fixture"));
+    // Exercise both real ACT execution entry points, not only the adapter.
+    const char* fixture="function DisableInput() { input.x=0; input.y=0; input.b0=0; input.b2=0; input.b3=0; }";
+    for(int twice=0;twice<2;++twice) {
+        CHECK(SQ_SUCCEEDED(sq_compilebuffer(vm,fixture,strlen(fixture),"data/script/global.nut",SQTrue)));
+        std::vector<unsigned char> data;
+        CHECK(SQ_SUCCEEDED(sq_writeclosure(vm,write,&data)));sq_pop(vm,1);
+        kinoko::act::ScriptStorageRecord script{};script.bytes=data.data();script.size=static_cast<uint32_t>(data.size());
+        sq_pushroottable(vm);HSQOBJECT root;sq_getstackobj(vm,-1,&root);sq_pop(vm,1);
+        kinoko::act::ScriptValueStorage environment{};std::memcpy(environment.data(),&root,sizeof(root));
+        const auto top=sq_gettop(vm);
+        CHECK((twice?kinoko_execute_act_file_bytecode(vm,&script,environment.data()):
+            kinoko_execute_embedded_act_script(vm,&script,environment.data()))==1);
+        CHECK(sq_gettop(vm)==top);
+        CHECK(run(vm,"input.jump=7; input.attack=9; input.run=10; input.carry=11; DisableInput(); if(input.jump!=0 || input.attack!=0 || input.run!=0 || input.carry!=0) throw 1;","fixture"));
+    }
     // Unrelated mod functions are not rewritten based only on field names.
     CHECK(run(vm,"input.b0=7; function Read() { return input.b0; } if(Read()!=7) throw 1;","mod.nut",true));
     const char* unsupported="function DisableInput() { input.b0=1; }";

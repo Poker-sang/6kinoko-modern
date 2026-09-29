@@ -23,11 +23,11 @@ The game never rewrites this configuration or replaces existing keyconfig.dat.
 | door | Up; enter normal/hidden doors |
 | pipeUp / pipeDown | Up / Down; enter corresponding pipes |
 | pause | A / original button 1; open pause |
-| menuBack | A / original button 1; original pause-menu secondary action |
+| menuAcceptAlt | A / original button 1; alternate confirmation of the selected pause-menu item |
 | useItem | C / original button 2; use stock item |
 | menuLeft/Right/Up/Down | Arrows; menu and world-map navigation |
 
-X is not a cancel key. MenuBack retains the original pause-menu behavior; it does
+X is not a cancel key. menuAcceptAlt confirms the selected pause-menu item; it does
 not add a universal cancel operation. Original any-button prompts and hidden-menu
 chords remain valid. Different transformations of the same jump/attack are not
 separate actions. The example separates keyboard controls; add `pad:N` explicitly
@@ -68,3 +68,17 @@ multiple sources, releases, parser rollback, script input suppression and refusa
 of unsupported original variants. Optional local CV4 arguments validate all
 extracted originals without executing gameplay. Build/test delivery is recorded
 separately; compilation is not user gameplay validation.
+
+## ACT loader correction
+
+The first build (4f27dee4) adapted ordinary CV4 loading but missed both ACT script
+execution paths. This left pause menus on original k1, so their independent key
+was ineffective. Both ACT entry points now adapt the loaded closure before its
+first execution. A regression contract calls both actual ACT loaders and checks
+input adaptation and stack balance. This also covers other ACT-hosted input reads.
+
+The canonical action is now `menuAcceptAlt`, an alternate confirmation, not back
+or cancel. Existing `menuBack` configuration lines remain accepted as a deprecated
+alias; specifying both names is rejected as a duplicate. No X cancellation exists.
+Testing is Windows-only; Linux/macOS CI continues compilation without executing
+contracts or claiming tests passed in their package manifests.
