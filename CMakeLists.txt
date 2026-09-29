@@ -73,6 +73,7 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/input_keys.cpp
     src/reconstructed/input_copy.cpp
     src/reconstructed/input_frame.cpp
+    src/platform/input_action_runtime.cpp
     src/reconstructed/input_runtime.cpp
     src/reconstructed/pat_animation.cpp
     src/reconstructed/pat_frame.cpp
@@ -120,7 +121,7 @@ add_library(kinoko_native_methods STATIC
     src/reconstructed/map_layout_lifetime.cpp
     src/reconstructed/map_render.cpp)
 target_include_directories(kinoko_native_methods PUBLIC include)
-target_link_libraries(kinoko_native_methods PUBLIC kinoko_platform kinoko_file_service kinoko_input_service)
+target_link_libraries(kinoko_native_methods PUBLIC kinoko_input_actions kinoko_platform kinoko_file_service kinoko_input_service)
 
 include(cmake/Xiph.cmake)
 add_library(kinoko_audio_runtime STATIC src/reconstructed/audio_runtime.cpp)
@@ -324,6 +325,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     src/squirrel/actor_lifecycle.cpp
     src/squirrel/squirrel_native_calls.cpp
     src/squirrel/script_file.cpp
+    src/squirrel/input_script_adapter.cpp
     src/squirrel/squirrel_game_objects.cpp
     src/squirrel/squirrel_table_values.cpp
     src/squirrel/table_diagnostics.cpp
@@ -431,6 +433,14 @@ target_link_options(kinoko_savedata_file_contract PRIVATE /OPT:REF /OPT:ICF)
 endif()
 add_test(NAME savedata_file_contract COMMAND kinoko_savedata_file_contract)
 set_tests_properties(savedata_file_contract PROPERTIES TIMEOUT 60)
+add_executable(kinoko_input_script_contract tests/input_script_contract.cpp)
+target_include_directories(kinoko_input_script_contract PRIVATE include "${KINOKO_SQUIRREL2_ROOT}/include")
+target_link_libraries(kinoko_input_script_contract PRIVATE kinoko_squirrel_cpp_vm)
+if(MSVC)
+    target_link_options(kinoko_input_script_contract PRIVATE /OPT:REF /OPT:ICF)
+endif()
+add_test(NAME input_script_contract COMMAND kinoko_input_script_contract)
+
 add_executable(kinoko_bytecode_wire_contract tests/bytecode_wire_contract.cpp)
 target_include_directories(kinoko_bytecode_wire_contract PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
 target_link_libraries(kinoko_bytecode_wire_contract PRIVATE kinoko_squirrel_cpp_vm)

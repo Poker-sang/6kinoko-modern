@@ -36,6 +36,8 @@ for relative in required:
     destination = root / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
+shutil.copytree(repo / "config", root / "config")
+shutil.copy2(repo / "docs/modern-platform/input-actions.md", root / "INPUT-ACTIONS.md")
 for executable in ["kinoko_modern_gpu", "kinoko_gpu_transfer_contract"]:
     os.chmod(root / (executable+suffix), 0o755)
 for diagnostic in [False, True]:

@@ -3,6 +3,7 @@
 #include "kinoko/owned_script_object.h"
 #include "kinoko/input_cluster.h"
 #include "kinoko/input_keys.h"
+#include "kinoko/input_action_state.h"
 typedef struct KinokoInputDeviceStorage KinokoInputDeviceStorage;
 typedef struct KinokoInputPublishedState {
     int32_t x, y;
@@ -18,12 +19,14 @@ typedef struct KinokoInputManager {
     KinokoInputCluster cluster;
     KinokoKeyTracker keys;
     KinokoInputPublishedState published;
+    KinokoActionState actions;
 } KinokoInputManager;
 #ifdef __cplusplus
 extern "C" {
 #endif
 void kinoko_input_manager_construct_devices(KinokoInputManager*, uint32_t controllers);
 int32_t kinoko_input_manager_update(KinokoInputManager*);
+void kinoko_input_actions_update(KinokoInputManager*);
 int32_t kinoko_input_save_config(KinokoInputManager*, const char* path);
 int32_t kinoko_input_load_config(KinokoInputManager*, const char* path);
 int32_t kinoko_input_set_assignment(KinokoInputManager*, int32_t device, int32_t field, int32_t value);
@@ -35,7 +38,7 @@ KinokoInputManager *kinoko_input_manager_assign(KinokoInputManager*, const Kinok
 static_assert(sizeof(KinokoInputPublishedState)==76);
 static_assert(offsetof(KinokoInputManager, keyboard)==sizeof(KinokoOwnedObjectWords));
 #if INTPTR_MAX == INT32_MAX
-static_assert(sizeof(KinokoInputManager)==1512);
+static_assert(offsetof(KinokoInputManager,actions)==1512);
 static_assert(offsetof(KinokoInputManager,keyboard)==12);
 static_assert(offsetof(KinokoInputManager,devices)==180);
 static_assert(offsetof(KinokoInputManager,cluster)==196);

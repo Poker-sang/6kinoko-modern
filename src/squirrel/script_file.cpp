@@ -4,6 +4,7 @@
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/owned_script_object.h"
 #include "kinoko/script_file.h"
+#include "kinoko/input_script_adapter.hpp"
 #include "kinoko/compat/resource_rules.hpp"
 #include "kinoko/file_io.h"
 #include "kinoko/squirrel_host_object.hpp"
@@ -16,6 +17,7 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <stdexcept>
 
 extern "C" {
 extern struct SQVM *kinoko_primary_vm;
@@ -77,6 +79,11 @@ void execute_bytecode(SQVM* vm, unsigned char* bytes, size_t size,
     const auto loaded = sq_readclosure(vm, read_bytecode, &stream);
     kinoko_trace_i32("402d40:compiled-result", loaded);
     if (SQ_FAILED(loaded)) return;
+    std::string adaptation_error;
+    if (!kinoko_adapt_input_script(vm, adaptation_error)) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Input script compatibility",adaptation_error.c_str(),nullptr);
+        throw std::runtime_error(adaptation_error);
+    }
     HSQOBJECT closure;
     sq_resetobject(&closure);
     sq_getstackobj(vm, -1, &closure);

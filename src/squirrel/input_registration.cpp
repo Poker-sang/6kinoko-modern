@@ -1,4 +1,5 @@
 #include "kinoko/input_manager.h"
+#include "kinoko/input_actions.hpp"
 #include "kinoko/squirrel_binding_detail.hpp"
 #include "kinoko/script_registration.h"
 #include "script_registration_host.hpp"
@@ -112,6 +113,13 @@ extern "C" int32_t kinoko_register_input_class(void) {
     for (const auto& field : fields) {
         auto bind = field.boolean ? kinoko_sqplus_bind_boolean : kinoko_sqplus_bind_integer;
         bind(reinterpret_cast<int32_t*>(&state.klass), descriptor, field.offset, const_cast<char*>(field.name), 0);
+    }
+    for (int i=0;i<kinoko::input::Count+4;++i) {
+        const char* axes[]={"moveX","moveY","menuX","menuY"};
+        const char* name=i<kinoko::input::Count?kinoko::input::names[i]:axes[i-kinoko::input::Count];
+        const auto offset=offsetof(KinokoInputManager,actions)+offsetof(KinokoActionState,published)+i*sizeof(int32_t);
+        kinoko_sqplus_bind_integer(reinterpret_cast<int32_t*>(&state.klass),descriptor,
+            static_cast<int32_t>(offset),const_cast<char*>(name),0);
     }
     kinoko_sqplus_object_assign(const_cast<void*>(kinoko_input_script_symbols()->input_class),
         kinoko_sqplus_object_get_value(&root, &temporary, "Input"));

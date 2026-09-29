@@ -681,7 +681,9 @@ int32_t kinoko_game_initialize_input(KinokoInputManager *input) {
 }
 
 int32_t kinoko_game_update_input(KinokoInputManager *input) {
-    return kinoko_input_manager_update(input);
+    const auto result = kinoko_input_manager_update(input);
+    kinoko_input_actions_update(input);
+    return result;
 }
 
 int32_t kinoko_game_load_boot_script(void) { return kinoko_script_load_file("data/script/boot.nut", 0); }

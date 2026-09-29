@@ -60,5 +60,6 @@ extern "C" KinokoInputManager* kinoko_input_manager_assign(KinokoInputManager* d
     destination->cluster.active_device=source->cluster.active_device;
     kinoko_input_keys_assign(&destination->keys,&source->keys);
     destination->published=source->published;
+    destination->actions=source->actions;
     return destination;
 }
