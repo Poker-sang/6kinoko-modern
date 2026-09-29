@@ -56,6 +56,8 @@ jobs:
         run: |
           python tests/mod_session_contract.py build-runs/bridge/mod-session-fixtures
           python tests/mod_manager_contract.py build-runs/bridge/mod-manager-fixtures
+          python -m pip install "Pillow>=11,<13"
+          python tests/mod_author_contract.py build-runs/bridge/mod-author-fixtures
       - name: Run focused compatibility contracts (no gameplay)
         run: ctest --test-dir build-runs/bridge -C Release --output-on-failure -R "^(savedata_file|bytecode_wire|file_archive|script_random|runtime_services|directory_search|input_actions|input_script|replay|replay_runtime|replay_session|mod_resources)_contract$"
       - name: Package Windows game (without original DAT)

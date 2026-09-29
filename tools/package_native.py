@@ -39,6 +39,7 @@ for relative in required:
 shutil.copytree(repo / "config", root / "config")
 shutil.copy2(repo / "tools/mod_session.py", root / "mod_session.py")
 shutil.copy2(repo / "tools/mod_manager.py", root / "mod_manager.py")
+shutil.copy2(repo / "tools/mod_author.py", root / "mod_author.py")
 shutil.copy2(repo / "docs/modern-platform/mods.md", root / "MODS.md")
 shutil.copytree(repo / "examples/mods", root / "mods")
 if windows:

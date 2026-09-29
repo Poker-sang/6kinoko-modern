@@ -1,6 +1,6 @@
 # Resource Mods, first version
 
-Mod work lives in `C:\WorkSpace\6kinoko-mods` on branch `codex/mod-overlays`.
+Mod work lives in `C:\WorkSpace\6kinoko-mods`; PR #1 merged into `master` at `2ea7564b`.
 This is an isolated game checkout, not a second engine or an editor UI.
 The TAS thread owns replay/control/rendering; this batch changes resource reads.
 
@@ -128,3 +128,32 @@ manifest/inventory and SHA256. Limits: 64 MiB/resource, 1 MiB/metadata, 512 MiB 
 identity or script trust. Package compilation does not bundle DAT or other unlisted
 files. Mod management currently uses launch scripts/CLI; a graphical manager is
 not included yet.
+
+## Creating new resources
+
+The bundled `mod_author.py` creates draft projects and imports files without
+manually editing the manifest. Python 3.10+ is required. PNG conversion/export
+additionally uses Pillow (`python -m pip install "Pillow>=11,<13"`); ordinary game
+launch, package installation and raw file import do not require Pillow.
+
+```powershell
+python mod_author.py new my-mod --id my-mod --name "My Mod"
+python mod_author.py import-png my-mod artwork.png data/custom/my-mod/portrait.cv2
+python mod_author.py add my-mod behavior.nut data/custom/my-mod/behavior.nut
+python mod_author.py check my-mod
+python mod_manager.py pack my-mod my-mod.kmod
+python mod_author.py export-png my-mod/data/custom/my-mod/portrait.cv2 preview.png
+```
+
+Use a private `data/custom/<mod-id>/...` namespace for new resources, or the exact
+existing game path for replacements. PNG imports preserve dimensions and straight
+alpha in 32-bit uncompressed BGRA CV2; they do not resize, premultiply or construct
+sprite animations. Export supports this 32-bit CV2 format only. Files and projects
+are not overwritten. Prior manifests are retained in `history/`; manually editing
+an already imported project resource is permitted, and changes its content hash.
+Empty draft projects cannot be packed or launched. Import failures leave the
+previous manifest intact; a file written before a manifest publication failure is
+retained unlisted for recovery. Creation/import are single-writer operations.
+
+Imported scripts are resources, not automatic startup plugins. No new script
+entry point, level/enemy registration API or map editor is introduced here.

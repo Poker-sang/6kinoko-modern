@@ -33,7 +33,7 @@ def checked_file(root, relative):
         raise ValueError('Resource exceeds 64 MiB: '+relative)
     return path
 
-def read_mod(directory):
+def read_mod(directory, *, allow_empty=False):
     directory=Path(directory).resolve()
     path=directory/'mod.json'
     if path.stat().st_size>1024*1024: raise ValueError('Manifest too large')
@@ -45,7 +45,7 @@ def read_mod(directory):
         if not isinstance(manifest.get(field),str) or not TOKEN.fullmatch(manifest[field]):
             raise ValueError('Invalid '+field)
     files=manifest.get('files')
-    if not isinstance(files,list) or not files or len(files)>10000: raise ValueError('Expected a nonempty files list')
+    if not isinstance(files,list) or (not files and not allow_empty) or len(files)>10000: raise ValueError('Expected a nonempty files list')
     assets={}
     for relative in files:
         key=resource_path(relative)
