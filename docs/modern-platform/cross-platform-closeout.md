@@ -48,4 +48,50 @@ user acceptance of this baseline; TAS and MOD are not implemented in this batch.
 
 ## Validation and packages
 
-Pending the committed build; final evidence is appended after execution.
+Built source: `19becedcb9c160941ccb3ba8525b48e9c0b0f35a`.
+[CI 36561889023](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36561889023)
+passed all seven jobs: four full-game builds plus three portable builds. All
+six focused contracts passed on each full-game job (24 passes total). macOS
+binaries contain both architectures; execution is on the CI runner's host
+architecture, not proof of executing both slices. Windows static D3D9 audits
+also passed.
+
+First CI 36561176403 exposed an old save-fixture syntax issue before file I/O:
+Squirrel 2.2 rejects consecutive same-line table definitions separated that
+way. Use supported newline boundaries in the fixture, without changing the
+compiler or save implementation. Independent WSL compiler probes are retained
+under `build-runs/closeout-script-probe-01` and `-02`. Final real save tests
+passed on all four configurations.
+
+GPU transfer executed in WSL CPU Vulkan/llvmpipe, exit 0, all pixels matched.
+Log: `build-runs/closeout-gpu-01/transfer-result.log`. GPU artifact source was
+15c50147; GPU test/backend source is unchanged in the final build. Metal and
+D3D12 GPU contracts were compiled but not executed. No new gameplay run is
+claimed. WSL compiler installation/probe artifacts and all old runs are retained.
+
+Final artifact manifests and all three original DAT sizes/SHA256 were verified.
+Native tar executable/launcher modes were checked and explicitly preserved.
+Final packages (local only, original DAT never uploaded):
+
+
+- `runtime-builds/modern-windows-baseline-01/6kinoko-modern-windows-x64-19becedc-with-data.zip`
+  SHA256 `86744ffd6ca14867467f526bd3c3bce5d4986ae25e279c23eeb5794750d1e7ce`.
+
+- `runtime-builds/modern-linux-baseline-01/6kinoko-modern-linux-x64-19becedc-with-data.tar.gz`
+  SHA256 `741c20ad0e55748114759a75c576a34cdb3e2e54100c86fec6b459a8182604f7`.
+
+- `runtime-builds/modern-macos-baseline-01/6kinoko-modern-macos-universal-19becedc-with-data.tar.gz`
+  SHA256 `cdb6327ff9bc547c7d113ab0b7e2f8bd503c3c8116207aa8de83ff7f198fd781`.
+
+Launch the extracted Windows `launch.cmd`, Linux `launch.sh`, or macOS
+`Launch.command`; each package includes its separate diagnostic launcher.
+Windows EXE is inside `runtime-builds/modern-windows-baseline-01/6kinoko-modern-windows-x64-19becedc/`.
+WSL is deployed to `/home/kinoko/games/baseline-01/6kinoko-modern-linux-x64-19becedc`.
+Local shortcuts: `runtime-builds/modern-linux-baseline-01/launch-wsl.cmd` and
+`diagnose-wsl.cmd`. These do not shut down WSL or replace older packages/saves.
+The new game was staged, not launched for gameplay.
+
+Downloaded CI logs, tests/fixtures, packages and staging hash records remain in
+`build-runs/closeout-final-{windows,linux,macos}` and
+`build-runs/closeout-delivery`. Follow-up documentation commits do not change
+the binary source revision above.

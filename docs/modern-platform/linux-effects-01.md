@@ -58,3 +58,10 @@ The WSLg COPY MODE/invisible-window problem recurred; Weston evidence retained
 and WSL restarted. Agent observed visible startup graphics afterward. This is
 startup evidence only; user gameplay verification and floating-score trace
 remain pending. Original full trace retained; new run uses the star filter.
+
+## User acceptance
+
+After the 067fc414 WSL handoff, the user explicitly reported that all three
+symptoms were fixed: block-spawned stars, balloon stars and floating stomp
+scores. This supersedes the pending symptom verification above for that Linux
+build. No additional macOS gameplay run is inferred from this feedback.

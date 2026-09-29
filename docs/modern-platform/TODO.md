@@ -346,3 +346,13 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] Run on target systems and validate first-level gameplay and save/load (user testing).
 - [ ] Extend retained text API with explicit UTF-8 localization support and font selection.
 - Details: [full-native-game.md](full-native-game.md). Earlier checkpoint blockers are historical.
+
+## Cross-platform closeout (2026-09-29)
+- [x] Record user acceptance of Linux block/balloon stars and stomp scores in 067fc414.
+- [x] Audit script randomness, numeric/wire widths, archive case/slash lookup and clocks.
+- [x] Run six focused compatibility contracts on Windows x86/x64, Linux and macOS CI.
+- [x] Correct mixed-zero transfer tests and Metal upload/download defaults; WSL Vulkan pass.
+- [x] Same-source packages with quiet normal and separate diagnostic launchers.
+- [ ] User gameplay acceptance: level entry/completion and save/quit/reload on each platform.
+- [ ] Next feature phase: separate attack/speed and door/ladder actions through shared input.
+- Details and precise execution limits: [cross-platform-closeout.md](cross-platform-closeout.md).
