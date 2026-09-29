@@ -28,6 +28,7 @@ std::unique_ptr<kinoko::replay::Writer> writer;
 kinoko::replay::Frame frame,expected;
 uint64_t index=0;
 bool stopped=false,completed=false,failed=false;
+std::string pending_error;
 void (*error_handler)(const char*)=nullptr;
 void quit() {SDL_Event event{};event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
 void note(const std::string& message) {status<<message<<'\n';status.flush();}
@@ -36,7 +37,7 @@ void fail(const std::string& message) {
     failed=true;stopped=true;
     note("FAILED at frame "+std::to_string(index)+": "+message);
     if(error_handler)error_handler(message.c_str());
-    else SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Replay stopped",message.c_str(),nullptr);
+    else pending_error=message; // Report on the main thread after the game worker joins.
     quit();
 }
 struct Hash {
@@ -102,7 +103,7 @@ uint64_t checkpoint() {
 bool kinoko_replay_start() {
     const char* value=SDL_getenv("KINOKO_REPLAY_MODE");
     if(!value || !*value)return true;
-    index=0;stopped=false;completed=false;failed=false;
+    index=0;stopped=false;completed=false;failed=false;pending_error.clear();
     try {
         const std::string requested(value);
         if(requested!="record" && requested!="play")throw std::runtime_error("Unknown replay mode");
@@ -160,13 +161,19 @@ void kinoko_replay_end_frame() {
     }catch(const std::exception& e){fail(e.what());}
 }
 void kinoko_replay_finish() {
-    if(mode==Mode::Off)return;
+    if(mode!=Mode::Off) {
     try {
         if(mode==Mode::Record && writer && !failed){writer->finish();completed=true;}
         note(std::string(completed?"COMPLETED ":failed?"FAILED ":"ABORTED ")+std::to_string(index)+" frames");
     }catch(const std::exception& e){fail(e.what());}
     writer.reset();reader.reset();output.close();input.close();status.close();
     kinoko_simulation_enable(0);mode=Mode::Off;
+    }
+    // Startup failures can occur before a mode is selected. They still need reporting.
+    if(!pending_error.empty()) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Replay stopped",pending_error.c_str(),nullptr);
+        pending_error.clear();
+    }
 }
 bool kinoko_replay_allow_rebind() {
     if(mode==Mode::Off)return true;
