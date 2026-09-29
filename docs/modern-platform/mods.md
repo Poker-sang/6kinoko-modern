@@ -268,7 +268,14 @@ a dedicated custom layer. It does not rewrite placements or change missing-ID
 behavior in the native loader. Both adapters accept only enemy/boss kinds with a
 script init function. Transformations remain application-defined factories.
 
-## Local first-stage practice variant
+## Historical direct-start practice variant (known broken, superseded)
+
+User testing found no player/HUD. Direct startup skipped the original title-menu
+PlayerImage/PlayerStatus BeginStage calls; player Init failed in SetFaceType
+(nextFace missing), then camera updates failed (deadCount missing). Do not use
+this candidate as the basis for new levels. Artifacts remain for investigation.
+
+### Historical instructions
 
 Build a playable candidate using your own DAT files:
 
@@ -299,3 +306,30 @@ Original archives and ordinary saves are not changed. The Mod's isolated slot A
 is used, so starting this entry resets its run's lives/score/player status.
 Build/script checks do not establish gameplay success; manual verification is
 still needed for player control, collision, pause and the return-to-title path.
+
+## Normal-flow level development
+
+1. Replace the first entrance's main map with the original second main map.
+2. Author a custom map replacing the first main map, with validated ACT editing.
+3. Add a separate level and a world-map node, including unlock rules and save identity.
+4. Extend to new worlds, then enemy/boss/transformation authoring and editor UI.
+
+Each step keeps title -> save selection -> world map -> level startup intact.
+The first milestone is resource-only: no entrypoint, startup selector, global
+callback hooks, player initialization, or save-slot selection code.
+
+```powershell
+python create_stage_swap_mod.py --reference-dir . --output first-stage-swap
+python mod_manager.py pack first-stage-swap first-stage-swap.kmod
+python mod_manager.py install-enable --game kinoko_modern_gpu.exe first-stage-swap.kmod
+python mod_manager.py launch --game kinoko_modern_gpu.exe
+```
+
+Use Launch-Mods.cmd, start/select a save, then enter the first world-map node.
+Only data/map/w1-c01a.act is overlaid with unchanged data/map/w1-c02a.act bytes.
+The first entrance and initial save key stay the first stage's; the original
+second-stage entrance also remains available. Embedded destinations are unchanged:
+a submap exit may lead to original second-stage resources. This is a main-map
+replacement probe, not a complete remapped second-stage campaign. Death, clear,
+warps and progression still need user gameplay validation. Mod saves are isolated.
+Generated maps and original DAT files stay local and outside the clean package.
