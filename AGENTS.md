@@ -192,3 +192,10 @@ save/resource compatibility regressions, transfer-contract investigation,
 same-source packages and normal/diagnostic launchers. Focused non-gameplay
 contracts may run in CI and WSL; gameplay remains user-owned. Retain fixtures
 and logs. Do not touch docs/font-resource-investigation (unrelated local work).
+
+## User update: Windows validation focus (2026-09-29)
+
+User requested Windows-only testing because validating other platforms is
+tedious. Deliver Windows builds for user gameplay checks; do not request Linux
+or macOS manual tests. Retain cross-platform automated compilation for portability.
+Keep previously completed cross-platform results as evidence, not new user validation.
