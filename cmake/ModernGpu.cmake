@@ -83,3 +83,9 @@ add_custom_target(kinoko_font_assets
     VERBATIM)
 
 target_link_libraries(kinoko_gpu PUBLIC kinoko_runtime_services)
+
+# Manual Windows GPU check: synthetic frame, no game scripts or DAT.
+add_executable(kinoko_tas_preview_contract tests/tas_preview_contract.cpp)
+target_link_libraries(kinoko_tas_preview_contract PRIVATE kinoko_gpu)
+add_dependencies(kinoko_tas_preview_contract kinoko_gpu_shaders)
+set_target_properties(kinoko_tas_preview_contract PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${KINOKO_RUNTIME_DIR}" RUNTIME_OUTPUT_DIRECTORY_RELEASE "${KINOKO_RUNTIME_DIR}")
