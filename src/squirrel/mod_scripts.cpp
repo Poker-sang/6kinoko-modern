@@ -3,8 +3,10 @@
 #include "kinoko/squirrel_source_runtime.h"
 #include <squirrel.h>
 #include <cstring>
+#include <algorithm>
 #include <memory>
 #include <stdexcept>
+#include <SDL3/SDL.h>
 
 namespace kinoko::mods {
 namespace {
@@ -52,6 +54,36 @@ if ("KinokoMods" in getroottable()) throw "KinokoMods root name already exists";
         local callArgs = clone arguments;
         callArgs.insert(0, getroottable());
         return target[id].create.acall(callArgs);
+    },
+    Spawn = function(kind, id, x, y, direction, argument) : (category) {
+        if (kind != "enemy" && kind != "boss") throw "Spawn expects enemy or boss";
+        local target = category(kind);
+        if (!(id in target) || !("init" in target[id]) || typeof target[id].init != "function")
+            throw "Content requires an actor init function";
+        return CreateActor(target[id].init, x, y, direction, argument);
+    },
+    BindMapActor = function(kind, id, mapId, environment) : (category) {
+        if (kind != "enemy" && kind != "boss") throw "Map binding expects enemy or boss";
+        if (typeof mapId != "integer" || mapId < 0 || mapId > 65535 || typeof environment != "table")
+            throw "Expected a 16-bit map ID and environment table";
+        local target = category(kind);
+        if (!(id in target) || !("init" in target[id]) || typeof target[id].init != "function")
+            throw "Content requires an actor init function";
+        local key = "Init";
+        for (local shift = 12; shift >= 0; shift -= 4) {
+            local digit = (mapId >> shift) & 15;
+            key += "0123456789abcdef".slice(digit, digit+1);
+        }
+        if (key in environment) throw "Map ID already bound in this environment";
+        SetInitFunctionByID(mapId, target[id].init, environment);
+        return environment;
+    },
+    SpawnMap = function(layer, bindings) {
+        if (typeof layer != "string" || typeof bindings != "array") throw "Expected layer and binding array";
+        local environment = {};
+        foreach (binding in bindings)
+            KinokoMods.BindMapActor(binding.kind, binding.id, binding.mapId, environment);
+        CreateActorFromMap(layer, environment);
     }
 };
 )SQ";
@@ -67,6 +99,75 @@ void execute(SQVM* vm, const std::string& source, const char* name) {
     sq_getstring(vm,-1,&detail);
     throw std::runtime_error(std::string(name)+": "+(detail?detail:"Squirrel execution failed"));
 }
+
+}
+namespace {
+struct StackGuard {SQVM* vm;SQInteger top;~StackGuard(){sq_settop(vm,top);}};
+void check(SQVM* vm,SQRESULT result) {
+    if(SQ_SUCCEEDED(result))return;
+    sq_getlasterror(vm);const SQChar* detail=nullptr;sq_getstring(vm,-1,&detail);
+    throw std::runtime_error(detail?detail:"Mod stage API failed");
+}
+void method(SQVM* vm,const char* name) {
+    sq_pushroottable(vm);sq_pushstring(vm,"KinokoMods",-1);check(vm,sq_get(vm,-2));
+    sq_pushstring(vm,name,-1);check(vm,sq_get(vm,-2));sq_push(vm,-2);
+}
+}
+bool list_stages(SQVM* vm,std::vector<StageChoice>& stages,std::string& error) {
+    stages.clear();error.clear();
+    if(!vm){error="Missing script VM";return false;}
+    StackGuard stack{vm,sq_gettop(vm)};
+    try {
+        method(vm,"List");sq_pushstring(vm,"stage",-1);check(vm,kinoko_sq_call(vm,2,SQTrue,SQFalse));
+        const auto array=sq_gettop(vm),count=sq_getsize(vm,array);
+        if(sq_gettype(vm,array)!=OT_ARRAY)throw std::runtime_error("Invalid stage list");
+        for(SQInteger i=0;i<count;++i) {
+            sq_pushinteger(vm,i);check(vm,sq_get(vm,array));const SQChar* id=nullptr;
+            check(vm,sq_getstring(vm,-1,&id));StageChoice choice{id,{}};sq_pop(vm,1);
+            const auto before=sq_gettop(vm);
+            method(vm,"Get");sq_pushstring(vm,"stage",-1);sq_pushstring(vm,choice.id.c_str(),-1);
+            check(vm,kinoko_sq_call(vm,3,SQTrue,SQFalse));sq_pushstring(vm,"name",-1);check(vm,sq_get(vm,-2));
+            const SQChar* name=nullptr;check(vm,sq_getstring(vm,-1,&name));choice.name=name;
+            stages.push_back(std::move(choice));sq_settop(vm,before);
+        }
+        return true;
+    }catch(const std::exception& e){error=e.what();stages.clear();return false;}
+}
+bool launch_stage(SQVM* vm,const std::string& id,std::string& error) {
+    error.clear();if(!vm){error="Missing script VM";return false;}
+    StackGuard stack{vm,sq_gettop(vm)};
+    try {
+        method(vm,"Create");sq_pushstring(vm,"stage",-1);sq_pushstring(vm,id.c_str(),-1);sq_newarray(vm,0);
+        check(vm,kinoko_sq_call(vm,4,SQFalse,SQFalse));return true;
+    }catch(const std::exception& e){error="Stage "+id+": "+e.what();return false;}
+}
+bool select_startup_stage(SQVM* vm,SDL_Window* window,const char* selection,std::string& error) {
+    error.clear();if(!selection || !*selection)return true;
+    if(std::strcmp(selection,"@choose")!=0)return launch_stage(vm,selection,error);
+    std::vector<StageChoice> stages;if(!list_stages(vm,stages,error))return false;
+    if(stages.empty()){error="No stages registered by enabled Mods";return false;}
+    size_t page=0;constexpr size_t per_page=6;
+    for(;;) {
+        std::vector<std::string> labels;
+        const auto end=std::min(stages.size(),page+per_page);
+        for(size_t i=page;i<end;++i)labels.push_back(stages[i].name+" ["+stages[i].id+"]");
+        std::vector<SDL_MessageBoxButtonData> buttons;
+        for(size_t i=0;i<labels.size();++i)buttons.push_back({0,static_cast<int>(i+1),labels[i].c_str()});
+        buttons.push_back({SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,0,"Return to title"});
+        if(page)buttons.push_back({0,-2,"Previous"});
+        if(end<stages.size())buttons.push_back({0,-3,"Next"});
+        SDL_MessageBoxData data{};data.flags=SDL_MESSAGEBOX_INFORMATION;data.window=window;
+        data.title="Mod stages";data.message="Choose a registered stage";
+        data.numbuttons=static_cast<int>(buttons.size());data.buttons=buttons.data();
+        int selected=0;
+        if(!SDL_ShowMessageBox(&data,&selected)){error=SDL_GetError();return false;}
+        if(selected==0 || selected==-1)return true;
+        if(selected==-2 && page){page-=per_page;continue;}
+        if(selected==-3 && end<stages.size()){page+=per_page;continue;}
+        if(selected>0 && static_cast<size_t>(selected)<=labels.size())
+            return launch_stage(vm,stages[page+selected-1].id,error);
+        error="Invalid stage selection";return false;
+    }
 }
 bool run_scripts(SQVM* vm,std::string& error) {
     error.clear();if(entrypoints().empty())return true;

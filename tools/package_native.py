@@ -43,6 +43,7 @@ shutil.copy2(repo / "tools/mod_author.py", root / "mod_author.py")
 shutil.copy2(repo / "docs/modern-platform/mods.md", root / "MODS.md")
 shutil.copytree(repo / "examples/mods", root / "mods")
 if windows:
+    (root / "Choose-Mod-Stage.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_manager.py" launch --game "%~dp0kinoko_modern_gpu.exe" --choose-stage\npause\n', encoding="ascii", newline="\r\n")
     (root / "Launch-Mods.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_manager.py" launch --game "%~dp0kinoko_modern_gpu.exe"\npause\n', encoding="ascii", newline="\r\n")
     (root / "Install-Mod.cmd").write_text('@echo off\ncd /d "%~dp0"\nif "%~1"=="" (echo Drag a .kmod file onto this script. & pause & exit /b 1)\npython "%~dp0mod_manager.py" install-enable --game "%~dp0kinoko_modern_gpu.exe" "%~1"\npause\n', encoding="ascii", newline="\r\n")
     (root / "Launch-Cursor-Mod.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_session.py" --game "%~dp0kinoko_modern_gpu.exe" --mod "%~dp0mods/cyan-title-cursor"\npause\n', encoding="ascii", newline="\r\n")

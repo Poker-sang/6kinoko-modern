@@ -690,6 +690,8 @@ int32_t kinoko_game_update_input(KinokoInputManager *input) {
 int32_t kinoko_game_load_boot_script(void) {
     const auto result=kinoko_script_load_file("data/script/boot.nut", 0);
     if(result && !kinoko::mods::run_scripts(kinoko_primary_vm,kinoko::mods::startup_error()))return 0;
+    if(result && !kinoko::mods::select_startup_stage(kinoko_primary_vm,kinoko::platform::host().window(),
+        kinoko::mods::active().empty()?nullptr:SDL_getenv("KINOKO_MOD_STAGE"),kinoko::mods::startup_error()))return 0;
     return result;
 }
 

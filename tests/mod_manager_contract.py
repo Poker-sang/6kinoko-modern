@@ -51,3 +51,23 @@ rejects(lambda:manager.install(root/'link.kmod',game))
 (path/'data/new-resource.bin').write_bytes(b'changed')
 rejects(lambda:manager.installed(game))
 print('PASS: reproducible pack, no overwrite, install/hash validation, new resources, dependencies/order, transactional profile, disable-to-vanilla, traversal/link rejection')
+from unittest.mock import patch
+stage_game=root/'stage-game'/'game.exe';stage_game.parent.mkdir();stage_game.write_bytes(b'not executed')
+rejects(lambda:manager.launch(stage_game,True,choose_stage=True))
+scripted=create('scripted',{'data/custom/scripted/main.nut':b'return 1;'})
+manifest=json.loads((scripted/'mod.json').read_text(encoding='utf-8'))
+manifest['entrypoint']='data/custom/scripted/main.nut'
+(scripted/'mod.json').write_text(json.dumps(manifest),encoding='utf-8')
+manager.pack(scripted,root/'scripted.kmod');manager.install(root/'scripted.kmod',stage_game);manager.enable(stage_game,'scripted')
+rejects(lambda:manager.launch(stage_game,True,stage='invalid'))
+rejects(lambda:manager.launch(stage_game,True,stage='scripted:stage',choose_stage=True))
+captured=[]
+def fake_process(*args,**kwargs):captured.append(kwargs['env']);return 0
+with patch.object(manager.subprocess,'call',fake_process),patch.dict(manager.os.environ,{'KINOKO_MOD_STAGE':'inherited:bad'}):
+    manager.launch(stage_game,stage='scripted:stage')
+    manager.launch(stage_game,choose_stage=True)
+    manager.launch(stage_game)
+assert captured[0]['KINOKO_MOD_STAGE']=='scripted:stage'
+assert captured[1]['KINOKO_MOD_STAGE']=='@choose'
+assert 'KINOKO_MOD_STAGE' not in captured[2]
+print('PASS: stage selection validation and launch environment (process mocked)')

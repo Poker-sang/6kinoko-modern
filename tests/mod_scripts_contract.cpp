@@ -41,6 +41,39 @@ int main(){
         try { KinokoMods.Create("enemy","missing",[]); }catch(e){rejected=true;}
         if(!rejected)throw "missing accepted";
     )SQ"));
+    CHECK(evaluate(vm,R"SQ(
+        ::stageStarted <- false;
+        KinokoMods.For("probe").Register("stage","launch",{name="Launch test",create=function(){::stageStarted=true;}});
+        ::CreateActor <- function(init,x,y,z,arg) { return {init=init,x=x,y=y,z=z,arg=arg}; };
+        ::SetInitFunctionByID <- function(id,init,env) {
+            if(id!=0x1234)throw "wrong map ID";
+            env.Init1234 <- init;
+        };
+        ::CreateActorFromMap <- function(layer,env) {
+            if(layer!="custom-enemies" || !("Init1234" in env))throw "wrong layer/environment";
+            ::mapSpawned <- true;
+        };
+        local init=function(t){return t;};
+        KinokoMods.For("probe").Register("enemy","mapped",{name="Mapped",create=function(){},init=init});
+        local actor=KinokoMods.Spawn("enemy","probe:mapped",12,34,-1,"argument");
+        if(actor.init!=init || actor.x!=12 || actor.y!=34 || actor.z!=-1 || actor.arg!="argument")throw "spawn forwarding";
+        local env={};
+        KinokoMods.BindMapActor("enemy","probe:mapped",0x1234,env);
+        if(env.Init1234!=init)throw "init forwarding";
+        local rejected=false;
+        try { KinokoMods.BindMapActor("enemy","probe:mapped",0x1234,env); } catch(e){rejected=true;}
+        if(!rejected)throw "map collision accepted";
+        rejected=false;
+        try { KinokoMods.BindMapActor("enemy","probe:mapped",65536,{}); } catch(e){rejected=true;}
+        if(!rejected)throw "invalid map ID accepted";
+        KinokoMods.SpawnMap("custom-enemies",[{kind="enemy",id="probe:mapped",mapId=0x1234}]);
+        if(!mapSpawned)throw "map dispatch";
+    )SQ"));
+    std::vector<StageChoice> stages;CHECK(list_stages(vm,stages,error));
+    CHECK(stages.size()==2 && stages[1].id=="probe:launch" && stages[1].name=="Launch test");
+    CHECK(launch_stage(vm,"probe:launch",error));CHECK(evaluate(vm,"if(!stageStarted)throw \"stage did not run\";"));
+    CHECK(!launch_stage(vm,"probe:missing",error));CHECK(sq_gettop(vm)==top);
+    CHECK(select_startup_stage(vm,nullptr,nullptr,error));
     CHECK(!run_scripts(vm,error) && !error.empty());CHECK(sq_gettop(vm)==top);
     sq_close(vm);vm=sq_open(1024);
     CHECK(prepare("this is not valid squirrel !"));CHECK(!run_scripts(vm,error));CHECK(sq_gettop(vm)==0);

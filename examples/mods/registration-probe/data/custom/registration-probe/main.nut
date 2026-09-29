@@ -5,3 +5,11 @@ mod.Register("enemy", "probe", {
 });
 if (KinokoMods.Create("enemy", "registration-probe:probe", [41]) != 42)
     throw "Mod content factory self-check failed";
+
+// A visible launcher/API demonstration, not a playable level.
+mod.Register("stage", "launcher-demo", {
+    name = "Launcher demo (returns to title)",
+    create = function() {
+        MessageBox("The selected Mod stage callback ran successfully. This demo returns to the original title screen.");
+    }
+});

@@ -122,6 +122,7 @@ def main():
         for conflict in report['conflicts']:print('Override:',conflict)
         if args.prepare_only:return 0
         env=os.environ.copy();env['KINOKO_MOD_CATALOG']=str(snapshot/'catalog.tsv');env.pop('KINOKO_REPLAY_MODE',None)
+        env.pop('KINOKO_MOD_STAGE',None)
         with (snapshot/'process.log').open('w',encoding='utf-8') as log:
             result=subprocess.run([str(args.game.resolve()),'--save-dir',report['save_directory']],cwd=args.game.resolve().parent,env=env,stdout=log,stderr=log)
         (snapshot/'exit-code.txt').write_text(str(result.returncode),encoding='ascii')

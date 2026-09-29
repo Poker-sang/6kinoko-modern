@@ -147,15 +147,26 @@ def move(game,mod_id,index):
     if found is None:raise ValueError('Mod is not enabled')
     entries.remove(found);entries.insert(index,found);save_profile(game,value)
 
-def launch(game,prepare_only=False):
+def launch(game,prepare_only=False,stage=None,choose_stage=False):
     game=Path(game).resolve()
     if not game.is_file():raise ValueError('Game not found')
     value=profile(game);selected=directories(game,value)
     env=os.environ.copy();env.pop('KINOKO_MOD_CATALOG',None);env.pop('KINOKO_REPLAY_MODE',None)
+    env.pop('KINOKO_MOD_STAGE',None)
+    if stage and choose_stage:raise ValueError('Select either stage or choose-stage')
+    if stage and (len(stage.split(':'))!=2 or any(not mods.TOKEN.fullmatch(part) for part in stage.split(':'))):
+        raise ValueError('Stage must be mod-id:content-id')
     if not selected:
+        if stage or choose_stage:raise ValueError('Enable a scripted Mod before choosing a stage')
         print('No Mods enabled; ordinary game and ordinary saves.')
         return 0 if prepare_only else subprocess.call([str(game)],cwd=game.parent,env=env)
+    if (stage or choose_stage) and not any('entrypoint' in mods.read_mod(directory)[0] for directory in selected):
+        raise ValueError('Stage selection requires an enabled script entrypoint')
     snapshot,report=mods.prepare(game,selected,value['allow_overrides'])
+    if stage or choose_stage:
+        report['requested_stage']='@choose' if choose_stage else stage
+        (snapshot/'session.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+        env['KINOKO_MOD_STAGE']=report['requested_stage']
     print(json.dumps({'snapshot':str(snapshot),**report},ensure_ascii=False,indent=2))
     if prepare_only:return 0
     env['KINOKO_MOD_CATALOG']=str(snapshot/'catalog.tsv')
@@ -173,7 +184,11 @@ def main():
         if name in ('enable','disable','move'):cmd.add_argument('id')
         if name=='enable':cmd.add_argument('--version');cmd.add_argument('--hash');cmd.add_argument('--allow-overrides',action='store_true')
         if name=='move':cmd.add_argument('position',type=int,help='zero-based enabled order')
-        if name=='launch':cmd.add_argument('--prepare-only',action='store_true')
+        if name=='launch':
+            cmd.add_argument('--prepare-only',action='store_true')
+            stage_args=cmd.add_mutually_exclusive_group()
+            stage_args.add_argument('--stage',help='Registered mod-id:content-id')
+            stage_args.add_argument('--choose-stage',action='store_true')
     args=parser.parse_args()
     try:
         if args.command=='pack':print(json.dumps(pack(args.directory,args.output),indent=2))
@@ -184,7 +199,7 @@ def main():
         if args.command=='enable':enable(args.game,args.id,args.version,args.hash,args.allow_overrides)
         if args.command=='disable':disable(args.game,args.id)
         if args.command=='move':move(args.game,args.id,args.position)
-        if args.command=='launch':return launch(args.game,args.prepare_only)
+        if args.command=='launch':return launch(args.game,args.prepare_only,args.stage,args.choose_stage)
         return 0
     except (ValueError,OSError,KeyError,TypeError,zipfile.BadZipFile) as error:parser.exit(1,'Mod error: '+str(error)+'\n')
 if __name__=='__main__':raise SystemExit(main())
