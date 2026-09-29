@@ -7,6 +7,11 @@
 #include <fstream>
 #include <iterator>
 #include <vector>
+extern "C" {
+char kinoko_sqrat_trace_enabled=0;
+const void* kinoko_sqrat_object_vtable() {static const int tag=1;return &tag;}
+const void* kinoko_sqrat_root_vtable() {static const int tag=2;return &tag;}
+}
 extern "C" void kinoko_trace(const char*) {}
 extern "C" void kinoko_trace_i32(const char*, int32_t) {}
 #ifdef KINOKO_STANDALONE_VM
