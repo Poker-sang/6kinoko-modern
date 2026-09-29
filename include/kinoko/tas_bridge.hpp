@@ -1,8 +1,11 @@
 #pragma once
 #include <cstdint>
 #include <string>
+struct SDL_Window;
 namespace kinoko::tas {
 bool enabled();
+bool embedded();
+void pump_window(SDL_Window* window);
 void start();
 void shutdown();
 // Worker-side frame boundary; waits for an acknowledged command while paused.

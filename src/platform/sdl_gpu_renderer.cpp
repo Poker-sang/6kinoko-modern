@@ -221,7 +221,7 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
     // Validate the whole frame before issuing any GPU commands.
     for(const auto& pass:passes) {
         if(bool(pass.logical_width)!=bool(pass.logical_height))throw std::runtime_error("Both logical dimensions are required");
-        const auto format=(pass.target||tas::enabled())?SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM:SDL_GetGPUSwapchainTextureFormat(s.device,s.window);
+        const auto format=(pass.target||tas::embedded())?SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM:SDL_GetGPUSwapchainTextureFormat(s.device,s.window);
         if(pass.target) {
             if(!s.texture(pass.target).target)throw std::runtime_error("Texture is not a render target");
             if(!pass.clear&&!initialized.count(pass.target))throw std::runtime_error("First target use must clear");
@@ -251,7 +251,7 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
         std::memcpy(mapped,vertices.data(),size);SDL_UnmapGPUTransferBuffer(s.device,s.upload);
     }
     Command command(s.device);SDL_GPUTexture* swapchain=nullptr;Uint32 width=0,height=0;
-    if(screen_initialized && tas::enabled()) {
+    if(screen_initialized && tas::embedded()) {
         width=640;height=480;
         if(!s.embedded) {
             SDL_GPUTextureCreateInfo info{};info.type=SDL_GPU_TEXTURETYPE_2D;info.format=SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
@@ -262,14 +262,14 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
         }
         swapchain=s.embedded;
     }
-    if(screen_initialized && !tas::enabled())require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
+    if(screen_initialized && !tas::embedded())require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
     if(swapchain && s.screen_extent!=std::make_pair(width,height)) {
         const auto old=s.screen_extent;
         const bool used_by_target=std::any_of(s.textures.begin(),s.textures.end(),[&](const auto& t){return t.second.target&&std::make_pair(t.second.width,t.second.height)==old;});
         if(!used_by_target){auto found=s.depths.find(old);if(found!=s.depths.end()){SDL_ReleaseGPUTexture(s.device,found->second);s.depths.erase(found);}}
         s.screen_extent={width,height};
     }
-    command.acquired=swapchain!=nullptr && !tas::enabled();
+    command.acquired=swapchain!=nullptr && !tas::embedded();
     if(size) {
         auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin upload pass");
         SDL_GPUTransferBufferLocation source{s.upload,0};SDL_GPUBufferRegion destination{s.vertices,0,size};
@@ -303,7 +303,7 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
         }
         SDL_EndGPURenderPass(render);
     }
-    if(tas::enabled() && swapchain) {
+    if(tas::embedded() && swapchain) {
         auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin TAS readback");
         SDL_GPUTextureRegion region{};region.texture=swapchain;region.w=width;region.h=height;region.d=1;
         SDL_GPUTextureTransferInfo destination{};destination.transfer_buffer=s.download;destination.pixels_per_row=width;destination.rows_per_layer=height;

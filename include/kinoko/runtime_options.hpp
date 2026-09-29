@@ -5,6 +5,7 @@ namespace kinoko::runtime {
 struct Options {
     std::filesystem::path save_dir, recording, playback, status, tas_dir, tas_output;
     std::string identity;
+    bool tas_window=false;
 };
 const Options& options();
 bool parse_options(int argc, char** argv, std::string& error);
