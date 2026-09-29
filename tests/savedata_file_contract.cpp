@@ -120,7 +120,7 @@ int main() {
         Machine machine; auto* vm=machine.vm; Files files;
         const auto saved=files.path("roundtrip.dat"), golden=files.path("golden.dat");
         const auto bad=files.path("bad.dat"), missing=files.path("missing.dat");
-        evaluate(vm,"source <- { integer=-1234567, real=1.25, yes=true, no=false, text=\"hello\", empty=\"\", nested={value=9}, array=[2,null,\"three\"], omitted=null }; destination <- {}; golden <- {}; simple <- { value=-7 }; blank <- {}; ");
+        evaluate(vm,"source <- { integer=-1234567, real=1.25, yes=true, no=false, text=\"hello\", empty=\"\", nested={value=9}, array=[2,null,\"three\"], omitted=null }\n destination <- {}\n golden <- {}\n simple <- { value=-7 }\n blank <- {}; ");
         for(int pass=0;pass<3;++pass) {
             require(file_call(vm,saved,"source",true),"save nested table");
             require(file_call(vm,saved,"destination",false),"load nested table");
@@ -149,7 +149,7 @@ int main() {
         evaluate(vm,"assert(golden[-3]==-17 && golden.minimum==-2147483647-1 && golden.negative_real==-1.25); assert(golden.flag && golden.real==1.25 && golden.text==\"fixture\"); assert(golden.nested.n==42); assert(golden.array.len()==3 && golden.array[0]==-9 && golden.array[1]==null && golden.array[2]==false);");
         // Buffer exhaustion must leave the prior save intact.
         const auto previous_save = read_bytes(saved);
-        evaluate(vm,"too_large <- { text = \"x\" }; for(local i=0;i<18;++i) too_large.text += too_large.text;");
+        evaluate(vm,"too_large <- { text = \"x\" }\n for(local i=0;i<18;++i) too_large.text += too_large.text;");
         require(!file_call(vm,saved,"too_large",true),"oversized table save fails");
         require(read_bytes(saved)==previous_save,"serialization failure preserves existing save");
         require(!file_call(vm,missing,"blank",false),"missing file fails");

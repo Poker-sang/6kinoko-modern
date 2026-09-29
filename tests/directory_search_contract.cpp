@@ -1,7 +1,7 @@
 #include "kinoko/directory_search.h"
 #include <filesystem>
 #include <fstream>
-#include <chrono>
+#include "retained_fixture.hpp"
 #include <memory>
 #include <set>
 #include <string>
@@ -16,8 +16,7 @@ std::set<std::string> names(const std::string& pattern) {
 }
 int main() {
     namespace fs=std::filesystem;
-    const auto root=fs::temp_directory_path()/("kinoko-directory-contract-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    CHECK(fs::create_directory(root)); // Retain fixture files for user inspection.
+    const auto root=retained_fixture("kinoko-directory");
     for(const char* name:{"alpha.dat","beta.dat","plain","literal[1].dat"}) {
         std::ofstream file(root/name); file << "fixture"; CHECK(file.good());
     }
