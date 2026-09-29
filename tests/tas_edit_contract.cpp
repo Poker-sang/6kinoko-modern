@@ -27,6 +27,7 @@ int main(){
     {std::ofstream out(root/"command.txt");out<<"2 stop 0";}
     check(!kinoko::tas::boundary(3,3,true));
     {std::ofstream out(root/"edit.bin",std::ios::binary);out<<wire(0,16);}
+    {std::ofstream out(root/"command.txt");out<<"1 target 1";}
     kinoko::tas::start();check(kinoko::tas::boundary(0,3,false));check(kinoko::tas::take_control());
     std::cout<<"PASS edit plan validation, verified-prefix takeover, frame-zero takeover and exact masks\n";
     return 0;

@@ -62,6 +62,7 @@ void start(){
 void shutdown(){stopping=true;}
 bool boundary(uint64_t frames,uint64_t total,bool live) {
     if(!enabled())return true;
+    if(!live && !edits.masks.empty() && total!=edits.masks.size())throw std::runtime_error("TAS edit plan/source length mismatch");
     while(!stopping.load()) {
         const int local=window_command.exchange(0);
         if(edits.masks.empty() && local==1){free_run=false;target=frames+1;}

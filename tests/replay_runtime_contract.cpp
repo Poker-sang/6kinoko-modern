@@ -139,6 +139,33 @@ int main() {
     for(int i=0;i<3;++i){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame a;kinoko_replay_input(&input_manager,a);
         camera.x+=float(a.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
     kinoko_replay_finish();CHECK(errors==before);
+    // Execute actual edit plans through the real runtime, then verify the new
+    // RNG/checkpoint stream from a fresh VM. Cover frame zero and a verified prefix.
+    for(int first:{0,2}) {
+        const auto edit=root/("edit-"+std::to_string(first));fs::create_directory(edit);
+        {std::ofstream out(edit/"edit.bin",std::ios::binary);out.write("KTASED01",8);
+        auto word=[&](uint32_t n){for(int b=0;b<4;++b)out.put(char(n>>(8*b)));};
+        word(4);word(first);for(int f=0;f<4;++f)word(f==first?0:1u<<kinoko::input::Jump);}
+        args={"contract","--save-dir",edit.u8string(),"--replay",(root/"record/session.krec").u8string(),
+            "--replay-status",(edit/"generate.txt").u8string(),"--replay-identity",std::string(64,'a'),
+            "--tas-dir",edit.u8string(),"--tas-output",(edit/"edited.krec").u8string()};
+        av.clear();for(auto& a:args)av.push_back(a.data());CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));
+        CHECK(reset() && kinoko_replay_start());std::ofstream(edit/"command.txt")<<"1 target 4\n";
+        int held=0;const auto prior=errors;
+        for(int f=0;f<4;++f){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame a;
+            kinoko_replay_input(&input_manager,a);held=f==first?0:held+1;
+            CHECK(a.held[kinoko::input::Jump]==held);
+            CHECK(a.released[kinoko::input::Jump]==(f==first&&first>0));
+            camera.x+=float(held);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
+        kinoko_replay_finish();CHECK(errors==prior);
+        args={"contract","--save-dir",edit.u8string(),"--replay",(edit/"edited.krec").u8string(),
+            "--replay-status",(edit/"verify.txt").u8string(),"--replay-identity",std::string(64,'a')};
+        av.clear();for(auto& a:args)av.push_back(a.data());CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));
+        CHECK(reset() && kinoko_replay_start());
+        for(int f=0;f<4;++f){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame a;kinoko_replay_input(&input_manager,a);
+            camera.x+=float(a.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
+        kinoko_replay_finish();CHECK(errors==prior && status().find("COMPLETED 4 frames")!=std::string::npos);
+    }
     sq_close(kinoko_primary_vm);kinoko_primary_vm=nullptr;
     kinoko_priority_destroy(&actors.actors);
     SDL_UnsetEnvironmentVariable(env,"KINOKO_REPLAY_MODE");SDL_Quit();fs::current_path(original);
