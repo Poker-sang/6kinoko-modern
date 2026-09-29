@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include "kinoko/platform.hpp"
+#include "kinoko/mod_resources.hpp"
 #include "kinoko/runtime_util.hpp"
 #include "kinoko/script_diagnostics.hpp"
 #include "kinoko/owned_script_object.h"
@@ -124,7 +125,7 @@ extern "C" int32_t kinoko_script_load_file(const char* path, const void* environ
     diagnostic_name("402d40:file", path);
     const char* lookup = path;
     char packed_lookup[260];
-    if (compiled_assets()) {
+    if (compiled_assets() && !kinoko::mods::contains(path)) {
         const size_t length = std::strlen(path);
         // 402D40 writes four bytes before the start for shorter names.
         if (length < 4 || kinoko::copy_string(packed_lookup, sizeof(packed_lookup), path) != 0) return 0;

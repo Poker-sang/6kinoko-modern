@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "id": "cyan-title-cursor",
+  "name": "Cyan title cursor",
+  "version": "1.0.0",
+  "requires": [],
+  "files": [
+    "data/system/title/title_cursor.cv2"
+  ]
+}
