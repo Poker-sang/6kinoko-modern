@@ -215,6 +215,7 @@ void kinoko_replay_end_frame() {
             throw std::runtime_error(message.str());
         }
         if(mode==Mode::Playback && kinoko::tas::enabled())writer->append(frame);
+        if(kinoko::tas::enabled()){output.flush();if(!output)throw std::runtime_error("Cannot publish live replay frame");}
         ++frame_index;kinoko::tas::completed(frame_index);
         if(!kinoko::tas::enabled() && mode==Mode::Playback && frame_index==reader->count()){completed=true;stopped=true;quit();}
     }catch(const std::exception& e){fail(e.what());}
