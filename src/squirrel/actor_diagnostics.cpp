@@ -42,12 +42,14 @@ extern "C" void kinoko_trace_star_state(const char *phase, KinokoActor* actor) {
     FrameRecord* sprite; SQFunctionProto* proto=nullptr;
     int release, hits, index;
     char message[768];
-    if (!actor || actor_bits<int32_t>(actor, &ActorRecord::take)!=1060) return;
+    if (!actor) return;
+    const int take=actor_bits<int32_t>(actor, &ActorRecord::take);
+    if (take!=1060 && (take<1104 || take>1109)) return;
     release=strcmp(phase,"release")==0;
     if (actor_bits<int32_t>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, type))==0x08000100)
         proto=_funcproto(actor_bits<SQClosure*>(actor, &ActorRecord::update_function, offsetof(KinokoOwnedObjectWords, value))->_function);
-    if (!release && (!proto || proto->_name._type!=0x08000010 ||
-        strcmp(_stringval(proto->_name),"UpdateWalk")!=0)) return;
+    const char* callback=proto && sq_type(proto->_name)==OT_STRING
+        ? _stringval(proto->_name) : "<none>";
     handle=actor_bits<uint32_t>(actor, &ActorRecord::pool_handle);
     index=(int)(handle%32);
     hits=actor_bits<int32_t>(actor, &ActorRecord::hits, 3 * sizeof(int32_t));
@@ -61,11 +63,11 @@ extern "C" void kinoko_trace_star_state(const char *phase, KinokoActor* actor) {
     ++observed[index].samples;
     sprite=actor_bits<FrameRecord*>(actor, &ActorRecord::current_frame);
     std::snprintf(message,sizeof(message),
-        "actor:star frame=%d phase=%s handle=%08X xy=(%.6g,%.6g) v=(%.6g,%.6g) "
+        "actor:star take=%d callback=%s frame=%d phase=%s handle=%08X xy=(%.6g,%.6g) v=(%.6g,%.6g) "
         "hits=(%d,%d,%d,%d) bounds=(%.6g,%.6g,%.6g,%.6g) "
         "active=%d visible=%d release=%d priority=%d alpha=%d texture=%d spriteY=(%.6g,%.6g) "
         "mapHeight=%d camera=(%.6g,%.6g,%.6g,%.6g)",
-        kinoko_application_frame_count(),phase,handle,actor_bits<float>(actor, &ActorRecord::x),actor_bits<float>(actor, &ActorRecord::y),
+        take,callback,kinoko_application_frame_count(),phase,handle,actor_bits<float>(actor, &ActorRecord::x),actor_bits<float>(actor, &ActorRecord::y),
         actor_bits<float>(actor, &ActorRecord::velocity_x),actor_bits<float>(actor, &ActorRecord::velocity_y),
         actor_bits<int32_t>(actor, &ActorRecord::hits, 0 * sizeof(int32_t)),actor_bits<int32_t>(actor, &ActorRecord::hits, 1 * sizeof(int32_t)),
         actor_bits<int32_t>(actor, &ActorRecord::hits, 2 * sizeof(int32_t)),hits,

@@ -318,3 +318,8 @@ add_test(NAME input_service_contract COMMAND kinoko_input_service_contract)
 add_executable(kinoko_text_encoding_contract tests/text_encoding_contract.cpp)
 target_link_libraries(kinoko_text_encoding_contract PRIVATE kinoko_platform)
 add_test(NAME text_encoding_contract COMMAND kinoko_text_encoding_contract)
+
+add_executable(kinoko_script_random_contract tests/script_random_contract.cpp)
+target_include_directories(kinoko_script_random_contract PRIVATE third_party/squirrel-2.2.2/sqstdlib)
+target_compile_features(kinoko_script_random_contract PRIVATE cxx_std_17)
+add_test(NAME script_random_contract COMMAND kinoko_script_random_contract)

@@ -3,6 +3,10 @@
 #include <math.h>
 #include <stdlib.h>
 #include <sqstdmath.h>
+#include "kinoko_random.hpp"
+
+// Match the original CRT's per-thread state shared by script VMs.
+static thread_local kinoko::ScriptRandom script_random;
 
 #define SINGLE_ARG_FUNC(_funcname) static SQInteger math_##_funcname(HSQUIRRELVM v){ \
 	SQFloat f; \
@@ -24,13 +28,13 @@ static SQInteger math_srand(HSQUIRRELVM v)
 	SQInteger i;
 	if(SQ_FAILED(sq_getinteger(v,2,&i)))
 		return sq_throwerror(v,_SC("invalid param"));
-	srand((unsigned int)i);
+	script_random.seed(static_cast<std::uint32_t>(i));
 	return 0;
 }
 
 static SQInteger math_rand(HSQUIRRELVM v)
 {
-	sq_pushinteger(v,rand());
+	sq_pushinteger(v,script_random.next());
 	return 1;
 }
 
@@ -97,7 +101,7 @@ SQRESULT sqstd_register_mathlib(HSQUIRRELVM v)
 		i++;
 	}
 	sq_pushstring(v,_SC("RAND_MAX"),-1);
-	sq_pushinteger(v,RAND_MAX);
+	sq_pushinteger(v,kinoko::ScriptRandom::maximum);
 	sq_createslot(v,-3);
 	sq_pushstring(v,_SC("PI"),-1);
 	sq_pushfloat(v,(SQFloat)M_PI);
