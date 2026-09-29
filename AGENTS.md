@@ -168,3 +168,13 @@ Native gameplay is not validated. Keep the user-run testing policy. Preserve
 fonts/ and shaders/ alongside the executable and three DAT; CI packages exclude
 proprietary DAT. Retain dynamic text for future localization (do not delete it
 because most current UI uses image assets). Ordinary services remain SDL/C++.
+
+## User update: macOS accepted and WSL execution authorized (2026-09-29)
+
+User confirmed modern-macos-render-02 works on Apple Silicon. Record this as
+user validation, not agent gameplay. User explicitly authorized configuring
+local WSL2 and running the Linux version there; this overrides the prior
+no-agent-execution policy for this WSL validation task. Preserve logs and use
+fresh runtime directories. Do not automatically reboot Windows. Current setup
+requires a reboot before Ubuntu installation can finish; see
+docs/modern-platform/wsl-validation-01.md for resume state.
