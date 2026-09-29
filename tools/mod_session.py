@@ -38,6 +38,7 @@ def read_mod(directory):
     path=directory/'mod.json'
     if path.stat().st_size>1024*1024: raise ValueError('Manifest too large')
     manifest=json.loads(path.read_text(encoding='utf-8-sig'))
+    if not isinstance(manifest,dict): raise ValueError('Manifest must be an object')
     if manifest.get('format')!=1 or set(manifest)-{'format','id','name','version','requires','files'}:
         raise ValueError('Unsupported manifest fields/version')
     for field in ('id','version'):
@@ -59,10 +60,8 @@ def read_mod(directory):
     identity={'id':manifest['id'],'version':manifest['version'],'requires':requirements,'files':{key:value[1] for key,value in sorted(assets.items())}}
     return {**identity,'content_sha256':digest(canonical(identity))},assets
 
-def prepare(game, mod_directories, allow_overrides=False):
-    game=Path(game).resolve()
-    if not game.is_file():raise ValueError('Game executable not found')
-    if not mod_directories:raise ValueError('Select at least one Mod, or use ordinary launch without Mods')
+def resolve(mod_directories, allow_overrides=False):
+    if not mod_directories:raise ValueError('Select at least one Mod')
     modules=[];effective={};owners={};conflicts=[];known={}
     for directory in mod_directories:
         info,assets=read_mod(directory)
@@ -77,6 +76,13 @@ def prepare(game, mod_directories, allow_overrides=False):
     catalog='KINOKOMODS1\n'+''.join('M\t'+m['id']+'\t'+m['version']+'\t'+m['content_sha256']+'\n' for m in modules)
     catalog+=''.join('F\t'+key+'\t'+effective[key][1]+'\n' for key in sorted(effective))
     identity=digest(catalog.encode('ascii'))
+    return modules,effective,conflicts,catalog,identity
+
+def prepare(game, mod_directories, allow_overrides=False):
+    game=Path(game).resolve()
+    if not game.is_file():raise ValueError('Game executable not found')
+    if not mod_directories:raise ValueError('Select at least one Mod, or use ordinary launch without Mods')
+    modules,effective,conflicts,catalog,identity=resolve(mod_directories,allow_overrides)
     cache=game.parent/'mod-sessions';cache.mkdir(exist_ok=True)
     snapshot=Path(tempfile.mkdtemp(prefix=identity[:12]+'-',dir=cache))
     for key,(source,expected) in effective.items():

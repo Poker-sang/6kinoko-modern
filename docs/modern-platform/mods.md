@@ -86,3 +86,45 @@ DAT and disabling restores DAT bytes. Python checks cover dependencies, conflict
 policy, deterministic identity, changed content, save isolation and retained snapshots.
 No agent gameplay testing. Mod-manager UI, map preview/editing, new enemies/Bosses
 and role transformations are later stages built on this resource layer.
+
+## Distributable packages and installed profiles
+
+A `.kmod` is a deterministic ZIP containing normalized mod.json, exactly the
+listed data/... files and checksums.json. It supports both overrides and entirely
+new resource paths. The game reader does not require an original DAT entry.
+Game scripts/registries must still reference new assets to use them; installing
+an image does not automatically register a new enemy or level.
+
+Windows: drag a `.kmod` onto `Install-Mod.cmd` to install and enable it, then use
+`Launch-Mods.cmd`. Installation and activation are distinct: a dependency/conflict
+error leaves the validated package installed but does not change the active profile.
+Ordinary `launch.cmd` still runs without the managed Mod profile.
+
+```powershell
+python mod_manager.py pack mods/cyan-title-cursor cyan-title-cursor.kmod
+python mod_manager.py install --game kinoko_modern_gpu.exe cyan-title-cursor.kmod
+python mod_manager.py list --game kinoko_modern_gpu.exe
+python mod_manager.py enable --game kinoko_modern_gpu.exe cyan-title-cursor
+python mod_manager.py launch --game kinoko_modern_gpu.exe
+python mod_manager.py disable --game kinoko_modern_gpu.exe cyan-title-cursor
+```
+
+`enable` accepts --version / --hash when multiple revisions are installed. Updates
+keep all previous revisions under installed-mods/id/version/content-sha256. It does
+not choose an arbitrary newest version. `move --game ... ID POSITION` changes the
+zero-based low-to-high load order, validating dependencies before saving. Enable
+with --allow-overrides explicitly permits resource conflicts for this profile.
+`launch --prepare-only` resolves the profile and snapshots without executing game.
+An empty profile launches the ordinary game with ordinary saves.
+
+mod-profile.json stores exact identities/order; history/ retains previous profile
+files before atomic replacement. Invalid edits leave the previous profile active.
+There is no uninstall/cleanup operation in this version. Failed or duplicate
+installation staging directories are retained but excluded from installed discovery.
+
+Package install checks paths, duplicated names, symbolic links, encryption, exact
+manifest/inventory and SHA256. Limits: 64 MiB/resource, 1 MiB/metadata, 512 MiB total,
+10002 ZIP entries. No extractall is used. Checksums verify integrity, not publisher
+identity or script trust. Package compilation does not bundle DAT or other unlisted
+files. Mod management currently uses launch scripts/CLI; a graphical manager is
+not included yet.
