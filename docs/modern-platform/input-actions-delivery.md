@@ -56,3 +56,23 @@ Automated contracts do not establish gameplay validation.
 User requested Windows-only testing at delivery. No Linux/macOS user tests are
 requested. Prior successful automated cross-platform results remain historical
 evidence; future user validation focuses on Windows.
+
+## ACT menu correction / ba163c9d
+
+User reported that the split preset's Escape binding did not work and the original
+pause key still accepted menu entries. ACT's local CompileFile uses
+kinoko_execute_act_file_bytecode, bypassing the previously adapted global loader.
+Both ACT bytecode paths now apply the same guarded action adapter before running.
+The action is renamed to menuAcceptAlt (alternate confirmation, not cancellation).
+The original menuBack configuration spelling remains a deprecated alias.
+
+- Source: `ba163c9d0240ebcf1872941cfffb8d5bb387afb2`.
+- Fresh local Windows x64 build: `build-runs/modern-x64-input-actions-03/`.
+- Both Windows input contracts executed and passed. Regression calls both actual
+  ACT execution APIs, checks adapted script assignments and balanced VM stacks;
+  separate bindings and compatibility spelling are covered by the action contract.
+- No gameplay run. Other platforms are compiled in CI without executing tests.
+- Launcher: `runtime-builds/modern-windows-input-actions-02/6kinoko-modern-windows-x64-ba163c9d/launch.cmd`.
+- Package file hashes and three DAT copies verified. Source and data manifests
+  are retained alongside the executable. Templates use the new canonical name.
+- Existing user configuration files were not overwritten or copied automatically.
