@@ -1,8 +1,8 @@
 # 6kinoko-modern
 
-SDL3 modernization fork of 6kinoko-rebuild. Complete games now build for Windows x86/x64, Linux x86_64 and macOS Intel/Apple Silicon. Non-Windows packages are compiled and staged, but target-machine gameplay validation is still pending.
+SDL3 modernization fork of 6kinoko-rebuild. Full games build for Windows x86/x64, Linux x86_64 and macOS Intel/Apple Silicon. Windows and Apple Silicon rendering have user validation; the user also confirmed block stars, balloon stars and floating stomp scores in Linux/WSL build `067fc414`. Full gameplay/save acceptance remains separate from automated tests.
 
-## Build / ÊûÑÂª∫
+## Build / ππΩ®
 
 Windows, after committing source (use a fresh name each time):
 
@@ -10,42 +10,46 @@ Windows, after committing source (use a fresh name each time):
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_x64_probe.ps1 -Name <unique-name> -SourceDir C:\WorkSpace\6kinoko -Generator "Visual Studio 17 2022"
 ```
 
-Linux/macOS full game (CMake 3.24+, C++17 compiler, SDL platform development dependencies, `glslangValidator`; macOS also needs `spirv-cross`):
+Linux/macOS require CMake 3.24+, a C++17 compiler, SDL development dependencies and `glslangValidator`; macOS also needs `spirv-cross`:
 
 ```sh
-cmake -S . -B build-runs/native-01 -DCMAKE_BUILD_TYPE=Release -DKINOKO_RUNTIME_DIR="<absolute-new-runtime-directory>"
+cmake -S . -B build-runs/native-01 -DCMAKE_BUILD_TYPE=Release -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR="<absolute-new-runtime-directory>"
 cmake --build build-runs/native-01 --target kinoko_modern_gpu --parallel 4
 ```
 
-For a universal macOS build, add `'-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'` when configuring. The CI workflow lists Linux development packages and uses `brew install glslang spirv-cross` on macOS. `KINOKO_PLATFORM_ONLY=ON` remains available for portable module builds. `tools/build_staged.ps1` retains the Windows x86 all-target build.
+For universal macOS add `'-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'`. CI lists Linux dependencies and macOS shader tools. `KINOKO_PLATFORM_ONLY=ON` builds portable modules; `tools/build_staged.ps1` retains the Windows x86 build. Always use fresh build/runtime directories and retain artifacts.
 
-Always use new build/runtime directories. Copy your original `6kinoko_a.dat`, `6kinoko_b.dat` and `6kinoko_c.dat` beside the executable. Keep `shaders/` and `fonts/` beside it too. Game and contract execution remain with the user.
+## Run / ‘À––
 
-## Status / Áä∂ÊÄÅ
+Extract the complete package to a writable directory. Put your original `6kinoko_a.dat`, `6kinoko_b.dat`, `6kinoko_c.dat` beside the executable, preserving these exact filenames. Keep `shaders/` and `fonts/`. CI packages never include proprietary DAT.
 
-Apple Silicon follow-up: the user rejected candidate `32dc959a`; its depth/Retina
-changes were reverted in `444faba`. Video and original-asset inspection identified
-a concrete SDL Metal texture-upload row/slice stride defect. The backend now
-honors the shared transfer descriptor; actual Mac output still requires user
-verification. See the [rendering handoff](../docs/modern-platform/macos-rendering-02.md).
+| Platform | Normal launch | Diagnostic launch |
+| --- | --- | --- |
+| Windows | `launch.cmd` | `run-with-diagnostics.cmd` |
+| Linux | `./launch.sh` | `./diagnose.sh` |
+| macOS | `Launch.command` | `Diagnose.command` |
 
-Source `6b39bfe4dfd8925003cc3d530ab91effcfc5af93` passed [all six CI jobs](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199): complete Windows, Linux and universal macOS games plus portable compilation on all three OSes.
+Normal launch explicitly disables tracing. Diagnostic launch enables low-volume logs beside the executable: `retdec_trace.log` on Windows, `kinoko-trace.log` elsewhere. Existing logs append and are preserved. For targeted native effect diagnostics, run the executable directly with `KINOKO_TRACE=1 KINOKO_TRACE_VERBOSE=1 KINOKO_TRACE_FILTER=star`.
 
-Local Windows delivery: `runtime-builds/modern-x64-native-05/kinoko_modern_gpu.exe`. The x64 game and selected contracts compiled; `modern-native-05` compiled the Win32 game and all 85 contracts. DAT hashes and static D3D9 audits passed. No game, CTest or contract executable was run.
+Linux targets Ubuntu 24.04 x86_64 or compatible newer systems with Vulkan. macOS targets Metal-capable macOS 14+, contains both CPU slices, and is unsigned/not notarized. WSL2 can run the Linux package through WSLg; this machine currently uses CPU Vulkan (llvmpipe). See the WSL record before interpreting performance. If the WSLg COPY MODE issue recurs, restarting WSL can restore the window; `wsl --shutdown` stops all WSL processes.
 
-Native CI artifacts `game-ubuntu-24.04` and `game-macos-14` contain `.tar.gz` packages with executable permissions, shaders, fonts, licenses and a hash manifest. They never include original DAT. Linux targets Ubuntu 24.04 x86_64 or compatible newer systems with Vulkan drivers. macOS targets Metal-capable macOS 14+ and contains both CPU architectures; the package is unsigned/not notarized. Extract to a writable directory and use `launch.sh` or `Launch.command`.
+## Status / ◊¥Ã¨
 
-The user accepted the preceding `modern-x64-graphics-02` and earlier gameplay/save fixes. That feedback is not validation of the current font/backend changes or non-Windows runtime. Dynamic text remains available through the existing layout/atlas API, using portable CP932 decoding and bundled Noto Sans CJK JP. Font face names use this fallback; exact GDI metrics are not preserved. UTF-8 localization APIs are future work.
+Script random numbers now preserve the original Windows CRT sequence and 0®C32767 range on all platforms. Metal honors row/slice pitch; mixed-zero defaults now match D3D12/Vulkan independently. No game shaders, physics or asset dimensions were altered to hide these issues.
 
-SDL 3.4.16 ¬∑ libogg 1.3.6 ¬∑ libvorbis 1.3.7 ¬∑ stb_truetype 1.26 ¬∑ Noto Sans CJK JP. No game D3D9/D3DX backend remains. Preserve SDL's local patches. Original DAT/bytecode/save widths remain distinct from native pointers. Windows keeps its modal-drag hook and crash diagnostics; ordinary platform services use SDL or standard C++.
+Full-game CI runs focused non-gameplay regressions for original bytecode/script numerics, save roundtrips and malformed files, archive lookup/decoding, random sequences, clocks/synchronization and directory matching. Logs and retained save/archive fixtures ship in CI artifacts. The GPU upload/download contract requires a graphics backend and runs separately. Automated tests do not establish that a level can be cleared or that real gameplay saves reload correctly.
 
-Next: target-machine launch/gameplay/save verification and any resulting platform fixes. Compilation alone does not establish runtime compatibility.
+Packages use the same source revision and include hash manifests, shaders, fonts and licenses. Windows artifacts are `windows-game-Win32` / `windows-game-x64`; native artifacts are `game-ubuntu-24.04` / `game-macos-14`. Latest build results and local paths are in the closeout record below.
 
-## Documentation / ÊñáÊ°£
+SDL 3.4.16 °§ libogg 1.3.6 °§ libvorbis 1.3.7 °§ stb_truetype 1.26 °§ Noto Sans CJK JP. D3D9/D3DX is removed. Preserve local SDL and Squirrel patches when updating. DAT/bytecode/save widths remain separate from native pointer sizes. Windows retains its modal-drag and crash adapters; ordinary services use SDL/C++. Dynamic text is retained for future localization; bundled fonts do not exactly reproduce GDI metrics.
 
-- [Full native game migration and delivery evidence](../docs/modern-platform/full-native-game.md)
+Next: user verification of level entry/completion, effects and save/quit/reload on each platform; then input action separation and the shared input layer before TAS/MOD expansion.
+
+## Documentation / Œƒµµ
+
+- [Cross-platform closeout, tests and packages](../docs/modern-platform/cross-platform-closeout.md)
+- [Star/score fix and evidence](../docs/modern-platform/linux-effects-01.md)
+- [WSL setup and runtime evidence](../docs/modern-platform/wsl-validation-02.md)
+- [Full native migration history](../docs/modern-platform/full-native-game.md)
 - [Dependency provenance](../docs/modern-platform/dependencies.json)
 - [Migration roadmap](../docs/modern-platform/TODO.md)
-- [Historical platform foundation](../docs/modern-platform/README.md)
-- [SDL GPU integration](../docs/modern-gpu/GAME.md)
-- [Native-width history](../docs/modern-x64/BUILD.md)

@@ -53,8 +53,13 @@ public:
 };
 void evaluate(HSQUIRRELVM vm, const char* source) {
     const auto top=sq_gettop(vm);
-    require(SQ_SUCCEEDED(sq_compilebuffer(vm,source,static_cast<SQInteger>(std::strlen(source)),
-        "savedata-contract",SQTrue)),"compile fixture");
+    if (SQ_FAILED(sq_compilebuffer(vm,source,static_cast<SQInteger>(std::strlen(source)),
+        "savedata-contract",SQTrue))) {
+        sq_getlasterror(vm); const SQChar* error=nullptr;
+        sq_getstring(vm,-1,&error);
+        std::fprintf(stderr,"compile: %s\nsource: %s\n",error?error:"<unknown>",source);
+        sq_settop(vm,top); throw std::runtime_error("compile fixture");
+    }
     sq_pushroottable(vm);
     if (SQ_FAILED(sq_call(vm,1,SQFalse,SQTrue))) {
         sq_settop(vm,top); throw std::runtime_error("fixture assertion/call failed");

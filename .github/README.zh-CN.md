@@ -1,50 +1,55 @@
 # 6kinoko-modern
 
-6kinoko-rebuild çš„ SDL3 çŽ°ä»£åŒ–åˆ†æ”¯ã€‚å®Œæ•´æ¸¸æˆçŽ°å·²èƒ½æž„å»º Windows x86/x64ã€Linux x86_64 åŠ macOS Intel/Apple Silicon ç‰ˆæœ¬ã€‚éž Windows è¿è¡ŒåŒ…å·²ç¼–è¯‘å¹¶éƒ¨ç½²èµ„æºï¼Œä½†ç›®æ ‡æœºå®žé™…æ¸¸æˆéªŒè¯ä»å¾…å®Œæˆã€‚
+6kinoko-rebuild µÄ SDL3 ÏÖ´ú»¯·ÖÖ§¡£ÍêÕûÓÎÏ·¿É¹¹½¨ Windows x86/x64¡¢Linux x86_64¡¢macOS Intel/Apple Silicon °æ±¾¡£Windows Óë Apple Silicon äÖÈ¾ÒÑÓÐÓÃ»§ÑéÖ¤£»ÓÃ»§Ò²È·ÈÏ Linux/WSL `067fc414` µÄ¶¥³öÐÇÐÇ¡¢ÆøÇòÐÇÐÇ¡¢²È¹ÖÆ®·ÖÕý³£¡£ÍêÕûÓÎÏ·¼°´æµµÑéÊÕÓë×Ô¶¯²âÊÔ·Ö¿ª¼ÇÂ¼¡£
 
-## Build / æž„å»º
+## Build / ¹¹½¨
 
-Windowsï¼šå…ˆæäº¤æºç ï¼Œæ¯æ¬¡ä½¿ç”¨æ–°åç§°ï¼š
+Windows£ºÏÈÌá½»Ô´Âë£¬Ã¿´ÎÊ¹ÓÃÐÂÃû³Æ£º
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_x64_probe.ps1 -Name <unique-name> -SourceDir C:\WorkSpace\6kinoko -Generator "Visual Studio 17 2022"
 ```
 
-Linux/macOS å®Œæ•´æ¸¸æˆéœ€è¦ CMake 3.24+ã€C++17 ç¼–è¯‘å™¨ã€SDL å¹³å°å¼€å‘ä¾èµ–åŠ `glslangValidator`ï¼›macOS è¿˜éœ€è¦ `spirv-cross`ï¼š
+Linux/macOS ÐèÒª CMake 3.24+¡¢C++17 ±àÒëÆ÷¡¢SDL ¿ª·¢ÒÀÀµºÍ `glslangValidator`£»macOS »¹ÐèÒª `spirv-cross`£º
 
 ```sh
-cmake -S . -B build-runs/native-01 -DCMAKE_BUILD_TYPE=Release -DKINOKO_RUNTIME_DIR="<absolute-new-runtime-directory>"
+cmake -S . -B build-runs/native-01 -DCMAKE_BUILD_TYPE=Release -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR="<absolute-new-runtime-directory>"
 cmake --build build-runs/native-01 --target kinoko_modern_gpu --parallel 4
 ```
 
-macOS åŒæž¶æž„æž„å»ºåœ¨é…ç½®æ—¶å¢žåŠ  `'-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'`ã€‚CI å·¥ä½œæµåˆ—å‡ºäº† Linux å¼€å‘ä¾èµ–ï¼›macOS ä½¿ç”¨ `brew install glslang spirv-cross`ã€‚`KINOKO_PLATFORM_ONLY=ON` ä»å¯åªæž„å»ºå¯ç§»æ¤æ¨¡å—ï¼›`tools/build_staged.ps1` ä¿ç•™ Windows x86 å…¨ç›®æ ‡æž„å»ºã€‚
+macOS Ë«¼Ü¹¹Ôö¼Ó `'-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64'`¡£CI ÁÐ³ö Linux ÒÀÀµÓë macOS ×ÅÉ«Æ÷¹¤¾ß¡£`KINOKO_PLATFORM_ONLY=ON` Ö»¹¹½¨¿ÉÒÆÖ²Ä£¿é£»`tools/build_staged.ps1` ±£Áô Windows x86 ¹¹½¨¡£Ê¼ÖÕÊ¹ÓÃÐÂµÄ¹¹½¨/ÔËÐÐÄ¿Â¼£¬±£Áô²úÎï¡£
 
-å§‹ç»ˆä½¿ç”¨æ–°çš„æž„å»ºåŠè¿è¡Œç›®å½•ã€‚å°†è‡ªå·±çš„åŽŸç‰ˆ `6kinoko_a.dat`ã€`6kinoko_b.dat`ã€`6kinoko_c.dat` æ”¾åœ¨ç¨‹åºåŒç›®å½•ï¼Œå¹¶ä¿ç•™åŒç›®å½•çš„ `shaders/` å’Œ `fonts/`ã€‚æ¸¸æˆåŠåˆçº¦ç¨‹åºä»ç”±ç”¨æˆ·æ‰§è¡Œã€‚
+## Run / ÔËÐÐ
 
-## Status / çŠ¶æ€
+½«ÍêÕû°ü½âÑ¹µ½¿ÉÐ´Ä¿Â¼¡£½«×Ô¼ºµÄÔ­°æ `6kinoko_a.dat`¡¢`6kinoko_b.dat`¡¢`6kinoko_c.dat` ·ÅÔÚ³ÌÐòÍ¬Ä¿Â¼£¬±£³ÖÎÄ¼þÃû´óÐ¡Ð´Ò»ÖÂ£¬²¢±£Áô `shaders/`¡¢`fonts/`¡£CI ²»°üº¬Ô­°æ DAT¡£
 
-Apple Silicon åŽç»­ï¼šç”¨æˆ·åé¦ˆå€™é€‰ç‰ˆ `32dc959a` æ— æ•ˆï¼Œå…¶æ·±åº¦/Retina æ”¹åŠ¨å·²åœ¨
-`444faba` æ’¤å›žã€‚å½•åƒåŠåŽŸç‰ˆèµ„æºæ£€æŸ¥ç¡®è®¤ SDL Metal çº¹ç†ä¸Šä¼ å¿½ç•¥è¡Œ/å±‚è·¨åº¦çš„é”™è¯¯ã€‚
-çŽ°å·²ä¿®æ­£åŽç«¯å¯¹é€šç”¨ä¸Šä¼ å‚æ•°çš„å¤„ç†ï¼›Mac å®žé™…æ˜¾ç¤ºç»“æžœä»éœ€ç”¨æˆ·éªŒè¯ã€‚è¯¦è§
-[æ¸²æŸ“äº¤æŽ¥](../docs/modern-platform/macos-rendering-02.md)ã€‚
+| Æ½Ì¨ | ÆÕÍ¨Æô¶¯ | Õï¶ÏÆô¶¯ |
+| --- | --- | --- |
+| Windows | `launch.cmd` | `run-with-diagnostics.cmd` |
+| Linux | `./launch.sh` | `./diagnose.sh` |
+| macOS | `Launch.command` | `Diagnose.command` |
 
-æºç  `6b39bfe4dfd8925003cc3d530ab91effcfc5af93` çš„[å…­é¡¹ CI å‡é€šè¿‡](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199)ï¼šå®Œæ•´ Windowsã€Linuxã€macOS åŒæž¶æž„æ¸¸æˆï¼Œä»¥åŠä¸‰å¹³å°å¯ç§»æ¤æ¨¡å—ç¼–è¯‘ã€‚
+ÆÕÍ¨Èë¿ÚÃ÷È·¹Ø±ÕÈÕÖ¾£»Õï¶ÏÈë¿Ú¿ªÆôµÍÁ÷Á¿ÈÕÖ¾¡£Windows ÈÕÖ¾Îª³ÌÐòÅÔµÄ `retdec_trace.log`£¬ÆäËûÆ½Ì¨Îª `kinoko-trace.log`£¬ÒÑÓÐÈÕÖ¾×·¼Ó±£Áô¡£Ô­ÉúÆ½Ì¨µÄ¶¨ÏòÌØÐ§Õï¶Ï¿ÉÖ±½ÓÔËÐÐ³ÌÐò²¢ÉèÖÃ `KINOKO_TRACE=1 KINOKO_TRACE_VERBOSE=1 KINOKO_TRACE_FILTER=star`¡£
 
-æœ¬åœ° Windows äº¤ä»˜ï¼š`runtime-builds/modern-x64-native-05/kinoko_modern_gpu.exe`ã€‚x64 æ¸¸æˆåŠç›¸å…³åˆçº¦å·²ç¼–è¯‘ï¼›`modern-native-05` å®Œæˆ Win32 æ¸¸æˆåŠå…¨éƒ¨ 85 ä¸ªåˆçº¦ç¼–è¯‘ã€‚DAT å“ˆå¸Œä¸Ž D3D9 é™æ€å®¡è®¡é€šè¿‡ã€‚ä»£ç†æœªè¿è¡Œæ¸¸æˆã€CTest æˆ–ä»»ä½•åˆçº¦ç¨‹åºã€‚
+Linux ÃæÏò Ubuntu 24.04 x86_64 »ò¼æÈÝÐÂÏµÍ³£¬ÐèÒª Vulkan¡£macOS ÃæÏòÖ§³Ö Metal µÄ macOS 14+£¬°üº¬Á½ÖÖ CPU ¼Ü¹¹£¬ÉÐÎ´Ç©Ãû/¹«Ö¤¡£WSL2 ¿ÉÍ¨¹ý WSLg ÔËÐÐ Linux °ü£»±¾»úµ±Ç°Ê¹ÓÃ CPU Vulkan£¨llvmpipe£©£¬ÆÀ¹ÀÐÔÄÜÇ°Çë¿´ WSL ¼ÇÂ¼¡£ÈôÔÙ´ÎÓöµ½ WSLg COPY MODE ÎÞ´°¿ÚÎÊÌâ£¬ÖØÆô WSL ¿É»Ö¸´£»`wsl --shutdown` »á¹Ø±ÕËùÓÐ WSL ½ø³Ì¡£
 
-åŽŸç”Ÿ CI é™„ä»¶ `game-ubuntu-24.04`ã€`game-macos-14` æä¾› `.tar.gz` è¿è¡ŒåŒ…ï¼Œä¿ç•™å¯æ‰§è¡Œæƒé™ï¼ŒåŒ…å«ç€è‰²å™¨ã€å­—ä½“ã€è®¸å¯è¯å’Œå“ˆå¸Œæ¸…å•ï¼Œä¸åŒ…å«åŽŸç‰ˆ DATã€‚Linux é¢å‘ Ubuntu 24.04 x86_64 æˆ–å…¼å®¹çš„æ–°ç³»ç»Ÿï¼Œéœ€è¦ Vulkan é©±åŠ¨ã€‚macOS é¢å‘æ”¯æŒ Metal çš„ macOS 14+ï¼ŒåŒ…å«ä¸¤ç§ CPU æž¶æž„ï¼›å°šæœªç­¾åæˆ–å…¬è¯ã€‚è§£åŽ‹åˆ°å¯å†™ç›®å½•ï¼Œé€šè¿‡ `launch.sh` æˆ– `Launch.command` å¯åŠ¨ã€‚
+## Status / ×´Ì¬
 
-ç”¨æˆ·å·²ç¡®è®¤ä¸Šä¸€ç‰ˆ `modern-x64-graphics-02` åŠæ­¤å‰æ¸¸æˆè¡Œä¸ºã€å­˜æ¡£ä¿®å¤æ­£å¸¸ï¼›è¿™ä¸ä»£è¡¨å½“å‰å­—ä½“/åŽç«¯å˜æ›´æˆ–éž Windows è¿è¡Œå·²èŽ·éªŒè¯ã€‚åŠ¨æ€æ–‡å­—ä¿ç•™åŽŸæœ‰å¸ƒå±€å’Œå›¾é›†æŽ¥å£ï¼Œä½¿ç”¨é€šç”¨ CP932 è§£ç ä¸Žé™„å¸¦çš„ Noto Sans CJK JPã€‚å­—ä½“åç§°ç»Ÿä¸€å›žé€€åˆ°è¯¥å­—ä½“ï¼Œä¸ä¿è¯ä¸Ž GDI å®Œå…¨ç›¸åŒçš„å­—å½¢åº¦é‡ã€‚UTF-8 å¤šè¯­è¨€æŽ¥å£ç•™å¾…åŽç»­å®žçŽ°ã€‚
+½Å±¾Ëæ»úÊýÔÚËùÓÐÆ½Ì¨±£³ÖÔ­°æ Windows CRT µÄÐòÁÐºÍ 0¨C32767 ·¶Î§¡£Metal ÕýÈ·´¦ÀíÐÐ/²ã¿ç¶È£¬»ìºÏÁãÄ¬ÈÏÖµÒ²·Ö±ðÓë D3D12/Vulkan Ò»ÖÂ¡£Ã»ÓÐÍ¨¹ýÐÞ¸ÄÓÎÏ·×ÅÉ«Æ÷¡¢ÎïÀí»ò×ÊÔ´³ß´çÑÚ¸ÇÕâÐ©ÎÊÌâ¡£
 
-SDL 3.4.16 Â· libogg 1.3.6 Â· libvorbis 1.3.7 Â· stb_truetype 1.26 Â· Noto Sans CJK JPã€‚æ¸¸æˆæ—§ D3D9/D3DX åŽç«¯å·²ç§»é™¤ï¼Œæ›´æ–° SDL æ—¶é¡»ä¿ç•™æœ¬åœ°è¡¥ä¸ã€‚åŽŸç‰ˆ DATã€å­—èŠ‚ç å’Œå­˜æ¡£å®½åº¦ä»ä¸ŽåŽŸç”ŸæŒ‡é’ˆåˆ†ç¦»ã€‚Windows ä¿ç•™æ¨¡æ€æ‹–åŠ¨é’©å­å’Œå´©æºƒè¯Šæ–­ï¼›æ™®é€šå¹³å°æœåŠ¡ä½¿ç”¨ SDL æˆ–æ ‡å‡† C++ã€‚
+ÍêÕûÓÎÏ· CI Ö´ÐÐ²»º¬ÓÎÍæµÄ¶¨Ïò»Ø¹é£ºÔ­°æ×Ö½ÚÂë/½Å±¾ÊýÖµ¡¢´æµµÍù·µ¼°Ëð»µÎÄ¼þ¡¢×ÊÔ´°ü²éÕÒ/½âÂë¡¢Ëæ»úÐòÁÐ¡¢¼ÆÊ±/Í¬²½¡¢Ä¿Â¼Æ¥Åä¡£ÈÕÖ¾Óë´æµµ/×ÊÔ´°ü²âÊÔÎÄ¼þËæ CI ¸½¼þ±£Áô¡£GPU ÉÏ´«/ÏÂÔØ²âÊÔÐèÒªÍ¼ÐÎºó¶Ë£¬µ¥¶ÀÖ´ÐÐ¡£×Ô¶¯²âÊÔ²»´ú±íÒÑÑéÖ¤¹ý¹Ø»òÊµ¼ÊÓÎÏ·´æµµÖØÆô¼ÓÔØ¡£
 
-ä¸‹ä¸€æ­¥ï¼šç›®æ ‡æœºå¯åŠ¨ã€æ¸¸æˆè¡Œä¸ºä¸Žå­˜æ¡£éªŒè¯ï¼Œå¹¶ä¿®å¤åé¦ˆçš„å¹³å°é—®é¢˜ã€‚ç¼–è¯‘æˆåŠŸä¸ç­‰äºŽè¿è¡Œå…¼å®¹æ€§å·²éªŒè¯ã€‚
+¸÷Æ½Ì¨°üÊ¹ÓÃÍ¬Ò»Ô´ÂëÌá½»£¬°üº¬¹þÏ£Çåµ¥¡¢×ÅÉ«Æ÷¡¢×ÖÌå¡¢Ðí¿ÉÖ¤¡£Windows ¸½¼þÎª `windows-game-Win32` / `windows-game-x64`£»Ô­Éú¸½¼þÎª `game-ubuntu-24.04` / `game-macos-14`¡£×îÐÂ¹¹½¨½á¹ûÓë±¾µØÂ·¾¶¼ûÏÂ·½ÊÕÎ²¼ÇÂ¼¡£
 
-## Documentation / æ–‡æ¡£
+SDL 3.4.16 ¡¤ libogg 1.3.6 ¡¤ libvorbis 1.3.7 ¡¤ stb_truetype 1.26 ¡¤ Noto Sans CJK JP¡£D3D9/D3DX ÒÑÒÆ³ý£¬¸üÐÂÊ±Ðë±£Áô SDL/Squirrel ±¾µØ²¹¶¡¡£DAT/×Ö½ÚÂë/´æµµ¿í¶ÈÓëÔ­ÉúÖ¸Õë¿í¶È·ÖÀë¡£Windows ±£ÁôÄ£Ì¬ÍÏ¶¯¼°±ÀÀ£ÊÊÅä£¬ÆÕÍ¨·þÎñÊ¹ÓÃ SDL/C++¡£¶¯Ì¬ÎÄ×Ö±£Áô¹©Î´À´¶àÓïÑÔÊ¹ÓÃ£¬¸½´ø×ÖÌå²»±£Ö¤ÍêÈ«¸´ÏÖ GDI ¶ÈÁ¿¡£
 
-- [å®Œæ•´åŽŸç”Ÿæ¸¸æˆè¿ç§»å’Œäº¤ä»˜è¯æ®](../docs/modern-platform/full-native-game.md)
-- [ä¾èµ–æ¥æº](../docs/modern-platform/dependencies.json)
-- [è¿ç§»è·¯çº¿](../docs/modern-platform/TODO.md)
-- [åŽ†å²å¹³å°åŸºç¡€è®°å½•](../docs/modern-platform/README.md)
-- [SDL GPU é›†æˆ](../docs/modern-gpu/GAME.md)
-- [åŽŸç”Ÿå®½åº¦è¿ç§»åŽ†å²](../docs/modern-x64/BUILD.md)
+ÏÂÒ»²½£ºÓÃ»§ÔÚ¸÷Æ½Ì¨ÑéÖ¤½ø¹Ø/¹ý¹Ø¡¢ÌØÐ§¡¢´æµµÍË³öÖØÆô¼ÓÔØ£»Ö®ºó²ð·ÖÊäÈë¶¯×÷¡¢½¨Á¢Í³Ò»ÊäÈë²ã£¬ÔÙÀ©Õ¹ TAS/MOD¡£
+
+## Documentation / ÎÄµµ
+
+- [¿çÆ½Ì¨ÊÕÎ²¡¢²âÊÔÓëÔËÐÐ°ü](../docs/modern-platform/cross-platform-closeout.md)
+- [ÐÇÐÇ/Æ®·ÖÐÞ¸´Ö¤¾Ý](../docs/modern-platform/linux-effects-01.md)
+- [WSL °²×°ÓëÔËÐÐÖ¤¾Ý](../docs/modern-platform/wsl-validation-02.md)
+- [ÍêÕûÔ­ÉúÇ¨ÒÆÀúÊ·](../docs/modern-platform/full-native-game.md)
+- [ÒÀÀµÀ´Ô´](../docs/modern-platform/dependencies.json)
+- [Ç¨ÒÆÂ·Ïß](../docs/modern-platform/TODO.md)
