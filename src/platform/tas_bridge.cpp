@@ -1,4 +1,5 @@
 #include "kinoko/tas_bridge.hpp"
+#include "kinoko/tas_edit_plan.hpp"
 #include "kinoko/runtime_options.hpp"
 #include <SDL3/SDL.h>
 #include <atomic>
@@ -17,6 +18,7 @@ uint64_t sequence=0,target=1;
 bool takeover=false,free_run=false;
 uint64_t last_input=0;uint32_t mask=0;
 std::string phase;
+EditPlan edits;
 const auto& directory(){return runtime::options().tas_dir;}
 bool replace(const std::filesystem::path& temporary,const std::filesystem::path& destination) {
     // Same-directory publication. Readers open with delete sharing and retry a missing mailbox.
@@ -50,14 +52,20 @@ void pump_window(SDL_Window* window) {
     else if(toggle&&!prev_toggle)window_command=2;
     prev_step=step;prev_toggle=toggle;
 }
-void start(){if(!enabled())return;stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=SDL_GetTicks();phase.clear();}
+void start(){
+    if(!enabled())return;
+    stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};
+    const auto plan=directory()/"edit.bin";
+    if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
+    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1\n";
+}
 void shutdown(){stopping=true;}
 bool boundary(uint64_t frames,uint64_t total,bool live) {
     if(!enabled())return true;
     while(!stopping.load()) {
         const int local=window_command.exchange(0);
-        if(local==1){free_run=false;target=frames+1;}
-        if(local==2){free_run=!free_run;target=frames;}
+        if(edits.masks.empty() && local==1){free_run=false;target=frames+1;}
+        if(edits.masks.empty() && local==2){free_run=!free_run;target=frames;}
         uint64_t seq=0,arg=0;std::string verb;bool read=false;
         {std::ifstream in(directory()/"command.txt");read=bool(in>>seq>>verb>>arg);}
         if(read && seq>sequence) {
@@ -68,9 +76,11 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
             if(verb=="run")free_run=true;
             if(verb=="takeover"){takeover=true;free_run=false;target=frames;mask=0;}
         }
+        if(!edits.masks.empty()){total=edits.masks.size();if(frames>=total){free_run=false;target=frames;}}
         if(!live && frames>=total && !takeover) {free_run=false;target=frames;}
         const bool advance=free_run || frames<target;
         publish(frames,total,advance?(live?"live":"playing"):(live?"live-paused":"paused"));
+        if(advance && !live && !edits.masks.empty() && frames==edits.first)takeover=true;
         if(takeover)return true; // Runtime changes mode, then re-enters this boundary.
         if(advance)return true;
         SDL_Delay(2);
@@ -79,6 +89,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
 }
 bool take_control(){const bool value=takeover;takeover=false;return value;}
 uint32_t input_mask() {
+    if(!edits.masks.empty()){const auto frame=count.load();if(frame>=edits.masks.size())throw std::runtime_error("TAS edit plan exhausted");return edits.masks[size_t(frame)];}
     std::ifstream in(directory()/"input.txt");uint64_t stamp;uint32_t value;
     if(in>>stamp>>value) {if(stamp!=last_input){last_input=stamp;mask=value;}}
     // The editor sends a zero mask on focus loss and refreshes its input lease every tick.

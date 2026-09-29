@@ -123,9 +123,10 @@ bool kinoko_replay_start() {
     const char* value=SDL_getenv("KINOKO_REPLAY_MODE");
     if(explicit_paths)value=settings.recording.empty()?"play":"record";
     if(!value || !*value)return true;
-    kinoko::tas::start();previous_actions={};previous_legacy={};
+    previous_actions={};previous_legacy={};
     frame_index=0;stopped=false;completed=false;failed=false;pending_error.clear();
     try {
+        kinoko::tas::start();
         if(const char* path=SDL_getenv("KINOKO_REPLAY_DETAILS")) {
             details.open(std::filesystem::u8path(path),std::ios::out);
             if(!details)throw std::runtime_error("Cannot create replay details log");

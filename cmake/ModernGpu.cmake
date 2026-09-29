@@ -89,3 +89,7 @@ add_executable(kinoko_tas_preview_contract tests/tas_preview_contract.cpp)
 target_link_libraries(kinoko_tas_preview_contract PRIVATE kinoko_gpu)
 add_dependencies(kinoko_tas_preview_contract kinoko_gpu_shaders)
 set_target_properties(kinoko_tas_preview_contract PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${KINOKO_RUNTIME_DIR}" RUNTIME_OUTPUT_DIRECTORY_RELEASE "${KINOKO_RUNTIME_DIR}")
+
+add_executable(kinoko_tas_edit_contract tests/tas_edit_contract.cpp)
+target_link_libraries(kinoko_tas_edit_contract PRIVATE kinoko_runtime_services)
+add_test(NAME tas_edit_contract COMMAND kinoko_tas_edit_contract)
