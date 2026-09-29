@@ -154,8 +154,11 @@ def launch(game,prepare_only=False,stage=None,choose_stage=False):
     env=os.environ.copy();env.pop('KINOKO_MOD_CATALOG',None);env.pop('KINOKO_REPLAY_MODE',None)
     env.pop('KINOKO_MOD_STAGE',None)
     if stage and choose_stage:raise ValueError('Select either stage or choose-stage')
-    if stage and (len(stage.split(':'))!=2 or any(not mods.TOKEN.fullmatch(part) for part in stage.split(':'))):
-        raise ValueError('Stage must be mod-id:content-id')
+    if stage:
+        parts=stage.split(':')
+        if (len(parts)!=2 or not mods.TOKEN.fullmatch(parts[0]) or not 1<=len(parts[1])<=127 or
+            any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789._-' for c in parts[1])):
+            raise ValueError('Stage must be mod-id:content-id')
     if not selected:
         if stage or choose_stage:raise ValueError('Enable a scripted Mod before choosing a stage')
         print('No Mods enabled; ordinary game and ordinary saves.')

@@ -67,7 +67,9 @@ with patch.object(manager.subprocess,'call',fake_process),patch.dict(manager.os.
     manager.launch(stage_game,stage='scripted:stage')
     manager.launch(stage_game,choose_stage=True)
     manager.launch(stage_game)
+    manager.launch(stage_game,stage='scripted:_stage')
 assert captured[0]['KINOKO_MOD_STAGE']=='scripted:stage'
 assert captured[1]['KINOKO_MOD_STAGE']=='@choose'
 assert 'KINOKO_MOD_STAGE' not in captured[2]
+assert captured[3]['KINOKO_MOD_STAGE']=='scripted:_stage'
 print('PASS: stage selection validation and launch environment (process mocked)')
