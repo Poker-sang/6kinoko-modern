@@ -1811,12 +1811,22 @@ static void METAL_UploadToTexture(
 
         MetalTexture *metalTexture = METAL_INTERNAL_PrepareTextureForWrite(renderer, textureContainer, cycle);
 
+        // Honor the public transfer-buffer layout, including application row
+        // padding. Either zero field selects a tightly packed source, as in
+        // SDL_GPUTextureTransferInfo and the download path below.
+        Uint32 bufferStride = source->pixels_per_row;
+        Uint32 bufferImageHeight = source->rows_per_layer;
+        if (bufferStride == 0 || bufferImageHeight == 0) {
+            bufferStride = destination->w;
+            bufferImageHeight = destination->h;
+        }
+
         [metalCommandBuffer->blitEncoder
                  copyFromBuffer:bufferContainer->activeBuffer->handle
                    sourceOffset:source->offset
-              sourceBytesPerRow:BytesPerRow(destination->w, textureContainer->header.info.format)
+              sourceBytesPerRow:BytesPerRow(bufferStride, textureContainer->header.info.format)
             // sourceBytesPerImage expects the stride between 2D images (slices) of a 3D texture, not the size of the entire region
-            sourceBytesPerImage:SDL_CalculateGPUTextureFormatSize(textureContainer->header.info.format, destination->w, destination->h, 1)
+            sourceBytesPerImage:SDL_CalculateGPUTextureFormatSize(textureContainer->header.info.format, bufferStride, bufferImageHeight, 1)
                      sourceSize:MTLSizeMake(destination->w, destination->h, destination->d)
                       toTexture:metalTexture->handle
                destinationSlice:destination->layer

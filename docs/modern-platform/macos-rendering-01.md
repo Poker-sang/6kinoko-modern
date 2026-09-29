@@ -1,5 +1,10 @@
 # Apple Silicon rendering correction (2026-09-29)
 
+**Rejected / reverted:** the user reported this candidate still renders badly.
+Implementation reverted in `444faba`; retain this file as historical evidence,
+not a current fix. Video inspection subsequently identified a concrete Metal
+texture upload stride defect. See `macos-rendering-02.md`.
+
 User feedback on native source `6b39bfe4`: macOS on an M-series Mac starts,
 but chimney particles and the animated door show triangular/striped artifacts,
 and level digits look blurred. The user reports Windows renders normally.

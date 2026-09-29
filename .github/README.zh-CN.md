@@ -23,11 +23,10 @@ macOS 双架构构建在配置时增加 `'-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64
 
 ## Status / 状态
 
-Apple Silicon 后续：用户确认 macOS 能启动，但粒子/门出现条纹、数字模糊
-（Windows 正常）。源码 `32dc959a` 增加浮点深度目标的 D24 精度兼容及 Retina
-高像素密度支持。[六项 CI](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36518686549)
-均通过；显示问题是否消失仍待用户实机验证。详见
-[渲染交接](../docs/modern-platform/macos-rendering-01.md)。
+Apple Silicon 后续：用户反馈候选版 `32dc959a` 无效，其深度/Retina 改动已在
+`444faba` 撤回。录像及原版资源检查确认 SDL Metal 纹理上传忽略行/层跨度的错误。
+现已修正后端对通用上传参数的处理；Mac 实际显示结果仍需用户验证。详见
+[渲染交接](../docs/modern-platform/macos-rendering-02.md)。
 
 源码 `6b39bfe4dfd8925003cc3d530ab91effcfc5af93` 的[六项 CI 均通过](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199)：完整 Windows、Linux、macOS 双架构游戏，以及三平台可移植模块编译。
 

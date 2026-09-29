@@ -23,12 +23,11 @@ Always use new build/runtime directories. Copy your original `6kinoko_a.dat`, `6
 
 ## Status / 状态
 
-Apple Silicon follow-up: the user confirmed macOS starts, but reported striped
-particles/doors and blurred digits (Windows looks normal). Source `32dc959a`
-adds D24 precision compatibility on floating depth targets and Retina drawables.
-All six [CI jobs](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36518686549)
-passed; visual correction still requires user verification. See the
-[rendering handoff](../docs/modern-platform/macos-rendering-01.md).
+Apple Silicon follow-up: the user rejected candidate `32dc959a`; its depth/Retina
+changes were reverted in `444faba`. Video and original-asset inspection identified
+a concrete SDL Metal texture-upload row/slice stride defect. The backend now
+honors the shared transfer descriptor; actual Mac output still requires user
+verification. See the [rendering handoff](../docs/modern-platform/macos-rendering-02.md).
 
 Source `6b39bfe4dfd8925003cc3d530ab91effcfc5af93` passed [all six CI jobs](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199): complete Windows, Linux and universal macOS games plus portable compilation on all three OSes.
 

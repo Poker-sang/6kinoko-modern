@@ -21,7 +21,7 @@ root = args.output / name
 if root.exists() or (args.output / (name + ".tar.gz")).exists():
     raise SystemExit("Refusing to overwrite retained package")
 root.mkdir()
-required = ["kinoko_modern_gpu", "fonts/NotoSansCJKjp-Regular.otf", "fonts/LICENSE"]
+required = ["kinoko_modern_gpu", "kinoko_gpu_transfer_contract", "fonts/NotoSansCJKjp-Regular.otf", "fonts/LICENSE"]
 extension = "msl" if args.platform == "macos-universal" else "spv"
 required += ["shaders/sprite." + stage + "." + extension for stage in ["vert", "frag"]]
 for relative in required:
@@ -32,6 +32,7 @@ for relative in required:
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
 os.chmod(root / "kinoko_modern_gpu", 0o755)
+os.chmod(root / "kinoko_gpu_transfer_contract", 0o755)
 launcher = root / ("Launch.command" if args.platform == "macos-universal" else "launch.sh")
 launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./kinoko_modern_gpu "$@"\n', encoding="utf-8")
 os.chmod(launcher, 0o755)
@@ -45,6 +46,7 @@ os.chmod(launcher, 0o755)
     "The macOS build is unsigned/not notarized. Use the normal macOS Open confirmation for a trusted local build.\n"
     "The directory must be writable for saves. Run from an extracted folder, not inside the archive.\n"
     "KINOKO_TRACE=1 enables kinoko-trace.log beside the executable.\n"
+    "Optional hardware check: ./kinoko_gpu_transfer_contract verifies texture upload/readback without game data. Not executed in CI.\n"
     "Compiled and packaged in CI; gameplay has not been validated on this platform.\n",
     encoding="utf-8")
 for source in (repo / "third_party").rglob("*"):

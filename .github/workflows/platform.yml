@@ -81,7 +81,7 @@ jobs:
         run: |
           set -o pipefail
           git rev-parse HEAD > build-runs/native/source-commit.txt
-          cmake --build build-runs/native --target kinoko_modern_gpu --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
+          cmake --build build-runs/native --target kinoko_modern_gpu kinoko_gpu_transfer_contract --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
       - name: Package native game (without original DAT)
         shell: bash
         run: |

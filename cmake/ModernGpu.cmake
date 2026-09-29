@@ -6,6 +6,11 @@ target_compile_features(kinoko_gpu PUBLIC cxx_std_17)
 add_executable(kinoko_gpu_vertices_contract tests/gpu_vertices_contract.cpp)
 target_link_libraries(kinoko_gpu_vertices_contract PRIVATE kinoko_gpu)
 add_test(NAME gpu_vertices_contract COMMAND kinoko_gpu_vertices_contract)
+add_executable(kinoko_gpu_transfer_contract tests/gpu_transfer_contract.cpp)
+target_link_libraries(kinoko_gpu_transfer_contract PRIVATE SDL3::SDL3-static)
+target_compile_features(kinoko_gpu_transfer_contract PRIVATE cxx_std_17)
+# Explicit/manual GPU contract: compile in CI, but do not require a GPU during
+# ordinary CTest execution. Run this executable on the target machine.
 if(WIN32)
     set(KINOKO_GPU_SHADER_SDK "10.0.22621.0" CACHE STRING "Pinned Windows SDK shader compiler version")
     set(KINOKO_FXC "C:/Program Files (x86)/Windows Kits/10/bin/${KINOKO_GPU_SHADER_SDK}/x64/fxc.exe" CACHE FILEPATH "Offline shader compiler (host x64)")
