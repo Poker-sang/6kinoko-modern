@@ -10,11 +10,11 @@ namespace {
 constexpr char registry[] = R"SQ(
 local definitions = { stage = {}, enemy = {}, boss = {}, transformation = {} };
 local ordered = { stage = [], enemy = [], boss = [], transformation = [] };
-local function category(kind) {
+local category = function(kind) : (definitions) {
     if (!(kind in definitions)) throw "Unknown Mod content kind";
     return definitions[kind];
-}
-local function register(owner, kind, name, definition) {
+};
+local register = function(owner, kind, name, definition) : (category, ordered) {
     local target = category(kind);
     if (typeof name != "string" || name.len() == 0 || name.len() > 127)
         throw "Invalid content name";
@@ -29,22 +29,22 @@ local function register(owner, kind, name, definition) {
     target[id] <- clone definition;
     ordered[kind].append(id);
     return id;
-}
+};
 if ("KinokoMods" in getroottable()) throw "KinokoMods root name already exists";
 ::KinokoMods <- {
     apiVersion = 1,
-    For = function(owner) {
-        return { Register = function(kind, name, definition) {
+    For = function(owner) : (register) {
+        return { Register = function(kind, name, definition) : (register, owner) {
             return register(owner, kind, name, definition);
         }};
     },
-    List = function(kind) { category(kind); return clone ordered[kind]; },
-    Get = function(kind, id) {
+    List = function(kind) : (category, ordered) { category(kind); return clone ordered[kind]; },
+    Get = function(kind, id) : (category) {
         local target = category(kind);
         if (!(id in target)) throw "Unknown Mod content id";
         return clone target[id];
     },
-    Create = function(kind, id, arguments) {
+    Create = function(kind, id, arguments) : (category) {
         local target = category(kind);
         if (!(id in target)) throw "Unknown Mod content id";
         if (typeof arguments != "array") throw "Expected argument array";
