@@ -24,6 +24,15 @@ This is asset inspection, not a game/GPU test. Evidence remains local under
 `worldmap-stride-evidence.png` and its metadata. Proprietary pixels/video are
 not uploaded to the repository.
 
+Additional source dimensions agree with the affected UI/animation:
+
+| Asset | Extent | RGBA row bytes | Upload row stride |
+| --- | --- | --- | --- |
+| `data/System/Title/title_menu_num.cv2` | 160x20 | 640 | 768 |
+| `data/System/stage_num.cv2` | 120x16 | 480 | 512 |
+| `data/Actor/Item/op-door_0000.cv2` | 65x100 | 260 | 512 |
+| `data/WorldMap/w1a.cv2` | 544x384 | 2176 | 2304 |
+
 ## Change and regression coverage
 
 Fix SDL's Metal backend to respect the public transfer descriptor, including
@@ -42,3 +51,23 @@ not execution; neither the agent nor CI runs this contract or the game.
 Mac user verification remains required after delivery. The code defect and
 static pixel reproduction are established; actual repaired Metal output has
 not yet been observed on the user's Mac.
+
+## Delivery evidence
+
+Source: `92dfbd07f007f69170b7bb440e6f9760433a3f65`.
+[CI 36525803562](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36525803562)
+passed all six full-game/portable jobs. The new GPU contract compiled on all
+three OSes, including both macOS architectures, but was not executed.
+
+Local Windows x64 game and GPU transfer contract compiled in
+`build-runs/modern-x64-macos-render-02/`. DAT validation and static D3D9 audit
+passed. Shaders, platform window creation and shared renderer sources match
+the pre-candidate `0c0f8064` versions: speculative depth/Retina edits are gone.
+
+macOS universal delivery with user-owned DAT (local only):
+`runtime-builds/modern-macos-render-02/6kinoko-modern-macos-universal-92dfbd07-with-data.tar.gz`.
+SHA256: `36a85d9d58d4db182e9cfb18a5f144ec96f285141a3ebdcde809332cb32d6dc4`.
+CI manifest hashes, DAT hashes and archive executable permissions were checked.
+Download and staging evidence: `build-runs/macos-render-delivery-02/`.
+Extract the entire new archive and launch `Launch.command`. Keep older packages
+and saves. Target-machine visual/gameplay verification remains with the user.
