@@ -32,3 +32,18 @@ assert mods.resource_path('data/PROBE.bin')=='data/probe.bin'
 # The native contract validates SHA against independent standard vectors.
 assert mods.digest(b'abc')=='ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
 print('PASS: ordered dependencies, conflicts, snapshot isolation, stable/changing identity, save isolation and path rejection')
+entry_mod=root/'scripted';entry_mod.mkdir()
+script=entry_mod/'data/custom/scripted/main.nut';script.parent.mkdir(parents=True)
+script.write_text('return 1;',encoding='utf-8')
+manifest={'format':1,'id':'scripted','version':'1','files':['data/custom/scripted/main.nut']}
+(entry_mod/'mod.json').write_text(json.dumps(manifest),encoding='utf-8')
+before=mods.resolve([entry_mod])[-1]
+manifest['entrypoint']='data/custom/scripted/main.nut'
+(entry_mod/'mod.json').write_text(json.dumps(manifest),encoding='utf-8')
+resolved=mods.resolve([entry_mod])
+assert resolved[-1]!=before and resolved[-2].startswith('KINOKOMODS2\n')
+assert 'E\tscripted\tdata/custom/scripted/main.nut\n' in resolved[-2]
+manifest['entrypoint']='data/custom/scripted/missing.nut'
+(entry_mod/'mod.json').write_text(json.dumps(manifest),encoding='utf-8')
+rejects(lambda:mods.resolve([entry_mod]))
+print('PASS: explicit entrypoint validation and identity')

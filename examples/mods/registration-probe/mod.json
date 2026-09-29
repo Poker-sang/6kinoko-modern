@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "id": "registration-probe",
+  "name": "Content registration API probe (no new gameplay)",
+  "version": "1.0.0",
+  "requires": [],
+  "entrypoint": "data/custom/registration-probe/main.nut",
+  "files": ["data/custom/registration-probe/main.nut"]
+}

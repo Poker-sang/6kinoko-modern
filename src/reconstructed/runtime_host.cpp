@@ -1,5 +1,7 @@
 #include <SDL3/SDL.h>
 #include "kinoko/platform.hpp"
+#include "kinoko/mod_scripts.hpp"
+#include "kinoko/mod_resources.hpp"
 #include "kinoko/runtime_util.hpp"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/owned_script_object.h"
@@ -685,7 +687,11 @@ int32_t kinoko_game_update_input(KinokoInputManager *input) {
     return result;
 }
 
-int32_t kinoko_game_load_boot_script(void) { return kinoko_script_load_file("data/script/boot.nut", 0); }
+int32_t kinoko_game_load_boot_script(void) {
+    const auto result=kinoko_script_load_file("data/script/boot.nut", 0);
+    if(result && !kinoko::mods::run_scripts(kinoko_primary_vm,kinoko::mods::startup_error()))return 0;
+    return result;
+}
 
 void kinoko_game_update_callback(int32_t trace_index) {
     if (kinoko_sqplus_object_type(&global_callback.closure) ==

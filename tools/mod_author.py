@@ -89,6 +89,17 @@ def export_png(source, destination):
         image.save(output, format='PNG')
 
 
+def set_entrypoint(directory, resource):
+    directory = Path(directory).resolve()
+    info, assets = mods.read_mod(directory)
+    resource = mods.resource_path(resource)
+    if resource not in assets or not resource.startswith('data/custom/'+info['id']+'/') or not resource.endswith('.nut'):
+        raise ValueError('Entrypoint must be a listed data/custom/<mod-id>/*.nut resource')
+    manifest = json.loads((directory/'mod.json').read_text(encoding='utf-8-sig'))
+    manifest['entrypoint'] = resource
+    write_json(directory/'mod.json', manifest)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest='command', required=True)
@@ -100,6 +111,7 @@ def main():
         cmd.add_argument('directory', type=Path); cmd.add_argument('source', type=Path)
         cmd.add_argument('resource', help='New or replacement data/... resource path')
     cmd = commands.add_parser('check'); cmd.add_argument('directory', type=Path)
+    cmd = commands.add_parser('entrypoint'); cmd.add_argument('directory', type=Path); cmd.add_argument('resource')
     cmd = commands.add_parser('export-png')
     cmd.add_argument('source', type=Path); cmd.add_argument('destination', type=Path)
     args = parser.parse_args()
@@ -108,6 +120,7 @@ def main():
         elif args.command in ('add', 'import-png'):
             print(json.dumps(add(args.directory, args.source, args.resource, png=args.command == 'import-png'), indent=2))
         elif args.command == 'check': print(json.dumps(mods.read_mod(args.directory)[0], indent=2))
+        elif args.command == 'entrypoint': set_entrypoint(args.directory, args.resource)
         else: export_png(args.source, args.destination)
     except (ValueError, OSError, KeyError, TypeError) as error:
         parser.exit(1, 'Mod author error: '+str(error)+'\n')

@@ -19,9 +19,11 @@ constexpr uint32_t constants[]={
 0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2};
 uint32_t rotate(uint32_t x,int n){return (x>>n)|(x<<(32-n));}
 std::vector<Info> modules;
+std::vector<Entry> scripts;
 struct Asset {std::filesystem::path path;std::string hash;};
 std::map<std::string,Asset> assets;
 std::string session_identity;
+std::string script_error;
 bool hex(const std::string& s){return s.size()==64 && s.find_first_not_of("0123456789abcdef")==s.npos;}
 bool token(const std::string& s){return !s.empty() && s.size()<128 && s.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789._-")==s.npos;}
 std::string normalize(std::string s) {
@@ -68,7 +70,9 @@ std::string sha256(std::string_view bytes) {
     const char* digits="0123456789abcdef";std::string out;
     for(auto n:h)for(int i=7;i>=0;--i)out+=digits[(n>>(i*4))&15];return out;
 }
-void clear(){assets.clear();modules.clear();session_identity.clear();}
+void clear(){assets.clear();modules.clear();scripts.clear();session_identity.clear();script_error.clear();}
+std::string& startup_error(){return script_error;}
+const std::vector<Entry>& entrypoints(){return scripts;}
 const std::vector<Info>& active(){return modules;}
 const std::string& identity(){return session_identity;}
 bool load(const std::filesystem::path& catalog,std::string& error) {
@@ -77,15 +81,19 @@ bool load(const std::filesystem::path& catalog,std::string& error) {
         if(std::filesystem::file_size(catalog)>4*1024*1024)throw std::runtime_error("Mod catalog too large");
         std::ifstream in(catalog,std::ios::binary);std::string bytes{std::istreambuf_iterator<char>(in),{}};
         std::istringstream lines(bytes);std::string line;
-        if(!std::getline(lines,line) || line!="KINOKOMODS1")throw std::runtime_error("Invalid Mod catalog header");
+        if(!std::getline(lines,line) || (line!="KINOKOMODS1" && line!="KINOKOMODS2"))throw std::runtime_error("Invalid Mod catalog header");
+        const bool version2=line=="KINOKOMODS2";
         auto root=std::filesystem::absolute(catalog).parent_path()/"assets";
         bool file_section=false;
         while(std::getline(lines,line)) {
             std::vector<std::string> fields;std::istringstream row(line);std::string field;
             while(std::getline(row,field,'\t'))fields.push_back(field);
-            if(fields.size()==4 && fields[0]=="M" && !file_section && token(fields[1]) && token(fields[2]) && hex(fields[3])) {
+            if(fields.size()==4 && fields[0]=="M" && !file_section && scripts.empty() && token(fields[1]) && token(fields[2]) && hex(fields[3])) {
                 if(std::any_of(modules.begin(),modules.end(),[&](const Info& m){return m.id==fields[1];}))throw std::runtime_error("Duplicate Mod id");
                 modules.push_back({fields[1],fields[2],fields[3]});
+            } else if(version2 && fields.size()==3 && fields[0]=="E" && !file_section && token(fields[1]) && normalize(fields[2])==fields[2] && fields[2].rfind("data/custom/"+fields[1]+"/",0)==0 && fields[2].size()>4 && fields[2].substr(fields[2].size()-4)==".nut") {
+                if(std::any_of(scripts.begin(),scripts.end(),[&](const Entry& e){return e.id==fields[1];}))throw std::runtime_error("Duplicate entrypoint");
+                scripts.push_back({fields[1],fields[2]});
             } else if(fields.size()==3 && fields[0]=="F" && normalize(fields[1])==fields[1] && !fields[1].empty() && hex(fields[2])) {
                 file_section=true;const auto path=root/std::filesystem::u8path(fields[1]);
                 if(!contained(root,path))throw std::runtime_error("Mod resource escapes snapshot");
@@ -95,9 +103,16 @@ bool load(const std::filesystem::path& catalog,std::string& error) {
             }else throw std::runtime_error("Invalid Mod catalog row");
         }
         if(modules.empty() || assets.empty())throw std::runtime_error("Empty Mod catalog");
+        size_t next=0;
+        for(const auto& entry:scripts) {
+            while(next<modules.size() && modules[next].id!=entry.id)++next;
+            if(next==modules.size() || !assets.count(entry.path))throw std::runtime_error("Invalid entrypoint order/resource");
+            ++next;
+        }
         session_identity=sha256(bytes);return true;
     }catch(const std::exception& e){error=e.what();clear();return false;}
 }
+bool contains(const char* path){return path && assets.count(normalize(path))!=0;}
 Lookup open(const char* path) noexcept {
     if(!path || assets.empty())return {};
     try {const auto found=assets.find(normalize(path));if(found==assets.end())return {};return {true,verified(found->second)};}

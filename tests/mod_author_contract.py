@@ -38,6 +38,10 @@ assert (project/'mod.json').read_bytes() == before
 rejects(lambda: author.export_png(cv2, root/'roundtrip.png'))
 (root/'script.nut').write_text('return 42;', encoding='utf-8')
 author.add(project, root/'script.nut', 'data/custom/new-script.nut')
+rejects(lambda: author.set_entrypoint(project, 'data/custom/new-script.nut'))
+author.add(project, root/'script.nut', 'data/custom/new-content/main.nut')
+author.set_entrypoint(project, 'data/custom/new-content/main.nut')
+assert session.read_mod(project)[0]['entrypoint'] == 'data/custom/new-content/main.nut'
 assert list((project/'history').glob('*.json'))
 manager.pack(project, root/'new-content.kmod')
 game = root/'game.exe'; game.write_bytes(b'not executed')

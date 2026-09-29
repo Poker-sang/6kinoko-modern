@@ -346,6 +346,8 @@ extern "C" int kinoko_application_run(int show_command) {
     config.manager = kinoko::game::create_manager();
     kinoko_application_open_archives();
     if (!config.manager || !initialize(config)) SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Error",u8"初期化失敗",platform.window());
+    else if(!kinoko::mods::startup_error().empty())
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Mod script failed",kinoko::mods::startup_error().c_str(),platform.window());
     else message_loop();
 #ifdef _WIN32
     stop_move_frames(window);

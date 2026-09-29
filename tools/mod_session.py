@@ -39,7 +39,7 @@ def read_mod(directory, *, allow_empty=False):
     if path.stat().st_size>1024*1024: raise ValueError('Manifest too large')
     manifest=json.loads(path.read_text(encoding='utf-8-sig'))
     if not isinstance(manifest,dict): raise ValueError('Manifest must be an object')
-    if manifest.get('format')!=1 or set(manifest)-{'format','id','name','version','requires','files'}:
+    if manifest.get('format')!=1 or set(manifest)-{'format','id','name','version','requires','files','entrypoint'}:
         raise ValueError('Unsupported manifest fields/version')
     for field in ('id','version'):
         if not isinstance(manifest.get(field),str) or not TOKEN.fullmatch(manifest[field]):
@@ -58,6 +58,11 @@ def read_mod(directory, *, allow_empty=False):
         if not isinstance(requirement,dict) or set(requirement)!={'id','version'} or any(not isinstance(requirement[k],str) or not TOKEN.fullmatch(requirement[k]) for k in ('id','version')):
             raise ValueError('Dependencies require exact id/version')
     identity={'id':manifest['id'],'version':manifest['version'],'requires':requirements,'files':{key:value[1] for key,value in sorted(assets.items())}}
+    if 'entrypoint' in manifest:
+        entry=resource_path(manifest['entrypoint'])
+        if entry not in assets or not entry.startswith('data/custom/'+manifest['id']+'/') or not entry.endswith('.nut'):
+            raise ValueError('Entrypoint must be a listed data/custom/<mod-id>/*.nut resource')
+        identity['entrypoint']=entry
     return {**identity,'content_sha256':digest(canonical(identity))},assets
 
 def resolve(mod_directories, allow_overrides=False):
@@ -73,7 +78,11 @@ def resolve(mod_directories, allow_overrides=False):
             if key in effective:conflicts.append({'resource':key,'previous':owners[key],'winner':info['id']})
             effective[key]=value;owners[key]=info['id']
     if conflicts and not allow_overrides:raise ValueError('Resource conflict; use --allow-overrides for explicit later-wins order: '+json.dumps(conflicts))
-    catalog='KINOKOMODS1\n'+''.join('M\t'+m['id']+'\t'+m['version']+'\t'+m['content_sha256']+'\n' for m in modules)
+    entries=[m for m in modules if 'entrypoint' in m]
+    for m in entries:
+        if owners[m['entrypoint']]!=m['id']:raise ValueError('Another Mod cannot override an entrypoint')
+    catalog=('KINOKOMODS2\n' if entries else 'KINOKOMODS1\n')+''.join('M\t'+m['id']+'\t'+m['version']+'\t'+m['content_sha256']+'\n' for m in modules)
+    catalog+=''.join('E\t'+m['id']+'\t'+m['entrypoint']+'\n' for m in entries)
     catalog+=''.join('F\t'+key+'\t'+effective[key][1]+'\n' for key in sorted(effective))
     identity=digest(catalog.encode('ascii'))
     return modules,effective,conflicts,catalog,identity
