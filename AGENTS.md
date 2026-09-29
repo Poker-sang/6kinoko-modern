@@ -176,5 +176,9 @@ user validation, not agent gameplay. User explicitly authorized configuring
 local WSL2 and running the Linux version there; this overrides the prior
 no-agent-execution policy for this WSL validation task. Preserve logs and use
 fresh runtime directories. Do not automatically reboot Windows. Current setup
-requires a reboot before Ubuntu installation can finish; see
-docs/modern-platform/wsl-validation-01.md for resume state.
+was rebooted and Ubuntu imported successfully; see
+docs/modern-platform/wsl-validation-02.md for current state. Linux game startup
+and main-menu rendering were observed by the agent through WSLg, using CPU
+Vulkan (llvmpipe), not hardware acceleration. Linux/macOS missing star and
+stomp-score effects remain user-reported issues; same-source Windows x64 is
+user-confirmed unaffected. Do not equate startup with gameplay validation.
