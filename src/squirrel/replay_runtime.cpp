@@ -24,6 +24,9 @@ enum class Mode {Off,Record,Playback};
 Mode mode=Mode::Off;
 std::ifstream input;
 std::ofstream output,status;
+std::ofstream details;
+uint64_t details_from=0;
+bool details_frame=false;
 std::unique_ptr<kinoko::replay::Reader> reader;
 std::unique_ptr<kinoko::replay::Writer> writer;
 kinoko::replay::Frame frame,expected;
@@ -43,11 +46,19 @@ void fail(const std::string& message) {
 }
 struct Hash {
     uint64_t value=14695981039346656037ull;
-    void number(uint64_t n) {for(int i=0;i<8;++i){value=(value^static_cast<uint8_t>(n>>(8*i)))*1099511628211ull;}}
+    std::vector<uint64_t> fields;
+    void number(uint64_t n) {if(details_frame)fields.push_back(n);for(int i=0;i<8;++i){value=(value^static_cast<uint8_t>(n>>(8*i)))*1099511628211ull;}}
     void real(float f) {uint32_t bits;std::memcpy(&bits,&f,4);number(bits);}
     void text(const char* s) {while(*s)value=(value^static_cast<uint8_t>(*s++))*1099511628211ull;number(0);}
+    void dump(const std::string& key) const {
+        if(!details_frame)return;
+        details<<std::dec<<frame_index<<' '<<key<<std::hex;
+        for(auto n:fields)details<<' '<<n;
+        details<<'\n';
+    }
 };
 uint64_t checkpoint() {
+    details_frame=details.is_open() && frame_index>=details_from;
     Hash h;
     h.number(kinoko_game_masks.update);h.number(kinoko_game_masks.render);
     const auto& objects=*kinoko_game_objects();
@@ -70,6 +81,7 @@ uint64_t checkpoint() {
         item.number(a.get(&actor::ActorRecord::take));item.number(a.get(&actor::ActorRecord::frame_index));
         item.number(a.get(&actor::ActorRecord::frame_time));
         for(auto hit:a.get(&actor::ActorRecord::hits))item.number(hit);
+        item.dump("actor:"+std::to_string(a.get(&actor::ActorRecord::pool_handle)));
         actors.emplace_back(a.get(&actor::ActorRecord::pool_handle),item.value);
     }
     std::sort(actors.begin(),actors.end());h.number(actors.size());
@@ -89,7 +101,7 @@ uint64_t checkpoint() {
                     if(type==OT_FLOAT){SQFloat v;sq_getfloat(vm,-1,&v);item.real(v);}
                     if(type==OT_BOOL){SQBool v;sq_getbool(vm,-1,&v);item.number(v);}
                     if(type==OT_STRING){const char* v;sq_getstring(vm,-1,&v);item.text(v);}
-                    globals.emplace_back(name,item.value);
+                    item.dump(std::string("global:")+name);globals.emplace_back(name,item.value);
                 }
             }
             sq_pop(vm,2);
@@ -98,6 +110,7 @@ uint64_t checkpoint() {
     }
     std::sort(globals.begin(),globals.end());
     for(const auto& item:globals){h.text(item.first.c_str());h.number(item.second);}
+    h.dump("state");if(details_frame)details.flush();
     return h.value;
 }
 }
@@ -109,6 +122,12 @@ bool kinoko_replay_start() {
     if(!value || !*value)return true;
     frame_index=0;stopped=false;completed=false;failed=false;pending_error.clear();
     try {
+        if(const char* path=SDL_getenv("KINOKO_REPLAY_DETAILS")) {
+            details.open(std::filesystem::u8path(path),std::ios::out);
+            if(!details)throw std::runtime_error("Cannot create replay details log");
+            const char* first=SDL_getenv("KINOKO_REPLAY_DETAILS_FROM");
+            details_from=first?std::stoull(first):0;
+        }
         const std::string requested(value);
         if(requested!="record" && requested!="play")throw std::runtime_error("Unknown replay mode");
         std::string identity=settings.identity;
@@ -173,7 +192,7 @@ void kinoko_replay_finish() {
         if(mode==Mode::Record && writer && !failed){writer->finish();completed=true;}
         note(std::string(completed?"COMPLETED ":failed?"FAILED ":"ABORTED ")+std::to_string(frame_index)+" frames");
     }catch(const std::exception& e){fail(e.what());}
-    writer.reset();reader.reset();output.close();input.close();status.close();
+    writer.reset();reader.reset();output.close();input.close();status.close();details.close();details_frame=false;
     kinoko_simulation_enable(0);mode=Mode::Off;
     }
     // Startup failures can occur before a mode is selected. They still need reporting.
