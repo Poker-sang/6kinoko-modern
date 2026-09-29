@@ -30,3 +30,31 @@ effect/error records; default gameplay still has no trace file.
 The new random contract checks known CRT outputs, full-range seeds, original
 star-speed bounds and (when compiled with MSVC) comparison with the real CRT.
 Build/delivery and actual execution results will be recorded below.
+
+## Delivery
+
+Source: `067fc414dabc51e9aea7e54958aeb592dbbaf988`.
+[CI 36553498171](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36553498171)
+passed all six jobs, including Linux and universal macOS full games. Local
+Windows x64 game and random contract compiled successfully at
+`runtime-builds/modern-x64-effects-01/kinoko_modern_gpu.exe`; three DAT hashes
+verified. Windows game/contract were not executed.
+
+Linux random contract from the portable CI artifact was executed in WSL and
+passed (exit 0); log: `build-runs/linux-effects-01/random-contract.log`.
+Native package manifests and all three staged DAT hashes verified. Executable
+modes explicitly verified in final tar archives (Windows-mode intermediate
+archives retained under separate names). Local-only data-containing packages:
+
+- `runtime-builds/modern-linux-effects-01/6kinoko-modern-linux-x64-067fc414-with-data.tar.gz`
+  SHA256 `47f202851729b515afcd40b84d778ce450e542094e49cf67e4bed41989134d30`.
+- `runtime-builds/modern-macos-effects-01/6kinoko-modern-macos-universal-067fc414-with-data.tar.gz`
+  SHA256 `53f06686f926afbe987b10f36ade05397dc3544693d38f06de15dab77462fe15`.
+
+Fresh WSL directory:
+`/home/kinoko/games/wsl-effects-02/6kinoko-modern-linux-x64-067fc414`.
+Launcher: `runtime-builds/modern-linux-effects-01/launch-wsl-diagnostics.cmd`.
+The WSLg COPY MODE/invisible-window problem recurred; Weston evidence retained
+and WSL restarted. Agent observed visible startup graphics afterward. This is
+startup evidence only; user gameplay verification and floating-score trace
+remain pending. Original full trace retained; new run uses the star filter.
