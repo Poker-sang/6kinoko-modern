@@ -19,6 +19,7 @@
 #include "../platform/resources/resource.h"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/replay_runtime.hpp"
+#include "kinoko/tas_bridge.hpp"
 #include "kinoko/platform.hpp"
 #include <SDL3/SDL.h>
 #include <cstdlib>
@@ -316,7 +317,7 @@ extern "C" int kinoko_application_run(int show_command) {
     if (!sdl_window_proc) { platform.close(); return 1; }
     // The entrypoint still receives Windows launch hints; window operations
     // themselves are SDL calls on the main thread.
-    if(show_command==SW_HIDE) SDL_HideWindow(platform.window());
+    if(show_command==SW_HIDE || kinoko::tas::enabled()) SDL_HideWindow(platform.window());
     else {
         SDL_ShowWindow(platform.window());
         if(show_command==SW_SHOWMINIMIZED || show_command==SW_MINIMIZE || show_command==SW_SHOWMINNOACTIVE)
@@ -325,7 +326,7 @@ extern "C" int kinoko_application_run(int show_command) {
     }
 #else
     (void)show_command;
-    SDL_ShowWindow(platform.window());
+    if(!kinoko::tas::enabled())SDL_ShowWindow(platform.window());
 #endif
     if(!kinoko_replay_start()) {kinoko_replay_finish();platform.close();return 1;}
     Configuration config;
@@ -336,6 +337,7 @@ extern "C" int kinoko_application_run(int show_command) {
 #ifdef _WIN32
     stop_move_frames(window);
 #endif
+    kinoko::tas::shutdown();
     kinoko_application_shutdown();
     kinoko_replay_finish();
 #ifdef _WIN32

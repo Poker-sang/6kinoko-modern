@@ -1,4 +1,5 @@
 #include "kinoko/gpu_renderer.hpp"
+#include "kinoko/tas_bridge.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <cstring>
@@ -48,6 +49,7 @@ struct Renderer::State {
     SDL_ThreadID thread=SDL_GetCurrentThreadID();
     SDL_GPUShader *vertex=nullptr,*fragment=nullptr;
     SDL_GPUTextureFormat depth_format=SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
+    SDL_GPUTexture* embedded=nullptr;SDL_GPUTransferBuffer* download=nullptr;
     SDL_GPUBuffer* vertices=nullptr;SDL_GPUTransferBuffer* upload=nullptr;
     Uint32 capacity=0;
     std::pair<uint32_t,uint32_t> screen_extent{};
@@ -65,6 +67,8 @@ struct Renderer::State {
         for(auto* s:samplers) if(s) SDL_ReleaseGPUSampler(device,s);
         for(auto& t:textures) SDL_ReleaseGPUTexture(device,t.second.value);
         for(auto& d:depths) SDL_ReleaseGPUTexture(device,d.second);
+        if(embedded)SDL_ReleaseGPUTexture(device,embedded);
+        if(download)SDL_ReleaseGPUTransferBuffer(device,download);
         if(vertices) SDL_ReleaseGPUBuffer(device,vertices);
         if(upload) SDL_ReleaseGPUTransferBuffer(device,upload);
         if(vertex) SDL_ReleaseGPUShader(device,vertex);
@@ -206,7 +210,7 @@ void Renderer::destroy_texture(TextureId id) {
     const bool retained=s.screen_extent==extent||std::any_of(s.textures.begin(),s.textures.end(),[&](const auto& t){return t.second.target&&std::make_pair(t.second.width,t.second.height)==extent;});
     if(!retained){auto depth=s.depths.find(extent);if(depth!=s.depths.end()){SDL_ReleaseGPUTexture(s.device,depth->second);s.depths.erase(depth);}}
 }
-bool Renderer::present(const std::vector<Pass>& passes) {
+bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
     auto& s=*state_;s.owner();
     if(passes.empty())throw std::runtime_error("A frame needs at least one pass");
     struct Prepared { SDL_GPUGraphicsPipeline* pipeline;SDL_GPUTextureSamplerBinding texture;Uint32 first,count; };
@@ -217,7 +221,7 @@ bool Renderer::present(const std::vector<Pass>& passes) {
     // Validate the whole frame before issuing any GPU commands.
     for(const auto& pass:passes) {
         if(bool(pass.logical_width)!=bool(pass.logical_height))throw std::runtime_error("Both logical dimensions are required");
-        const auto format=pass.target?SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM:SDL_GetGPUSwapchainTextureFormat(s.device,s.window);
+        const auto format=(pass.target||tas::enabled())?SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM:SDL_GetGPUSwapchainTextureFormat(s.device,s.window);
         if(pass.target) {
             if(!s.texture(pass.target).target)throw std::runtime_error("Texture is not a render target");
             if(!pass.clear&&!initialized.count(pass.target))throw std::runtime_error("First target use must clear");
@@ -247,14 +251,25 @@ bool Renderer::present(const std::vector<Pass>& passes) {
         std::memcpy(mapped,vertices.data(),size);SDL_UnmapGPUTransferBuffer(s.device,s.upload);
     }
     Command command(s.device);SDL_GPUTexture* swapchain=nullptr;Uint32 width=0,height=0;
-    if(screen_initialized)require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
+    if(screen_initialized && tas::enabled()) {
+        width=640;height=480;
+        if(!s.embedded) {
+            SDL_GPUTextureCreateInfo info{};info.type=SDL_GPU_TEXTURETYPE_2D;info.format=SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+            info.usage=SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;info.width=width;info.height=height;info.layer_count_or_depth=1;info.num_levels=1;
+            s.embedded=SDL_CreateGPUTexture(s.device,&info);require(s.embedded,"Create TAS render target");
+            SDL_GPUTransferBufferCreateInfo transfer{};transfer.usage=SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD;transfer.size=width*height*4;
+            s.download=SDL_CreateGPUTransferBuffer(s.device,&transfer);require(s.download,"Create TAS readback");
+        }
+        swapchain=s.embedded;
+    }
+    if(screen_initialized && !tas::enabled())require(SDL_WaitAndAcquireGPUSwapchainTexture(command.value,s.window,&swapchain,&width,&height),"Acquire swapchain");
     if(swapchain && s.screen_extent!=std::make_pair(width,height)) {
         const auto old=s.screen_extent;
         const bool used_by_target=std::any_of(s.textures.begin(),s.textures.end(),[&](const auto& t){return t.second.target&&std::make_pair(t.second.width,t.second.height)==old;});
         if(!used_by_target){auto found=s.depths.find(old);if(found!=s.depths.end()){SDL_ReleaseGPUTexture(s.device,found->second);s.depths.erase(found);}}
         s.screen_extent={width,height};
     }
-    command.acquired=swapchain!=nullptr;
+    command.acquired=swapchain!=nullptr && !tas::enabled();
     if(size) {
         auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin upload pass");
         SDL_GPUTransferBufferLocation source{s.upload,0};SDL_GPUBufferRegion destination{s.vertices,0,size};
@@ -288,7 +303,16 @@ bool Renderer::present(const std::vector<Pass>& passes) {
         }
         SDL_EndGPURenderPass(render);
     }
-    command.submit();
+    if(tas::enabled() && swapchain) {
+        auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin TAS readback");
+        SDL_GPUTextureRegion region{};region.texture=swapchain;region.w=width;region.h=height;region.d=1;
+        SDL_GPUTextureTransferInfo destination{};destination.transfer_buffer=s.download;destination.pixels_per_row=width;destination.rows_per_layer=height;
+        SDL_DownloadFromGPUTexture(copy,&region,&destination);SDL_EndGPUCopyPass(copy);
+        auto* fence=SDL_SubmitGPUCommandBufferAndAcquireFence(command.value);command.value=nullptr;require(fence,"Submit TAS frame");
+        const bool waited=SDL_WaitForGPUFences(s.device,true,&fence,1);SDL_ReleaseGPUFence(s.device,fence);require(waited,"Wait for TAS frame");
+        void* pixels=SDL_MapGPUTransferBuffer(s.device,s.download,false);require(pixels,"Map TAS frame");
+        tas::image(frame_number,width,height,pixels);SDL_UnmapGPUTransferBuffer(s.device,s.download);
+    }else command.submit();
     for(auto id:initialized)s.textures.at(id).initialized=true;
     return swapchain!=nullptr;
 }

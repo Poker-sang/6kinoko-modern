@@ -1,5 +1,6 @@
 #include "kinoko/replay_runtime.hpp"
 #include "kinoko/replay.hpp"
+#include "kinoko/tas_bridge.hpp"
 #include "kinoko/runtime_options.hpp"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/game_host.h"
@@ -32,16 +33,18 @@ std::unique_ptr<kinoko::replay::Writer> writer;
 kinoko::replay::Frame frame,expected;
 uint64_t frame_index=0;
 bool stopped=false,completed=false,failed=false;
+kinoko::input::Frame previous_actions;
+KinokoInputPublishedState previous_legacy{};
 std::string pending_error;
 void (*error_handler)(const char*)=nullptr;
 void quit() {SDL_Event event{};event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
 void note(const std::string& message) {status<<message<<'\n';status.flush();}
 void fail(const std::string& message) {
     if(failed)return;
-    failed=true;stopped=true;
+    failed=true;stopped=true;kinoko::tas::failure(message);
     note("FAILED at frame "+std::to_string(frame_index)+": "+message);
     if(error_handler)error_handler(message.c_str());
-    else pending_error=message; // Report on the main thread after the game worker joins.
+    else if(!kinoko::tas::enabled())pending_error=message; // Report on the main thread after the game worker joins.
     quit();
 }
 struct Hash {
@@ -120,6 +123,7 @@ bool kinoko_replay_start() {
     const char* value=SDL_getenv("KINOKO_REPLAY_MODE");
     if(explicit_paths)value=settings.recording.empty()?"play":"record";
     if(!value || !*value)return true;
+    kinoko::tas::start();previous_actions={};previous_legacy={};
     frame_index=0;stopped=false;completed=false;failed=false;pending_error.clear();
     try {
         if(const char* path=SDL_getenv("KINOKO_REPLAY_DETAILS")) {
@@ -147,6 +151,11 @@ bool kinoko_replay_start() {
         }else {
             input.open(replay_path,std::ios::binary);
             reader=std::make_unique<kinoko::replay::Reader>(input,identity);
+            if(kinoko::tas::enabled()) {
+                if(std::filesystem::exists(settings.tas_output))throw std::runtime_error("Branch already exists");
+                output.open(settings.tas_output,std::ios::binary|std::ios::out);
+                writer=std::make_unique<kinoko::replay::Writer>(output,identity);
+            }
         }
         kinoko_simulation_enable(1);
         note("Started "+requested+"; format 1; fixed simulation clock 60 Hz; identity "+identity);
@@ -157,6 +166,13 @@ bool kinoko_replay_begin_frame() {
     if(mode==Mode::Off)return true;
     if(stopped)return false;
     try {
+        if(kinoko::tas::enabled()) {
+            for(;;) {
+                if(!kinoko::tas::boundary(frame_index,reader?reader->count():0,mode==Mode::Record)){quit();return false;}
+                if(!kinoko::tas::take_control())break;
+                mode=Mode::Record;note("Takeover at completed frame count "+std::to_string(frame_index));
+            }
+        }
         kinoko_simulation_frame(frame_index);frame={};frame.clock=kinoko_simulation_milliseconds();
         frame.random_before=kinoko_script_random_state();
         if(mode==Mode::Playback) {
@@ -170,7 +186,23 @@ bool kinoko_replay_begin_frame() {
 void kinoko_replay_input(KinokoInputManager* manager,kinoko::input::Frame& actions) {
     if(mode==Mode::Off || stopped)return;
     if(mode==Mode::Playback){manager->published=expected.legacy;actions=expected.actions;}
+    if(kinoko::tas::enabled() && mode==Mode::Record) {
+        const auto mask=kinoko::tas::input_mask();
+        for(int i=0;i<kinoko::input::Count;++i) {
+            actions.held[i]=(mask&(1u<<i))? (previous_actions.held[i]==INT32_MAX?INT32_MAX:previous_actions.held[i]+1):0;
+            actions.released[i]=previous_actions.held[i]>0 && actions.held[i]==0;
+        }
+        auto& legacy=manager->published;legacy={};
+        using namespace kinoko::input;
+        auto combine=[&](int a,int b){return std::max(actions.held[a],actions.held[b]);};
+        legacy.x=combine(Left,MenuLeft)?-combine(Left,MenuLeft):combine(Right,MenuRight);
+        legacy.y=combine(Up,MenuUp)?-combine(Up,MenuUp):combine(Down,MenuDown);
+        legacy.buttons[0]=combine(Jump,Confirm);legacy.buttons[1]=combine(Pause,MenuAcceptAlt);
+        legacy.buttons[2]=actions.held[UseItem];legacy.buttons[3]=std::max(combine(Attack,Run),actions.held[Carry]);
+        for(int i=0;i<4;++i)legacy.released[i]=previous_legacy.buttons[i]>0 && legacy.buttons[i]==0;
+    }
     frame.legacy=manager->published;frame.actions=actions;
+    previous_actions=actions;previous_legacy=manager->published;
 }
 void kinoko_replay_end_frame() {
     if(mode==Mode::Off || stopped)return;
@@ -182,18 +214,19 @@ void kinoko_replay_end_frame() {
                 <<", actual "<<frame.checkpoint<<"; RNG expected "<<expected.random_after<<", actual "<<frame.random_after;
             throw std::runtime_error(message.str());
         }
-        ++frame_index;
-        if(mode==Mode::Playback && frame_index==reader->count()){completed=true;stopped=true;quit();}
+        if(mode==Mode::Playback && kinoko::tas::enabled())writer->append(frame);
+        ++frame_index;kinoko::tas::completed(frame_index);
+        if(!kinoko::tas::enabled() && mode==Mode::Playback && frame_index==reader->count()){completed=true;stopped=true;quit();}
     }catch(const std::exception& e){fail(e.what());}
 }
 void kinoko_replay_finish() {
     if(mode!=Mode::Off) {
     try {
-        if(mode==Mode::Record && writer && !failed){writer->finish();completed=true;}
+        if((mode==Mode::Record || kinoko::tas::enabled()) && writer && !failed){writer->finish();completed=true;}
         note(std::string(completed?"COMPLETED ":failed?"FAILED ":"ABORTED ")+std::to_string(frame_index)+" frames");
     }catch(const std::exception& e){fail(e.what());}
     writer.reset();reader.reset();output.close();input.close();status.close();details.close();details_frame=false;
-    kinoko_simulation_enable(0);mode=Mode::Off;
+    kinoko_simulation_enable(0);mode=Mode::Off;kinoko::tas::finish();
     }
     // Startup failures can occur before a mode is selected. They still need reporting.
     if(!pending_error.empty()) {

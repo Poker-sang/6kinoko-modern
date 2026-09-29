@@ -1,4 +1,8 @@
 #include "kinoko/replay_runtime.hpp"
+#include "kinoko/tas_bridge.hpp"
+#include "kinoko/replay.hpp"
+#include <future>
+#include <thread>
 #include "kinoko/runtime_options.hpp"
 #include "kinoko/game_host.h"
 #include "kinoko/game_runtime.h"
@@ -108,6 +112,35 @@ int main() {
         CHECK(scenario ? (errors==prior_errors+1 && status().find("FAILED at frame 2")!=std::string::npos):
             (errors==prior_errors && status().find("COMPLETED 4 frames")!=std::string::npos));
     }
+    // TAS branch: validate two source frames, pause, take over and release jump.
+    const auto tas=root/"tas";fs::create_directory(tas);
+    std::vector<std::string> args={"contract","--save-dir",tas.u8string(),"--replay",(root/"record/session.krec").u8string(),
+        "--replay-status",(tas/"status.txt").u8string(),"--replay-identity",std::string(64,'a'),"--tas-dir",tas.u8string(),"--tas-output",(tas/"branch.krec").u8string()};
+    std::vector<char*> av;for(auto& a:args)av.push_back(a.data());std::string error;
+    CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));CHECK(reset() && kinoko_replay_start());
+    std::ofstream(tas/"command.txt")<<"1 target 2\n";
+    for(int i=0;i<2;++i){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame action;
+        kinoko_replay_input(&input_manager,action);camera.x+=float(action.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
+    std::ofstream(tas/"command.txt")<<"2 takeover 0\n";
+    auto controller=std::async(std::launch::async,[&] {
+        for(int i=0;i<500;++i){std::ifstream in(tas/"state.txt");std::string line;std::getline(in,line);
+            if(line.find("live-paused")!=line.npos){std::ofstream(tas/"input.txt")<<"1 0\n";std::ofstream(tas/"command.txt")<<"3 target 3\n";return true;}
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));}
+        kinoko::tas::shutdown();return false;
+    });
+    CHECK(kinoko_replay_begin_frame());CHECK(controller.get());kinoko::input::Frame action;
+    kinoko_replay_input(&input_manager,action);CHECK(action.held[kinoko::input::Jump]==0 && action.released[kinoko::input::Jump]==1);
+    CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();kinoko_replay_finish();
+    {std::ifstream in(tas/"branch.krec",std::ios::binary);kinoko::replay::Reader branch(in,std::string(64,'a'));CHECK(branch.count()==3);}
+    args.resize(11); // Base arguments include no TAS flags.
+    args[4]=(tas/"branch.krec").u8string();args[6]=(tas/"verify.txt").u8string();
+    // Rebuild argument list explicitly (option,value pairs).
+    args={"contract","--save-dir",tas.u8string(),"--replay",(tas/"branch.krec").u8string(),"--replay-status",(tas/"verify.txt").u8string(),"--replay-identity",std::string(64,'a')};
+    av.clear();for(auto& a:args)av.push_back(a.data());CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));
+    const int before=errors;CHECK(reset() && kinoko_replay_start());
+    for(int i=0;i<3;++i){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame a;kinoko_replay_input(&input_manager,a);
+        camera.x+=float(a.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
+    kinoko_replay_finish();CHECK(errors==before);
     sq_close(kinoko_primary_vm);kinoko_primary_vm=nullptr;
     kinoko_priority_destroy(&actors.actors);
     SDL_UnsetEnvironmentVariable(env,"KINOKO_REPLAY_MODE");SDL_Quit();fs::current_path(original);

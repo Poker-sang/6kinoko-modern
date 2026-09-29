@@ -12,12 +12,14 @@ bool parse_options(int argc,char** argv,std::string& error) {
         Options parsed;
         for(int i=1;i<argc;++i) {
             const std::string key=argv[i];
-            if(key!="--save-dir" && key!="--record" && key!="--replay" && key!="--replay-status" && key!="--replay-identity")
+            if(key!="--save-dir" && key!="--record" && key!="--replay" && key!="--replay-status" && key!="--replay-identity" && key!="--tas-dir" && key!="--tas-output")
                 throw std::runtime_error("Unknown argument: "+key);
             if(++i==argc || !*argv[i])throw std::runtime_error("Missing value for "+key);
             if(key=="--replay-identity")parsed.identity=argv[i];
             else {
                 const auto path=std::filesystem::absolute(std::filesystem::u8path(argv[i])).lexically_normal();
+                if(key=="--tas-dir")parsed.tas_dir=path;
+                if(key=="--tas-output")parsed.tas_output=path;
                 if(key=="--save-dir")parsed.save_dir=path;
                 if(key=="--record")parsed.recording=path;
                 if(key=="--replay")parsed.playback=path;
@@ -28,6 +30,10 @@ bool parse_options(int argc,char** argv,std::string& error) {
         if(!parsed.recording.empty() || !parsed.playback.empty()) {
             if(parsed.save_dir.empty() || parsed.status.empty() || parsed.identity.size()!=64 || parsed.identity.find_first_not_of("0123456789abcdefABCDEF")!=std::string::npos)
                 throw std::runtime_error("Replay requires --save-dir, --replay-status and a 64-digit --replay-identity; use the session launcher");
+        }
+        if(!parsed.tas_dir.empty()) {
+            if(parsed.save_dir.empty() || (parsed.recording.empty() && parsed.playback.empty()) || parsed.tas_output.empty())throw std::runtime_error("TAS requires isolated save and replay paths");
+            if(!std::filesystem::is_directory(parsed.tas_dir))throw std::runtime_error("TAS directory does not exist");
         }
         if(!parsed.save_dir.empty())std::filesystem::create_directories(parsed.save_dir);
         settings=std::move(parsed);return true;

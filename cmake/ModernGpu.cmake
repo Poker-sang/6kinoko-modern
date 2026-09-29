@@ -81,3 +81,5 @@ add_custom_target(kinoko_font_assets
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/third_party/noto/NotoSansCJKjp-Regular.otf" "${KINOKO_RUNTIME_DIR}/fonts/NotoSansCJKjp-Regular.otf"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/third_party/noto/LICENSE" "${KINOKO_RUNTIME_DIR}/fonts/LICENSE"
     VERBATIM)
+
+target_link_libraries(kinoko_gpu PUBLIC kinoko_runtime_services)

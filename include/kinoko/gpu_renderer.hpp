@@ -58,7 +58,7 @@ public:
     void destroy_texture(TextureId);
     // Pass and draw order is exact. No sorting of translucent objects.
     // false means minimized/no available swapchain image, not a render failure.
-    bool present(const std::vector<Pass>& passes);
+    bool present(const std::vector<Pass>& passes,uint64_t frame_number=0);
     const char* driver() const;
 private:
     struct State;

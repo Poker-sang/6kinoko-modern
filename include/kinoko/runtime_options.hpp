@@ -3,7 +3,7 @@
 #include <string>
 namespace kinoko::runtime {
 struct Options {
-    std::filesystem::path save_dir, recording, playback, status;
+    std::filesystem::path save_dir, recording, playback, status, tas_dir, tas_output;
     std::string identity;
 };
 const Options& options();
