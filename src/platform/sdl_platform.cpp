@@ -155,11 +155,7 @@ bool Platform::open(const char* title, int width, int height, bool hidden) {
     constexpr auto flags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK;
     if (!SDL_InitSubSystem(flags)) return false;
     state_->initialized = true;
-    // Render into physical pixels on Retina/HiDPI displays instead of letting
-    // the compositor enlarge a low-resolution window surface. Game coordinates
-    // remain logical; the GPU pass already carries their independent extent.
-    state_->window = SDL_CreateWindow(title, width, height,
-        SDL_WINDOW_HIGH_PIXEL_DENSITY | (hidden ? SDL_WINDOW_HIDDEN : 0));
+    state_->window = SDL_CreateWindow(title, width, height, hidden ? SDL_WINDOW_HIDDEN : 0);
     if (!state_->window) { close(); return false; }
     int count = 0;
     auto* ids = SDL_GetJoysticks(&count);

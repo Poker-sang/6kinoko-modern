@@ -282,12 +282,7 @@ bool Renderer::present(const std::vector<Pass>& passes) {
             extent[2]=pass.draws[i].clip_space?1.f:0.f;
             SDL_PushGPUVertexUniformData(command.value,0,extent,sizeof(extent));
             const auto& raster=pass.draws[i].raster;
-            // Apple GPUs cannot store D24S8. Preserve its normalized fixed-point
-            // precision when using D32F instead, rather than exposing extra
-            // precision to coplanar legacy layers and their LEQUAL comparison.
-            struct Alpha {Uint32 enabled,comparison;float reference,depth_unorm24;} alpha{
-                raster.alpha_test?1u:0u,Uint32(raster.alpha_compare),float(raster.alpha_reference)/255,
-                s.depth_format==SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT?1.f:0.f};
+            struct Alpha {Uint32 enabled,comparison;float reference,padding;} alpha{raster.alpha_test?1u:0u,Uint32(raster.alpha_compare),float(raster.alpha_reference)/255,0};
             SDL_PushGPUFragmentUniformData(command.value,0,&alpha,sizeof(alpha));
             SDL_DrawGPUPrimitives(render,prepared[index].count,1,prepared[index].first,0);
         }
