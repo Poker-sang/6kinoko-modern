@@ -140,6 +140,7 @@ bool initialize(const Configuration& configuration) {
 }
 void message_loop() {
     while (state.is_running() && kinoko::platform::host().pump()) {
+        kinoko::tas::pump_window(kinoko::platform::host().window());
         if (kinoko::platform::host().take_fullscreen_request()) {
             const bool was_windowed=kinoko_graphics.present.Windowed!=0;
             { CriticalLock lock(&state.scene_lock); kinoko_graphics_toggle_window(); }
@@ -317,7 +318,7 @@ extern "C" int kinoko_application_run(int show_command) {
     if (!sdl_window_proc) { platform.close(); return 1; }
     // The entrypoint still receives Windows launch hints; window operations
     // themselves are SDL calls on the main thread.
-    if(show_command==SW_HIDE || kinoko::tas::enabled()) SDL_HideWindow(platform.window());
+    if(show_command==SW_HIDE || kinoko::tas::embedded()) SDL_HideWindow(platform.window());
     else {
         SDL_ShowWindow(platform.window());
         if(show_command==SW_SHOWMINIMIZED || show_command==SW_MINIMIZE || show_command==SW_SHOWMINNOACTIVE)
@@ -326,7 +327,7 @@ extern "C" int kinoko_application_run(int show_command) {
     }
 #else
     (void)show_command;
-    if(!kinoko::tas::enabled())SDL_ShowWindow(platform.window());
+    if(!kinoko::tas::embedded())SDL_ShowWindow(platform.window());
 #endif
     if(!kinoko_replay_start()) {kinoko_replay_finish();platform.close();return 1;}
     Configuration config;
