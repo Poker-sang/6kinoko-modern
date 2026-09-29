@@ -156,7 +156,7 @@ previous manifest intact; a file written before a manifest publication failure i
 retained unlisted for recovery. Creation/import are single-writer operations.
 
 Imported scripts remain inert until explicitly selected as an entrypoint. See the
-content API below. No map editor or automatic menu/spawn integration exists yet.
+content API below. No map editor exists yet. Stage selection and explicit spawn adapters are described below.
 
 
 ## Content API v1 and startup scripts
@@ -199,11 +199,71 @@ Squirrel 2.2 closures need explicit outer captures: `function(x) : (localValue)`
 Consumers use `KinokoMods.List(kind)` (registration order), `Get(kind, fullId)`
 (metadata/factory), and `Create(kind, fullId, [arguments...])` (factory result).
 Factories run with the root table as `this`; they may call existing engine APIs.
-The registry does not automatically insert map objects, add selection-menu rows,
-allocate original numeric actor IDs, or implement boss/transform behavior.
+The registry does not automatically insert map objects, allocate original numeric
+actor IDs, or implement boss/transform behavior.
 `KinokoMods.For` is namespace plumbing, not a security boundary between scripts.
 
 `examples/mods/registration-probe` exercises registration and factory invocation
-at startup without spawning actors or changing levels. It is an API probe, not a
-new playable enemy. Next integration work is explicit stage selection and map
-spawn adapters that consume these namespaced IDs.
+at startup without spawning actors. Version 1.1 adds a selectable launcher demo
+that displays a message and returns to the title; it is not a playable level.
+
+
+## Selecting and launching a Mod stage
+
+On Windows use `Choose-Mod-Stage.cmd`. The SDL system dialog lists stages from
+all enabled entrypoints in registration order, six per page. Choose a stage to
+call its `create()` factory with no arguments, or Return to title / close the
+dialog to continue the normal title screen. Nothing opens during ordinary
+`Launch-Mods.cmd` startup. This is a startup selector, not a redesigned in-game
+world map; its appearance follows the OS and has not been manually game-tested.
+
+```powershell
+python mod_manager.py launch --game kinoko_modern_gpu.exe --choose-stage
+python mod_manager.py launch --game kinoko_modern_gpu.exe --stage my-mod:first-stage
+```
+
+Selection happens after all entrypoints register, before the first game frame.
+A requested unknown stage or failing factory blocks the game loop and returns an
+error. Factories must manage their own scene, camera, actor and global-update
+transitions using existing game APIs. Selection alone does not construct a map,
+player or HUD, and does not automatically discard the title's callbacks/resources.
+Return normally from a stage factory; an infinite loop blocks startup.
+
+The launcher records requested_stage in the retained session report. The chooser
+records `@choose` (not the actual user choice). Stage selection shares the same
+Mod-combination save directory. Old inherited KINOKO_MOD_STAGE values are cleared
+by launchers; explicit selection is forwarded only to the intended child process.
+No recording/replay support is added.
+
+## Native actor and map adapters
+
+Enemy/boss definitions may provide an additional `init` closure. Its `this` and
+argument follow the original actor initialization contract, not the root-table
+factory contract. Authors must supply animation, collision and update behavior.
+
+```squirrel
+mod.Register("enemy", "custom", {
+    name = "Custom enemy",
+    create = function() { /* optional application-specific factory body */ },
+    init = function(argument) { /* this is the engine-created Actor */ }
+});
+local actor = KinokoMods.Spawn("enemy", "my-mod:custom", 100, 200, 1, null);
+local environment = {};
+KinokoMods.BindMapActor("enemy", "my-mod:custom", 0x1234, environment);
+CreateActorFromMap("custom-enemies", environment);
+// Or use an isolated environment for a dedicated custom placement layer:
+KinokoMods.SpawnMap("custom-enemies", [
+    {kind="enemy", id="my-mod:custom", mapId=0x1234}
+]);
+```
+
+Spawn delegates to existing CreateActor and returns its Actor (or original failure
+result). BindMapActor delegates to SetInitFunctionByID(mapId, init, environment),
+creating the original `Init%04x` lookup. IDs must be integers 0..65535; an existing
+slot, including an inherited slot, is rejected. No global automatic ID allocation
+occurs. To extend an existing original layer, bind into its intended environment
+without colliding with original slots. SpawnMap builds a separate environment,
+validates/binds all entries, then calls the original CreateActorFromMap; use it for
+a dedicated custom layer. It does not rewrite placements or change missing-ID
+behavior in the native loader. Both adapters accept only enemy/boss kinds with a
+script init function. Transformations remain application-defined factories.
