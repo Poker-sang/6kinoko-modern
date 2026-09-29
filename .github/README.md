@@ -53,3 +53,5 @@ Next: user verification of level entry/completion, effects and save/quit/reload 
 - [Full native migration history](../docs/modern-platform/full-native-game.md)
 - [Dependency provenance](../docs/modern-platform/dependencies.json)
 - [Migration roadmap](../docs/modern-platform/TODO.md)
+
+Independent action bindings preserve keyconfig.dat: [input actions](../docs/modern-platform/input-actions.md). Existing settings UI is unchanged.

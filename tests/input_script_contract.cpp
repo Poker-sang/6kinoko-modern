@@ -39,7 +39,8 @@ foreach(k,v in input) { if(v != 0) throw k; }
 )","fixture"));
     // Unrelated mod functions are not rewritten based only on field names.
     CHECK(run(vm,"input.b0=7; function Read() { return input.b0; } if(Read()!=7) throw 1;","mod.nut",true));
-    CHECK(SQ_SUCCEEDED(sq_compilebuffer(vm,"function DisableInput() { input.b0=1; }",37,"data/script/global.nut",SQTrue)));
+    const char* unsupported="function DisableInput() { input.b0=1; }";
+    CHECK(SQ_SUCCEEDED(sq_compilebuffer(vm,unsupported,strlen(unsupported),"data/script/global.nut",SQTrue)));
     std::string error;CHECK(!kinoko_adapt_input_script(vm,error) && !error.empty());
     sq_settop(vm,0);
     // Optional local original fixtures: validate every guarded variant without

@@ -53,3 +53,5 @@ SDL 3.4.16 · libogg 1.3.6 · libvorbis 1.3.7 · stb_truetype 1.26 · Noto Sans 
 - [完整原生迁移历史](../docs/modern-platform/full-native-game.md)
 - [依赖来源](../docs/modern-platform/dependencies.json)
 - [迁移路线](../docs/modern-platform/TODO.md)
+
+Independent action bindings preserve keyconfig.dat: [input actions](../docs/modern-platform/input-actions.md). Existing settings UI is unchanged.

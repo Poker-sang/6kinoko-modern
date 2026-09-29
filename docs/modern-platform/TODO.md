@@ -356,3 +356,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] User gameplay acceptance: level entry/completion and save/quit/reload on each platform.
 - [ ] Next feature phase: separate attack/speed and door/ladder actions through shared input.
 - Details and precise execution limits: [cross-platform-closeout.md](cross-platform-closeout.md).
+
+## Independent input actions (2026-09-29)
+
+- [x] Split attack/run/carry, jump/confirm, door/ladder/pipe, pause/menu secondary action and menu directions.
+- [x] Preserve keyconfig.dat and expose configuration/frame APIs; no new settings UI.
+- [ ] User gameplay validation of independent bindings.
+- Details: [input-actions.md](input-actions.md).
