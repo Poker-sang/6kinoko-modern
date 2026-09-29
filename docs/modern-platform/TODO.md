@@ -372,3 +372,10 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [ ] User Windows gameplay recording/replay validation.
 - [ ] Frame advance, input editing and full save-state snapshots (later phase).
 - See [replay guide](replay.md).
+
+## Lightweight replay sessions (2026-09-29)
+
+- [x] Shared executable/assets with explicit recording, playback and save-directory arguments.
+- [x] Snapshot only writable saves/configuration; read recordings in place.
+- [x] Retain runtime hash validation in the launcher and Unicode path support.
+- [ ] Compress recording frame blocks after measuring actual recording files.

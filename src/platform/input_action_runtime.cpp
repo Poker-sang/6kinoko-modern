@@ -3,6 +3,7 @@
 #include "kinoko/input_service.h"
 #include "kinoko/platform.hpp"
 #include "kinoko/replay_runtime.hpp"
+#include "kinoko/runtime_options.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <string>
@@ -17,7 +18,7 @@ const kinoko::input::Bindings& bindings() {
         auto result=kinoko::input::classic_bindings();
         const char* base=SDL_GetBasePath();
         if(!base)return result;
-        const std::string path=std::string(base)+"input-actions.cfg";
+        const std::string path=kinoko::runtime::options().save_dir.empty() ? std::string(base)+"input-actions.cfg" : kinoko::runtime::save_path("input-actions.cfg");
         SDL_PathInfo info{};
         if(!SDL_GetPathInfo(path.c_str(),&info))return result;
         size_t size=0;void* bytes=SDL_LoadFile(path.c_str(),&size);

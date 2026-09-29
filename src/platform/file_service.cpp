@@ -1,5 +1,6 @@
 #include "kinoko/file_service.h"
 #include <new>
+#include <filesystem>
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -16,14 +17,18 @@ struct KinokoFile { HANDLE handle; };
 struct KinokoFile { std::FILE* handle; };
 static_assert(sizeof(off_t)>=8, "File backend needs 64-bit offsets");
 #endif
-extern "C" KinokoFile* kinoko_file_open(const char* path, KinokoFileMode mode) {
+static KinokoFile* open_file(const char* path, KinokoFileMode mode,bool utf8) {
     if (!path || mode<KINOKO_FILE_READ || mode>KINOKO_FILE_WRITE) return nullptr;
     auto* file=new(std::nothrow) KinokoFile{};
     if (!file) return nullptr;
 #if defined(_WIN32)
     const bool write=mode==KINOKO_FILE_WRITE;
     const DWORD share=write?0:mode==KINOKO_FILE_READ_SHARED?FILE_SHARE_READ|FILE_SHARE_WRITE:FILE_SHARE_READ;
-    file->handle=CreateFileA(path,write?GENERIC_WRITE:GENERIC_READ,share,nullptr,
+    if(utf8) {
+        try { file->handle=CreateFileW(std::filesystem::u8path(path).c_str(),write?GENERIC_WRITE:GENERIC_READ,share,nullptr,
+            write?CREATE_ALWAYS:OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr); }
+        catch(...) {delete file;return nullptr;}
+    } else file->handle=CreateFileA(path,write?GENERIC_WRITE:GENERIC_READ,share,nullptr,
         write?CREATE_ALWAYS:OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
     if (file->handle==INVALID_HANDLE_VALUE) { delete file; return nullptr; }
 #else
@@ -32,6 +37,8 @@ extern "C" KinokoFile* kinoko_file_open(const char* path, KinokoFileMode mode) {
 #endif
     return file;
 }
+extern "C" KinokoFile* kinoko_file_open(const char* path, KinokoFileMode mode) {return open_file(path,mode,false);}
+extern "C" KinokoFile* kinoko_file_open_utf8(const char* path, KinokoFileMode mode) {return open_file(path,mode,true);}
 extern "C" void kinoko_file_close(KinokoFile* file) {
     if (!file) return;
 #if defined(_WIN32)

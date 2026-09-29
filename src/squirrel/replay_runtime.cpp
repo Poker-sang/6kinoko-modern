@@ -1,5 +1,6 @@
 #include "kinoko/replay_runtime.hpp"
 #include "kinoko/replay.hpp"
+#include "kinoko/runtime_options.hpp"
 #include "kinoko/runtime_clock.h"
 #include "kinoko/game_host.h"
 #include "kinoko/game_runtime.h"
@@ -101,25 +102,31 @@ uint64_t checkpoint() {
 }
 }
 bool kinoko_replay_start() {
+    const auto& settings=kinoko::runtime::options();
+    const bool explicit_paths=!settings.recording.empty() || !settings.playback.empty();
     const char* value=SDL_getenv("KINOKO_REPLAY_MODE");
+    if(explicit_paths)value=settings.recording.empty()?"play":"record";
     if(!value || !*value)return true;
     frame_index=0;stopped=false;completed=false;failed=false;pending_error.clear();
     try {
         const std::string requested(value);
         if(requested!="record" && requested!="play")throw std::runtime_error("Unknown replay mode");
-        std::ifstream marker(".replay-session");std::string marker_mode;std::getline(marker,marker_mode);
-        if(marker_mode!=requested)throw std::runtime_error("Use Record-Replay.cmd / Play-Replay.cmd to create an isolated session");
-        std::ifstream identity_file("session.identity");std::string identity;std::getline(identity_file,identity);
+        std::string identity=settings.identity;
+        if(!explicit_paths) {
+            std::ifstream marker(".replay-session");std::string marker_mode;std::getline(marker,marker_mode);
+            if(marker_mode!=requested)throw std::runtime_error("Use Record-Replay.cmd / Play-Replay.cmd to create an isolated session");
+            std::ifstream identity_file("session.identity");std::getline(identity_file,identity);
+        }
+        const auto replay_path=explicit_paths?(requested=="record"?settings.recording:settings.playback):std::filesystem::path("session.krec");
         mode=requested=="record"?Mode::Record:Mode::Playback;
-        status.open("replay-status.txt",std::ios::out|std::ios::trunc);
+        status.open(explicit_paths?settings.status:std::filesystem::path("replay-status.txt"),std::ios::out|std::ios::trunc);
         if(!status)throw std::runtime_error("Cannot create replay status log");
         if(mode==Mode::Record) {
-            SDL_PathInfo info{};
-            if(SDL_GetPathInfo("session.krec",&info))throw std::runtime_error("Recording already exists; create a fresh session");
-            output.open("session.krec",std::ios::binary|std::ios::out);
+            if(std::filesystem::exists(replay_path))throw std::runtime_error("Recording already exists; create a fresh session");
+            output.open(replay_path,std::ios::binary|std::ios::out);
             writer=std::make_unique<kinoko::replay::Writer>(output,identity);
         }else {
-            input.open("session.krec",std::ios::binary);
+            input.open(replay_path,std::ios::binary);
             reader=std::make_unique<kinoko::replay::Reader>(input,identity);
         }
         kinoko_simulation_enable(1);

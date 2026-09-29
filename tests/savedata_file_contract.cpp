@@ -1,4 +1,5 @@
 #include "kinoko/savedata.h"
+#include "kinoko/runtime_options.hpp"
 #include "kinoko/squirrel_game_objects.h"
 #include <type_traits>
 #include "kinoko/squirrel_host_object.hpp"
@@ -161,6 +162,16 @@ int main() {
         require(!file_call(vm,bad,"blank",false),"short encoded payload fails");
         raw.clear(); word(raw,OT_INTEGER); // Missing key tag/value, valid compressed envelope.
         encoded_fixture(bad,raw); require(!file_call(vm,bad,"blank",false),"truncated table fails");
+        const auto isolated=retained_fixture("save-directory")/std::filesystem::u8path(u8"独立 saves");
+        std::string argument=isolated.u8string(), option="--save-dir", program="contract", error;
+        char* args[]={program.data(),option.data(),argument.data()};
+        require(kinoko::runtime::parse_options(3,args,error),"parse Unicode save directory");
+        require(file_call(vm,"marisaA.dat","source",true),"save into selected directory");
+        require(std::filesystem::exists(isolated/"marisaA.dat"),"selected save file exists");
+        require(file_call(vm,"marisaA.dat","destination",false),"load from selected directory");
+        require(!file_call(vm,"../escape.dat","source",true),"reject path escaping save directory");
+        require(!file_call(vm,saved,"source",true),"reject absolute path bypass");
+        require(kinoko::runtime::parse_options(1,args,error),"reset ordinary paths");
         require(sq_gettop(vm)==0,"final stack balance");
         std::puts("PASS: savedata file roundtrip, independent wire fixtures, scalar widths and file failures");
     } catch(const std::exception& error) {

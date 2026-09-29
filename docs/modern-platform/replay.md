@@ -8,18 +8,19 @@ records from startup, including title/menu navigation. Ordinary launch is unchan
 
 1. 先在普通游戏中设置好按键并退出。新版本可以复制原有 `keyconfig.dat`、
    `input-actions.cfg` 和 `marisaA.dat` / `marisaB.dat` / `marisaC.dat`。
-2. 双击 **Record-Replay.cmd**。启动器保存初始文件快照，并在独立目录启动游戏。
+2. 双击 **Record-Replay.cmd**。启动器保存初始存档/配置快照，使用当前 EXE 和独立存档目录启动游戏。
    正常操作，最后关闭窗口结束录制。看到 `COMPLETED ... frames` 表示文件已完成。
-3. 双击 **Play-Replay.cmd** 回放最近一次录制。它会从初始快照另建一个运行目录，
+3. 双击 **Play-Replay.cmd** 回放最近一次录制。它会从初始快照另建一个存档目录，
    回放时忽略实时游戏操作输入，到最后一帧自动退出。仍可关闭窗口提前终止。
 4. 结果见运行目录的 **replay-status.txt**。`COMPLETED` 表示全部检查点一致；
    `FAILED at frame ...` 给出首个检测到差异的帧；提前关闭则为 `ABORTED`。
 
-会话保存在 EXE 旁的 `recordings/session-.../`：`initial/` 是不可修改的初始快照，
+会话保存在 EXE 旁的 `recordings/session-.../`：`initial/` 只保存不可修改的初始存档和配置快照，
 `record/` 保存录制运行和 `session.krec`，每次回放新建 `play-.../`。
 原有游戏目录里的存档不会被录制或回放改写；录制产生的新进度也不会自动导回。
-所有资源包括三个 DAT 都复制到各运行目录的 EXE 旁，不依赖原版工作目录。
-每份快照/运行目录会占用一份游戏资源的空间，所有产物保留。
+EXE、三个 DAT、字体和着色器直接使用当前游戏目录里的文件，不复制进会话。
+回放直接读取 `record/session.krec`，也不复制录制文件；新增空间只有存档、配置和少量日志。
+资源仍从 EXE 自身目录加载，独立存档目录通过启动参数选择，所有产物保留。
 
 回放指定会话：
 
@@ -28,8 +29,34 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\replay_session.ps1 -Mode p
 ```
 
 当前限制：不在录制/回放期间修改游戏内键位；这样做会停止会话并报错。也不要修改
-`initial/` 下的任何文件。旧版录制与更新后的 EXE 不混用：每个会话保留自己的程序。
+`initial/` 下的任何文件。旧版录制与更新后的 EXE 不混用：启动器会校验当前程序和资源，更新版本后须使用原版本的程序与资源回放。
+旧版完整复制会话（manifest version 1）继续用原来保留的包和启动器回放；新版会话为 version 2，录制二进制格式仍为 1。
 首版不支持中途开始、快进、逐帧、输入编辑或快照恢复。
+
+## Direct executable arguments
+
+The same executable supports `--save-dir DIRECTORY` for ordinary play. Relative
+command-line paths resolve against the caller's working directory before startup
+switches resource loading to the executable directory. Saves, legacy keyconfig
+and input-actions.cfg use the selected directory without fallback to ordinary saves.
+
+For recording/playback, the launcher supplies:
+
+```text
+kinoko_modern_gpu.exe --save-dir "D:\sessions\example\play-001" --replay "D:\sessions\example\record\session.krec" --replay-status "D:\sessions\example\play-001\replay-status.txt" --replay-identity <64-digit identity>
+```
+
+Use `--record FILE` instead of `--replay FILE` to record. The exact executable and
+arguments are saved in each run's `launch-arguments.json`. The identity comes from
+the session manifest. The launcher performs runtime/snapshot SHA256 validation;
+manual invocation must preserve the same binary/resources and restore the initial
+saves/configuration. The runtime checks the recording's identity and frame checksums,
+but does not independently hash all assets. Reusing a modified save directory does
+not restore initial state; use the launcher for repeatable playback.
+
+The Windows entry uses SDL_RunApp for Unicode argument decoding; shared C++ code
+parses options and resolves paths. The existing Windows file adapter retains ANSI
+semantics for original paths and adds UTF-8 opening for explicit save-directory paths.
 
 ## Contracts
 
@@ -52,8 +79,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\replay_session.ps1 -Mode p
 - Checkpoints cover selected state, not the whole VM, every menu-local variable
   or every save write. Matching checkpoints are useful evidence, not proof of
   complete state equivalence. User gameplay replay validation remains required.
-- Session identity is SHA256 over the exact copied EXE, assets, configs and initial
-  saves. The launcher verifies both the initial snapshot and every run copy.
+- Session identity is SHA256 over the current EXE/assets and initial configs/saves.
+  The launcher hashes immutable runtime files in place and verifies the initial
+  snapshot and every writable run copy. No EXE, assets or replay file are duplicated.
   Existing recordings cannot be overwritten; playback always uses a fresh copy.
 - The binary format uses explicit little-endian widths, version/action schema,
   identity, frame indices, per-record checksums and a complete-stream footer.

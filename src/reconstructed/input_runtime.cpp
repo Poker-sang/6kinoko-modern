@@ -4,6 +4,7 @@
 #include "kinoko/input_devices.h"
 #include "kinoko/input_cluster.h"
 #include "kinoko/file_service.hpp"
+#include "kinoko/runtime_options.hpp"
 #include <cstdint>
 #include <cstring>
 
@@ -46,7 +47,8 @@ extern "C" int32_t kinoko_input_save_config(KinokoInputManager* manager, const c
     kinoko_trace_i32("46b7c0:this", diagnostic_address(manager));
     kinoko_trace_i32("46b7c0:path", diagnostic_address(path));
     {
-        ConfigFile file(path, KINOKO_FILE_WRITE);
+        const auto selected=kinoko::runtime::save_path(path);
+        ConfigFile file(selected.c_str(), KINOKO_FILE_WRITE,!kinoko::runtime::options().save_dir.empty());
         if (!file) return 0;
         file.write(&manager->keyboard.assignment, sizeof(KinokoInputAssignment));
         if (kinoko_input_devices_size(manager)) file.write(&kinoko_input_devices_at(manager, 0)->assignment, sizeof(KinokoInputAssignment));
@@ -59,7 +61,8 @@ extern "C" int32_t kinoko_input_load_config(KinokoInputManager* manager, const c
     kinoko_trace_i32("46b880:path", diagnostic_address(path));
     kinoko::script::diagnostic_name("input:config-load", path);
     {
-        ConfigFile file(path, KINOKO_FILE_READ_SHARED);
+        const auto selected=kinoko::runtime::save_path(path);
+        ConfigFile file(selected.c_str(), KINOKO_FILE_READ_SHARED,!kinoko::runtime::options().save_dir.empty());
         if (!file) return 0;
         KinokoInputAssignment record;
         if (file.read(&record, sizeof(record))) {

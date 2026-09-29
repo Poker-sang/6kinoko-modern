@@ -10,6 +10,7 @@ enum KinokoFileOrigin { KINOKO_FILE_BEGIN, KINOKO_FILE_CURRENT, KINOKO_FILE_END 
    Read succeeds at EOF with a short/zero transferred count. Seek returns -1 on
    failure, independently of valid positions whose low word is 0xffffffff. */
 KinokoFile* kinoko_file_open(const char* path, enum KinokoFileMode mode);
+KinokoFile* kinoko_file_open_utf8(const char* path, enum KinokoFileMode mode);
 void kinoko_file_close(KinokoFile* file);
 int kinoko_file_read(KinokoFile* file, void* data, uint32_t size, uint32_t* transferred);
 int kinoko_file_write(KinokoFile* file, const void* data, uint32_t size, uint32_t* transferred);

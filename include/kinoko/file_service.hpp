@@ -6,6 +6,7 @@ class File final {
     KinokoFile* file_ = nullptr;
 public:
     File(const char* path, KinokoFileMode mode) : file_(kinoko_file_open(path, mode)) {}
+    File(const char* path, KinokoFileMode mode, bool utf8) : file_(utf8?kinoko_file_open_utf8(path,mode):kinoko_file_open(path,mode)) {}
     ~File() { close(); }
     File(const File&) = delete;
     File& operator=(const File&) = delete;

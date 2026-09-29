@@ -1,5 +1,6 @@
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/savedata.h"
+#include "kinoko/runtime_options.hpp"
 #include "kinoko/base_utilities.h"
 #include "kinoko/squirrel_game_objects.h"
 #include "kinoko/squirrel_host_compat.h"
@@ -227,7 +228,8 @@ int32_t load_file(const char *path, Object input) {
     kinoko_trace(path);
     int32_t result = 0;
     {
-        File file(path, KINOKO_FILE_READ_SHARED);
+        const auto selected=kinoko::runtime::save_path(path);
+        File file(selected.c_str(), KINOKO_FILE_READ_SHARED,!kinoko::runtime::options().save_dir.empty());
         if (file) {
             auto encoded = allocate_buffer();
             auto decoded = allocate_buffer();
@@ -272,7 +274,8 @@ int32_t save_file(const char *path, Object input) {
                 raw.get(), stream.position, encoded.get(), kFileBufferSize));
             kinoko_trace_i32("savedata:encoded-size", static_cast<int32_t>(encoded_size));
             if (encoded_size && encoded_size <= kFileBufferSize) {
-                File file(path, KINOKO_FILE_WRITE);
+                const auto selected=kinoko::runtime::save_path(path);
+                File file(selected.c_str(), KINOKO_FILE_WRITE,!kinoko::runtime::options().save_dir.empty());
                 if (file &&
                     file.write(&encoded_size, sizeof(encoded_size)) &&
                     file.write(encoded.get(), encoded_size)) result = 1;

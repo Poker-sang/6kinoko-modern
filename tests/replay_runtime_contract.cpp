@@ -1,4 +1,5 @@
 #include "kinoko/replay_runtime.hpp"
+#include "kinoko/runtime_options.hpp"
 #include "kinoko/game_host.h"
 #include "kinoko/game_runtime.h"
 #include "kinoko/actor_records.hpp"
@@ -48,7 +49,7 @@ bool reset() {
     sqstd_register_mathlib(kinoko_primary_vm);sq_pop(kinoko_primary_vm,1);
     return evaluate("srand(1); score <- 0;");
 }
-std::string status() {std::ifstream in("replay-status.txt");return {std::istreambuf_iterator<char>(in),{}};}
+std::string status() {const auto& p=kinoko::runtime::options().status;std::ifstream in(p.empty()?std::filesystem::path("replay-status.txt"):p);return {std::istreambuf_iterator<char>(in),{}};}
 }
 #define CHECK(x) do{if(!(x)){std::fprintf(stderr,"runtime replay contract line %d\n",__LINE__);return 1;}}while(0)
 int main() {
@@ -70,9 +71,13 @@ int main() {
     kinoko_replay_finish();CHECK(errors==0 && status().find("COMPLETED 4 frames")!=std::string::npos);
     for(int scenario=0;scenario<3;++scenario) {
         const auto run=root/("play-"+std::to_string(scenario));fs::create_directory(run);
-        fs::copy_file(root/"record/session.krec",run/"session.krec");fs::copy_file(root/"record/session.identity",run/"session.identity");
-        fs::current_path(run);std::ofstream(".replay-session")<<"play";
-        SDL_SetEnvironmentVariable(env,"KINOKO_REPLAY_MODE","play",true);
+        // Replay reads the original recording in place, independent of cwd.
+        fs::current_path(original);
+        std::vector<std::string> arguments={"contract","--save-dir",run.u8string(),"--replay",(root/"record/session.krec").u8string(),
+            "--replay-status",(run/"replay-status.txt").u8string(),"--replay-identity",std::string(64,'a')};
+        std::vector<char*> argv;for(auto& argument:arguments)argv.push_back(argument.data());std::string error;
+        CHECK(kinoko::runtime::parse_options(static_cast<int>(argv.size()),argv.data(),error));
+        SDL_UnsetEnvironmentVariable(env,"KINOKO_REPLAY_MODE");
         CHECK(reset() && kinoko_replay_start());const int prior_errors=errors;
         for(int i=0;i<4;++i) {
             CHECK(kinoko_replay_begin_frame());kinoko::input::Frame live;live.held[kinoko::input::Jump]=99;
