@@ -333,3 +333,37 @@ a submap exit may lead to original second-stage resources. This is a main-map
 replacement probe, not a complete remapped second-stage campaign. Death, clear,
 warps and progression still need user gameplay validation. Mod saves are isolated.
 Generated maps and original DAT files stay local and outside the clean package.
+
+## Authored first-stage replacement
+
+The stage-swap milestone was confirmed working by the user. The next candidate,
+short-course 1.0.0, replaces the first map with a 2560-pixel authored course:
+three increasingly high step groups, two original enemies, original spawn and
+goal events. Terrain placement is new; art, background and behavior use original
+resources. This is not an independently added world-map node.
+
+```powershell
+python create_custom_stage_mod.py --reference-dir . --output short-course
+python mod_manager.py pack short-course short-course.kmod
+python mod_manager.py install-enable --game kinoko_modern_gpu.exe short-course.kmod
+python mod_manager.py launch --game kinoko_modern_gpu.exe
+```
+
+Use a fresh package directory or disable other first-map replacements first.
+Edit mod-authoring/short-course/map.json and pass --recipe to generate another
+new output directory. Floor entries are [startX, endXExclusive, surfaceY] on a
+32-pixel grid. Enemies/events are [originalChipID, x, y]. The generator requires
+one spawn and one goal and only chip IDs already present in the corresponding
+original layer. The generated project also retains its map.json recipe.
+
+act_map_edit.py supplies the first limited authoring API: bounded ACT1 parsing,
+lossless no-op roundtrip, map placement replacement and map-width changes.
+It preserves scripts/resources/unmodified data, rebuilds placement counts and
+bounds and sorts cells by x/y. It accepts self-described map-only documents with
+12-byte cells, chip resources and no timelines; other variants fail explicitly.
+It is not a general ACT editor or GUI. Original map bytes remain local.
+
+The course retains the original first-stage script (music/time and dormant warp
+callback) and background but removes warp placements, hidden areas and original
+enemy arrangements. It makes no player/HUD or startup callback changes. Gameplay,
+goal completion and return-to-world behavior need manual confirmation.
