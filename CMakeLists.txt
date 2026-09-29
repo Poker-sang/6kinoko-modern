@@ -469,6 +469,7 @@ add_executable(kinoko_file_archive_contract tests/file_archive_contract.cpp
 target_include_directories(kinoko_file_archive_contract PRIVATE include)
 target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_zlib kinoko_file_service)
 add_test(NAME file_archive_contract COMMAND kinoko_file_archive_contract)
+include(cmake/Mods.cmake)
 
 if(NOT WIN32)
     # Static reconstructed modules have bidirectional references. Repeat the group
@@ -973,3 +974,7 @@ include(cmake/GameRenderer.cmake)
 foreach(target kinoko_native_methods kinoko_squirrel_cpp_vm kinoko_audio_runtime kinoko_application_contract kinoko_audio_runtime_contract)
     target_link_libraries(${target} PUBLIC kinoko_runtime_services)
 endforeach()
+
+if(TARGET kinoko_application_contract)
+    target_link_libraries(kinoko_application_contract PRIVATE kinoko_mod_resources)
+endif()
