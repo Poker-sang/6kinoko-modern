@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "kinoko/input_action_state.h"
 
 namespace kinoko::input {
 // Stable IDs. Append new actions; never renumber recorded frames.
@@ -28,6 +29,7 @@ Bindings classic_bindings();
 bool parse_bindings(std::string_view text, Bindings& destination, std::string& error,
                     int (*key_scan)(const std::string&));
 void advance(const Bindings&, const Sample&, Frame&);
+void publish(const Frame&,KinokoActionState&);
 // Legacy defaults reuse original counters, including device handoffs.
 int32_t legacy_count(Action, const Sample&);
 }

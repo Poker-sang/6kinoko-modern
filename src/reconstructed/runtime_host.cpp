@@ -303,7 +303,7 @@ int32_t kinoko_host_sleep(int32_t dwMilliseconds) {
 }
 
 static int32_t kinoko_script_milliseconds(void) {
-    return (int32_t)kinoko_clock_milliseconds();
+    return (int32_t)kinoko_simulation_milliseconds();
 }
 
 int32_t kinoko_host_milliseconds(void) {

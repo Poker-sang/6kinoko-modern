@@ -1,3 +1,5 @@
+bool kinoko_replay_start(){return true;}
+void kinoko_replay_finish(){}
 #include "kinoko/critical_section.h"
 #include "kinoko/game_runtime.h"
 #include "kinoko/input_service.h"

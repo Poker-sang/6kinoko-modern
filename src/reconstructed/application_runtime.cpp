@@ -18,6 +18,7 @@
 #include "kinoko/game_math.h"
 #include "../platform/resources/resource.h"
 #include "kinoko/runtime_clock.h"
+#include "kinoko/replay_runtime.hpp"
 #include "kinoko/platform.hpp"
 #include <SDL3/SDL.h>
 #include <cstdlib>
@@ -326,6 +327,7 @@ extern "C" int kinoko_application_run(int show_command) {
     (void)show_command;
     SDL_ShowWindow(platform.window());
 #endif
+    if(!kinoko_replay_start()) {kinoko_replay_finish();platform.close();return 1;}
     Configuration config;
     config.manager = kinoko::game::create_manager();
     kinoko_application_open_archives();
@@ -335,6 +337,7 @@ extern "C" int kinoko_application_run(int show_command) {
     stop_move_frames(window);
 #endif
     kinoko_application_shutdown();
+    kinoko_replay_finish();
 #ifdef _WIN32
     SetWindowLongPtrW(window,GWLP_WNDPROC,reinterpret_cast<LONG_PTR>(sdl_window_proc));
 #endif

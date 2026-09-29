@@ -12,7 +12,7 @@
 #include "kinoko/act_resource_records.hpp"
 #include "kinoko/legacy_memory.hpp"
 static DWORD test_clock;
-extern "C" uint32_t kinoko_clock_milliseconds() { return test_clock; }
+extern "C" uint32_t kinoko_simulation_milliseconds() { return test_clock; }
 extern "C" void kinoko_clock_delay(uint32_t) {}
 #include "../src/reconstructed/act_resource.cpp"
 

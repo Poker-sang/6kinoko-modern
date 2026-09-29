@@ -98,7 +98,7 @@ public:
 
     int32_t sleep_to(int32_t milliseconds) const {
         // The OS clock is sampled even for a null receiver, as in the baseline.
-        const uint32_t deadline = kinoko_clock_milliseconds() + static_cast<uint32_t>(milliseconds);
+        const uint32_t deadline = kinoko_simulation_milliseconds() + static_cast<uint32_t>(milliseconds);
         if (storage_) record_.set(&RuntimeRecord::wake_time, deadline);
         return kinoko::memory::load<int32_t>(&deadline);
     }

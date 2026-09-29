@@ -55,3 +55,5 @@ SDL 3.4.16 ¡¤ libogg 1.3.6 ¡¤ libvorbis 1.3.7 ¡¤ stb_truetype 1.26 ¡¤ Noto Sans 
 - [Ç¨ÒÆÂ·Ïß](../docs/modern-platform/TODO.md)
 
 Independent action bindings preserve keyconfig.dat: [input actions](../docs/modern-platform/input-actions.md). Existing settings UI is unchanged.
+
+Windows startup recording/replay: [replay guide](../docs/modern-platform/replay.md). Session saves are isolated; gameplay replay validation is pending.

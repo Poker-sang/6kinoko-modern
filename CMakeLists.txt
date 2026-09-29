@@ -326,6 +326,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     src/squirrel/squirrel_native_calls.cpp
     src/squirrel/script_file.cpp
     src/squirrel/input_script_adapter.cpp
+    src/squirrel/replay_runtime.cpp
     src/squirrel/squirrel_game_objects.cpp
     src/squirrel/squirrel_table_values.cpp
     src/squirrel/table_diagnostics.cpp
@@ -371,7 +372,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     "${KINOKO_SQUIRREL2_ROOT}/squirrel/sqtable.cpp"
     "${KINOKO_SQUIRREL2_ROOT}/squirrel/sqvm.cpp"
 )
-target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_native_control kinoko_zlib kinoko_platform kinoko_audio_output kinoko_file_service)
+target_link_libraries(kinoko_squirrel_cpp_vm PUBLIC kinoko_replay kinoko_native_control kinoko_zlib kinoko_platform kinoko_audio_output kinoko_file_service)
 target_include_directories(kinoko_squirrel_cpp_vm PRIVATE
     third_party/stb
     "${KINOKO_SQUIRREL2_ROOT}/include"
@@ -433,6 +434,19 @@ target_link_options(kinoko_savedata_file_contract PRIVATE /OPT:REF /OPT:ICF)
 endif()
 add_test(NAME savedata_file_contract COMMAND kinoko_savedata_file_contract)
 set_tests_properties(savedata_file_contract PROPERTIES TIMEOUT 60)
+add_executable(kinoko_replay_runtime_contract tests/replay_runtime_contract.cpp src/reconstructed/actor_priority.cpp)
+target_include_directories(kinoko_replay_runtime_contract PRIVATE include "${KINOKO_SQUIRREL2_ROOT}/include")
+target_link_libraries(kinoko_replay_runtime_contract PRIVATE kinoko_squirrel_cpp_vm kinoko_input_actions)
+if(MSVC)
+    target_link_options(kinoko_replay_runtime_contract PRIVATE /OPT:REF /OPT:ICF)
+endif()
+add_test(NAME replay_runtime_contract COMMAND kinoko_replay_runtime_contract)
+if(WIN32)
+    add_test(NAME replay_session_contract COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+        -File "${CMAKE_SOURCE_DIR}/tests/replay_session_contract.ps1"
+        -OutputRoot "${CMAKE_BINARY_DIR}/Testing/fixtures" -SessionScript "${CMAKE_SOURCE_DIR}/tools/replay_session.ps1")
+endif()
+
 add_executable(kinoko_input_script_contract tests/input_script_contract.cpp)
 target_include_directories(kinoko_input_script_contract PRIVATE include "${KINOKO_SQUIRREL2_ROOT}/include")
 target_link_libraries(kinoko_input_script_contract PRIVATE kinoko_squirrel_cpp_vm)

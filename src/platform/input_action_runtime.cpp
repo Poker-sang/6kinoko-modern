@@ -2,6 +2,7 @@
 #include "kinoko/input_manager.h"
 #include "kinoko/input_service.h"
 #include "kinoko/platform.hpp"
+#include "kinoko/replay_runtime.hpp"
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <string>
@@ -46,14 +47,6 @@ extern "C" void kinoko_input_actions_update(KinokoInputManager* manager) {
     Frame frame;
     std::copy_n(manager->actions.held,Count,frame.held);
     advance(bindings(),sample,frame);
-    std::copy_n(frame.held,Count,manager->actions.held);
-    std::copy_n(frame.released,Count,manager->actions.released);
-    auto* out=manager->actions.published;
-    std::copy_n(frame.held,Count,out);
-    // Negative direction wins, matching original keyboard opposite-key priority.
-    out[Count]=out[Left] ? -out[Left]:out[Right];
-    out[Count+1]=out[Up] ? -out[Up]:out[Down];
-    out[Count+2]=out[MenuLeft] ? -out[MenuLeft]:out[MenuRight];
-    out[Count+3]=out[MenuUp] ? -out[MenuUp]:out[MenuDown];
-    out[Door]=-out[Door];out[PipeUp]=-out[PipeUp];
+    kinoko_replay_input(manager,frame);
+    publish(frame,manager->actions);
 }

@@ -7,6 +7,7 @@
 
 // Match the original CRT's per-thread state shared by script VMs.
 static thread_local kinoko::ScriptRandom script_random;
+extern "C" uint32_t kinoko_script_random_state() {return script_random.state();}
 
 #define SINGLE_ARG_FUNC(_funcname) static SQInteger math_##_funcname(HSQUIRRELVM v){ \
 	SQFloat f; \

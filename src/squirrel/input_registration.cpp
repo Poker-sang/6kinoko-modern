@@ -1,5 +1,6 @@
 #include "kinoko/input_manager.h"
 #include "kinoko/input_actions.hpp"
+#include "kinoko/replay_runtime.hpp"
 #include "kinoko/squirrel_binding_detail.hpp"
 #include "kinoko/script_registration.h"
 #include "script_registration_host.hpp"
@@ -18,9 +19,11 @@ KinokoInputManager* input_receiver(void* self) { return static_cast<KinokoInputM
 int32_t save_config(void* self, const char* path) { return kinoko_input_save_config(input_receiver(self), path); }
 int32_t load_config(void* self, const char* path) { return kinoko_input_load_config(input_receiver(self), path); }
 int32_t set_assignment(void* self, int32_t device, int32_t field, int32_t value) {
+    if(!kinoko_replay_allow_rebind())return 0;
     return kinoko_input_set_assignment(input_receiver(self), device, field, value);
 }
 int32_t wait_assignment(void* self, int32_t device, int32_t field) {
+    if(!kinoko_replay_allow_rebind())return 0;
     return kinoko_input_wait_assignment(input_receiver(self), device, field);
 }
 int32_t get_assignment(void* self, int32_t device, int32_t field) {

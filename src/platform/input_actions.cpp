@@ -4,6 +4,18 @@
 #include <sstream>
 
 namespace kinoko::input {
+void publish(const Frame& frame,KinokoActionState& state) {
+    static_assert(Count==19);
+    std::copy_n(frame.held,Count,state.held);
+    std::copy_n(frame.released,Count,state.released);
+    auto* out=state.published;
+    std::copy_n(frame.held,Count,out);
+    out[Count]=out[Left] ? -out[Left]:out[Right];
+    out[Count+1]=out[Up] ? -out[Up]:out[Down];
+    out[Count+2]=out[MenuLeft] ? -out[MenuLeft]:out[MenuRight];
+    out[Count+3]=out[MenuUp] ? -out[MenuUp]:out[MenuDown];
+    out[Door]=-out[Door];out[PipeUp]=-out[PipeUp];
+}
 Bindings classic_bindings() {
     Bindings result;
     for (int i=0;i<Count;++i) result[i].push_back({Source::Legacy,i});

@@ -1,5 +1,6 @@
 #include "kinoko/runtime_util.hpp"
 #include "kinoko/game_runtime.h"
+#include "kinoko/replay_runtime.hpp"
 #include "kinoko/game_host.h"
 #include "kinoko/base_utilities.h"
 #include "kinoko/application.h"
@@ -66,6 +67,7 @@ extern "C" int32_t kinoko_game_shutdown(void) {
     return kinoko_game_release_script_state();
 }
 extern "C" int32_t kinoko_game_update(void) {
+    if(!kinoko_replay_begin_frame())return 0;
     const auto& objects=*kinoko_game_objects();
     static std::atomic<int32_t> trace_count;
     const int32_t trace_index=++trace_count;
@@ -94,6 +96,7 @@ extern "C" int32_t kinoko_game_update(void) {
         result=kinoko_stages_update();
     }
     if (trace_index<=16) kinoko_trace_i32("469900:result",result);
+    kinoko_replay_end_frame();
     return result;
 }
 extern "C" int32_t kinoko_game_draw(void) {

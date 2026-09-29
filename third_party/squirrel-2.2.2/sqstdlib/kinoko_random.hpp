@@ -8,6 +8,7 @@ class ScriptRandom {
 public:
     static constexpr int maximum = 32767;
     void seed(std::uint32_t value) noexcept { state_ = value; }
+    std::uint32_t state() const noexcept { return state_; }
     int next() noexcept {
         state_ = state_ * 214013u + 2531011u;
         return static_cast<int>((state_ >> 16) & maximum);

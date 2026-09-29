@@ -1,3 +1,5 @@
+bool kinoko_replay_begin_frame(){return true;}
+void kinoko_replay_end_frame(){}
 #include "kinoko/game_runtime.h"
 #include "kinoko/game_host.h"
 #include "kinoko/application_runtime.hpp"

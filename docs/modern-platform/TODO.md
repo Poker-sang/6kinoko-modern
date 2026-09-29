@@ -363,3 +363,12 @@ B 的宽度/布局约束从当前所有新代码开始执行，不等到 x64 批
 - [x] Preserve keyconfig.dat and expose configuration/frame APIs; no new settings UI.
 - [ ] User gameplay validation of independent bindings.
 - Details: [input-actions.md](input-actions.md).
+
+## Startup replay baseline (2026-09-29)
+
+- [x] Shared logical frame publication and legacy input capture.
+- [x] Isolated startup recording/replay, deterministic script clock, RNG/state checkpoints.
+- [x] Windows session launcher and focused non-gameplay regressions.
+- [ ] User Windows gameplay recording/replay validation.
+- [ ] Frame advance, input editing and full save-state snapshots (later phase).
+- See [replay guide](replay.md).

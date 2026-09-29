@@ -40,3 +40,5 @@ float constructor. On x64, a reused register otherwise retains upper bytes from 
 pointer/integer; IsEqual and table lookup compare the complete raw union.
 sqcompiler.cpp zero-initializes scalar constant objects for the same reason.
 The original float bit equality (including signed zero) is not changed.
+
+Replay format 1 observes the existing ScriptRandom state through kinoko_script_random_state(); its sequence and seeding behavior are unchanged.

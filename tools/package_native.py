@@ -38,6 +38,11 @@ for relative in required:
     shutil.copy2(source, destination)
 shutil.copytree(repo / "config", root / "config")
 shutil.copy2(repo / "docs/modern-platform/input-actions.md", root / "INPUT-ACTIONS.md")
+if windows:
+    shutil.copy2(repo / "tools/replay_session.ps1", root / "replay_session.ps1")
+    shutil.copy2(repo / "docs/modern-platform/replay.md", root / "REPLAY.md")
+    for mode, filename in [("record", "Record-Replay.cmd"), ("play", "Play-Replay.cmd")]:
+        (root / filename).write_text('@echo off\ncd /d "%~dp0"\npowershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0replay_session.ps1" -Mode '+mode+'\npause\n', encoding="ascii", newline="\r\n")
 for executable in ["kinoko_modern_gpu", "kinoko_gpu_transfer_contract"]:
     os.chmod(root / (executable+suffix), 0o755)
 for diagnostic in [False, True]:
