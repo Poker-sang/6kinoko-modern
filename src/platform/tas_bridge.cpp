@@ -16,17 +16,17 @@ bool takeover=false,free_run=false;
 uint64_t last_input=0;uint32_t mask=0;
 std::string phase;
 const auto& directory(){return runtime::options().tas_dir;}
-void replace(const std::filesystem::path& temporary,const std::filesystem::path& destination) {
+bool replace(const std::filesystem::path& temporary,const std::filesystem::path& destination) {
     // Same-directory publication. Readers open with delete sharing and retry a missing mailbox.
     std::error_code ec;std::filesystem::remove(destination,ec);ec.clear();
-    std::filesystem::rename(temporary,destination,ec);
+    std::filesystem::rename(temporary,destination,ec);return !ec;
 }
 void publish(uint64_t frames,uint64_t total,const char* state) {
     const std::string key=std::to_string(sequence)+" "+std::to_string(frames)+" "+std::to_string(total)+" "+state;
     if(phase==key)return;
     auto path=directory()/"state.tmp";
     {std::ofstream out(path);out<<"KTAS1 "<<key<<'\n';if(!out)return;}
-    replace(path,directory()/"state.txt");phase=key;
+    if(replace(path,directory()/"state.txt"))phase=key;
 }
 }
 bool enabled(){return !directory().empty();}
@@ -35,8 +35,9 @@ void shutdown(){stopping=true;}
 bool boundary(uint64_t frames,uint64_t total,bool live) {
     if(!enabled())return true;
     while(!stopping.load()) {
-        std::ifstream in(directory()/"command.txt");uint64_t seq=0,arg=0;std::string verb;
-        if(in>>seq>>verb>>arg && seq>sequence) {
+        uint64_t seq=0,arg=0;std::string verb;bool read=false;
+        {std::ifstream in(directory()/"command.txt");read=bool(in>>seq>>verb>>arg);}
+        if(read && seq>sequence) {
             sequence=seq;
             if(verb=="stop"){stopping=true;return false;}
             if(verb=="pause"){free_run=false;target=frames;}

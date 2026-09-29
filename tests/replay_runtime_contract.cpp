@@ -123,7 +123,7 @@ int main() {
         kinoko_replay_input(&input_manager,action);camera.x+=float(action.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
     std::ofstream(tas/"command.txt")<<"2 takeover 0\n";
     auto controller=std::async(std::launch::async,[&] {
-        for(int i=0;i<500;++i){std::ifstream in(tas/"state.txt");std::string line;std::getline(in,line);
+        for(int i=0;i<500;++i){std::ifstream in(tas/"state.txt");std::string line;std::getline(in,line);in.close();
             if(line.find("live-paused")!=line.npos){std::ofstream(tas/"input.txt")<<"1 0\n";std::ofstream(tas/"command.txt")<<"3 target 3\n";return true;}
             std::this_thread::sleep_for(std::chrono::milliseconds(2));}
         kinoko::tas::shutdown();return false;
@@ -132,8 +132,6 @@ int main() {
     kinoko_replay_input(&input_manager,action);CHECK(action.held[kinoko::input::Jump]==0 && action.released[kinoko::input::Jump]==1);
     CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();kinoko_replay_finish();
     {std::ifstream in(tas/"branch.krec",std::ios::binary);kinoko::replay::Reader branch(in,std::string(64,'a'));CHECK(branch.count()==3);}
-    args.resize(11); // Base arguments include no TAS flags.
-    args[4]=(tas/"branch.krec").u8string();args[6]=(tas/"verify.txt").u8string();
     // Rebuild argument list explicitly (option,value pairs).
     args={"contract","--save-dir",tas.u8string(),"--replay",(tas/"branch.krec").u8string(),"--replay-status",(tas/"verify.txt").u8string(),"--replay-identity",std::string(64,'a')};
     av.clear();for(auto& a:args)av.push_back(a.data());CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));
