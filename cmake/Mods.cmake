@@ -8,7 +8,3 @@ target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_mod_resources)
 add_executable(kinoko_mod_resources_contract tests/mod_resources_contract.cpp)
 target_link_libraries(kinoko_mod_resources_contract PRIVATE kinoko_mod_resources)
 add_test(NAME mod_resources_contract COMMAND kinoko_mod_resources_contract)
-
-if(TARGET kinoko_application_contract)
- target_link_libraries(kinoko_application_contract PRIVATE kinoko_mod_resources)
-endif()

@@ -72,7 +72,7 @@ void clear(){assets.clear();modules.clear();session_identity.clear();}
 const std::vector<Info>& active(){return modules;}
 const std::string& identity(){return session_identity;}
 bool load(const std::filesystem::path& catalog,std::string& error) {
-    clear();if(catalog.empty())return true;
+    clear();error.clear();if(catalog.empty())return true;
     try {
         if(std::filesystem::file_size(catalog)>4*1024*1024)throw std::runtime_error("Mod catalog too large");
         std::ifstream in(catalog,std::ios::binary);std::string bytes{std::istreambuf_iterator<char>(in),{}};
