@@ -1,6 +1,7 @@
 // Synthetic original-width Squirrel 2.2.2 closure: two literals (-123, 1.25),
 // one parameter/local/line record, LOAD + RETURN. This is not extracted game data.
 #include <squirrel.h>
+#include <sqstdmath.h>
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
@@ -49,5 +50,19 @@ int main() {
     SQInteger value=0;CHECK(SQ_SUCCEEDED(sq_getinteger(vm,-1,&value)) && value==-123);
     sq_settop(vm,0); Reader truncated{0,sizeof(fixture)-1};
     CHECK(SQ_FAILED(sq_readclosure(vm,read,&truncated)));
+    sq_settop(vm,0);
+    sq_pushroottable(vm); CHECK(SQ_SUCCEEDED(sqstd_register_mathlib(vm))); sq_pop(vm,1);
+    const char* script=R"(
+        assert(RAND_MAX == 32767);
+        srand(1); assert(rand()==41 && rand()==18467 && rand()==6334);
+        srand(-1); for(local i=0;i<1000;++i) { local r=rand(); assert(r>=0 && r<=32767); }
+        local effect={user=0, vy=-0.5, direction=-1};
+        for(local i=0;i<60;++i) { local old=effect.user++; assert(old==i); }
+        assert(effect.user==60 && effect.direction==-1 && effect.vy==-0.5);
+        assert((-2147483647-1)<0 && (-7/2)==-3);
+    )";
+    CHECK(SQ_SUCCEEDED(sq_compilebuffer(vm,script,std::strlen(script),"portable-numerics",SQTrue)));
+    sq_pushroottable(vm); CHECK(SQ_SUCCEEDED(sq_call(vm,1,SQFalse,SQTrue)));
+    std::puts("PASS: original-width bytecode and script numeric/random contracts");
     sq_close(vm);return 0;
 }

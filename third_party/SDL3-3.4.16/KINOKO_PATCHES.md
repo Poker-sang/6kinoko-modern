@@ -22,3 +22,9 @@ Upstream base: SDL 3.4.16; original archive checksum remains in
 
 Carry these changes forward when updating SDL; do not present this tree as an
 unmodified upstream release. Original SDL license notices remain intact.
+
+Mixed-zero stride follow-up: Metal upload AND download now default each zero
+field independently, matching D3D12 and Vulkan. The initial local upload fix
+copied Metal download's incorrect combined-zero check. The contract no longer
+expects both fields to reset: it tests all four combinations across 3D slices.
+Normal game uploads specify both fields and retain their accepted behavior.

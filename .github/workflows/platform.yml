@@ -35,13 +35,30 @@ jobs:
             build-runs/portable/CMakeFiles/CMakeConfigureLog.yaml
             runtime-builds/portable/
   game:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [Win32, x64]
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Configure Windows game with SDL bridge
-        run: cmake -S . -B build-runs/bridge -A Win32 -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/bridge
-      - name: Build game and contracts (no execution)
-        run: cmake --build build-runs/bridge --config Release --parallel 4
+        run: cmake -S . -B build-runs/bridge -A ${{ matrix.arch }} -DKINOKO_RETDEC_DISABLE_TRACE=ON -DKINOKO_RUNTIME_DIR=${{ github.workspace }}/runtime-builds/bridge
+      - name: Build game and contracts
+        shell: pwsh
+        run: |
+          if ('${{ matrix.arch }}' -eq 'Win32') {
+            cmake --build build-runs/bridge --config Release --parallel 4
+          } else {
+            cmake --build build-runs/bridge --config Release --target kinoko_modern_gpu kinoko_gpu_transfer_contract kinoko_savedata_file_contract kinoko_bytecode_wire_contract kinoko_file_archive_contract kinoko_script_random_contract kinoko_runtime_services_contract kinoko_directory_search_contract --parallel 4
+          }
+      - name: Run focused compatibility contracts (no gameplay)
+        run: ctest --test-dir build-runs/bridge -C Release --output-on-failure -R "^(savedata_file|bytecode_wire|file_archive|script_random|runtime_services|directory_search)_contract$"
+      - name: Package Windows game (without original DAT)
+        shell: pwsh
+        run: |
+          $platform = if ('${{ matrix.arch }}' -eq 'x64') { 'windows-x64' } else { 'windows-x86' }
+          python tools/package_native.py --runtime runtime-builds/bridge --platform $platform --output runtime-builds/packages --tests-passed
       - name: Audit default dependency graph (no execution)
         shell: pwsh
         run: |
@@ -50,11 +67,13 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: windows-game
+          name: windows-game-${{ matrix.arch }}
           path: |
             runtime-builds/bridge/
             build-runs/bridge/gpu-shader-toolchain.txt
             build-runs/bridge/d3d9-audit.json
+            build-runs/bridge/Testing/
+            runtime-builds/packages/
 
   native-game:
     strategy:
@@ -81,17 +100,19 @@ jobs:
         run: |
           set -o pipefail
           git rev-parse HEAD > build-runs/native/source-commit.txt
-          cmake --build build-runs/native --target kinoko_modern_gpu kinoko_gpu_transfer_contract --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
+          cmake --build build-runs/native --target kinoko_modern_gpu kinoko_gpu_transfer_contract kinoko_savedata_file_contract kinoko_bytecode_wire_contract kinoko_file_archive_contract kinoko_script_random_contract kinoko_runtime_services_contract kinoko_directory_search_contract --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
+      - name: Run focused compatibility contracts (no gameplay)
+        run: ctest --test-dir build-runs/native --output-on-failure -R "^(savedata_file|bytecode_wire|file_archive|script_random|runtime_services|directory_search)_contract$"
       - name: Package native game (without original DAT)
         shell: bash
         run: |
           if [[ "$RUNNER_OS" == "macOS" ]]; then
             lipo -info runtime-builds/native/kinoko_modern_gpu
             otool -L runtime-builds/native/kinoko_modern_gpu > build-runs/native/dependencies.txt
-            python3 tools/package_native.py --runtime runtime-builds/native --platform macos-universal --output runtime-builds/packages
+            python3 tools/package_native.py --runtime runtime-builds/native --platform macos-universal --output runtime-builds/packages --tests-passed
           else
             ldd runtime-builds/native/kinoko_modern_gpu > build-runs/native/dependencies.txt
-            python3 tools/package_native.py --runtime runtime-builds/native --platform linux-x64 --output runtime-builds/packages
+            python3 tools/package_native.py --runtime runtime-builds/native --platform linux-x64 --output runtime-builds/packages --tests-passed
           fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
@@ -101,5 +122,6 @@ jobs:
             build-runs/native/source-commit.txt
             build-runs/native/build.log
             build-runs/native/dependencies.txt
+            build-runs/native/Testing/
             runtime-builds/packages/
             runtime-builds/native/

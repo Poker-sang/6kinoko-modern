@@ -1,5 +1,5 @@
 #include "kinoko/file_io_layout.h"
-#include <windows.h>
+#include "retained_fixture.hpp"
 #include "kinoko/archive_random.h"
 #include "kinoko/legacy_string.hpp"
 #include <array>
@@ -10,8 +10,8 @@
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"file/archive line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 namespace {
 struct TempFile {
-    char path[MAX_PATH]{};
-    TempFile() { char dir[MAX_PATH]{}; GetTempPathA(MAX_PATH,dir); GetTempFileNameA(dir,"kio",0,path); }
+    std::string storage=(retained_fixture("kinoko-archive")/"fixture.dat").string();
+    const char* path=storage.c_str();
     ~TempFile() { std::printf("Retained archive fixture: %s\n",path); }
 };
 void word(std::vector<uint8_t>& bytes,uint32_t value) {
@@ -34,7 +34,7 @@ int main() {
     CHECK(kinoko_writer_open(&writer,ordinary.path));
     CHECK(kinoko_writer_write(writer,"ABCDE",5));
     CHECK(writer->methods->transferred(writer, nullptr)==5);
-    CHECK(kinoko_reader_seek(writer,2,FILE_BEGIN)==2);
+    CHECK(kinoko_reader_seek(writer,2,KINOKO_FILE_BEGIN)==2);
     CHECK(kinoko_writer_write(writer,"x",1));
     kinoko_reader_close(writer); writer=nullptr;
     CHECK(kinoko_reader_open(&plain,ordinary.path));
@@ -44,12 +44,12 @@ int main() {
     CHECK(std::memcmp(bytes,"ABxDE",5)==0);
     // File ReadFile returns success with zero bytes at EOF; package Read does not.
     CHECK(kinoko_reader_read(plain,bytes,1) && plain->transferred==0);
-    CHECK(kinoko_reader_seek(plain,0,FILE_BEGIN)==0);
+    CHECK(kinoko_reader_seek(plain,0,KINOKO_FILE_BEGIN)==0);
     // Exercise the recovered string overload via the actual thiscall table.
     KinokoArchiveReader string_reader{&kinoko_file_reader_methods,nullptr,0};
     kinoko::legacy::StringRecord path_record{};
-    char *name=ordinary.path; std::memcpy(path_record.characters,&name,sizeof(name));
-    path_record.capacity=MAX_PATH; path_record.length=static_cast<uint32_t>(std::strlen(name));
+    const char *name=ordinary.path; std::memcpy(path_record.characters,&name,sizeof(name));
+    path_record.capacity=static_cast<uint32_t>(ordinary.storage.size()+1); path_record.length=static_cast<uint32_t>(std::strlen(name));
     CHECK(string_reader.methods->open_string(&string_reader, nullptr,&path_record));
     CHECK(string_reader.methods->size(&string_reader, nullptr)==5);
     string_reader.methods->destroy(&string_reader, nullptr,0);
@@ -66,7 +66,7 @@ int main() {
     CHECK(kinoko_writer_write(writer,&count,2));
     CHECK(kinoko_writer_write(writer,&index_size,4));
     CHECK(kinoko_writer_write(writer,index.data(),index_size));
-    CHECK(kinoko_reader_seek(writer,offset,FILE_BEGIN)==offset);
+    CHECK(kinoko_reader_seek(writer,offset,KINOKO_FILE_BEGIN)==offset);
     std::array<uint8_t,length> payload{'H','E','L','L','O'};
     const auto key=static_cast<uint8_t>((offset>>1)|0x23);
     for(auto& c:payload) c^=key;
@@ -88,17 +88,19 @@ int main() {
     CHECK(!kinoko_reader_seek_relative(reader,1));
     // Explicitly pin the original virtual seek quirk; guarded loader skips above
     // remain absolute. FILE_END subtracts distance instead of adding it.
-    CHECK(kinoko_reader_seek(reader,1,FILE_END)==4 && package->read_position==4);
+    CHECK(kinoko_reader_seek(reader,1,KINOKO_FILE_END)==4 && package->read_position==4);
     CHECK(kinoko_file_seek(reader->handle,0,KINOKO_FILE_CURRENT)==offset+4);
-    CHECK(kinoko_reader_seek(reader,2,FILE_BEGIN)==2);
+    CHECK(kinoko_reader_seek(reader,2,KINOKO_FILE_BEGIN)==2);
     CHECK(kinoko_file_seek(reader->handle,0,KINOKO_FILE_CURRENT)==offset+2);
-    CHECK(kinoko_reader_seek(reader,1,FILE_CURRENT)==3);
+    CHECK(kinoko_reader_seek(reader,1,KINOKO_FILE_CURRENT)==3);
     CHECK(package->read_position==3);
     kinoko_archive_count=1;
     CHECK(kinoko_reader_open(&reader,"data/fixture.bin"));
     CHECK(kinoko_reader_read(reader,bytes,8) && reader->transferred==5);
     CHECK(std::memcmp(bytes,"HELLO",5)==0 && package!=nullptr);
     CHECK(!kinoko_reader_read(reader,bytes,1));
+    CHECK(kinoko_reader_open(&reader,"./DATA\\FIXTURE.BIN"));
+    CHECK(kinoko_reader_read(reader,bytes,5) && std::memcmp(bytes,"HELLO",5)==0);
     CHECK(!kinoko_reader_open(&reader,"data/missing.bin") && reader==nullptr);
     kinoko_archive_initialize();
     return 0;

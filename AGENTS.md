@@ -182,3 +182,13 @@ and main-menu rendering were observed by the agent through WSLg, using CPU
 Vulkan (llvmpipe), not hardware acceleration. Linux/macOS missing star and
 stomp-score effects remain user-reported issues; same-source Windows x64 is
 user-confirmed unaffected. Do not equate startup with gameplay validation.
+
+## User update: cross-platform closeout (2026-09-29)
+
+User confirmed all three missing-effect symptoms fixed after the WSL run of
+067fc414. Record this as user feedback for that Linux build, not a new macOS
+validation. User accepted the full closeout plan: focused automated numeric,
+save/resource compatibility regressions, transfer-contract investigation,
+same-source packages and normal/diagnostic launchers. Focused non-gameplay
+contracts may run in CI and WSL; gameplay remains user-owned. Retain fixtures
+and logs. Do not touch docs/font-resource-investigation (unrelated local work).

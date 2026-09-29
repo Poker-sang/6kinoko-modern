@@ -421,6 +421,31 @@ foreach(target kinoko_native_methods kinoko_squirrel_cpp_vm kinoko_audio_runtime
     target_link_libraries(${target} PUBLIC kinoko_runtime_services)
 endforeach()
 add_dependencies(kinoko_modern_gpu kinoko_gpu_shaders kinoko_font_assets)
+add_executable(kinoko_savedata_file_contract tests/savedata_file_contract.cpp
+    src/reconstructed/buffer_codec.cpp)
+target_include_directories(kinoko_savedata_file_contract PRIVATE
+    include "${KINOKO_SQUIRREL2_ROOT}/include")
+target_link_libraries(kinoko_savedata_file_contract PRIVATE kinoko_squirrel_cpp_vm)
+if(MSVC)
+target_link_options(kinoko_savedata_file_contract PRIVATE /OPT:REF /OPT:ICF)
+endif()
+add_test(NAME savedata_file_contract COMMAND kinoko_savedata_file_contract)
+set_tests_properties(savedata_file_contract PROPERTIES TIMEOUT 60)
+add_executable(kinoko_bytecode_wire_contract tests/bytecode_wire_contract.cpp)
+target_include_directories(kinoko_bytecode_wire_contract PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
+target_link_libraries(kinoko_bytecode_wire_contract PRIVATE kinoko_squirrel_cpp_vm)
+if(MSVC)
+target_link_options(kinoko_bytecode_wire_contract PRIVATE /OPT:REF /OPT:ICF)
+endif()
+add_test(NAME bytecode_wire_contract COMMAND kinoko_bytecode_wire_contract)
+set_tests_properties(bytecode_wire_contract PROPERTIES TIMEOUT 60)
+add_executable(kinoko_file_archive_contract tests/file_archive_contract.cpp
+    src/reconstructed/file_io.cpp src/reconstructed/archive_store.cpp
+    src/reconstructed/archive_random.cpp)
+target_include_directories(kinoko_file_archive_contract PRIVATE include)
+target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_zlib kinoko_file_service)
+add_test(NAME file_archive_contract COMMAND kinoko_file_archive_contract)
+
 if(NOT WIN32)
     # Static reconstructed modules have bidirectional references. Repeat the group
     # on Apple (no GNU start-group); use CMake RESCAN on ELF platforms.
@@ -532,27 +557,11 @@ target_link_libraries(kinoko_upstream_bindings_contract PRIVATE kinoko_squirrel_
 add_test(NAME upstream_bindings_contract COMMAND kinoko_upstream_bindings_contract)
 set_tests_properties(upstream_bindings_contract PROPERTIES TIMEOUT 120)
 
-add_executable(kinoko_savedata_file_contract tests/savedata_file_contract.cpp
-    src/reconstructed/buffer_codec.cpp)
-target_include_directories(kinoko_savedata_file_contract PRIVATE
-    include "${KINOKO_SQUIRREL2_ROOT}/include")
-target_link_libraries(kinoko_savedata_file_contract PRIVATE kinoko_squirrel_cpp_vm)
-target_link_options(kinoko_savedata_file_contract PRIVATE /OPT:REF /OPT:ICF)
-add_test(NAME savedata_file_contract COMMAND kinoko_savedata_file_contract)
-set_tests_properties(savedata_file_contract PROPERTIES TIMEOUT 60)
-
 add_executable(kinoko_script_callback_status_contract tests/script_callback_status_contract.cpp
     src/squirrel/script_callback_invocation.cpp)
 target_include_directories(kinoko_script_callback_status_contract PRIVATE
     include "${KINOKO_SQUIRREL2_ROOT}/include")
 add_test(NAME script_callback_status_contract COMMAND kinoko_script_callback_status_contract)
-
-add_executable(kinoko_bytecode_wire_contract tests/bytecode_wire_contract.cpp)
-target_include_directories(kinoko_bytecode_wire_contract PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
-target_link_libraries(kinoko_bytecode_wire_contract PRIVATE kinoko_squirrel_cpp_vm)
-target_link_options(kinoko_bytecode_wire_contract PRIVATE /OPT:REF /OPT:ICF)
-add_test(NAME bytecode_wire_contract COMMAND kinoko_bytecode_wire_contract)
-set_tests_properties(bytecode_wire_contract PROPERTIES TIMEOUT 60)
 
 add_executable(kinoko_squirrel_source_vm_contract tests/squirrel_source_vm_contract.cpp)
 target_include_directories(kinoko_squirrel_source_vm_contract PRIVATE
@@ -795,13 +804,6 @@ set_tests_properties(actor_lifecycle_contract PROPERTIES TIMEOUT 120)
 
 
 # Compile-only handoff: execution remains user-controlled.
-add_executable(kinoko_file_archive_contract tests/file_archive_contract.cpp
-    src/reconstructed/file_io.cpp src/reconstructed/archive_store.cpp
-    src/reconstructed/archive_random.cpp)
-target_include_directories(kinoko_file_archive_contract PRIVATE include)
-target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_zlib user32 kinoko_file_service)
-add_test(NAME file_archive_contract COMMAND kinoko_file_archive_contract)
-
 add_executable(kinoko_map_loading_contract tests/map_loading_contract.cpp
     src/reconstructed/map_loading.cpp)
 target_include_directories(kinoko_map_loading_contract PRIVATE include "${KINOKO_SQUIRREL2_ROOT}/include")

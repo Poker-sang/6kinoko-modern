@@ -3,7 +3,7 @@
 #include <type_traits>
 #include "kinoko/squirrel_host_object.hpp"
 #include "kinoko/squirrel_source_runtime.h"
-#include <windows.h>
+#include "retained_fixture.hpp"
 #include <zlib.h>
 #include <cstdio>
 #include <cstdlib>
@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-// Real source VM, SqPlus references, serializer, Windows file I/O and codec.
+// Real source VM, SqPlus references, serializer, platform file I/O and codec.
 // Only unrelated game host/diagnostic ports are supplied by this fixture.
 extern "C" {
 struct SQVM *kinoko_primary_vm = nullptr;
@@ -44,14 +44,10 @@ class Files {
     std::vector<std::string> paths;
 public:
     Files() {
-        char temp[MAX_PATH], unique[MAX_PATH];
-        require(GetTempPathA(MAX_PATH,temp) > 0, "temp path");
-        require(GetTempFileNameA(temp,"ksv",0,unique) != 0, "unique temp name");
-        require(DeleteFileA(unique) && CreateDirectoryA(unique,nullptr), "temp directory");
-        directory=unique;
+        directory=retained_fixture("kinoko-save").string();
     }
     std::string path(const char* name) {
-        paths.push_back(directory+"\\"+name); return paths.back();
+        paths.push_back((std::filesystem::path(directory)/name).string()); return paths.back();
     }
     ~Files() { std::printf("Retained savedata fixtures: %s\n", directory.c_str()); }
 };
@@ -152,7 +148,7 @@ int main() {
         require(!file_call(vm,saved,"too_large",true),"oversized table save fails");
         require(read_bytes(saved)==previous_save,"serialization failure preserves existing save");
         require(!file_call(vm,missing,"blank",false),"missing file fails");
-        require(!file_call(vm,missing+"\\child.dat","source",true),"invalid parent save fails");
+        require(!file_call(vm,(std::filesystem::path(missing)/"child.dat").string(),"source",true),"invalid parent save fails");
         write_bytes(bad,{1,2,3}); require(!file_call(vm,bad,"blank",false),"short file header fails");
         Bytes oversized; word(oversized,0x20001); write_bytes(bad,oversized);
         require(!file_call(vm,bad,"blank",false),"oversized encoded length fails");

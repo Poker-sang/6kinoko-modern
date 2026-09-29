@@ -1812,12 +1812,13 @@ static void METAL_UploadToTexture(
         MetalTexture *metalTexture = METAL_INTERNAL_PrepareTextureForWrite(renderer, textureContainer, cycle);
 
         // Honor the public transfer-buffer layout, including application row
-        // padding. Either zero field selects a tightly packed source, as in
-        // SDL_GPUTextureTransferInfo and the download path below.
+        // padding. Each zero field defaults independently, as in D3D12/Vulkan.
         Uint32 bufferStride = source->pixels_per_row;
         Uint32 bufferImageHeight = source->rows_per_layer;
-        if (bufferStride == 0 || bufferImageHeight == 0) {
+        if (bufferStride == 0) {
             bufferStride = destination->w;
+        }
+        if (bufferImageHeight == 0) {
             bufferImageHeight = destination->h;
         }
 
@@ -1965,8 +1966,10 @@ static void METAL_DownloadFromTexture(
             source->h,
             source->d);
 
-        if (bufferStride == 0 || bufferImageHeight == 0) {
+        if (bufferStride == 0) {
             bufferStride = source->w;
+        }
+        if (bufferImageHeight == 0) {
             bufferImageHeight = source->h;
         }
 

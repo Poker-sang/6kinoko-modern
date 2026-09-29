@@ -7,22 +7,27 @@ from pathlib import Path
 import shutil
 import subprocess
 import tarfile
+import zipfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--runtime", type=Path, required=True)
-parser.add_argument("--platform", choices=["linux-x64", "macos-universal"], required=True)
+parser.add_argument("--platform", choices=["linux-x64", "macos-universal", "windows-x64", "windows-x86"], required=True)
 parser.add_argument("--output", type=Path, required=True)
+parser.add_argument("--tests-passed", action="store_true", help="Record successful focused compatibility contracts, not gameplay")
 args = parser.parse_args()
 repo = Path(__file__).resolve().parent.parent
 revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
 name = "6kinoko-modern-" + args.platform + "-" + revision[:8]
+windows = args.platform.startswith("windows-")
+suffix = ".exe" if windows else ""
+archive_suffix = ".zip" if windows else ".tar.gz"
 args.output.mkdir(parents=True, exist_ok=True)
 root = args.output / name
-if root.exists() or (args.output / (name + ".tar.gz")).exists():
+if root.exists() or (args.output / (name + archive_suffix)).exists():
     raise SystemExit("Refusing to overwrite retained package")
 root.mkdir()
-required = ["kinoko_modern_gpu", "kinoko_gpu_transfer_contract", "fonts/NotoSansCJKjp-Regular.otf", "fonts/LICENSE"]
-extension = "msl" if args.platform == "macos-universal" else "spv"
+required = ["kinoko_modern_gpu"+suffix, "kinoko_gpu_transfer_contract"+suffix, "fonts/NotoSansCJKjp-Regular.otf", "fonts/LICENSE"]
+extension = "dxbc" if windows else "msl" if args.platform == "macos-universal" else "spv"
 required += ["shaders/sprite." + stage + "." + extension for stage in ["vert", "frag"]]
 for relative in required:
     source = args.runtime / relative
@@ -31,11 +36,23 @@ for relative in required:
     destination = root / relative
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
-os.chmod(root / "kinoko_modern_gpu", 0o755)
-os.chmod(root / "kinoko_gpu_transfer_contract", 0o755)
-launcher = root / ("Launch.command" if args.platform == "macos-universal" else "launch.sh")
-launcher.write_text('#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\nexec ./kinoko_modern_gpu "$@"\n', encoding="utf-8")
-os.chmod(launcher, 0o755)
+for executable in ["kinoko_modern_gpu", "kinoko_gpu_transfer_contract"]:
+    os.chmod(root / (executable+suffix), 0o755)
+for diagnostic in [False, True]:
+    if windows:
+        launcher = root / ("run-with-diagnostics.cmd" if diagnostic else "launch.cmd")
+        content = '@echo off\nsetlocal\ncd /d "%~dp0"\n'
+        content += 'set "KINOKO_TRACE='+('1' if diagnostic else '0')+'"\n'
+        content += 'set "KINOKO_TRACE_VERBOSE=0"\nset "KINOKO_TRACE_FILTER="\n'
+        content += 'kinoko_modern_gpu.exe %*\n'
+    else:
+        extension_launcher = ".command" if args.platform == "macos-universal" else ".sh"
+        launcher = root / (("Diagnose" if diagnostic else "Launch")+extension_launcher if args.platform == "macos-universal" else ("diagnose.sh" if diagnostic else "launch.sh"))
+        content = '#!/bin/sh\ncd -- "$(dirname -- "$0")" || exit 1\n'
+        content += 'export KINOKO_TRACE='+('1' if diagnostic else '0')+'\n'
+        content += 'export KINOKO_TRACE_VERBOSE=0\nunset KINOKO_TRACE_FILTER\nexec ./kinoko_modern_gpu "$@"\n'
+    launcher.write_text(content, encoding="utf-8", newline="\r\n" if windows else "\n")
+    os.chmod(launcher, 0o755)
 (root / "README.txt").write_text(
     "6kinoko-modern / " + args.platform + "\nSource: " + revision + "\n\n"
     "Copy your original 6kinoko_a.dat, 6kinoko_b.dat and 6kinoko_c.dat into this folder, beside kinoko_modern_gpu.\n"
@@ -45,9 +62,11 @@ os.chmod(launcher, 0o755)
     "macOS package contains Intel x86_64 and Apple Silicon arm64 code; Metal-capable macOS 14 or newer is targeted.\n"
     "The macOS build is unsigned/not notarized. Use the normal macOS Open confirmation for a trusted local build.\n"
     "The directory must be writable for saves. Run from an extracted folder, not inside the archive.\n"
-    "KINOKO_TRACE=1 enables kinoko-trace.log beside the executable.\n"
+    "Normal launch explicitly disables traces. Windows: launch.cmd; Linux: launch.sh; macOS: Launch.command.\n"
+    "Diagnostics: run-with-diagnostics.cmd / diagnose.sh / Diagnose.command.\n"
+    "Logs: retdec_trace.log on Windows; kinoko-trace.log on Linux/macOS, beside the executable.\n"
     "Optional hardware check: ./kinoko_gpu_transfer_contract verifies texture upload/readback without game data. Not executed in CI.\n"
-    "Compiled and packaged in CI; gameplay has not been validated on this platform.\n",
+    "This build is compiled and packaged; automated contracts do not establish gameplay validation.\n",
     encoding="utf-8")
 for source in (repo / "third_party").rglob("*"):
     if source.is_file() and source.name.lower() in ["license", "license.txt", "copying", "copying.txt", "copyright"]:
@@ -55,12 +74,23 @@ for source in (repo / "third_party").rglob("*"):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
 manifest = {"source_commit": revision, "platform": args.platform, "game_run": False,
-            "tests_run": False, "original_dat_included": False, "files": {}}
+            "tests_run": args.tests_passed, "original_dat_included": False, "files": {}}
 for path in sorted(root.rglob("*")):
     if path.is_file():
         manifest["files"][path.relative_to(root).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
 (root / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-archive = args.output / (name + ".tar.gz")
-with tarfile.open(archive, "w:gz") as output:
-    output.add(root, arcname=name)
+archive = args.output / (name + archive_suffix)
+if windows:
+    with zipfile.ZipFile(archive,"w",zipfile.ZIP_DEFLATED) as output:
+        for path in sorted(root.rglob("*")):
+            if path.is_file(): output.write(path,Path(name)/path.relative_to(root))
+else:
+    def modes(info):
+        # Preserve executable permissions even when packaging on Windows.
+        info.mode = 0o755 if info.isdir() or Path(info.name).name in [
+            "kinoko_modern_gpu", "kinoko_gpu_transfer_contract", "launch.sh",
+            "diagnose.sh", "Launch.command", "Diagnose.command"] else 0o644
+        return info
+    with tarfile.open(archive, "w:gz") as output:
+        output.add(root, arcname=name, filter=modes)
 print(archive)
