@@ -267,3 +267,35 @@ validates/binds all entries, then calls the original CreateActorFromMap; use it 
 a dedicated custom layer. It does not rewrite placements or change missing-ID
 behavior in the native loader. Both adapters accept only enemy/boss kinds with a
 script init function. Transformations remain application-defined factories.
+
+## Local first-stage practice variant
+
+Build a playable candidate using your own DAT files:
+
+```powershell
+python create_practice_mod.py --reference-dir . --output practice-stage
+python mod_manager.py pack practice-stage practice-stage.kmod
+python mod_manager.py install-enable --game kinoko_modern_gpu.exe practice-stage.kmod
+python mod_manager.py launch --game kinoko_modern_gpu.exe --stage practice-stage:first-stage
+```
+
+The builder copies the original `data/map/w1-c01a.act` to the NEW resource
+`data/map/mods/practice-stage.act`. Terrain and original enemies are unchanged;
+this is a practice variant of the first stage, not a newly designed map. Generated
+map bytes and packages stay local and are not included in the source repository
+or standard game ZIP. LOCAL-SOURCE.json records their source path/hash.
+
+The entrypoint registers a stage that selects Mod-session slot A, resets player
+status through InitGlobal, ends title/logo/world presentation, and invokes the
+original InitStage lifecycle. It then sets 99 lives, pauses the initial map timer
+and removes the title fade. The `mods/` prefix satisfies the original fourth-
+character `s` convention for suppressing world-number intros. Death/quit/clear
+that request ChangeStageToWorld are redirected to the original ChangeStageToTitle;
+temporary transition hooks restore themselves before leaving or if startup throws.
+Warping into other original submaps preserves their original behavior and may
+reset timer options; this is not a complete practice-mode framework.
+
+Original archives and ordinary saves are not changed. The Mod's isolated slot A
+is used, so starting this entry resets its run's lives/score/player status.
+Build/script checks do not establish gameplay success; manual verification is
+still needed for player control, collision, pause and the return-to-title path.

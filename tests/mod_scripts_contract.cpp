@@ -79,5 +79,35 @@ int main(){
     CHECK(prepare("this is not valid squirrel !"));CHECK(!run_scripts(vm,error));CHECK(sq_gettop(vm)==0);
     sq_close(vm);vm=sq_open(1024);
     CHECK(prepare("throw \"deliberate failure\";"));CHECK(!run_scripts(vm,error));CHECK(error.find("deliberate failure")!=std::string::npos);
+    sq_close(vm);vm=sq_open(1024);
+    std::ifstream practice(KINOKO_PRACTICE_SCRIPT,std::ios::binary);
+    const std::string practice_source{std::istreambuf_iterator<char>(practice),{}};
+    CHECK(!practice_source.empty());CHECK(prepare(practice_source));CHECK(run_scripts(vm,error));
+    CHECK(evaluate(vm,R"SQ(
+        ::events <- [];
+        ::savedata <- [{}];
+        ::life <- 0; ::stageTimeStop <- false;
+        ::TitleMenu <- {pl={EndStage=function(){events.append("title-end");}}};
+        ::WorldMap <- {pl={EndStage=function(){events.append("world-end");}}};
+        ::Logo <- {pl={EndStage=function(){events.append("logo-end");}}};
+        ::PlayerStatus <- {life=0};
+        ::Fader2 <- {FadeIn=function(a,b,c,d){events.append("fade");}};
+        ::InitGlobal <- function(){events.append("global");};
+        ::InitStage <- function(path){if(path!="mods/practice-stage.act")throw "map path";events.append("stage");};
+        ::ChangeStageToWorld <- function(){events.append("world");};
+        ::ChangeStageToTitle <- function(){events.append("title");};
+        ::originalWorld <- ChangeStageToWorld; ::originalTitle <- ChangeStageToTitle;
+    )SQ"));
+    CHECK(launch_stage(vm,"probe:first-stage",error));
+    CHECK(evaluate(vm,R"SQ(
+        if(events.len()!=6 || events[0]!="global" || events[1]!="title-end" ||
+           events[2]!="world-end" || events[3]!="logo-end" || events[4]!="stage" || events[5]!="fade")throw "startup order";
+        if(life!=99 || PlayerStatus.life!=99 || !stageTimeStop)throw "practice flags";
+        ChangeStageToWorld();
+        if(events.top()!="title" || ChangeStageToWorld!=originalWorld || ChangeStageToTitle!=originalTitle)throw "return/restore";
+        ::InitStage=function(path){throw "map load failure";};
+    )SQ"));
+    CHECK(!launch_stage(vm,"probe:first-stage",error));
+    CHECK(evaluate(vm,"if(ChangeStageToWorld!=originalWorld || ChangeStageToTitle!=originalTitle)throw \"error restore\";"));
     sq_close(vm);clear();return 0;
 }
