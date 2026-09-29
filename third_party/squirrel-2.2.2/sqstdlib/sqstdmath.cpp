@@ -4,6 +4,21 @@
 #include <stdlib.h>
 #include <sqstdmath.h>
 #include "kinoko_random.hpp"
+#include <fstream>
+#include <filesystem>
+#include <cstring>
+
+// Optional cross-platform diagnostics: log the actual operands/result once,
+// without recomputing math or changing the VM's rounding environment.
+static void trace_math(const char* name,SQFloat a,SQFloat b,SQFloat result) {
+    static thread_local std::ofstream log=[] {
+        const char* path=getenv("KINOKO_SCRIPT_MATH_DETAILS");
+        return path?std::ofstream(std::filesystem::u8path(path)):std::ofstream();
+    }();
+    if(!log.is_open())return;
+    uint32_t bits[3];memcpy(&bits[0],&a,4);memcpy(&bits[1],&b,4);memcpy(&bits[2],&result,4);
+    log<<name<<std::hex<<' '<<bits[0]<<' '<<bits[1]<<' '<<bits[2]<<'\n';log.flush();
+}
 
 // Match the original CRT's per-thread state shared by script VMs.
 static thread_local kinoko::ScriptRandom script_random;
@@ -12,7 +27,9 @@ extern "C" uint32_t kinoko_script_random_state() {return script_random.state();}
 #define SINGLE_ARG_FUNC(_funcname) static SQInteger math_##_funcname(HSQUIRRELVM v){ \
 	SQFloat f; \
 	sq_getfloat(v,2,&f); \
-	sq_pushfloat(v,(SQFloat)_funcname(f)); \
+	const SQFloat result=(SQFloat)_funcname(f); \
+	trace_math(#_funcname,f,0,result); \
+	sq_pushfloat(v,result); \
 	return 1; \
 }
 
@@ -20,7 +37,9 @@ extern "C" uint32_t kinoko_script_random_state() {return script_random.state();}
 	SQFloat p1,p2; \
 	sq_getfloat(v,2,&p1); \
 	sq_getfloat(v,3,&p2); \
-	sq_pushfloat(v,(SQFloat)_funcname(p1,p2)); \
+	const SQFloat result=(SQFloat)_funcname(p1,p2); \
+	trace_math(#_funcname,p1,p2,result); \
+	sq_pushfloat(v,result); \
 	return 1; \
 }
 
