@@ -15,6 +15,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <cfenv>
 namespace {
 KinokoInputManager input_manager{};
 kinoko::camera::Record camera{};
@@ -60,7 +61,20 @@ int main() {
     std::ofstream("session.identity")<<std::string(64,'a');std::ofstream(".replay-session")<<"record";
     SDL_Init(SDL_INIT_EVENTS);kinoko_replay_set_error_handler(report);
     auto* env=SDL_GetEnvironment();SDL_SetEnvironmentVariable(env,"KINOKO_REPLAY_MODE","record",true);
-    CHECK(reset() && kinoko_replay_start());
+    CHECK(reset());
+    // Actual first divergent cos operand from the cross-platform game replay.
+    // Exercise the registered VM function under the game's upward rounding.
+    const auto rounding=std::fegetround();CHECK(std::fesetround(FE_UPWARD)==0);
+    uint32_t operand_bits=0x3f5710c4;float operand;std::memcpy(&operand,&operand_bits,4);
+    sq_pushroottable(kinoko_primary_vm);sq_pushstring(kinoko_primary_vm,"mathInput",-1);
+    sq_pushfloat(kinoko_primary_vm,operand);sq_newslot(kinoko_primary_vm,-3,SQFalse);sq_pop(kinoko_primary_vm,1);
+    CHECK(evaluate("mathResult <- cos(mathInput);"));
+    sq_pushroottable(kinoko_primary_vm);sq_pushstring(kinoko_primary_vm,"mathResult",-1);
+    CHECK(SQ_SUCCEEDED(sq_get(kinoko_primary_vm,-2)));SQFloat math_result;
+    CHECK(SQ_SUCCEEDED(sq_getfloat(kinoko_primary_vm,-1,&math_result)));sq_pop(kinoko_primary_vm,2);
+    uint32_t result_bits;std::memcpy(&result_bits,&math_result,4);
+    CHECK(std::fesetround(rounding)==0);CHECK(result_bits==0x3f2ad9fc);
+    CHECK(kinoko_replay_start());
     for(int i=0;i<4;++i) {
         CHECK(kinoko_replay_begin_frame());kinoko::input::Frame actions;
         actions.held[kinoko::input::Jump]=i+1;input_manager.published.buttons[0]=i+1;

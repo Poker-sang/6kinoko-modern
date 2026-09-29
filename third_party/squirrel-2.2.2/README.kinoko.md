@@ -42,3 +42,13 @@ sqcompiler.cpp zero-initializes scalar constant objects for the same reason.
 The original float bit equality (including signed zero) is not changed.
 
 Replay format 1 observes the existing ScriptRandom state through kinoko_script_random_state(); its sequence and seeding behavior are unchanged.
+
+## Script math precision (2026-09-29)
+
+sqstdmath.cpp explicitly promotes arguments to double before C math calls and
+narrows the result to SQFloat. This preserves the Windows C-header behavior and
+prevents POSIX/C++ float overload selection from changing directed-rounding
+results. For example, under FE_UPWARD, cos(binary32 0x3f5710c4) must narrow to
+0x3f2ad9fc; the prior Linux float overload returned 0x3f2ad9fd, causing a replay
+velocity difference at frame 3444. This is precision selection, not a replacement
+random generator or a guarantee that every platform libm is bit-identical.
