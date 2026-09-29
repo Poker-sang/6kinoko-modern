@@ -29,3 +29,27 @@ and format difference, not a confirmed GPU capture. This correction requires
 user verification on the affected Mac. No game or contract execution by the
 agent. Compile shaders and complete packages before handing off. Preserve all
 earlier packages and saves; stage only the three reference DAT in new packages.
+
+## Build and delivery
+
+Built source: `32dc959ae77d3cd7bbd19a1e3e8c74fd95005e4f`.
+[CI 36518686549](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36518686549)
+passed all six Windows/Linux/macOS full-game and portable jobs. Shader sources
+compiled through FXC and glslang/SPIRV-Cross. Generated MSL retains explicit
+fragment depth output and the D24 rounding operation.
+
+Local Windows x64 `runtime-builds/modern-x64-macos-render-01/kinoko_modern_gpu.exe`
+compiled and passed DAT hash validation and the static D3D9 dependency audit.
+No game or contract was executed.
+
+macOS universal local package, including hash-verified user-owned DAT:
+`runtime-builds/modern-macos-render-01/6kinoko-modern-macos-universal-32dc959a-with-data.tar.gz`.
+SHA256: `78b049f261edac36382f8934062e08811e8d8c28c94a2e5b1b4c3a2ea601b0ff`.
+Original CI package manifest and executable permissions were verified. Download,
+build logs, staging script and delivery record are retained under
+`build-runs/macos-render-delivery-01/`. DAT packages remain local only.
+
+Extract the complete new package and open `Launch.command`. Observe chimney
+particles, door animation and level digits on the affected M-series Mac. Actual
+visual resolution remains unverified; do not treat compilation as confirmation
+of the depth hypothesis or as a gameplay test.

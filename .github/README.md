@@ -23,6 +23,13 @@ Always use new build/runtime directories. Copy your original `6kinoko_a.dat`, `6
 
 ## Status / 状态
 
+Apple Silicon follow-up: the user confirmed macOS starts, but reported striped
+particles/doors and blurred digits (Windows looks normal). Source `32dc959a`
+adds D24 precision compatibility on floating depth targets and Retina drawables.
+All six [CI jobs](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36518686549)
+passed; visual correction still requires user verification. See the
+[rendering handoff](../docs/modern-platform/macos-rendering-01.md).
+
 Source `6b39bfe4dfd8925003cc3d530ab91effcfc5af93` passed [all six CI jobs](https://github.com/Poker-sang/6kinoko-modern/actions/runs/36460831199): complete Windows, Linux and universal macOS games plus portable compilation on all three OSes.
 
 Local Windows delivery: `runtime-builds/modern-x64-native-05/kinoko_modern_gpu.exe`. The x64 game and selected contracts compiled; `modern-native-05` compiled the Win32 game and all 85 contracts. DAT hashes and static D3D9 audits passed. No game, CTest or contract executable was run.
