@@ -26,7 +26,7 @@ std::ofstream output,status;
 std::unique_ptr<kinoko::replay::Reader> reader;
 std::unique_ptr<kinoko::replay::Writer> writer;
 kinoko::replay::Frame frame,expected;
-uint64_t index=0;
+uint64_t frame_index=0;
 bool stopped=false,completed=false,failed=false;
 std::string pending_error;
 void (*error_handler)(const char*)=nullptr;
@@ -35,7 +35,7 @@ void note(const std::string& message) {status<<message<<'\n';status.flush();}
 void fail(const std::string& message) {
     if(failed)return;
     failed=true;stopped=true;
-    note("FAILED at frame "+std::to_string(index)+": "+message);
+    note("FAILED at frame "+std::to_string(frame_index)+": "+message);
     if(error_handler)error_handler(message.c_str());
     else pending_error=message; // Report on the main thread after the game worker joins.
     quit();
@@ -103,7 +103,7 @@ uint64_t checkpoint() {
 bool kinoko_replay_start() {
     const char* value=SDL_getenv("KINOKO_REPLAY_MODE");
     if(!value || !*value)return true;
-    index=0;stopped=false;completed=false;failed=false;pending_error.clear();
+    frame_index=0;stopped=false;completed=false;failed=false;pending_error.clear();
     try {
         const std::string requested(value);
         if(requested!="record" && requested!="play")throw std::runtime_error("Unknown replay mode");
@@ -131,12 +131,12 @@ bool kinoko_replay_begin_frame() {
     if(mode==Mode::Off)return true;
     if(stopped)return false;
     try {
-        kinoko_simulation_frame(index);frame={};frame.clock=kinoko_simulation_milliseconds();
+        kinoko_simulation_frame(frame_index);frame={};frame.clock=kinoko_simulation_milliseconds();
         frame.random_before=kinoko_script_random_state();
         if(mode==Mode::Playback) {
             if(!reader->next(expected)){completed=true;stopped=true;quit();return false;}
             if(expected.clock!=frame.clock || expected.random_before!=frame.random_before)
-                throw std::runtime_error("Pre-frame clock/random state differs at frame "+std::to_string(index));
+                throw std::runtime_error("Pre-frame clock/random state differs at frame "+std::to_string(frame_index));
         }
         return true;
     }catch(const std::exception& e){fail(e.what());return false;}
@@ -152,19 +152,19 @@ void kinoko_replay_end_frame() {
         frame.random_after=kinoko_script_random_state();frame.checkpoint=checkpoint();
         if(mode==Mode::Record)writer->append(frame);
         else if(!kinoko::replay::same_checkpoint(expected,frame)) {
-            std::ostringstream message;message<<"Desync at frame "<<index<<"; checkpoint expected "<<std::hex<<expected.checkpoint
+            std::ostringstream message;message<<"Desync at frame "<<frame_index<<"; checkpoint expected "<<std::hex<<expected.checkpoint
                 <<", actual "<<frame.checkpoint<<"; RNG expected "<<expected.random_after<<", actual "<<frame.random_after;
             throw std::runtime_error(message.str());
         }
-        ++index;
-        if(mode==Mode::Playback && index==reader->count()){completed=true;stopped=true;quit();}
+        ++frame_index;
+        if(mode==Mode::Playback && frame_index==reader->count()){completed=true;stopped=true;quit();}
     }catch(const std::exception& e){fail(e.what());}
 }
 void kinoko_replay_finish() {
     if(mode!=Mode::Off) {
     try {
         if(mode==Mode::Record && writer && !failed){writer->finish();completed=true;}
-        note(std::string(completed?"COMPLETED ":failed?"FAILED ":"ABORTED ")+std::to_string(index)+" frames");
+        note(std::string(completed?"COMPLETED ":failed?"FAILED ":"ABORTED ")+std::to_string(frame_index)+" frames");
     }catch(const std::exception& e){fail(e.what());}
     writer.reset();reader.reset();output.close();input.close();status.close();
     kinoko_simulation_enable(0);mode=Mode::Off;

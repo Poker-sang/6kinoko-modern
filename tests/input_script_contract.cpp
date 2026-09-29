@@ -14,6 +14,7 @@ const void* kinoko_sqrat_root_vtable() {static const int tag=2;return &tag;}
 }
 extern "C" void kinoko_trace(const char*) {}
 extern "C" void kinoko_trace_i32(const char*, int32_t) {}
+extern "C" void kinoko_trace_squirrel_name(const char*, int32_t) {}
 #ifdef KINOKO_STANDALONE_VM
 SQInteger kinoko_squirrel_invoke_native(HSQUIRRELVM v,SQFUNCTION f){return f(v);}
 #endif

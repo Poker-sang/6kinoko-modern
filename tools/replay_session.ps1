@@ -14,9 +14,15 @@ function Unique-Directory([string]$parent, [string]$prefix) {
     New-Item -ItemType Directory -Path $path | Out-Null
     return $path
 }
+function File-Sha256([string]$path) {
+    $hash = [Security.Cryptography.SHA256]::Create()
+    $stream = [IO.File]::OpenRead($path)
+    try { return ([BitConverter]::ToString($hash.ComputeHash($stream))).Replace('-','').ToLowerInvariant() }
+    finally { $stream.Dispose(); $hash.Dispose() }
+}
 function Inventory([string]$directory) {
     $entries = @(Get-ChildItem -LiteralPath $directory -File -Recurse | ForEach-Object {
-        [ordered]@{ path=$_.FullName.Substring($directory.Length+1).Replace('\','/'); sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+        [ordered]@{ path=$_.FullName.Substring($directory.Length+1).Replace('\','/'); sha256=(File-Sha256 $_.FullName) }
     } | Sort-Object { $_.path })
     return ,$entries
 }
