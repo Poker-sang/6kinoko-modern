@@ -47,3 +47,11 @@ manifest['entrypoint']='data/custom/scripted/missing.nut'
 (entry_mod/'mod.json').write_text(json.dumps(manifest),encoding='utf-8')
 rejects(lambda:mods.resolve([entry_mod]))
 print('PASS: explicit entrypoint validation and identity')
+manifest['entrypoint']='data/custom/scripted/main.nut'
+(entry_mod/'mod.json').write_text(json.dumps(manifest),encoding='utf-8')
+other=root/'entry-override';other.mkdir()
+override=other/'data/custom/scripted/main.nut';override.parent.mkdir(parents=True)
+override.write_text('return 2;',encoding='utf-8')
+(other/'mod.json').write_text(json.dumps({'format':1,'id':'other','version':'1','files':['data/custom/scripted/main.nut']}),encoding='utf-8')
+rejects(lambda:mods.resolve([entry_mod,other],True))
+print('PASS: entrypoint override rejected even with general overrides enabled')

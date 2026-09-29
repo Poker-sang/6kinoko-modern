@@ -21,5 +21,8 @@ int main() {
  value=open("data/probe.bin");CHECK(value.matched && !value.file);
  CHECK(!load(root/"catalog.tsv",error) && active().empty() && identity().empty());
  CHECK(load({},error) && !open("data/probe.bin").matched);
+ const std::string invalid="KINOKOMODS2\nM\tsample\t1\t"+sha256("sample")+"\nE\tsample\tdata/custom/sample/missing.nut\nF\tdata/probe.bin\t"+sha256("bad")+"\n";
+ std::ofstream(root/"catalog.tsv",std::ios::binary)<<invalid;
+ CHECK(!load(root/"catalog.tsv",error) && entrypoints().empty());
  return 0;
 }

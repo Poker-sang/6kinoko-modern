@@ -155,5 +155,55 @@ Empty draft projects cannot be packed or launched. Import failures leave the
 previous manifest intact; a file written before a manifest publication failure is
 retained unlisted for recovery. Creation/import are single-writer operations.
 
-Imported scripts are resources, not automatic startup plugins. No new script
-entry point, level/enemy registration API or map editor is introduced here.
+Imported scripts remain inert until explicitly selected as an entrypoint. See the
+content API below. No map editor or automatic menu/spawn integration exists yet.
+
+
+## Content API v1 and startup scripts
+
+Use `python mod_author.py entrypoint my-mod data/custom/my-mod/main.nut` after
+importing that file. The optional manifest `entrypoint` must be a listed `.nut`
+inside `data/custom/<mod-id>/`. It participates in the content hash, snapshot and
+save identity. Resource-only manifests/catalogs retain their existing identities.
+Scripted sessions use internal `KINOKOMODS2` catalogs, rejected by older engines.
+Another Mod cannot override an entrypoint even with --allow-overrides.
+
+The host runs explicit entrypoints once, in dependency/load order, after the
+original boot script and before the first gameplay frame. Entrypoints are plain
+UTF-8 Squirrel 2.2.2 source (optional BOM). Syntax/runtime/read errors show a Mod
+error and exit without entering the game loop. Startup effects already performed
+by scripts are not rolled back; this is not a script sandbox. Mods remain
+incompatible with recording/playback until identity integration is complete.
+Listed Mod source paths also bypass the original `.nut` -> `.cv4` rewrite when
+loaded through the existing script loader; absent paths keep the original rule.
+
+Every entrypoint receives local `mod`. Register a factory with:
+
+```squirrel
+mod.Register("enemy", "custom-enemy", {
+    name = "Custom enemy",
+    create = function(x, y) {
+        // Implement initialization using existing game bindings/resources here.
+        // Return the resulting object to the caller.
+    }
+});
+```
+
+Kinds are `stage`, `enemy`, `boss`, `transformation`. Local names use lowercase
+letters, digits, dots, underscores and hyphens (1..127 characters). The full ID is
+`<mod-id>:<local-name>`. Duplicate registrations fail rather than overwrite.
+Definitions require a display `name` string and a `create` script function; other
+metadata is retained. The registry stores/returns shallow copies of definitions.
+Squirrel 2.2 closures need explicit outer captures: `function(x) : (localValue)`.
+
+Consumers use `KinokoMods.List(kind)` (registration order), `Get(kind, fullId)`
+(metadata/factory), and `Create(kind, fullId, [arguments...])` (factory result).
+Factories run with the root table as `this`; they may call existing engine APIs.
+The registry does not automatically insert map objects, add selection-menu rows,
+allocate original numeric actor IDs, or implement boss/transform behavior.
+`KinokoMods.For` is namespace plumbing, not a security boundary between scripts.
+
+`examples/mods/registration-probe` exercises registration and factory invocation
+at startup without spawning actors or changing levels. It is an API probe, not a
+new playable enemy. Next integration work is explicit stage selection and map
+spawn adapters that consume these namespaced IDs.

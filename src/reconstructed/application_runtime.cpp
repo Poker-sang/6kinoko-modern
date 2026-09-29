@@ -358,5 +358,5 @@ extern "C" int kinoko_application_run(int show_command) {
     SetWindowLongPtrW(window,GWLP_WNDPROC,reinterpret_cast<LONG_PTR>(sdl_window_proc));
 #endif
     platform.close();
-    return 0;
+    return kinoko::mods::startup_error().empty()?0:1;
 }

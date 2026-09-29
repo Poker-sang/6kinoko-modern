@@ -1,5 +1,6 @@
 #include "kinoko/mod_scripts.hpp"
 #include "kinoko/mod_resources.hpp"
+#include "kinoko/squirrel_source_runtime.h"
 #include <squirrel.h>
 #include <cstring>
 #include <memory>
@@ -60,7 +61,7 @@ void execute(SQVM* vm, const std::string& source, const char* name) {
     struct Stack { SQVM* vm; SQInteger top; ~Stack(){sq_settop(vm,top);} } stack{vm,top};
     if(SQ_SUCCEEDED(sq_compilebuffer(vm,source.data(),static_cast<SQInteger>(source.size()),name,SQFalse))) {
         sq_pushroottable(vm);
-        if(SQ_SUCCEEDED(sq_call(vm,1,SQFalse,SQFalse)))return;
+        if(SQ_SUCCEEDED(kinoko_sq_call(vm,1,SQFalse,SQFalse)))return;
     }
     sq_getlasterror(vm);const SQChar* detail=nullptr;
     sq_getstring(vm,-1,&detail);
