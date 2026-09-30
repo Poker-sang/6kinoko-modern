@@ -40,7 +40,7 @@ void end_profile(uint64_t frames) {
     std::ofstream out(runtime::options().tas_dir/"seek-profile.txt",std::ios::app);
     out<<"first="<<profile_first<<" completed="<<frames<<" wall_ms="<<double(elapsed)/1000000
        <<" fps="<<double(frames-profile_first)*1000000000/double(elapsed)<<'\n';
-    const char* names[]={"update","draw","render_wait","render_poll","boundary_io"};
+    const char* names[]={"update","draw","render_wait","render_poll","boundary_io","checkpoint","replay_write","input_poll","scene_update"};
     for(size_t i=0;i<profile_times.size();++i)out<<names[i]<<"_ms="<<double(profile_times[i].load())/1000000<<" calls="<<profile_calls[i].load()<<'\n';
     const char* packets[]={"deferred","mixed","offscreen","submitted"};
     for(size_t i=0;i<profile_packets.size();++i)out<<packets[i]<<"_packets="<<profile_packets[i].load()<<'\n';

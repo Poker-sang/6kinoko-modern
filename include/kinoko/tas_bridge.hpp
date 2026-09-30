@@ -14,7 +14,7 @@ bool publish_preview(uint64_t completed);
 uint64_t requested_preview();
 void rendered(uint64_t completed);
 void set_flush_handler(void (*handler)());
-enum class ProfileStage { update, draw, render_wait, render_poll, boundary_io, count };
+enum class ProfileStage { update, draw, render_wait, render_poll, boundary_io, checkpoint, replay_write, input_poll, scene_update, count };
 enum class ProfilePacket { deferred, mixed, offscreen, submitted, count };
 bool profiling();
 void profile_time(ProfileStage stage,uint64_t nanoseconds);
