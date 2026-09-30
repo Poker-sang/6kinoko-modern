@@ -199,3 +199,12 @@ User requested Windows-only testing because validating other platforms is
 tedious. Deliver Windows builds for user gameplay checks; do not request Linux
 or macOS manual tests. Retain cross-platform automated compilation for portability.
 Keep previously completed cross-platform results as evidence, not new user validation.
+
+## User update: fast seek optimization scope (2026-10-01)
+
+Preserve ordinary gameplay and normal replay behavior when optimizing TAS seeking.
+Prefer gating seek-specific work behind fast_seeking(). User authorized background
+Windows replay benchmarks using isolated save/session directories. Compare real
+recording outputs and target images, retain all artifacts, and report measured
+benefit. Avoid large changes for small gains; prioritize measured bottlenecks and
+defer full VM snapshots unless separately requested.
