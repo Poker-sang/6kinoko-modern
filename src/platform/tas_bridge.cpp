@@ -9,6 +9,7 @@
 #include <sstream>
 #include <limits>
 #include <vector>
+#include <array>
 namespace kinoko::tas {
 namespace {
 std::atomic<bool> stopping{false};
@@ -20,6 +21,29 @@ std::atomic<uint32_t> speed_percent{100};
 std::atomic<bool> fast_seek{false};
 std::atomic<uint64_t> fast_target{0},preview_request{0},preview_completed{0};
 uint64_t next_frame_ns=0;
+bool profile_enabled=false;
+uint64_t profile_start=0,profile_first=0;
+std::array<std::atomic<uint64_t>,size_t(ProfileStage::count)> profile_times{},profile_calls{};
+std::array<std::atomic<uint64_t>,size_t(ProfilePacket::count)> profile_packets{};
+void begin_profile(uint64_t frames) {
+    if(!profile_enabled)return;
+    for(auto& value:profile_times)value=0;
+    for(auto& value:profile_calls)value=0;
+    for(auto& value:profile_packets)value=0;
+    profile_first=frames;profile_start=SDL_GetTicksNS();
+}
+void end_profile(uint64_t frames) {
+    if(!profile_enabled || !profile_start)return;
+    const auto elapsed=SDL_GetTicksNS()-profile_start;
+    std::ofstream out(runtime::options().tas_dir/"seek-profile.txt",std::ios::app);
+    out<<"first="<<profile_first<<" completed="<<frames<<" wall_ms="<<double(elapsed)/1000000
+       <<" fps="<<double(frames-profile_first)*1000000000/double(elapsed)<<'\n';
+    const char* names[]={"update","draw","render_wait","render_poll","boundary_io"};
+    for(size_t i=0;i<profile_times.size();++i)out<<names[i]<<"_ms="<<double(profile_times[i].load())/1000000<<" calls="<<profile_calls[i].load()<<'\n';
+    const char* packets[]={"deferred","mixed","offscreen","submitted"};
+    for(size_t i=0;i<profile_packets.size();++i)out<<packets[i]<<"_packets="<<profile_packets[i].load()<<'\n';
+    out<<"---\n";profile_start=0;
+}
 uint64_t sequence=0,target=1;
 uint64_t published_sequence=UINT64_MAX,last_publish_ns=0;
 bool takeover=false,free_run=false;
@@ -68,6 +92,7 @@ void pump_window(SDL_Window* window) {
 }
 void start(){
     if(!enabled())return;
+    const auto* profile=SDL_getenv("KINOKO_TAS_PROFILE");profile_enabled=profile && std::string(profile)=="1";profile_start=0;
     stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};speed_percent=100;next_frame_ns=0;
     fast_seek=false;fast_target=0;preview_request=0;preview_completed=0;audio::mute_output(false);
     published_sequence=UINT64_MAX;last_publish_ns=0;
@@ -82,6 +107,9 @@ bool publish_preview(uint64_t frames){return !fast_seeking() || frames>=fast_tar
 uint64_t requested_preview(){return preview_request.load();}
 void rendered(uint64_t frames){preview_completed=frames;}
 void set_flush_handler(void (*handler)()){flush_handler=handler;}
+bool profiling(){return profile_enabled && fast_seeking();}
+void profile_time(ProfileStage stage,uint64_t nanoseconds){profile_times[size_t(stage)].fetch_add(nanoseconds,std::memory_order_relaxed);profile_calls[size_t(stage)].fetch_add(1,std::memory_order_relaxed);}
+void profile_packet(ProfilePacket kind){profile_packets[size_t(kind)].fetch_add(1,std::memory_order_relaxed);}
 uint64_t frame_interval_ns(){return 100000000000ull/(60*speed_percent.load());}
 void pace_frame() {
     if(fast_seeking()){next_frame_ns=0;return;}
@@ -95,6 +123,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
     if(!enabled())return true;
     if(!live && !edits.masks.empty() && total!=edits.source_count)throw std::runtime_error("TAS edit plan/source length mismatch");
     while(!stopping.load()) {
+        const auto profile_tick=profiling()?SDL_GetTicksNS():0;
         const int local=window_command.exchange(0);
         if(!fast_seeking() && edits.masks.empty() && local==1){free_run=false;target=frames+1;}
         if(!fast_seeking() && edits.masks.empty() && local==2){free_run=!free_run;target=frames;}
@@ -115,6 +144,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
                 if(!arg || ((!live || !edits.masks.empty()) && arg>limit))throw std::runtime_error("TAS seek target outside recording");
                 free_run=false;target=arg;fast_target=arg;fast_seek=frames<target;
                 next_frame_ns=0;audio::mute_output(fast_seeking());
+                if(fast_seeking())begin_profile(frames);
             }
             if(verb=="run")free_run=true;
             if(verb=="speed") {
@@ -126,6 +156,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
         if(!edits.masks.empty()){total=edits.masks.size();if(frames>=total){free_run=false;target=frames;}}
         if(!live && frames>=total && !takeover) {free_run=false;target=frames;}
         const bool advance=free_run || frames<target;
+        if(profile_tick)profile_time(ProfileStage::boundary_io,SDL_GetTicksNS()-profile_tick);
         if(focus_requested.load()){SDL_Delay(1);continue;}
         if(!advance && fast_seeking()) {
             // Cancellation must expose the actual last simulated frame, too.
@@ -133,6 +164,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
                 preview_request=frames;SDL_Delay(1);continue;
             }
             fast_seek=false;preview_request=0;next_frame_ns=0;audio::mute_output(false);
+            end_profile(frames);
         }
         publish(frames,total,advance?(live?"live":"playing"):(live?"live-paused":"paused"));
         if(advance && !live && !edits.masks.empty() && frames==edits.first)takeover=true;

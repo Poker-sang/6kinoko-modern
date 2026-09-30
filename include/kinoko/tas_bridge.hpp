@@ -14,6 +14,11 @@ bool publish_preview(uint64_t completed);
 uint64_t requested_preview();
 void rendered(uint64_t completed);
 void set_flush_handler(void (*handler)());
+enum class ProfileStage { update, draw, render_wait, render_poll, boundary_io, count };
+enum class ProfilePacket { deferred, mixed, offscreen, submitted, count };
+bool profiling();
+void profile_time(ProfileStage stage,uint64_t nanoseconds);
+void profile_packet(ProfilePacket kind);
 void shutdown();
 // Worker-side frame boundary; waits for an acknowledged command while paused.
 bool boundary(uint64_t completed,uint64_t total,bool live);

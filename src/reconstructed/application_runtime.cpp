@@ -66,11 +66,18 @@ unsigned long __stdcall game_loop(void*) {
     kinoko_trace("game:entry");
     while (state.is_running()) {
         update_statistics();
+        const bool profile_frame=kinoko::tas::profiling();
+        auto profile_tick=profile_frame?SDL_GetTicksNS():0;
         update_frame();
+        if(profile_frame && kinoko::tas::profiling())kinoko::tas::profile_time(kinoko::tas::ProfileStage::update,SDL_GetTicksNS()-profile_tick);
+        if(profile_frame)profile_tick=SDL_GetTicksNS();
         if (!state.config.separate_draw) draw_frame();
+        if(profile_frame && kinoko::tas::profiling())kinoko::tas::profile_time(kinoko::tas::ProfileStage::draw,SDL_GetTicksNS()-profile_tick);
         kinoko_math_checkpoint("render-done", 0);
         if (kinoko::tas::enabled()) {
+            if(profile_frame)profile_tick=SDL_GetTicksNS();
             kinoko::graphics::wait_for_tas_render();
+            if(profile_frame && kinoko::tas::profiling())kinoko::tas::profile_time(kinoko::tas::ProfileStage::render_wait,SDL_GetTicksNS()-profile_tick);
             kinoko::tas::pace_frame();
         }
         else if (frame_event) kinoko_frame_timer_wait(frame_event);

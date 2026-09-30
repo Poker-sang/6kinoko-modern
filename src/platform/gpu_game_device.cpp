@@ -152,6 +152,7 @@ struct Device::State {
         std::vector<RecordedPass> frame;uint64_t frame_number=0;
         {std::lock_guard<std::mutex> lock(queue_mutex);if(!queue.empty()){frame_number=queue.front().first;frame=std::move(queue.front().second);queue.pop_front();}}
         if(!frame.empty()){
+            const auto profile_tick=tas::profiling()?SDL_GetTicksNS():0;
             struct Completion {
                 State& state;
                 ~Completion(){
@@ -164,9 +165,17 @@ struct Device::State {
             if(!tas::publish_preview(frame_number) && tas::requested_preview()!=frame_number
                 && std::all_of(frame.begin(),frame.end(),[](const auto& pass){return pass.target->id==0;})) {
                 deferred_screen=std::move(frame);deferred_frame=frame_number;
+                if(profile_tick)tas::profile_packet(tas::ProfilePacket::deferred);
             }else {
+                if(profile_tick){
+                    const bool screen=std::any_of(frame.begin(),frame.end(),[](const auto& pass){return pass.target->id==0;});
+                    const bool offscreen=std::any_of(frame.begin(),frame.end(),[](const auto& pass){return pass.target->id!=0;});
+                    tas::profile_packet(tas::ProfilePacket::submitted);
+                    if(offscreen)tas::profile_packet(screen?tas::ProfilePacket::mixed:tas::ProfilePacket::offscreen);
+                }
                 deferred_screen.clear();deferred_frame=0;submit(frame,frame_number);
             }
+            if(profile_tick)tas::profile_time(tas::ProfileStage::render_poll,SDL_GetTicksNS()-profile_tick);
         }
         if(const auto requested=tas::requested_preview();requested && requested==deferred_frame) {
             submit(deferred_screen,requested);deferred_screen.clear();deferred_frame=0;
