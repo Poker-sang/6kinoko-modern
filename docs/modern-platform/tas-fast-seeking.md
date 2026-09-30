@@ -44,3 +44,12 @@ serialized save-state is introduced.
 No actual game gameplay or gameplay speed benchmark was performed. No new
 Linux/macOS manual validation is claimed. Speed depends on the machine; the
 change removes scheduling caps, not the cost of simulation/rendering itself.
+
+## User acceptance
+
+2026-09-30: the user reported that unlimited seeking works well and requested
+closing the first TAS version. This is user-reported acceptance of the current
+delivery, not agent gameplay or new Linux/macOS validation. No runtime changes
+were made for closeout. Remaining save-state serialization and editor packaging
+are optional later work. Scope and current executable paths are recorded in
+[the editor closeout](https://github.com/Poker-sang/6kinoko-tas/blob/master/docs/first-version-closeout.md).
