@@ -9,6 +9,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <thread>
 #include "sqpcheader.h"
 #include "sqvm.h"
 #include "sqfuncproto.h"
@@ -62,7 +63,7 @@ SQInteger kinoko_squirrel_invoke_native(HSQUIRRELVM vm, SQFUNCTION function) {
     struct Sample {uint64_t ns=0,calls=0;std::string name;};
     struct Samples {
         std::map<SQFUNCTION,Sample> values;
-        ~Samples(){std::ofstream out(path);for(const auto& entry:values)
+        ~Samples(){std::ofstream out(std::string(path)+"-"+std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())));for(const auto& entry:values)
             out<<reinterpret_cast<uintptr_t>(entry.first)<<' '<<entry.second.ns<<' '<<entry.second.calls<<' '<<entry.second.name<<'\n';}
     };
     static thread_local Samples samples;
