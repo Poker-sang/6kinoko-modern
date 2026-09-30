@@ -1,3 +1,5 @@
+#include "sqpcheader.h"
+#include "sqtable.h"
 #include "kinoko/replay_runtime.hpp"
 #include "kinoko/replay.hpp"
 #include "kinoko/tas_bridge.hpp"
@@ -93,21 +95,36 @@ uint64_t checkpoint() {
     std::vector<std::pair<std::string,uint64_t>> globals;
     auto* vm=kinoko_primary_vm;
     if(vm) {
-        const auto top=sq_gettop(vm);sq_pushroottable(vm);sq_pushnull(vm);
-        while(SQ_SUCCEEDED(sq_next(vm,-2))) {
-            const char* name=nullptr;
-            if(sq_gettype(vm,-2)==OT_STRING && SQ_SUCCEEDED(sq_getstring(vm,-2,&name))) {
-                const char* tracked[]={"score","life","star","playerType","playerItem","currentMap","currentTime","clearCount","stageBeginTime"};
-                if(std::any_of(std::begin(tracked),std::end(tracked),[&](const char* n){return std::strcmp(n,name)==0;})) {
-                    Hash item;const auto type=sq_gettype(vm,-1);item.number(type);
+        const char* tracked[]={"score","life","star","playerType","playerItem","currentMap","currentTime","clearCount","stageBeginTime"};
+        const auto append=[&](const char* name) {
+            Hash item;const auto type=sq_gettype(vm,-1);item.number(type);
                     if(type==OT_INTEGER){SQInteger v;sq_getinteger(vm,-1,&v);item.number(v);}
                     if(type==OT_FLOAT){SQFloat v;sq_getfloat(vm,-1,&v);item.real(v);}
                     if(type==OT_BOOL){SQBool v;sq_getbool(vm,-1,&v);item.number(v);}
                     if(type==OT_STRING){const char* v;sq_getstring(vm,-1,&v);item.text(v);}
                     item.dump(std::string("global:")+name);globals.emplace_back(name,item.value);
+        };
+        const auto top=sq_gettop(vm);sq_pushroottable(vm);
+        if(kinoko::tas::fast_seeking()) {
+            // SQTable::Get is the raw lookup underlying sq_rawget, but a miss
+            // does not overwrite the VM last error or consult a delegate.
+            HSQOBJECT root;sq_getstackobj(vm,-1,&root);
+            for(const auto* name:tracked) {
+                sq_pushstring(vm,name,-1);HSQOBJECT key;sq_getstackobj(vm,-1,&key);
+                SQObjectPtr value;
+                if(_table(root)->Get(SQObjectPtr(key),value)) {
+                    sq_pushobject(vm,value);append(name);sq_pop(vm,1);
                 }
+                sq_pop(vm,1);
             }
-            sq_pop(vm,2);
+        }else {
+            sq_pushnull(vm);
+            while(SQ_SUCCEEDED(sq_next(vm,-2))) {
+                const char* name=nullptr;
+                if(sq_gettype(vm,-2)==OT_STRING && SQ_SUCCEEDED(sq_getstring(vm,-2,&name)) &&
+                    std::any_of(std::begin(tracked),std::end(tracked),[&](const char* n){return std::strcmp(n,name)==0;}))append(name);
+                sq_pop(vm,2);
+            }
         }
         sq_settop(vm,top);
     }

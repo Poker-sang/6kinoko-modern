@@ -52,7 +52,7 @@ bool reset() {
     if(kinoko_primary_vm)sq_close(kinoko_primary_vm);
     kinoko_primary_vm=sq_open(128);sq_pushroottable(kinoko_primary_vm);
     sqstd_register_mathlib(kinoko_primary_vm);sq_pop(kinoko_primary_vm,1);
-    return evaluate("srand(1); score <- 0;");
+    return evaluate("srand(1); score <- 0; life <- 3.5; star <- true; playerType <- \"test\"; playerItem <- null; currentMap <- {}; getroottable().setdelegate({ currentTime = 99, _get = function(key) { throw \"unexpected getter\"; } });");
 }
 std::string status() {const auto& p=kinoko::runtime::options().status;std::ifstream in(p.empty()?std::filesystem::path("replay-status.txt"):p);return {std::istreambuf_iterator<char>(in),{}};}
 }
@@ -118,9 +118,13 @@ int main() {
         "--replay-status",(tas/"status.txt").u8string(),"--replay-identity",std::string(64,'a'),"--tas-dir",tas.u8string(),"--tas-output",(tas/"branch.krec").u8string()};
     std::vector<char*> av;for(auto& a:args)av.push_back(a.data());std::string error;
     CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));CHECK(reset() && kinoko_replay_start());
-    std::ofstream(tas/"command.txt")<<"1 target 2\n";
+    std::ofstream(tas/"command.txt")<<"1 seek 2\n";
     for(int i=0;i<2;++i){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame action;
-        kinoko_replay_input(&input_manager,action);camera.x+=float(action.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
+        kinoko_replay_input(&input_manager,action);camera.x+=float(action.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));
+        const auto stack_top=sq_gettop(kinoko_primary_vm);sq_throwerror(kinoko_primary_vm,"preserved checkpoint error");
+        kinoko_replay_end_frame();CHECK(sq_gettop(kinoko_primary_vm)==stack_top);
+        sq_getlasterror(kinoko_primary_vm);const char* last_error=nullptr;
+        CHECK(SQ_SUCCEEDED(sq_getstring(kinoko_primary_vm,-1,&last_error)) && std::strcmp(last_error,"preserved checkpoint error")==0);sq_pop(kinoko_primary_vm,1);}
     std::ofstream(tas/"command.txt")<<"2 takeover 0\n";
     auto controller=std::async(std::launch::async,[&] {
         bool requested_snapshot=false;
