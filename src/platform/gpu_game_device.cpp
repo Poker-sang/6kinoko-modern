@@ -66,7 +66,6 @@ struct Device::State {
     std::atomic<size_t> pending{0};
     std::vector<RecordedPass> deferred_screen;
     uint64_t deferred_frame=0;
-    size_t fast_screen_reserve=0;
     std::condition_variable drained;
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
@@ -95,12 +94,6 @@ struct Device::State {
             p.pass.logical_width=image->width;p.pass.logical_height=image->height;
             // A new frame backbuffer has undefined contents until cleared.
             if(image->id==0&&std::none_of(recording.begin(),recording.end(),[](auto& v){return v.target->id==0;}))p.pass.clear=p.pass.clear_depth=true;
-            // Fast frames repeatedly rebuild similarly sized screen packets.
-            // Reserve from observed demand to avoid moving every draw through
-            // several vector growth steps. This changes capacity only.
-            if(image->id==0 && tas::fast_seeking()) {
-                p.pass.draws.reserve(fast_screen_reserve);p.textures.reserve(fast_screen_reserve);
-            }
             recording.push_back(std::move(p));
         }
         return recording.back();
@@ -232,10 +225,7 @@ kinoko::graphics::Result Device::Reset(kinoko::graphics::Presentation* p){
 kinoko::graphics::Result Device::BeginScene(){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);const auto limit=tas::fast_seeking()?fast_render_queue_limit:3;if(s.closed||s.queue.size()>=limit)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::EndScene(){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;
-    if(tas::fast_seeking())for(const auto& pass:s.recording)if(pass.target->id==0)
-        s.fast_screen_reserve=std::max(s.fast_screen_reserve,std::min<size_t>(pass.pass.draws.size(),4096));
-    std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty()){s.queue.emplace_back(tas::frame_number(),std::move(s.recording));++s.pending;}return kinoko::graphics::ok;}
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty()){s.queue.emplace_back(tas::frame_number(),std::move(s.recording));++s.pending;}return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::present(){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return kinoko::graphics::ok;} // Submission acknowledgement; main-thread poll owns actual presentation.
 kinoko::graphics::Result SwapChain::Present(){return device->present();}
