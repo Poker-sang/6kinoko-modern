@@ -9,7 +9,7 @@ struct EditPlan {
     uint32_t first=0,source_count=0;
     std::vector<uint32_t> masks;
     void read(std::istream& in) {
-        char magic[8];in.read(magic,8);
+        char magic[8]{};in.read(magic,8);
         const std::string version(magic,8);
         if(!in || (version!="KTASED01" && version!="KTASED02"))throw std::runtime_error("Invalid TAS edit plan header");
         auto word=[&](){uint32_t n=0;for(int i=0;i<4;++i){int b=in.get();if(b<0)throw std::runtime_error("Truncated TAS edit plan");n|=uint32_t(b)<<(8*i);}return n;};

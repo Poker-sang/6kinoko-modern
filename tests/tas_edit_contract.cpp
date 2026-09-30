@@ -12,7 +12,7 @@ int main(){
     auto wire=[](uint32_t first,uint32_t mask){std::string s="KTASED01";auto word=[&](uint32_t n){for(int i=0;i<4;++i)s+=char(n>>(i*8));};word(3);word(first);word(0);word(mask);word(0);return s;};
     auto check=[](bool ok){if(!ok)throw std::runtime_error("TAS edit contract failed");};
     auto bytes=wire(1,16);std::istringstream good(bytes);kinoko::tas::EditPlan p;p.read(good);check(p.first==1&&p.masks[1]==16);
-    for(auto bad:{bytes.substr(0,bytes.size()-1),bytes+"x",wire(3,0),wire(0,1u<<19)}){
+    for(auto bad:{bytes.substr(0,3),bytes.substr(0,bytes.size()-1),bytes+"x",wire(3,0),wire(0,1u<<19)}){
         bool rejected=false;try{std::istringstream in(bad);p.read(in);}catch(const std::exception&){rejected=true;}check(rejected);
     }
     namespace fs=std::filesystem;
