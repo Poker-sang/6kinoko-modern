@@ -22,3 +22,25 @@ settings, decoders and voice state remain active; this does not reconstruct
 audio position at the target. Seek completion, cancellation, stop and failure
 restore gain. Non-TAS scheduling remains unchanged. No image-history cache or
 serialized save-state is introduced.
+
+## Windows delivery
+
+- Game: `runtime-builds/modern-x64-tas-fast-seek-03/kinoko_modern_gpu.exe`,
+  source `d64dac9d`. Fonts, shaders and all three DAT are staged beside it;
+  DAT size and SHA256 checks passed.
+- Editor: `C:/WorkSpace/6kinoko-tas/artifacts/windows-editor-20/KinokoTAS.App.exe`,
+  source `57f7064`. Select the new game executable to enable unlimited seeking.
+- Logs: `build-runs/modern-x64-tas-fast-seek-03/`; earlier 01/02 builds retained.
+- `tas_edit_contract`, `replay_contract`, `replay_runtime_contract` and
+  `audio_output_contract` passed. Real runtime/Squirrel edit scenarios use
+  unlimited seeking, then verify the resulting RNG/checkpoints from fresh VMs.
+- Hidden-window GPU contract passed: intermediate readbacks are suppressed,
+  bounded GPU submissions finish, target and cancelled-frame pixels/labels
+  agree. Fixtures remain under the build tree's `Testing/fixtures/`.
+- Editor full synthetic checks passed in `artifacts/checks-51`, with build and
+  publication logs in `artifacts/build-51`. New protocol, legacy fallback,
+  unchanged playback speed and cancellation are covered.
+
+No actual game gameplay or gameplay speed benchmark was performed. No new
+Linux/macOS manual validation is claimed. Speed depends on the machine; the
+change removes scheduling caps, not the cost of simulation/rendering itself.
