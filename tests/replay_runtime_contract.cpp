@@ -150,7 +150,7 @@ int main() {
             "--replay-status",(edit/"generate.txt").u8string(),"--replay-identity",std::string(64,'a'),
             "--tas-dir",edit.u8string(),"--tas-output",(edit/"edited.krec").u8string()};
         av.clear();for(auto& a:args)av.push_back(a.data());CHECK(kinoko::runtime::parse_options(int(av.size()),av.data(),error));
-        CHECK(reset() && kinoko_replay_start());std::ofstream(edit/"command.txt")<<"1 target 4\n";
+        CHECK(reset() && kinoko_replay_start());std::ofstream(edit/"command.txt")<<"1 seek 4\n";
         int held=0;const auto prior=errors;
         for(int f=0;f<4;++f){CHECK(kinoko_replay_begin_frame());kinoko::input::Frame a;
             kinoko_replay_input(&input_manager,a);held=f==first?0:held+1;
@@ -179,7 +179,7 @@ int main() {
         CHECK(reset() && kinoko_replay_start());std::ofstream(edited/"command.txt")<<"1 speed 400\n";
         int duration=0;const int prior=errors;
         for(int frame=0;frame<length;++frame){
-            if(frame==1)std::ofstream(edited/"command.txt")<<"2 target "<<length<<'\n';
+            if(frame==1)std::ofstream(edited/"command.txt")<<"2 seek "<<length<<'\n';
             CHECK(kinoko_replay_begin_frame());kinoko::input::Frame actions;kinoko_replay_input(&input_manager,actions);
             duration=frame==first?0:duration+1;CHECK(actions.held[kinoko::input::Jump]==duration);
             camera.x+=float(duration);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();

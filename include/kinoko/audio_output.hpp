@@ -50,4 +50,6 @@ public:
     virtual OutputBufferPtr create(PcmFormat format, std::size_t bytes) = 0;
 };
 std::shared_ptr<OutputDevice> open_sdl_output();
+// Output gain only; voices and decoder state keep progressing.
+void mute_output(bool muted);
 }

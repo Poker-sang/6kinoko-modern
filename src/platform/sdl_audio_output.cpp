@@ -15,6 +15,9 @@ struct DeviceState {
         if(initialized) SDL_QuitSubSystem(SDL_INIT_AUDIO);
     }
 };
+std::mutex devices_mutex;
+std::vector<std::weak_ptr<DeviceState>> devices;
+bool output_muted=false;
 struct StreamLock {
     SDL_AudioStream* stream;
     explicit StreamLock(SDL_AudioStream* s) : stream(SDL_LockAudioStream(s) ? s : nullptr) {}
@@ -131,7 +134,16 @@ std::shared_ptr<OutputDevice> open_sdl_output() {
         SDL_AudioSpec spec{SDL_AUDIO_F32,2,44100};
         state->id=SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,&spec);
         if(!state->id || !SDL_ResumeAudioDevice(state->id)) return {};
+        {std::lock_guard<std::mutex> lock(devices_mutex);
+        SDL_SetAudioDeviceGain(state->id,output_muted?0.f:1.f);devices.push_back(state);}
         return std::make_shared<SdlDevice>(std::move(state));
     } catch(const std::bad_alloc&) { SDL_SetError("Audio device allocation failed");return {}; }
+}
+void mute_output(bool muted) {
+    std::lock_guard<std::mutex> lock(devices_mutex);output_muted=muted;
+    for(auto it=devices.begin();it!=devices.end();) {
+        if(auto device=it->lock()){SDL_SetAudioDeviceGain(device->id,muted?0.f:1.f);++it;}
+        else it=devices.erase(it);
+    }
 }
 }

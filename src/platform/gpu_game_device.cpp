@@ -61,6 +61,7 @@ struct Device::State {
     std::uint32_t fvf=kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse|kinoko::graphics::vertex_tex1;
     math::Matrix world=math::identity(),view=math::identity(),projection=math::identity();
     std::vector<RecordedPass> recording;std::mutex queue_mutex;std::deque<std::pair<uint64_t,std::vector<RecordedPass>>> queue;
+    std::atomic<size_t> pending{0};
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
     State(std::uint32_t x,std::uint32_t y):width(x),height(y) {
@@ -140,12 +141,14 @@ struct Device::State {
         std::vector<RecordedPass> frame;uint64_t frame_number=0;
         {std::lock_guard<std::mutex> lock(queue_mutex);if(!queue.empty()){frame_number=queue.front().first;frame=std::move(queue.front().second);queue.pop_front();}}
         if(!frame.empty()){
+            struct Completion {std::atomic<size_t>& count;~Completion(){--count;}} completion{pending};
             std::vector<gpu::Pass> passes;
             for(auto& p:frame){p.pass.target=upload({p.target,nullptr,0});
                 for(size_t i=0;i<p.textures.size();++i)p.pass.draws[i].texture=upload(p.textures[i]);
                 passes.push_back(std::move(p.pass));}
             renderer->present(passes,frame_number);
         }
+        renderer->poll_tas();
         for(auto i=uploaded.begin();i!=uploaded.end();){
             if(i->second.image.expired()||(!i->second.target&&i->second.pixels.expired())){renderer->destroy_texture(i->second.id);i=uploaded.erase(i);}else ++i;
         }
@@ -154,6 +157,14 @@ struct Device::State {
 Device::Device(std::uint32_t x,std::uint32_t y):state(std::make_unique<State>(x,y)){active=this;}
 Device::~Device(){if(active==this)active=nullptr;}
 void stop(){if(active){std::lock_guard<std::mutex> lock(active->state->queue_mutex);active->state->closed=true;}}
+void wait_for_tas_render(){
+    if(!active)return;
+    auto& state=*active->state;
+    while(state.pending.load()) {
+        {std::lock_guard<std::mutex> lock(state.queue_mutex);if(state.closed)return;}
+        SDL_Delay(1);
+    }
+}
 kinoko::graphics::Result Device::GetDeviceCaps(kinoko::graphics::Capabilities* out){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return kinoko::graphics::error_pointer;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::GetSwapChain(std::uint32_t index,SwapChain** out){
@@ -172,7 +183,7 @@ kinoko::graphics::Result Device::Reset(kinoko::graphics::Presentation* p){
 kinoko::graphics::Result Device::BeginScene(){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::EndScene(){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty())s.queue.emplace_back(tas::frame_number(),std::move(s.recording));return kinoko::graphics::ok;}
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty()){s.queue.emplace_back(tas::frame_number(),std::move(s.recording));++s.pending;}return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::present(){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);return kinoko::graphics::ok;} // Submission acknowledgement; main-thread poll owns actual presentation.
 kinoko::graphics::Result SwapChain::Present(){return device->present();}

@@ -50,6 +50,8 @@ struct Renderer::State {
     SDL_GPUShader *vertex=nullptr,*fragment=nullptr;
     SDL_GPUTextureFormat depth_format=SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT;
     SDL_GPUTexture* embedded=nullptr;SDL_GPUTransferBuffer* download=nullptr;
+    uint64_t embedded_frame=0;
+    bool embedded_ready=false,fast_present=false;
     SDL_GPUBuffer* vertices=nullptr;SDL_GPUTransferBuffer* upload=nullptr;
     Uint32 capacity=0;
     std::pair<uint32_t,uint32_t> screen_extent{};
@@ -212,6 +214,7 @@ void Renderer::destroy_texture(TextureId id) {
 }
 bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
     auto& s=*state_;s.owner();
+    poll_tas();
     if(passes.empty())throw std::runtime_error("A frame needs at least one pass");
     struct Prepared { SDL_GPUGraphicsPipeline* pipeline;SDL_GPUTextureSamplerBinding texture;Uint32 first,count; };
     std::vector<Prepared> prepared;std::vector<Vertex> vertices;
@@ -303,17 +306,39 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
         }
         SDL_EndGPURenderPass(render);
     }
+    command.submit();
     if(tas::embedded() && swapchain) {
-        auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin TAS readback");
-        SDL_GPUTextureRegion region{};region.texture=swapchain;region.w=width;region.h=height;region.d=1;
-        SDL_GPUTextureTransferInfo destination{};destination.transfer_buffer=s.download;destination.pixels_per_row=width;destination.rows_per_layer=height;
-        SDL_DownloadFromGPUTexture(copy,&region,&destination);SDL_EndGPUCopyPass(copy);
-        auto* fence=SDL_SubmitGPUCommandBufferAndAcquireFence(command.value);command.value=nullptr;require(fence,"Submit TAS frame");
-        const bool waited=SDL_WaitForGPUFences(s.device,true,&fence,1);SDL_ReleaseGPUFence(s.device,fence);require(waited,"Wait for TAS frame");
-        void* pixels=SDL_MapGPUTransferBuffer(s.device,s.download,false);require(pixels,"Map TAS frame");
-        tas::image(frame_number,width,height,pixels);SDL_UnmapGPUTransferBuffer(s.device,s.download);
-    }else command.submit();
+        s.embedded_frame=frame_number;s.embedded_ready=true;
+        if(tas::publish_preview(frame_number))capture_preview(frame_number);
+    }
     for(auto id:initialized)s.textures.at(id).initialized=true;
     return swapchain!=nullptr;
+}
+void Renderer::capture_preview(uint64_t frame_number) {
+    auto& s=*state_;s.owner();
+    if(!s.embedded_ready || s.embedded_frame!=frame_number)return;
+    Command command(s.device);
+    auto* copy=SDL_BeginGPUCopyPass(command.value);require(copy,"Begin TAS readback");
+    SDL_GPUTextureRegion region{};region.texture=s.embedded;region.w=640;region.h=480;region.d=1;
+    SDL_GPUTextureTransferInfo destination{};destination.transfer_buffer=s.download;destination.pixels_per_row=640;destination.rows_per_layer=480;
+    SDL_DownloadFromGPUTexture(copy,&region,&destination);SDL_EndGPUCopyPass(copy);
+    auto* fence=SDL_SubmitGPUCommandBufferAndAcquireFence(command.value);command.value=nullptr;require(fence,"Submit TAS frame");
+    const bool waited=SDL_WaitForGPUFences(s.device,true,&fence,1);SDL_ReleaseGPUFence(s.device,fence);require(waited,"Wait for TAS frame");
+    void* pixels=SDL_MapGPUTransferBuffer(s.device,s.download,false);require(pixels,"Map TAS frame");
+    tas::image(frame_number,640,480,pixels);SDL_UnmapGPUTransferBuffer(s.device,s.download);
+}
+void Renderer::poll_tas() {
+    auto& s=*state_;s.owner();
+    const bool fast=tas::fast_seeking();
+    if(!tas::embedded() && fast!=s.fast_present) {
+        auto mode=SDL_GPU_PRESENTMODE_VSYNC;
+        if(fast) {
+            if(SDL_WindowSupportsGPUPresentMode(s.device,s.window,SDL_GPU_PRESENTMODE_IMMEDIATE))mode=SDL_GPU_PRESENTMODE_IMMEDIATE;
+            else if(SDL_WindowSupportsGPUPresentMode(s.device,s.window,SDL_GPU_PRESENTMODE_MAILBOX))mode=SDL_GPU_PRESENTMODE_MAILBOX;
+        }
+        require(SDL_SetGPUSwapchainParameters(s.device,s.window,SDL_GPU_SWAPCHAINCOMPOSITION_SDR,mode),"Set TAS presentation mode");
+        s.fast_present=fast;
+    }
+    if(const auto requested=tas::requested_preview())capture_preview(requested);
 }
 }

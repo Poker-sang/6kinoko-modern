@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iostream>
 #include <chrono>
+#include <future>
+#include <thread>
 int main(){
  try {
     auto wire=[](uint32_t first,uint32_t mask){std::string s="KTASED01";auto word=[&](uint32_t n){for(int i=0;i<4;++i)s+=char(n>>(i*8));};word(3);word(first);word(0);word(mask);word(0);return s;};
@@ -38,6 +40,28 @@ int main(){
     auto variable=[](uint32_t size,uint32_t first,uint32_t source){std::string result="KTASED02";auto word=[&](uint32_t number){for(int byte=0;byte<4;++byte)result+=char(number>>(8*byte));};word(size);word(first);word(source);for(uint32_t frame=0;frame<size;++frame)word(0);return result;};
     for(auto plan:{variable(2,1,3),variable(5,3,3)}){std::istringstream stream(plan);kinoko::tas::EditPlan parsed;parsed.read(stream);check(parsed.source_count==3);}
     bool invalid=false;try{std::istringstream stream(variable(5,4,3));kinoko::tas::EditPlan parsed;parsed.read(stream);}catch(const std::exception&){invalid=true;}check(invalid);
+    fs::remove(root/"edit.bin");
+    auto command=[&](const char* text){std::ofstream out(root/"command.txt");out<<text;};
+    auto wait=[&](auto ready){const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(3);while(!ready() && std::chrono::steady_clock::now()<until)std::this_thread::sleep_for(std::chrono::milliseconds(1));return ready();};
+    for(bool cancel:{false,true}) {
+        command("1 seek 3");kinoko::tas::start();check(kinoko::tas::boundary(0,3,false));
+        check(kinoko::tas::fast_seeking() && !kinoko::tas::publish_preview(2) && kinoko::tas::publish_preview(3));
+        kinoko_simulation_enable(1);kinoko_simulation_frame(17);const auto simulation_clock=kinoko_simulation_milliseconds();
+        const auto begin=std::chrono::steady_clock::now();for(int i=0;i<60;++i)kinoko::tas::pace_frame();
+        check(std::chrono::steady_clock::now()-begin<std::chrono::milliseconds(200));
+        check(kinoko_simulation_milliseconds()==simulation_clock);kinoko_simulation_enable(0);
+        const uint64_t frame=cancel?2:3;kinoko::tas::completed(frame);
+        const uint32_t pixel=0xff123456;
+        if(cancel)command("2 pause 0");else kinoko::tas::image(frame,1,1,&pixel);
+        auto paused=std::async(std::launch::async,[&]{return kinoko::tas::boundary(frame,3,false);});
+        bool requested=true;
+        if(cancel){requested=wait([&]{return kinoko::tas::requested_preview()==frame;});kinoko::tas::image(frame,1,1,&pixel);}
+        const bool restored=wait([&]{return !kinoko::tas::fast_seeking();});
+        command("3 stop 0");
+        if(!requested || !restored)kinoko::tas::shutdown();
+        check(!paused.get() && requested && restored);
+        check(kinoko::tas::requested_preview()==0 && kinoko::tas::publish_preview(frame));
+    }
     std::cout<<"PASS edit plan validation, verified-prefix takeover, frame-zero takeover and exact masks\n";
     return 0;
  }catch(const std::exception& e){std::cerr<<e.what();return 1;}

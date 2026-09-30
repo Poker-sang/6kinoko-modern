@@ -9,6 +9,9 @@ void pump_window(SDL_Window* window);
 void start();
 uint64_t frame_interval_ns();
 void pace_frame();
+bool fast_seeking();
+bool publish_preview(uint64_t completed);
+uint64_t requested_preview();
 void shutdown();
 // Worker-side frame boundary; waits for an acknowledged command while paused.
 bool boundary(uint64_t completed,uint64_t total,bool live);

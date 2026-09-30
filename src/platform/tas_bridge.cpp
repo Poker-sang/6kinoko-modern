@@ -1,6 +1,7 @@
 #include "kinoko/tas_bridge.hpp"
 #include "kinoko/tas_edit_plan.hpp"
 #include "kinoko/runtime_options.hpp"
+#include "kinoko/audio_output.hpp"
 #include <SDL3/SDL.h>
 #include <atomic>
 #include <filesystem>
@@ -15,6 +16,8 @@ std::atomic<uint64_t> count{0};
 std::atomic<uint32_t> window_mask{0};
 std::atomic<int> window_command{0};
 std::atomic<uint32_t> speed_percent{100};
+std::atomic<bool> fast_seek{false};
+std::atomic<uint64_t> fast_target{0},preview_request{0},preview_completed{0};
 uint64_t next_frame_ns=0;
 uint64_t sequence=0,target=1;
 bool takeover=false,free_run=false;
@@ -57,32 +60,46 @@ void pump_window(SDL_Window* window) {
 void start(){
     if(!enabled())return;
     stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};speed_percent=100;next_frame_ns=0;
+    fast_seek=false;fast_target=0;preview_request=0;preview_completed=0;audio::mute_output(false);
     const auto plan=directory()/"edit.bin";
     if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
-    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1\n";
+    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1\n";
 }
+bool fast_seeking(){return fast_seek.load();}
+bool publish_preview(uint64_t frames){return !fast_seeking() || frames>=fast_target.load();}
+uint64_t requested_preview(){return preview_request.load();}
 uint64_t frame_interval_ns(){return 100000000000ull/(60*speed_percent.load());}
 void pace_frame() {
+    if(fast_seeking()){next_frame_ns=0;return;}
     const uint64_t now=SDL_GetTicksNS(),interval=frame_interval_ns();
     if(!next_frame_ns || now>next_frame_ns+interval)next_frame_ns=now+interval;
     else next_frame_ns+=interval;
     if(next_frame_ns>now)SDL_DelayNS(next_frame_ns-now);
 }
-void shutdown(){stopping=true;}
+void shutdown(){stopping=true;fast_seek=false;audio::mute_output(false);}
 bool boundary(uint64_t frames,uint64_t total,bool live) {
     if(!enabled())return true;
     if(!live && !edits.masks.empty() && total!=edits.source_count)throw std::runtime_error("TAS edit plan/source length mismatch");
     while(!stopping.load()) {
         const int local=window_command.exchange(0);
-        if(edits.masks.empty() && local==1){free_run=false;target=frames+1;}
-        if(edits.masks.empty() && local==2){free_run=!free_run;target=frames;}
+        if(!fast_seeking() && edits.masks.empty() && local==1){free_run=false;target=frames+1;}
+        if(!fast_seeking() && edits.masks.empty() && local==2){free_run=!free_run;target=frames;}
         uint64_t seq=0,arg=0;std::string verb;bool read=false;
         {std::ifstream in(directory()/"command.txt");read=bool(in>>seq>>verb>>arg);}
         if(read && seq>sequence) {
             sequence=seq;
-            if(verb=="stop"){stopping=true;return false;}
+            if(verb=="stop"){shutdown();return false;}
+            if(verb=="run" || verb=="target" || verb=="takeover") {
+                fast_seek=false;preview_request=0;next_frame_ns=0;audio::mute_output(false);
+            }
             if(verb=="pause"){free_run=false;target=frames;}
             if(verb=="target"){free_run=false;target=arg;}
+            if(verb=="seek") {
+                const auto limit=edits.masks.empty()?total:edits.masks.size();
+                if(!arg || ((!live || !edits.masks.empty()) && arg>limit))throw std::runtime_error("TAS seek target outside recording");
+                free_run=false;target=arg;fast_target=arg;fast_seek=frames<target;
+                next_frame_ns=0;audio::mute_output(fast_seeking());
+            }
             if(verb=="run")free_run=true;
             if(verb=="speed") {
                 if(arg!=25 && arg!=50 && arg!=100 && arg!=200 && arg!=400)throw std::runtime_error("Unsupported TAS speed");
@@ -93,6 +110,13 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
         if(!edits.masks.empty()){total=edits.masks.size();if(frames>=total){free_run=false;target=frames;}}
         if(!live && frames>=total && !takeover) {free_run=false;target=frames;}
         const bool advance=free_run || frames<target;
+        if(!advance && fast_seeking()) {
+            // Cancellation must expose the actual last simulated frame, too.
+            if(embedded() && preview_completed.load()!=frames) {
+                preview_request=frames;SDL_Delay(1);continue;
+            }
+            fast_seek=false;preview_request=0;next_frame_ns=0;audio::mute_output(false);
+        }
         publish(frames,total,advance?(live?"live":"playing"):(live?"live-paused":"paused"));
         if(advance && !live && !edits.masks.empty() && frames==edits.first)takeover=true;
         if(takeover)return true; // Runtime changes mode, then re-enters this boundary.
@@ -113,14 +137,14 @@ uint32_t input_mask() {
 }
 void completed(uint64_t frames){count=frames;}
 uint64_t frame_number(){return count.load();}
-void failure(const std::string& message) {if(enabled()){std::ofstream out(directory()/"error.txt");out<<message;publish(count,0,"failed");}}
-void finish(){if(enabled())publish(count,0,"finished");}
+void failure(const std::string& message) {shutdown();if(enabled()){std::ofstream out(directory()/"error.txt");out<<message;publish(count,0,"failed");}}
+void finish(){shutdown();if(enabled())publish(count,0,"finished");}
 void image(uint64_t frames,uint32_t width,uint32_t height,const void* rgba) {
     if(!enabled() || !width || !height || width>4096 || height>4096)return;
     auto path=directory()/"image.tmp";
     {std::ofstream out(path,std::ios::binary);out.write("KTASIMG1",8);
     auto number=[&](uint64_t n,int size){for(int i=0;i<size;i++)out.put(char(n>>(8*i)));};
     number(frames,8);number(width,4);number(height,4);out.write(static_cast<const char*>(rgba),size_t(width)*height*4);if(!out)return;}
-    replace(path,directory()/"image.rgba");
+    if(replace(path,directory()/"image.rgba"))preview_completed=frames;
 }
 }

@@ -59,10 +59,13 @@ public:
     // Pass and draw order is exact. No sorting of translucent objects.
     // false means minimized/no available swapchain image, not a render failure.
     bool present(const std::vector<Pass>& passes,uint64_t frame_number=0);
+    // Main-thread maintenance, including readback of a cancelled fast seek.
+    void poll_tas();
     const char* driver() const;
 private:
     struct State;
     std::unique_ptr<State> state_;
+    void capture_preview(uint64_t frame_number);
 };
 // CPU conversion is shared by the renderer and compile-only contract.
 std::array<Vertex,6> expand_quad(const std::array<KinokoSpriteVertex,4>&);

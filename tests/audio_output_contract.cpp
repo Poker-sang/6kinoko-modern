@@ -26,7 +26,7 @@ int main() {
     PcmRing invalid(7,2,0);CHECK(!invalid.valid() && !invalid.seek(0));
     CHECK(amplitude_from_db(-10000)==0 && amplitude_from_db(0)==1);
     CHECK(std::abs(amplitude_from_db(-2000)-0.1f)<0.000001f);
-    auto device=open_sdl_output();CHECK(device);
+    mute_output(true);auto device=open_sdl_output();CHECK(device);
     CHECK(!device->create({44100,0,16},1024));
     CHECK(!device->create({44100,2,24},1024));
     CHECK(!device->create({44100,2,16},1023));
@@ -38,7 +38,7 @@ int main() {
         while(SDL_GetTicks()-start<1500) { if(voice->position()!=prior) return true;SDL_Delay(5); }
         return false;
     };
-    CHECK(wait_progress(first,0));CHECK(first->stop());
+    CHECK(wait_progress(first,0));mute_output(false);CHECK(first->stop());
     const auto paused=first->position(),other=second->position();
     CHECK(wait_progress(second,other));CHECK(first->position()==paused && !first->playing());
     CHECK(first->play(true));CHECK(wait_progress(first,paused));

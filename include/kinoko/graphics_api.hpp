@@ -74,6 +74,8 @@ struct Factory:Ref {
 };
 Factory* create_factory(std::uint32_t);
 void stop(); // Cancels producer backpressure before the application joins workers.
+// Worker-side, outside graphics/scene locks; preserves TAS render packets.
+void wait_for_tas_render();
 using BaseTexture=Texture;
 using VertexBuffer=Buffer;
 using IndexBuffer=Buffer;
