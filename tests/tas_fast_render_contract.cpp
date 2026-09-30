@@ -55,7 +55,7 @@ int main() {
             fs::remove(root/"image.rgba");
             for(uint64_t count=1;count<=3;++count)frame(count,0xff00ff00,false);
             command("2 pause 0");
-            auto cancelled=std::async(std::launch::async,[&]{return kinoko::tas::boundary(3,6,true);});
+            auto cancelled=std::async(std::launch::async,[&]{while(kinoko::tas::boundary(3,6,true))std::this_thread::yield();return false;});
             const auto cancel_until=std::chrono::steady_clock::now()+std::chrono::seconds(3);
             while(kinoko::tas::fast_seeking() && std::chrono::steady_clock::now()<cancel_until){device.TestCooperativeLevel();std::this_thread::sleep_for(std::chrono::milliseconds(1));}
             const bool cancel_ready=!kinoko::tas::fast_seeking();
@@ -67,7 +67,7 @@ int main() {
                 for(uint64_t count=1;count<6;++count){frame(count,0xff00ff00);check(!fs::exists(root/"image.rgba"));}
                 const uint64_t target=cancel?5:6;
                 if(cancel)command("2 pause 0");else frame(6,0xffff0000);
-                auto paused=std::async(std::launch::async,[&]{return kinoko::tas::boundary(target,6,true);});
+                auto paused=std::async(std::launch::async,[&]{while(kinoko::tas::boundary(target,6,true))std::this_thread::yield();return false;});
                 const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(3);
                 while(kinoko::tas::fast_seeking() && std::chrono::steady_clock::now()<until){device.TestCooperativeLevel();std::this_thread::sleep_for(std::chrono::milliseconds(1));}
                 const bool restored=!kinoko::tas::fast_seeking();

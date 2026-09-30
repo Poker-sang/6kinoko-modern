@@ -56,7 +56,7 @@ int main(){
         const uint64_t frame=cancel?2:3;kinoko::tas::completed(frame);
         const uint32_t pixel=0xff123456;
         if(cancel)command("2 pause 0");else kinoko::tas::image(frame,1,1,&pixel);
-        auto paused=std::async(std::launch::async,[&]{return kinoko::tas::boundary(frame,3,false);});
+        auto paused=std::async(std::launch::async,[&]{while(kinoko::tas::boundary(frame,3,false))std::this_thread::yield();return false;});
         bool requested=true;
         if(cancel){requested=wait([&]{return kinoko::tas::requested_preview()==frame;});kinoko::tas::image(frame,1,1,&pixel);}
         const bool restored=wait([&]{return !kinoko::tas::fast_seeking();});
