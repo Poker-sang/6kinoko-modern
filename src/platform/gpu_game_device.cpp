@@ -221,7 +221,7 @@ kinoko::graphics::Result Device::Reset(kinoko::graphics::Presentation* p){
     if(!SDL_SetWindowFullscreen(window,p->Windowed==false)) return bad(SDL_GetError());
     return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::BeginScene(){
-    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);if(s.closed||s.queue.size()>=3)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return kinoko::graphics::ok;}
+    std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;std::lock_guard<std::mutex> lock(s.queue_mutex);const auto limit=tas::fast_seeking()?fast_render_queue_limit:3;if(s.closed||s.queue.size()>=limit)return kinoko::graphics::error_wasstilldrawing;if(s.scene)return bad("Nested GPU scene");s.recording.clear();s.scene=true;return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::EndScene(){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);auto& s=*state;if(!s.scene)return bad("Unbalanced GPU EndScene");s.scene=false;std::lock_guard<std::mutex> lock(s.queue_mutex);if(!s.closed&&!s.recording.empty()){s.queue.emplace_back(tas::frame_number(),std::move(s.recording));++s.pending;}return kinoko::graphics::ok;}
 kinoko::graphics::Result Device::present(){
