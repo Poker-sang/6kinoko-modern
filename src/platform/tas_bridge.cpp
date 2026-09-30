@@ -20,6 +20,7 @@ std::atomic<bool> fast_seek{false};
 std::atomic<uint64_t> fast_target{0},preview_request{0},preview_completed{0};
 uint64_t next_frame_ns=0;
 uint64_t sequence=0,target=1;
+uint64_t published_sequence=UINT64_MAX,last_publish_ns=0;
 bool takeover=false,free_run=false;
 uint64_t last_input=0;uint32_t mask=0;
 std::string phase;
@@ -33,9 +34,12 @@ bool replace(const std::filesystem::path& temporary,const std::filesystem::path&
 void publish(uint64_t frames,uint64_t total,const char* state) {
     const std::string key=std::to_string(sequence)+" "+std::to_string(frames)+" "+std::to_string(total)+" "+state;
     if(phase==key)return;
+    const auto now=SDL_GetTicksNS();
+    // Progress is UI telemetry; command acknowledgements and pauses are exact.
+    if(sequence==published_sequence && (std::string(state)=="playing" || std::string(state)=="live") && now-last_publish_ns<16000000)return;
     auto path=directory()/"state.tmp";
     {std::ofstream out(path);out<<"KTAS1 "<<key<<'\n';if(!out)return;}
-    if(replace(path,directory()/"state.txt"))phase=key;
+    if(replace(path,directory()/"state.txt")){phase=key;published_sequence=sequence;last_publish_ns=now;}
 }
 }
 bool enabled(){return !directory().empty();}
@@ -61,6 +65,7 @@ void start(){
     if(!enabled())return;
     stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};speed_percent=100;next_frame_ns=0;
     fast_seek=false;fast_target=0;preview_request=0;preview_completed=0;audio::mute_output(false);
+    published_sequence=UINT64_MAX;last_publish_ns=0;
     const auto plan=directory()/"edit.bin";
     if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
     std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1\n";

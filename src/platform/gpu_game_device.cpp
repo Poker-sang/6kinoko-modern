@@ -9,6 +9,7 @@
 #include <array>
 #include <cstring>
 #include <deque>
+#include <condition_variable>
 #include <fstream>
 #include <iterator>
 #include <map>
@@ -62,6 +63,7 @@ struct Device::State {
     math::Matrix world=math::identity(),view=math::identity(),projection=math::identity();
     std::vector<RecordedPass> recording;std::mutex queue_mutex;std::deque<std::pair<uint64_t,std::vector<RecordedPass>>> queue;
     std::atomic<size_t> pending{0};
+    std::condition_variable drained;
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
     State(std::uint32_t x,std::uint32_t y):width(x),height(y) {
@@ -141,7 +143,13 @@ struct Device::State {
         std::vector<RecordedPass> frame;uint64_t frame_number=0;
         {std::lock_guard<std::mutex> lock(queue_mutex);if(!queue.empty()){frame_number=queue.front().first;frame=std::move(queue.front().second);queue.pop_front();}}
         if(!frame.empty()){
-            struct Completion {std::atomic<size_t>& count;~Completion(){--count;}} completion{pending};
+            struct Completion {
+                State& state;
+                ~Completion(){
+                    {std::lock_guard<std::mutex> lock(state.queue_mutex);--state.pending;}
+                    state.drained.notify_all();
+                }
+            } completion{*this};
             std::vector<gpu::Pass> passes;
             for(auto& p:frame){p.pass.target=upload({p.target,nullptr,0});
                 for(size_t i=0;i<p.textures.size();++i)p.pass.draws[i].texture=upload(p.textures[i]);
@@ -156,14 +164,15 @@ struct Device::State {
 };
 Device::Device(std::uint32_t x,std::uint32_t y):state(std::make_unique<State>(x,y)){active=this;}
 Device::~Device(){if(active==this)active=nullptr;}
-void stop(){if(active){std::lock_guard<std::mutex> lock(active->state->queue_mutex);active->state->closed=true;}}
+void stop(){if(active){
+    {std::lock_guard<std::mutex> lock(active->state->queue_mutex);active->state->closed=true;}
+    active->state->drained.notify_all();
+}}
 void wait_for_tas_render(){
     if(!active)return;
     auto& state=*active->state;
-    while(state.pending.load()) {
-        {std::lock_guard<std::mutex> lock(state.queue_mutex);if(state.closed)return;}
-        SDL_Delay(1);
-    }
+    std::unique_lock<std::mutex> lock(state.queue_mutex);
+    state.drained.wait(lock,[&]{return state.closed || !state.pending.load();});
 }
 kinoko::graphics::Result Device::GetDeviceCaps(kinoko::graphics::Capabilities* out){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return kinoko::graphics::error_pointer;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return kinoko::graphics::ok;}

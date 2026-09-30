@@ -155,7 +155,7 @@ void message_loop() {
             }
         }
         kinoko_graphics_poll();
-        SDL_Delay(1);
+        SDL_Delay(kinoko::tas::fast_seeking()?0:1);
     }
 }
 #ifdef _WIN32
