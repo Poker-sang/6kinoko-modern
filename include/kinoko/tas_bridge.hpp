@@ -16,6 +16,7 @@ void shutdown();
 // Worker-side frame boundary; waits for an acknowledged command while paused.
 bool boundary(uint64_t completed,uint64_t total,bool live);
 bool take_control();
+bool take_snapshot_request();
 uint32_t input_mask();
 void completed(uint64_t count);
 uint64_t frame_number();

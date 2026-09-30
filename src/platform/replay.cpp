@@ -1,4 +1,5 @@
 #include "kinoko/replay.hpp"
+#include <algorithm>
 #include <cstring>
 #include <stdexcept>
 #include <vector>
@@ -72,6 +73,13 @@ void Writer::append(const Frame& f) {
 void Writer::finish() {
     require(!finished_,"Replay already finalized");Bytes footer{0};put(footer,count_,8);put(footer,chain_,8);
     write(out_,footer);out_.flush();require(bool(out_),"Cannot finalize replay");finished_=true;
+}
+void Writer::snapshot(std::istream& prefix,std::ostream& destination) {
+    require(!finished_,"Replay already finalized");out_.flush();require(bool(out_),"Cannot flush replay snapshot");
+    uint64_t remaining=80+count_*208;
+    while(remaining){auto block=read(prefix,size_t(std::min<uint64_t>(remaining,65536)));write(destination,block);remaining-=block.size();}
+    Bytes footer{0};put(footer,count_,8);put(footer,chain_,8);write(destination,footer);
+    destination.flush();require(bool(destination),"Cannot finalize replay snapshot");
 }
 Reader::Reader(std::istream& in,const std::string& identity):in_(in) {
     identity_ok(identity);header(in_,identity);uint64_t chain=14695981039346656037ull;

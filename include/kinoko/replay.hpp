@@ -20,6 +20,8 @@ public:
     Writer(std::ostream&,const std::string& identity);
     void append(const Frame&);
     void finish();
+    // Export the flushed prefix with a footer without finalizing this writer.
+    void snapshot(std::istream& prefix,std::ostream& destination);
     uint64_t count() const {return count_;}
 private:
     std::ostream& out_; uint64_t count_=0,chain_=14695981039346656037ull;bool finished_=false;

@@ -123,8 +123,14 @@ int main() {
         kinoko_replay_input(&input_manager,action);camera.x+=float(action.held[kinoko::input::Jump]);CHECK(evaluate("score += rand();"));kinoko_replay_end_frame();}
     std::ofstream(tas/"command.txt")<<"2 takeover 0\n";
     auto controller=std::async(std::launch::async,[&] {
+        bool requested_snapshot=false;
         for(int i=0;i<500;++i){std::ifstream in(tas/"state.txt");std::string line;std::getline(in,line);in.close();
-            if(line.find("live-paused")!=line.npos){std::ofstream(tas/"input.txt")<<"1 0\n";std::ofstream(tas/"command.txt")<<"3 target 3\n";return true;}
+            if(line.find("live-paused")!=line.npos && !requested_snapshot){std::ofstream(tas/"command.txt")<<"3 snapshot 0\n";requested_snapshot=true;}
+            else if(requested_snapshot && line.find("KTAS1 3 2 ")==0 && line.find("live-paused")!=line.npos){
+                std::ifstream snapshot(tas/"recording.krec",std::ios::binary);kinoko::replay::Reader exported(snapshot,std::string(64,'a'));
+                if(exported.count()!=2){kinoko::tas::shutdown();return false;}
+                std::ofstream(tas/"input.txt")<<"1 0\n";std::ofstream(tas/"command.txt")<<"4 target 3\n";return true;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(2));}
         kinoko::tas::shutdown();return false;
     });

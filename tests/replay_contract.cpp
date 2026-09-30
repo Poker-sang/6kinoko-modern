@@ -15,6 +15,9 @@ int main() {
     a.legacy.x=-13;a.legacy.y=std::numeric_limits<int32_t>::min();a.legacy.buttons[0]=9;a.legacy.digits[8]=4;
     a.random_before=1;a.random_after=0xdeadbeef;a.checkpoint=0x1234567887654321ull;a.clock=1000;
     writer.append(a);Frame b=a;b.clock=1016;b.actions.held[kinoko::input::Jump]=0;b.checkpoint++;
+    std::istringstream prefix(stream.str(),std::ios::binary);std::stringstream exported;
+    writer.snapshot(prefix,exported);Reader snapshot(exported,identity);CHECK(snapshot.count()==1 && writer.count()==1);
+    Frame saved;CHECK(snapshot.next(saved) && same_checkpoint(saved,a));
     writer.append(b);writer.finish();
     const auto encoded=stream.str();CHECK(encoded.size()==80+2*208+17);
     CHECK(static_cast<unsigned char>(encoded[8])==1 && static_cast<unsigned char>(encoded[12])==19);

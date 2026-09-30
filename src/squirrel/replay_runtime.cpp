@@ -170,6 +170,19 @@ bool kinoko_replay_begin_frame() {
         if(kinoko::tas::enabled()) {
             for(;;) {
                 if(!kinoko::tas::boundary(frame_index,reader?reader->count():0,mode==Mode::Record)){quit();return false;}
+                if(kinoko::tas::take_snapshot_request()) {
+                    const auto& options=kinoko::runtime::options();
+                    const auto temporary=options.tas_dir/"recording.tmp",destination=options.tas_dir/"recording.krec";
+                    output.flush();
+                    std::ifstream prefix(options.recording.empty()?options.tas_output:options.recording,std::ios::binary);
+                    std::ofstream exported(temporary,std::ios::binary|std::ios::trunc);
+                    if(!writer || !prefix || !exported)throw std::runtime_error("Cannot open recording snapshot");
+                    writer->snapshot(prefix,exported);exported.close();
+                    std::error_code error;std::filesystem::remove(destination,error);error.clear();
+                    std::filesystem::rename(temporary,destination,error);
+                    if(error)throw std::runtime_error("Cannot publish recording snapshot: "+error.message());
+                    continue;
+                }
                 if(!kinoko::tas::take_control())break;
                 mode=Mode::Record;note("Takeover at completed frame count "+std::to_string(frame_index));
             }

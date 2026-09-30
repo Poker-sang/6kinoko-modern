@@ -15,6 +15,7 @@ std::atomic<bool> stopping{false};
 std::atomic<uint64_t> count{0};
 std::atomic<uint32_t> window_mask{0};
 std::atomic<int> window_command{0};
+std::atomic<bool> focus_requested{false};
 std::atomic<uint32_t> speed_percent{100};
 std::atomic<bool> fast_seek{false};
 std::atomic<uint64_t> fast_target{0},preview_request{0},preview_completed{0};
@@ -22,6 +23,7 @@ uint64_t next_frame_ns=0;
 uint64_t sequence=0,target=1;
 uint64_t published_sequence=UINT64_MAX,last_publish_ns=0;
 bool takeover=false,free_run=false;
+bool snapshot_requested=false;
 uint64_t last_input=0;uint32_t mask=0;
 std::string phase;
 EditPlan edits;
@@ -46,6 +48,7 @@ bool enabled(){return !directory().empty();}
 bool embedded(){return enabled() && !runtime::options().tas_window;}
 void pump_window(SDL_Window* window) {
     if(!enabled() || embedded())return;
+    if(focus_requested.exchange(false))SDL_RaiseWindow(window);
     const bool focused=(SDL_GetWindowFlags(window)&SDL_WINDOW_INPUT_FOCUS)!=0;
     const bool* keys=SDL_GetKeyboardState(nullptr);uint32_t value=0;
     auto set=[&](SDL_Scancode key,uint32_t bits){if(focused && keys[key])value|=bits;};
@@ -66,9 +69,11 @@ void start(){
     stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};speed_percent=100;next_frame_ns=0;
     fast_seek=false;fast_target=0;preview_request=0;preview_completed=0;audio::mute_output(false);
     published_sequence=UINT64_MAX;last_publish_ns=0;
+    snapshot_requested=false;
+    focus_requested=false;
     const auto plan=directory()/"edit.bin";
     if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
-    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1\n";
+    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1 snapshot-v1 focus-v1\n";
 }
 bool fast_seeking(){return fast_seek.load();}
 bool publish_preview(uint64_t frames){return !fast_seeking() || frames>=fast_target.load();}
@@ -98,6 +103,8 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
                 fast_seek=false;preview_request=0;next_frame_ns=0;audio::mute_output(false);
             }
             if(verb=="pause"){free_run=false;target=frames;}
+            if(verb=="snapshot"){free_run=false;target=frames;snapshot_requested=true;return true;}
+            if(verb=="focus" && !embedded())focus_requested=true;
             if(verb=="target"){free_run=false;target=arg;}
             if(verb=="seek") {
                 const auto limit=edits.masks.empty()?total:edits.masks.size();
@@ -115,6 +122,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
         if(!edits.masks.empty()){total=edits.masks.size();if(frames>=total){free_run=false;target=frames;}}
         if(!live && frames>=total && !takeover) {free_run=false;target=frames;}
         const bool advance=free_run || frames<target;
+        if(focus_requested.load()){SDL_Delay(1);continue;}
         if(!advance && fast_seeking()) {
             // Cancellation must expose the actual last simulated frame, too.
             if(embedded() && preview_completed.load()!=frames) {
@@ -131,6 +139,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
     return false;
 }
 bool take_control(){const bool value=takeover;takeover=false;return value;}
+bool take_snapshot_request(){const bool value=snapshot_requested;snapshot_requested=false;return value;}
 uint32_t input_mask() {
     if(!edits.masks.empty()){const auto frame=count.load();if(frame>=edits.masks.size())throw std::runtime_error("TAS edit plan exhausted");return edits.masks[size_t(frame)];}
     std::ifstream in(directory()/"input.txt");uint64_t stamp;uint32_t value;
