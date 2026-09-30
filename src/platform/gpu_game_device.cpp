@@ -283,7 +283,7 @@ kinoko::graphics::Result Device::DrawPrimitiveUP(kinoko::graphics::Primitive typ
     try{gpu::Draw draw;draw.clip_space=state->fvf==0x4142;const auto* bytes=static_cast<const uint8_t*>(data);
         // Keep ordinary quads in the existing inline representation. Conversion
         // only happens if this packet is actually submitted (or shown on cancel).
-        if(primitives==2 && !draw.clip_space){
+        if(tas::fast_seeking() && primitives==2 && !draw.clip_space){
             for(unsigned i=0;i<4;++i)std::memcpy(&draw.vertices[i],bytes+i*stride,state->fvf==(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse)?20:28);
             state->draw(std::move(draw));return kinoko::graphics::ok;
         }
