@@ -52,7 +52,12 @@ bool reset() {
     if(kinoko_primary_vm)sq_close(kinoko_primary_vm);
     kinoko_primary_vm=sq_open(128);sq_pushroottable(kinoko_primary_vm);
     sqstd_register_mathlib(kinoko_primary_vm);sq_pop(kinoko_primary_vm,1);
-    return evaluate("srand(1); score <- 0; life <- 3.5; star <- true; playerType <- \"test\"; playerItem <- null; currentMap <- {}; getroottable().setdelegate({ currentTime = 99, _get = function(key) { throw \"unexpected getter\"; } });");
+    if(!evaluate("srand(1); score <- 0; life <- 3.5; star <- true; playerType <- \"test\"; playerItem <- null; currentMap <- {};"))return false;
+    sq_pushroottable(kinoko_primary_vm);sq_newtable(kinoko_primary_vm);
+    sq_pushstring(kinoko_primary_vm,"currentTime",-1);sq_pushinteger(kinoko_primary_vm,99);
+    sq_newslot(kinoko_primary_vm,-3,SQFalse);
+    sq_setdelegate(kinoko_primary_vm,-2);sq_pop(kinoko_primary_vm,1);
+    return true;
 }
 std::string status() {const auto& p=kinoko::runtime::options().status;std::ifstream in(p.empty()?std::filesystem::path("replay-status.txt"):p);return {std::istreambuf_iterator<char>(in),{}};}
 }

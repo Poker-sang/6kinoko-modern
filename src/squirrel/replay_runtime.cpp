@@ -91,18 +91,18 @@ uint64_t checkpoint() {
     }
     std::sort(actors.begin(),actors.end());h.number(actors.size());
     for(auto item:actors){h.number(item.first);h.number(item.second);}
-    // Raw root iteration never invokes script getters or serializes pointers.
+    // Raw root reads never invoke script getters or serialize pointers.
     std::vector<std::pair<std::string,uint64_t>> globals;
     auto* vm=kinoko_primary_vm;
     if(vm) {
         const char* tracked[]={"score","life","star","playerType","playerItem","currentMap","currentTime","clearCount","stageBeginTime"};
         const auto append=[&](const char* name) {
             Hash item;const auto type=sq_gettype(vm,-1);item.number(type);
-                    if(type==OT_INTEGER){SQInteger v;sq_getinteger(vm,-1,&v);item.number(v);}
-                    if(type==OT_FLOAT){SQFloat v;sq_getfloat(vm,-1,&v);item.real(v);}
-                    if(type==OT_BOOL){SQBool v;sq_getbool(vm,-1,&v);item.number(v);}
-                    if(type==OT_STRING){const char* v;sq_getstring(vm,-1,&v);item.text(v);}
-                    item.dump(std::string("global:")+name);globals.emplace_back(name,item.value);
+            if(type==OT_INTEGER){SQInteger v;sq_getinteger(vm,-1,&v);item.number(v);}
+            if(type==OT_FLOAT){SQFloat v;sq_getfloat(vm,-1,&v);item.real(v);}
+            if(type==OT_BOOL){SQBool v;sq_getbool(vm,-1,&v);item.number(v);}
+            if(type==OT_STRING){const char* v;sq_getstring(vm,-1,&v);item.text(v);}
+            item.dump(std::string("global:")+name);globals.emplace_back(name,item.value);
         };
         const auto top=sq_gettop(vm);sq_pushroottable(vm);
         if(kinoko::tas::fast_seeking()) {
