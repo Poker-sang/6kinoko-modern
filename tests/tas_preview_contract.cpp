@@ -37,14 +37,17 @@ int main(int argc,char** argv) {
         auto image_frame=[&]{std::ifstream in(root/"image.rgba",std::ios::binary);std::vector<unsigned char> b(std::istreambuf_iterator<char>(in),{});return b.size()>8?b[8]:0;};
         auto command=[&](const char* text){std::ofstream out(root/"command.txt");out<<text;};
         for(bool cancel:{false,true}) {
-            command("1 seek 3");kinoko::tas::start();
-            if(!kinoko::tas::boundary(0,3,false))throw std::runtime_error("Seek rejected");
-            pass.clear_color={0,1,0,1};renderer.present({pass},2);
-            if(image_frame()==2)throw std::runtime_error("Intermediate fast-seek frame was read back");
-            const uint64_t frame=cancel?2:3;
-            if(cancel)command("2 pause 0");else renderer.present({pass},3);
+            command("1 seek 6");kinoko::tas::start();
+            if(!kinoko::tas::boundary(0,6,false))throw std::runtime_error("Seek rejected");
+            pass.clear_color={0,1,0,1};
+            for(uint64_t intermediate=1;intermediate<6;++intermediate) {
+                renderer.present({pass},intermediate);
+                if(image_frame()==intermediate)throw std::runtime_error("Intermediate fast-seek frame was read back");
+            }
+            const uint64_t frame=cancel?5:6;
+            if(cancel)command("2 pause 0");else renderer.present({pass},6);
             kinoko::tas::completed(frame);
-            auto paused=std::async(std::launch::async,[&]{return kinoko::tas::boundary(frame,3,false);});
+            auto paused=std::async(std::launch::async,[&]{return kinoko::tas::boundary(frame,6,false);});
             const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(3);
             while(kinoko::tas::fast_seeking() && std::chrono::steady_clock::now()<until){renderer.poll_tas();std::this_thread::sleep_for(std::chrono::milliseconds(1));}
             const bool restored=!kinoko::tas::fast_seeking();

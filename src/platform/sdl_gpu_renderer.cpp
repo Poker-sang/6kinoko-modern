@@ -3,6 +3,7 @@
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <cstring>
+#include <deque>
 #include <limits>
 #include <map>
 #include <set>
@@ -52,6 +53,7 @@ struct Renderer::State {
     SDL_GPUTexture* embedded=nullptr;SDL_GPUTransferBuffer* download=nullptr;
     uint64_t embedded_frame=0;
     bool embedded_ready=false,fast_present=false;
+    std::deque<SDL_GPUFence*> fast_fences;
     SDL_GPUBuffer* vertices=nullptr;SDL_GPUTransferBuffer* upload=nullptr;
     Uint32 capacity=0;
     std::pair<uint32_t,uint32_t> screen_extent{};
@@ -65,6 +67,7 @@ struct Renderer::State {
     ~State() {
         if(!device)return;
         SDL_WaitForGPUIdle(device);
+        for(auto* fence:fast_fences)SDL_ReleaseGPUFence(device,fence);
         for(auto& p:pipelines) SDL_ReleaseGPUGraphicsPipeline(device,p.second);
         for(auto* s:samplers) if(s) SDL_ReleaseGPUSampler(device,s);
         for(auto& t:textures) SDL_ReleaseGPUTexture(device,t.second.value);
@@ -306,7 +309,16 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
         }
         SDL_EndGPURenderPass(render);
     }
-    command.submit();
+    if(tas::embedded() && tas::fast_seeking()) {
+        auto* fence=SDL_SubmitGPUCommandBufferAndAcquireFence(command.value);command.value=nullptr;require(fence,"Submit fast TAS frame");
+        s.fast_fences.push_back(fence);
+        // Bound outstanding GPU work without imposing a frame-rate delay.
+        if(s.fast_fences.size()>=3) {
+            auto* oldest=s.fast_fences.front();
+            const bool waited=SDL_WaitForGPUFences(s.device,true,&oldest,1);
+            SDL_ReleaseGPUFence(s.device,oldest);s.fast_fences.pop_front();require(waited,"Wait for fast TAS frame");
+        }
+    }else command.submit();
     if(tas::embedded() && swapchain) {
         s.embedded_frame=frame_number;s.embedded_ready=true;
         if(tas::publish_preview(frame_number))capture_preview(frame_number);
@@ -324,6 +336,8 @@ void Renderer::capture_preview(uint64_t frame_number) {
     SDL_DownloadFromGPUTexture(copy,&region,&destination);SDL_EndGPUCopyPass(copy);
     auto* fence=SDL_SubmitGPUCommandBufferAndAcquireFence(command.value);command.value=nullptr;require(fence,"Submit TAS frame");
     const bool waited=SDL_WaitForGPUFences(s.device,true,&fence,1);SDL_ReleaseGPUFence(s.device,fence);require(waited,"Wait for TAS frame");
+    for(auto* pending:s.fast_fences)SDL_ReleaseGPUFence(s.device,pending);
+    s.fast_fences.clear();
     void* pixels=SDL_MapGPUTransferBuffer(s.device,s.download,false);require(pixels,"Map TAS frame");
     tas::image(frame_number,640,480,pixels);SDL_UnmapGPUTransferBuffer(s.device,s.download);
 }
