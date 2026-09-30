@@ -35,3 +35,8 @@ Continue using runtime-builds/modern-x64-tas-cpu-02/kinoko_modern_gpu.exe.
 The next investigation should measure update/checkpoint/VM work separately
 before choosing another optimization; update_ms includes checkpoint work, so
 it is not evidence that script execution alone accounts for that time.
+
+After rejecting the prototype, final source 3b8fd2ad was built in the fresh
+modern-x64-tas-checkpoint-final directory (replay contract target only).
+The enhanced replay runtime contract passed against the restored production
+implementation. No replacement game executable is delivered by this batch.
