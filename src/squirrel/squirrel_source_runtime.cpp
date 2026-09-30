@@ -4,17 +4,10 @@
 #include <atomic>
 #include <cstddef>
 #include <cstring>
-#include <chrono>
-#include <cstdlib>
-#include <fstream>
-#include <map>
-#include <string>
-#include <thread>
 #include "sqpcheader.h"
 #include "sqvm.h"
 #include "sqfuncproto.h"
 #include "sqclosure.h"
-#include "sqstring.h"
 
 namespace {
 int32_t address(const void* value) noexcept {
@@ -58,24 +51,7 @@ extern "C" void kinoko_sq_set_context_exchange(kinoko_sq_context_exchange exchan
 // Standalone source VMs have no legacy receiver and simply call the function.
 SQInteger kinoko_squirrel_invoke_native(HSQUIRRELVM vm, SQFUNCTION function) {
     ReceiverScope scope(vm);
-    static const char* path=std::getenv("KINOKO_NATIVE_PROFILE");
-    if(!path || !*path)return function(vm);
-    struct Sample {uint64_t ns=0,calls=0;std::string name;};
-    struct Samples {
-        std::map<SQFUNCTION,Sample> values;
-        ~Samples(){std::ofstream out(std::string(path)+"-"+std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id())));for(const auto& entry:values)
-            out<<reinterpret_cast<uintptr_t>(entry.first)<<' '<<entry.second.ns<<' '<<entry.second.calls<<' '<<entry.second.name<<'\n';}
-    };
-    static thread_local Samples samples;
-    auto& sample=samples.values[function];
-    if(sample.name.empty() && vm->ci && sq_type(vm->ci->_closure)==OT_NATIVECLOSURE) {
-        const auto& name=_nativeclosure(vm->ci->_closure)->_name;
-        sample.name=sq_type(name)==OT_STRING?_stringval(name):"<unnamed>";
-    }
-    const auto tick=std::chrono::steady_clock::now();
-    const auto result=function(vm);
-    sample.ns+=std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-tick).count();++sample.calls;
-    return result;
+    return function(vm);
 }
 
 extern "C" const void* kinoko_sq_source_vm_vtable(void) {

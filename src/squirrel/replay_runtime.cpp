@@ -222,11 +222,7 @@ void kinoko_replay_input(KinokoInputManager* manager,kinoko::input::Frame& actio
 void kinoko_replay_end_frame() {
     if(mode==Mode::Off || stopped)return;
     try {
-        const bool profile=kinoko::tas::profiling();
-        auto tick=profile?SDL_GetTicksNS():0;
         frame.random_after=kinoko_script_random_state();frame.checkpoint=checkpoint();
-        if(profile)kinoko::tas::profile_time(kinoko::tas::ProfileStage::checkpoint,SDL_GetTicksNS()-tick);
-        if(profile)tick=SDL_GetTicksNS();
         if(mode==Mode::Record)writer->append(frame);
         else if(!kinoko::replay::same_checkpoint(expected,frame)) {
             std::ostringstream message;message<<"Desync at frame "<<frame_index<<"; checkpoint expected "<<std::hex<<expected.checkpoint
@@ -238,7 +234,6 @@ void kinoko_replay_end_frame() {
             if(!kinoko::tas::fast_seeking() || (frame_index+1)%256==0 || kinoko::tas::publish_preview(frame_index+1))output.flush();
             if(!output)throw std::runtime_error("Cannot publish live replay frame");
         }
-        if(profile)kinoko::tas::profile_time(kinoko::tas::ProfileStage::replay_write,SDL_GetTicksNS()-tick);
         ++frame_index;kinoko::tas::completed(frame_index);
         if(!kinoko::tas::enabled() && mode==Mode::Playback && frame_index==reader->count()){completed=true;stopped=true;quit();}
     }catch(const std::exception& e){fail(e.what());}
