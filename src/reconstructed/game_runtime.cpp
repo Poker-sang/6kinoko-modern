@@ -1,3 +1,5 @@
+#include "kinoko/tas_bridge.hpp"
+#include <SDL3/SDL.h>
 #include "kinoko/runtime_util.hpp"
 #include "kinoko/game_runtime.h"
 #include "kinoko/replay_runtime.hpp"
@@ -77,25 +79,36 @@ extern "C" int32_t kinoko_game_update(void) {
         kinoko_trace_i32("469900:render-mask",kinoko_game_masks.render);
         kinoko_game_trace_map(objects.map,0);
     }
+    const bool profile=kinoko::tas::profiling();
+    auto tick=profile?SDL_GetTicksNS():0;
+    const auto measured=[&](kinoko::tas::ProfileStage stage) {
+        if(profile){const auto now=SDL_GetTicksNS();kinoko::tas::profile_time(stage,now-tick);tick=now;}
+    };
     kinoko_game_update_input(objects.input);
+    measured(kinoko::tas::ProfileStage::game_input);
     kinoko_game_update_callback(trace_index);
+    measured(kinoko::tas::ProfileStage::game_callback);
     // 46995C snapshots AFTER the callback; later stages use this same mask.
     const uint32_t mask=static_cast<uint32_t>(kinoko_game_masks.update);
     int32_t result=static_cast<int32_t>(mask);
     if (mask & KINOKO_GAME_CAMERA) result=kinoko_camera_update(objects.camera,nullptr);
+    measured(kinoko::tas::ProfileStage::camera_update);
     if (mask & KINOKO_GAME_ACTOR_GROUPS) {
         kinoko::actor::ManagerView(objects.actors).set(&kinoko::actor::ManagerPrefix::update_mask,static_cast<int32_t>(mask));
         result=kinoko_actor_manager_update(objects.actors,objects.camera);
     }
+    measured(kinoko::tas::ProfileStage::actor_update);
     if (mask & KINOKO_GAME_MAP) {
         if (trace_index<=16) kinoko_trace("469900:map-update");
         result=kinoko_game_update_map(objects.map);
     }
+    measured(kinoko::tas::ProfileStage::map_update);
     if (mask & KINOKO_GAME_STAGES) {
         if (trace_index<=16) kinoko_trace("469900:global-update");
         result=kinoko_stages_update();
     }
     if (trace_index<=16) kinoko_trace_i32("469900:result",result);
+    measured(kinoko::tas::ProfileStage::stages_update);
     kinoko_replay_end_frame();
     return result;
 }

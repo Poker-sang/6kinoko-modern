@@ -223,7 +223,10 @@ bool initialize_input_audio(const Configuration& configuration) {
 }
 
 void update_frame() {
+    const bool profile=kinoko::tas::profiling();
+    const auto input_tick=profile?SDL_GetTicksNS():0;
     if (state.config.input) kinoko_input_poll();
+    if(profile && kinoko::tas::profiling())kinoko::tas::profile_time(kinoko::tas::ProfileStage::input_poll,SDL_GetTicksNS()-input_tick);
     kinoko_math_checkpoint("input-done", 0);
     auto* manager = state.config.manager;
     auto* transition = state.config.transition;
@@ -233,7 +236,9 @@ void update_frame() {
     } else {
         if (transition) transition->methods->update(transition, nullptr);
         if (state.scene) {
+            const auto scene_tick=profile?SDL_GetTicksNS():0;
             state.requested_scene = state.scene->methods->update(state.scene, nullptr);
+            if(profile && kinoko::tas::profiling())kinoko::tas::profile_time(kinoko::tas::ProfileStage::scene_update,SDL_GetTicksNS()-scene_tick);
             if (state.requested_scene == -1) state.running.store(false);
             else ++state.frame_count;
         }
