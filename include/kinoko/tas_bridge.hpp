@@ -7,6 +7,8 @@ bool enabled();
 bool embedded();
 void pump_window(SDL_Window* window);
 void start();
+uint64_t frame_interval_ns();
+void pace_frame();
 void shutdown();
 // Worker-side frame boundary; waits for an acknowledged command while paused.
 bool boundary(uint64_t completed,uint64_t total,bool live);

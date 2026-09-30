@@ -14,6 +14,8 @@ std::atomic<bool> stopping{false};
 std::atomic<uint64_t> count{0};
 std::atomic<uint32_t> window_mask{0};
 std::atomic<int> window_command{0};
+std::atomic<uint32_t> speed_percent{100};
+uint64_t next_frame_ns=0;
 uint64_t sequence=0,target=1;
 bool takeover=false,free_run=false;
 uint64_t last_input=0;uint32_t mask=0;
@@ -54,15 +56,22 @@ void pump_window(SDL_Window* window) {
 }
 void start(){
     if(!enabled())return;
-    stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};
+    stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};speed_percent=100;next_frame_ns=0;
     const auto plan=directory()/"edit.bin";
     if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
-    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1\n";
+    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1\n";
+}
+uint64_t frame_interval_ns(){return 100000000000ull/(60*speed_percent.load());}
+void pace_frame() {
+    const uint64_t now=SDL_GetTicksNS(),interval=frame_interval_ns();
+    if(!next_frame_ns || now>next_frame_ns+interval)next_frame_ns=now+interval;
+    else next_frame_ns+=interval;
+    if(next_frame_ns>now)SDL_DelayNS(next_frame_ns-now);
 }
 void shutdown(){stopping=true;}
 bool boundary(uint64_t frames,uint64_t total,bool live) {
     if(!enabled())return true;
-    if(!live && !edits.masks.empty() && total!=edits.masks.size())throw std::runtime_error("TAS edit plan/source length mismatch");
+    if(!live && !edits.masks.empty() && total!=edits.source_count)throw std::runtime_error("TAS edit plan/source length mismatch");
     while(!stopping.load()) {
         const int local=window_command.exchange(0);
         if(edits.masks.empty() && local==1){free_run=false;target=frames+1;}
@@ -75,6 +84,10 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
             if(verb=="pause"){free_run=false;target=frames;}
             if(verb=="target"){free_run=false;target=arg;}
             if(verb=="run")free_run=true;
+            if(verb=="speed") {
+                if(arg!=25 && arg!=50 && arg!=100 && arg!=200 && arg!=400)throw std::runtime_error("Unsupported TAS speed");
+                speed_percent=uint32_t(arg);next_frame_ns=0;
+            }
             if(verb=="takeover"){takeover=true;free_run=false;target=frames;mask=0;}
         }
         if(!edits.masks.empty()){total=edits.masks.size();if(frames>=total){free_run=false;target=frames;}}

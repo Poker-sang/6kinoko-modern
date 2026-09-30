@@ -69,7 +69,8 @@ unsigned long __stdcall game_loop(void*) {
         update_frame();
         if (!state.config.separate_draw) draw_frame();
         kinoko_math_checkpoint("render-done", 0);
-        if (frame_event) kinoko_frame_timer_wait(frame_event);
+        if (kinoko::tas::enabled()) kinoko::tas::pace_frame();
+        else if (frame_event) kinoko_frame_timer_wait(frame_event);
         else kinoko_clock_delay(16); // Retained reconstruction fallback for event allocation failure.
     }
     if (frame_event) kinoko_frame_timer_unregister(frame_event);

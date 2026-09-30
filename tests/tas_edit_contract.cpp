@@ -1,6 +1,7 @@
 #include "kinoko/tas_edit_plan.hpp"
 #include "kinoko/tas_bridge.hpp"
 #include "kinoko/runtime_options.hpp"
+#include "kinoko/runtime_clock.h"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -29,6 +30,14 @@ int main(){
     {std::ofstream out(root/"edit.bin",std::ios::binary);out<<wire(0,16);}
     {std::ofstream out(root/"command.txt");out<<"1 target 1";}
     kinoko::tas::start();check(kinoko::tas::boundary(0,3,false));check(kinoko::tas::take_control());
+    {std::ofstream out(root/"command.txt");out<<"2 speed 25";}
+    check(kinoko::tas::boundary(0,3,true));check(kinoko::tas::frame_interval_ns()==100000000000ull/(60*25));
+    {std::ofstream out(root/"command.txt");out<<"3 speed 400";}
+    check(kinoko::tas::boundary(0,3,true));check(kinoko::tas::frame_interval_ns()==100000000000ull/(60*400));
+    kinoko_simulation_enable(1);kinoko_simulation_frame(17);auto clock=kinoko_simulation_milliseconds();kinoko::tas::pace_frame();check(kinoko_simulation_milliseconds()==clock);kinoko_simulation_enable(0);
+    auto variable=[](uint32_t size,uint32_t first,uint32_t source){std::string result="KTASED02";auto word=[&](uint32_t number){for(int byte=0;byte<4;++byte)result+=char(number>>(8*byte));};word(size);word(first);word(source);for(uint32_t frame=0;frame<size;++frame)word(0);return result;};
+    for(auto plan:{variable(2,1,3),variable(5,3,3)}){std::istringstream stream(plan);kinoko::tas::EditPlan parsed;parsed.read(stream);check(parsed.source_count==3);}
+    bool invalid=false;try{std::istringstream stream(variable(5,4,3));kinoko::tas::EditPlan parsed;parsed.read(stream);}catch(const std::exception&){invalid=true;}check(invalid);
     std::cout<<"PASS edit plan validation, verified-prefix takeover, frame-zero takeover and exact masks\n";
     return 0;
  }catch(const std::exception& e){std::cerr<<e.what();return 1;}
