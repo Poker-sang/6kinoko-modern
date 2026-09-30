@@ -34,7 +34,12 @@ function Wait-State($process,[string]$directory,[long]$sequence,[long]$completed
 function Command([string]$directory,[string]$text){
     $temporary=Join-Path $directory 'command.tmp'
     [IO.File]::WriteAllText($temporary,$text,[Text.UTF8Encoding]::new($false))
-    Move-Item -LiteralPath $temporary -Destination (Join-Path $directory 'command.txt') -Force
+    $destination=Join-Path $directory 'command.txt'
+    $retry=[Diagnostics.Stopwatch]::StartNew()
+    while($true){
+        try{[IO.File]::Move($temporary,$destination,$true);break}
+        catch{if($retry.Elapsed.TotalSeconds -ge 5){throw};Start-Sleep -Milliseconds 1}
+    }
 }
 $results=@()
 for($iteration=1;$iteration -le $Iterations;$iteration++){
