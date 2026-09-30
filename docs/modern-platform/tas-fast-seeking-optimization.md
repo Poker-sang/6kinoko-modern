@@ -23,3 +23,15 @@ Synthetic validation covers target/cancel pixels at the Device queue boundary,
 intermediate screen suppression, offscreen texture use after deferred frames,
 pause flushing and existing runtime/Squirrel replay consistency. A synthetic
 120-screen-frame timing comparison is logged; it is not a gameplay benchmark.
+
+## Windows delivery
+
+Source: `80271671`. Runtime:
+`C:/WorkSpace/6kinoko-modern/runtime-builds/modern-x64-tas-fast-seek-04/kinoko_modern_gpu.exe`.
+Release build, three replay/TAS contracts and both synthetic GPU contracts passed.
+Logs and retained fixtures are in `build-runs/modern-x64-tas-fast-seek-04`.
+The three DAT files were copied beside the executable and SHA256 verified.
+The clear-only 120-frame synthetic comparison measured 165.087 ms normally and
+1.278 ms with deferred rendering; actual gameplay speedup remains unmeasured.
+Keep draw callbacks and mixed/offscreen passes, so logic-heavy scenes can gain less.
+Select this executable in the editor and create/reopen the game session to use it.
