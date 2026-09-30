@@ -119,8 +119,10 @@ struct Device::State {
     }
     gpu::Vertex vertex(float x,float y,float z,float w,std::uint32_t color,float u,float v,bool transform){
         gpu::Vertex out{{x,y,z,w},{float((color>>16)&255)/255,float((color>>8)&255)/255,float(color&255)/255,float(color>>24)/255},{u,v}};
+        const auto tick=transform && tas::profiling()?SDL_GetTicksNS():0;
         if(transform){const auto m=math::multiply(math::multiply(world,view),projection);float input[4]={x,y,z,w};
             for(int j=0;j<4;++j){out.position[j]=0;for(int i=0;i<4;++i)out.position[j]+=input[i]*m.m[i][j];}}
+        if(tick)tas::profile_time(tas::ProfileStage::transformed_vertex,SDL_GetTicksNS()-tick);
         return out;
     }
     gpu::TextureId upload(const Snapshot& snap){
