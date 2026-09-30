@@ -27,6 +27,7 @@ bool snapshot_requested=false;
 uint64_t last_input=0;uint32_t mask=0;
 std::string phase;
 EditPlan edits;
+void (*flush_handler)()=nullptr;
 const auto& directory(){return runtime::options().tas_dir;}
 bool replace(const std::filesystem::path& temporary,const std::filesystem::path& destination) {
     // Same-directory publication. Readers open with delete sharing and retry a missing mailbox.
@@ -36,6 +37,7 @@ bool replace(const std::filesystem::path& temporary,const std::filesystem::path&
 void publish(uint64_t frames,uint64_t total,const char* state) {
     const std::string key=std::to_string(sequence)+" "+std::to_string(frames)+" "+std::to_string(total)+" "+state;
     if(phase==key)return;
+    if(flush_handler && (std::string(state)=="paused" || std::string(state)=="live-paused"))flush_handler();
     const auto now=SDL_GetTicksNS();
     // Progress is UI telemetry; command acknowledgements and pauses are exact.
     if(sequence==published_sequence && (std::string(state)=="playing" || std::string(state)=="live") && now-last_publish_ns<16000000)return;
@@ -78,6 +80,8 @@ void start(){
 bool fast_seeking(){return fast_seek.load();}
 bool publish_preview(uint64_t frames){return !fast_seeking() || frames>=fast_target.load();}
 uint64_t requested_preview(){return preview_request.load();}
+void rendered(uint64_t frames){preview_completed=frames;}
+void set_flush_handler(void (*handler)()){flush_handler=handler;}
 uint64_t frame_interval_ns(){return 100000000000ull/(60*speed_percent.load());}
 void pace_frame() {
     if(fast_seeking()){next_frame_ns=0;return;}
@@ -125,7 +129,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
         if(focus_requested.load()){SDL_Delay(1);continue;}
         if(!advance && fast_seeking()) {
             // Cancellation must expose the actual last simulated frame, too.
-            if(embedded() && preview_completed.load()!=frames) {
+            if(preview_completed.load()!=frames) {
                 preview_request=frames;SDL_Delay(1);continue;
             }
             fast_seek=false;preview_request=0;next_frame_ns=0;audio::mute_output(false);

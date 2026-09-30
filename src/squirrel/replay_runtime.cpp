@@ -159,6 +159,7 @@ bool kinoko_replay_start() {
             }
         }
         kinoko_simulation_enable(1);
+        kinoko::tas::set_flush_handler([]{output.flush();if(!output)throw std::runtime_error("Cannot publish paused replay prefix");});
         note("Started "+requested+"; format 1; fixed simulation clock 60 Hz; identity "+identity);
         return true;
     }catch(const std::exception& e){fail(e.what());return false;}
@@ -229,12 +230,16 @@ void kinoko_replay_end_frame() {
             throw std::runtime_error(message.str());
         }
         if(mode==Mode::Playback && kinoko::tas::enabled())writer->append(frame);
-        if(kinoko::tas::enabled()){output.flush();if(!output)throw std::runtime_error("Cannot publish live replay frame");}
+        if(kinoko::tas::enabled()){
+            if(!kinoko::tas::fast_seeking() || (frame_index+1)%256==0 || kinoko::tas::publish_preview(frame_index+1))output.flush();
+            if(!output)throw std::runtime_error("Cannot publish live replay frame");
+        }
         ++frame_index;kinoko::tas::completed(frame_index);
         if(!kinoko::tas::enabled() && mode==Mode::Playback && frame_index==reader->count()){completed=true;stopped=true;quit();}
     }catch(const std::exception& e){fail(e.what());}
 }
 void kinoko_replay_finish() {
+    kinoko::tas::set_flush_handler(nullptr);
     if(mode!=Mode::Off) {
     try {
         if((mode==Mode::Record || kinoko::tas::enabled()) && writer && !failed){writer->finish();completed=true;}

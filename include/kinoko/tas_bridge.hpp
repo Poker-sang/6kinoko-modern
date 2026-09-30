@@ -12,6 +12,8 @@ void pace_frame();
 bool fast_seeking();
 bool publish_preview(uint64_t completed);
 uint64_t requested_preview();
+void rendered(uint64_t completed);
+void set_flush_handler(void (*handler)());
 void shutdown();
 // Worker-side frame boundary; waits for an acknowledged command while paused.
 bool boundary(uint64_t completed,uint64_t total,bool live);

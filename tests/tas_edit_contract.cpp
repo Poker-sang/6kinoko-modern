@@ -9,6 +9,7 @@
 #include <chrono>
 #include <future>
 #include <thread>
+#include <atomic>
 int main(){
  try {
     auto wire=[](uint32_t first,uint32_t mask){std::string s="KTASED01";auto word=[&](uint32_t n){for(int i=0;i<4;++i)s+=char(n>>(i*8));};word(3);word(first);word(0);word(mask);word(0);return s;};
@@ -44,6 +45,8 @@ int main(){
     auto command=[&](const char* text){std::ofstream out(root/"command.txt");out<<text;};
     auto wait=[&](auto ready){const auto until=std::chrono::steady_clock::now()+std::chrono::seconds(3);while(!ready() && std::chrono::steady_clock::now()<until)std::this_thread::sleep_for(std::chrono::milliseconds(1));return ready();};
     for(bool cancel:{false,true}) {
+        static std::atomic<int> flushes{0};flushes=0;
+        kinoko::tas::set_flush_handler([]{++flushes;});
         command("1 seek 3");kinoko::tas::start();check(kinoko::tas::boundary(0,3,false));
         check(kinoko::tas::fast_seeking() && !kinoko::tas::publish_preview(2) && kinoko::tas::publish_preview(3));
         kinoko_simulation_enable(1);kinoko_simulation_frame(17);const auto simulation_clock=kinoko_simulation_milliseconds();
@@ -57,9 +60,11 @@ int main(){
         bool requested=true;
         if(cancel){requested=wait([&]{return kinoko::tas::requested_preview()==frame;});kinoko::tas::image(frame,1,1,&pixel);}
         const bool restored=wait([&]{return !kinoko::tas::fast_seeking();});
+        const bool flushed=wait([&]{return flushes.load()>0;});
         command("3 stop 0");
         if(!requested || !restored)kinoko::tas::shutdown();
-        check(!paused.get() && requested && restored);
+        check(!paused.get() && requested && restored && flushed);
+        kinoko::tas::set_flush_handler(nullptr);
         check(kinoko::tas::requested_preview()==0 && kinoko::tas::publish_preview(frame));
     }
     std::cout<<"PASS edit plan validation, verified-prefix takeover, frame-zero takeover and exact masks\n";

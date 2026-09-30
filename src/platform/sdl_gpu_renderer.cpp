@@ -321,8 +321,9 @@ bool Renderer::present(const std::vector<Pass>& passes,uint64_t frame_number) {
     }else command.submit();
     if(tas::embedded() && swapchain) {
         s.embedded_frame=frame_number;s.embedded_ready=true;
-        if(tas::publish_preview(frame_number))capture_preview(frame_number);
+        if(tas::publish_preview(frame_number) || tas::requested_preview()==frame_number)capture_preview(frame_number);
     }
+    if(screen_initialized && !tas::embedded())tas::rendered(frame_number);
     for(auto id:initialized)s.textures.at(id).initialized=true;
     return swapchain!=nullptr;
 }

@@ -63,6 +63,8 @@ struct Device::State {
     math::Matrix world=math::identity(),view=math::identity(),projection=math::identity();
     std::vector<RecordedPass> recording;std::mutex queue_mutex;std::deque<std::pair<uint64_t,std::vector<RecordedPass>>> queue;
     std::atomic<size_t> pending{0};
+    std::vector<RecordedPass> deferred_screen;
+    uint64_t deferred_frame=0;
     std::condition_variable drained;
     struct Uploaded {gpu::TextureId id;std::weak_ptr<Image> image;std::weak_ptr<const Pixels> pixels;bool target;};
     std::map<std::pair<uint64_t,uint64_t>,Uploaded> uploaded;
@@ -139,6 +141,13 @@ struct Device::State {
         const auto id=renderer->create_texture(image.width,image.height,rgba.empty()?nullptr:rgba.data(),rgba.size(),size_t(image.width)*4,image.target);
         try {uploaded.emplace(key,Uploaded{id,snap.image,snap.pixels,image.target});}catch(...){renderer->destroy_texture(id);throw;}return id;
     }
+    void submit(std::vector<RecordedPass>& frame,uint64_t frame_number){
+        std::vector<gpu::Pass> passes;
+        for(auto& p:frame){p.pass.target=upload({p.target,nullptr,0});
+            for(size_t i=0;i<p.textures.size();++i)p.pass.draws[i].texture=upload(p.textures[i]);
+            passes.push_back(std::move(p.pass));}
+        if(!passes.empty())renderer->present(passes,frame_number);
+    }
     void poll(){
         std::vector<RecordedPass> frame;uint64_t frame_number=0;
         {std::lock_guard<std::mutex> lock(queue_mutex);if(!queue.empty()){frame_number=queue.front().first;frame=std::move(queue.front().second);queue.pop_front();}}
@@ -150,11 +159,17 @@ struct Device::State {
                     state.drained.notify_all();
                 }
             } completion{*this};
-            std::vector<gpu::Pass> passes;
-            for(auto& p:frame){p.pass.target=upload({p.target,nullptr,0});
-                for(size_t i=0;i<p.textures.size();++i)p.pass.draws[i].texture=upload(p.textures[i]);
-                passes.push_back(std::move(p.pass));}
-            renderer->present(passes,frame_number);
+            // Mixed target/screen frames may share depth and texture history.
+            // Keep their exact pass order; only defer screen-only frames.
+            if(!tas::publish_preview(frame_number) && tas::requested_preview()!=frame_number
+                && std::all_of(frame.begin(),frame.end(),[](const auto& pass){return pass.target->id==0;})) {
+                deferred_screen=std::move(frame);deferred_frame=frame_number;
+            }else {
+                deferred_screen.clear();deferred_frame=0;submit(frame,frame_number);
+            }
+        }
+        if(const auto requested=tas::requested_preview();requested && requested==deferred_frame) {
+            submit(deferred_screen,requested);deferred_screen.clear();deferred_frame=0;
         }
         renderer->poll_tas();
         for(auto i=uploaded.begin();i!=uploaded.end();){
