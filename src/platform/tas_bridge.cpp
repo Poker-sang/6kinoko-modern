@@ -21,6 +21,7 @@ std::atomic<uint32_t> speed_percent{100};
 std::atomic<bool> fast_seek{false};
 std::atomic<uint64_t> fast_target{0},preview_request{0},preview_completed{0};
 uint64_t next_frame_ns=0;
+uint64_t next_fast_command_poll=0;
 bool profile_enabled=false;
 uint64_t profile_start=0,profile_first=0;
 std::array<std::atomic<uint64_t>,size_t(ProfileStage::count)> profile_times{},profile_calls{};
@@ -92,6 +93,7 @@ void pump_window(SDL_Window* window) {
 }
 void start(){
     if(!enabled())return;
+    next_fast_command_poll=0;
     const auto* profile=SDL_getenv("KINOKO_TAS_PROFILE");profile_enabled=profile && std::string(profile)=="1";profile_start=0;
     stopping=false;count=0;sequence=0;target=1;takeover=false;free_run=false;mask=0;last_input=0;phase.clear();edits={};speed_percent=100;next_frame_ns=0;
     fast_seek=false;fast_target=0;preview_request=0;preview_completed=0;audio::mute_output(false);
@@ -128,7 +130,13 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
         if(!fast_seeking() && edits.masks.empty() && local==1){free_run=false;target=frames+1;}
         if(!fast_seeking() && edits.masks.empty() && local==2){free_run=!free_run;target=frames;}
         uint64_t seq=0,arg=0;std::string verb;bool read=false;
-        {std::ifstream in(directory()/"command.txt");read=bool(in>>seq>>verb>>arg);}
+        // Fast simulation can execute thousands of frames per second. Poll the
+        // control file at most every 2 ms while advancing, always at the target.
+        const auto command_now=SDL_GetTicksNS();
+        if(!fast_seeking() || frames>=target || command_now>=next_fast_command_poll){
+            std::ifstream in(directory()/"command.txt");read=bool(in>>seq>>verb>>arg);
+            next_fast_command_poll=command_now+2000000;
+        }
         if(read && seq>sequence) {
             sequence=seq;
             if(verb=="stop"){shutdown();return false;}

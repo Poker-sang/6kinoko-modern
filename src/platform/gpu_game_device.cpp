@@ -281,6 +281,12 @@ kinoko::graphics::Result Device::DrawPrimitiveUP(kinoko::graphics::Primitive typ
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);
     if(type!=kinoko::graphics::primitive_trianglestrip||!data||primitives<1||primitives>2||stride<(state->fvf==(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse)?20u:28u))return bad("Unsupported immediate primitive");
     try{gpu::Draw draw;draw.clip_space=state->fvf==0x4142;const auto* bytes=static_cast<const uint8_t*>(data);
+        // Keep ordinary quads in the existing inline representation. Conversion
+        // only happens if this packet is actually submitted (or shown on cancel).
+        if(primitives==2 && !draw.clip_space){
+            for(unsigned i=0;i<4;++i)std::memcpy(&draw.vertices[i],bytes+i*stride,state->fvf==(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse)?20:28);
+            state->draw(std::move(draw));return kinoko::graphics::ok;
+        }
         draw.triangles.reserve(primitives*3);
         const unsigned order[]={0,1,2,2,1,3};
         for(unsigned i=0;i<primitives*3;++i){KinokoSpriteVertex v{};std::memcpy(&v,bytes+order[i]*stride,state->fvf==(kinoko::graphics::vertex_xyzrhw|kinoko::graphics::vertex_diffuse)?20:28);
