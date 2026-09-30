@@ -64,3 +64,6 @@ recordings do not produce these measurements. No optimization or replay wire
 format change is delivered in this profiling batch. Release compilation,
 TAS edit/runtime replay contracts and the synthetic GPU target/cancel/offscreen
 contract passed. Build logs, DAT SHA256 staging and all test fixtures are retained.
+
+The subsequent bounded queue implementation and real measured improvement are
+documented in [tas-render-pipeline.md](tas-render-pipeline.md).
