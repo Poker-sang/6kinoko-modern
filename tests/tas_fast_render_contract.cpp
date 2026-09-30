@@ -30,13 +30,37 @@ int main() {
         check(kinoko::platform::host().open("Fast render contract",640,480,true));
         {
             kinoko::graphics::Device device(640,480);
-            auto frame=[&](uint64_t count,uint32_t color){
+            auto frame=[&](uint64_t count,uint32_t color,bool poll=true){
                 kinoko::tas::completed(count);
                 check(kinoko::graphics::succeeded(device.BeginScene()));
                 check(kinoko::graphics::succeeded(device.Clear(0,nullptr,kinoko::graphics::clear_target|kinoko::graphics::clear_zbuffer,color,1,0)));
                 check(kinoko::graphics::succeeded(device.EndScene()));
-                check(kinoko::graphics::succeeded(device.TestCooperativeLevel()));
+                if(poll)check(kinoko::graphics::succeeded(device.TestCooperativeLevel()));
             };
+            command("1 seek 6");kinoko::tas::start();check(kinoko::tas::boundary(0,6,true));
+            for(uint64_t count=1;count<=3;++count)frame(count,0xff00ff00,false);
+            auto overlap=std::async(std::launch::async,[]{kinoko::graphics::wait_for_tas_render();});
+            const bool advanced=overlap.wait_for(std::chrono::seconds(1))==std::future_status::ready;
+            if(!advanced)kinoko::graphics::stop();overlap.get();check(advanced);
+            frame(4,0xff00ff00,false);
+            auto bounded=std::async(std::launch::async,[]{kinoko::graphics::wait_for_tas_render();});
+            check(bounded.wait_for(std::chrono::milliseconds(30))==std::future_status::timeout);
+            device.TestCooperativeLevel();bounded.get();check(!fs::exists(root/"image.rgba"));
+            frame(5,0xff00ff00,false);frame(6,0xffff0000,false);
+            auto exact=std::async(std::launch::async,[]{kinoko::graphics::wait_for_tas_render();});
+            check(exact.wait_for(std::chrono::milliseconds(30))==std::future_status::timeout);
+            device.TestCooperativeLevel();exact.get();pixels(6,0xffff0000);
+            // A cancellation can arrive while several unsubmitted frames are queued.
+            command("1 seek 6");kinoko::tas::start();check(kinoko::tas::boundary(0,6,true));
+            fs::remove(root/"image.rgba");
+            for(uint64_t count=1;count<=3;++count)frame(count,0xff00ff00,false);
+            command("2 pause 0");
+            auto cancelled=std::async(std::launch::async,[&]{return kinoko::tas::boundary(3,6,true);});
+            const auto cancel_until=std::chrono::steady_clock::now()+std::chrono::seconds(3);
+            while(kinoko::tas::fast_seeking() && std::chrono::steady_clock::now()<cancel_until){device.TestCooperativeLevel();std::this_thread::sleep_for(std::chrono::milliseconds(1));}
+            const bool cancel_ready=!kinoko::tas::fast_seeking();
+            command("3 stop 0");if(!cancel_ready)kinoko::tas::shutdown();
+            check(!cancelled.get() && cancel_ready);pixels(3,0xff00ff00);
             for(bool cancel:{false,true}) {
                 fs::remove(root/"image.rgba");command("1 seek 6");kinoko::tas::start();
                 check(kinoko::tas::boundary(0,6,true));

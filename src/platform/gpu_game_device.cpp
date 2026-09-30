@@ -18,6 +18,7 @@
 #include <string>
 namespace kinoko::graphics {
 namespace {
+constexpr size_t fast_render_queue_limit=4;
 std::mutex errors_mutex;std::string error;Device* active=nullptr;
 kinoko::graphics::Result bad(const char* message){std::lock_guard<std::mutex> lock(errors_mutex);if(error.empty())error=message;return kinoko::graphics::error_invalidcall;}
 std::vector<char> shader(const char* filename){
@@ -149,8 +150,10 @@ struct Device::State {
         if(!passes.empty())renderer->present(passes,frame_number);
     }
     void poll(){
+        const auto batch_limit=tas::fast_seeking()?fast_render_queue_limit:1;
+        for(size_t processed=0;processed<batch_limit;++processed){
         std::vector<RecordedPass> frame;uint64_t frame_number=0;
-        {std::lock_guard<std::mutex> lock(queue_mutex);if(!queue.empty()){frame_number=queue.front().first;frame=std::move(queue.front().second);queue.pop_front();}}
+        {std::lock_guard<std::mutex> lock(queue_mutex);if(queue.empty())break;frame_number=queue.front().first;frame=std::move(queue.front().second);queue.pop_front();}
         if(!frame.empty()){
             const auto profile_tick=tas::profiling()?SDL_GetTicksNS():0;
             struct Completion {
@@ -177,6 +180,7 @@ struct Device::State {
             }
             if(profile_tick)tas::profile_time(tas::ProfileStage::render_poll,SDL_GetTicksNS()-profile_tick);
         }
+        }
         if(const auto requested=tas::requested_preview();requested && requested==deferred_frame) {
             submit(deferred_screen,requested);deferred_screen.clear();deferred_frame=0;
         }
@@ -195,8 +199,11 @@ void stop(){if(active){
 void wait_for_tas_render(){
     if(!active)return;
     auto& state=*active->state;
+    // Intermediate fast frames can overlap main-thread packet processing. Target
+    // frames still drain fully; cancellation waits for the exact preview in boundary().
+    const bool overlap=tas::fast_seeking() && !tas::publish_preview(tas::frame_number());
     std::unique_lock<std::mutex> lock(state.queue_mutex);
-    state.drained.wait(lock,[&]{return state.closed || !state.pending.load();});
+    state.drained.wait(lock,[&]{return state.closed || (overlap?state.pending.load()<fast_render_queue_limit:!state.pending.load());});
 }
 kinoko::graphics::Result Device::GetDeviceCaps(kinoko::graphics::Capabilities* out){
     std::lock_guard<std::recursive_mutex> cpu_guard(state->cpu_mutex);if(!out)return kinoko::graphics::error_pointer;*out={};out->MaxTextureWidth=out->MaxTextureHeight=16384;return kinoko::graphics::ok;}
