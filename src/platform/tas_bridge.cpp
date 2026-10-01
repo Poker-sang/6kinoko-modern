@@ -115,7 +115,7 @@ void start(){
     focus_requested=false;
     const auto plan=directory()/"edit.bin";
     if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
-    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1 snapshot-v1 focus-v1 shortcuts-v1\n";
+    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 pacing-075-v1 seek-fast-v1 snapshot-v1 focus-v1 shortcuts-v1\n";
 }
 bool fast_seeking(){return fast_seek.load();}
 bool publish_preview(uint64_t frames){return !fast_seeking() || frames>=fast_target.load();}
@@ -170,7 +170,7 @@ bool boundary(uint64_t frames,uint64_t total,bool live) {
             }
             if(verb=="run")free_run=true;
             if(verb=="speed") {
-                if(arg!=25 && arg!=50 && arg!=100 && arg!=200 && arg!=400)throw std::runtime_error("Unsupported TAS speed");
+                if(arg!=25 && arg!=50 && arg!=75 && arg!=100 && arg!=200 && arg!=400)throw std::runtime_error("Unsupported TAS speed");
                 speed_percent=uint32_t(arg);next_frame_ns=0;
             }
             if(verb=="takeover"){takeover=true;free_run=false;target=frames;mask=0;}
