@@ -17,6 +17,7 @@ std::atomic<uint64_t> count{0};
 std::atomic<uint32_t> window_mask{0};
 std::atomic<int> window_command{0};
 std::atomic<bool> focus_requested{false};
+uint64_t shortcut_sequence=0;
 std::atomic<uint32_t> speed_percent{100};
 std::atomic<bool> fast_seek{false};
 std::atomic<uint64_t> fast_target{0},preview_request{0},preview_completed{0};
@@ -86,11 +87,21 @@ void pump_window(SDL_Window* window) {
     set(SDL_SCANCODE_A,(1u<<12)|(1u<<13));set(SDL_SCANCODE_C,1u<<14);
     set(SDL_SCANCODE_SPACE,1u<<4);set(SDL_SCANCODE_RETURN,1u<<11);set(SDL_SCANCODE_ESCAPE,1u<<13);
     window_mask=value;
-    static bool prev_step=false,prev_toggle=false;
+    static bool prev_step=false,prev_toggle=false,prev_record=false;
+    const bool record=focused&&keys[SDL_SCANCODE_F8];
+    if(record&&!prev_record) {
+        // The editor owns takeover/recovery; queue an intent, never mutate
+        // recording mode locally. Unique files retain clicks while it is busy.
+        const auto id=++shortcut_sequence;
+        const auto temporary=directory()/"shortcut.tmp";
+        {std::ofstream out(temporary);out<<"KTASKEY1 "<<id<<" toggle-recording\n";}
+        replace(temporary,directory()/("shortcut-"+std::to_string(id)+".txt"));
+    }
     const bool step=focused&&keys[SDL_SCANCODE_F10],toggle=focused&&keys[SDL_SCANCODE_F9];
     if(step&&!prev_step)window_command=1;
     else if(toggle&&!prev_toggle)window_command=2;
     prev_step=step;prev_toggle=toggle;
+    prev_record=record;
 }
 void start(){
     if(!enabled())return;
@@ -104,7 +115,7 @@ void start(){
     focus_requested=false;
     const auto plan=directory()/"edit.bin";
     if(std::filesystem::exists(plan)){std::ifstream in(plan,std::ios::binary);edits.read(in);}
-    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1 snapshot-v1 focus-v1\n";
+    std::ofstream capabilities(directory()/"capabilities.txt");capabilities<<"KTAS1 edits-v1 edits-v2 pacing-v1 seek-fast-v1 snapshot-v1 focus-v1 shortcuts-v1\n";
 }
 bool fast_seeking(){return fast_seek.load();}
 bool publish_preview(uint64_t frames){return !fast_seeking() || frames>=fast_target.load();}
