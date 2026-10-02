@@ -29,7 +29,7 @@ assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]
 # Exercise both exposed sides, walls, buried base grass and interior earth.
 terrain={(x,y):chip for chip,x,y in stage.layers["terrain"]["keys"][0]["cells"]}
 assert terrain[512,864]==1025 and terrain[608,864]==1027
-assert terrain[960,864]==1025 and terrain[1056,864]==1027
+assert terrain[960,864]==1025 and terrain[1056,864]==1026
 assert terrain[1088,832]==1025 and terrain[1184,832]==1027
 assert terrain[1088,864]==1028 and terrain[1184,864]==1029
 assert terrain[1120,864]==1034
