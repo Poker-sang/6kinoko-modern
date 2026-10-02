@@ -26,6 +26,15 @@ assert [973,64,800] in world.layers["event"]["keys"][0]["cells"]
 assert world.resources==original.resources
 stage=MapDocument((project/creator.STAGE).read_bytes())
 assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==2560
+# Exercise both exposed sides, walls, buried base grass and interior earth.
+terrain={(x,y):chip for chip,x,y in stage.layers["terrain"]["keys"][0]["cells"]}
+assert terrain[512,864]==1025 and terrain[608,864]==1027
+assert terrain[960,864]==1025 and terrain[1056,864]==1027
+assert terrain[1088,832]==1025 and terrain[1184,832]==1027
+assert terrain[1088,864]==1028 and terrain[1184,864]==1029
+assert terrain[1120,864]==1034
+assert all(terrain[x,896] in (1025,1026,1027) for x in range(0,2560,32))
+assert len(terrain)==len(stage.layers["terrain"]["keys"][0]["cells"])
 # Verify directions against actual MCD, rather than trusting hardcoded chip labels.
 b=read_resource(reference,"data/worldmap/worldmap.mcd");skip=struct.unpack_from("<I",b,8)[0];n,size=struct.unpack_from("<II",b,12+skip);p=20+skip;flags={}
 for _ in range(n):

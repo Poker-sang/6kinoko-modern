@@ -52,7 +52,7 @@ def create(reference, output, recipe=None):
     output.mkdir(parents=True, exist_ok=False)
     for name, data in ((WORLD,world),(STAGE,stage)):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="New first-world stage 16",version="1.0.0",requires=[],files=[WORLD,STAGE])
+    manifest = dict(format=1,id="new-stage",name="New first-world stage 16",version="1.0.1",requires=[],files=[WORLD,STAGE])
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),
