@@ -385,7 +385,7 @@ python mod_manager.py launch --game kinoko_modern_gpu.exe
 ```
 
 This resource-only Mod overlays the world-map ACT and adds an unused stage file.
-It has no script entrypoint or scene hooks. Native stage lookup maps event chip
+It has no script entrypoint or scene hooks. Original script stage lookup maps event chip
 973 to c16a; world 1 produces w1-c16a.act and its own save key w1-c16a. The original
 16-slot limit remains: this is the first independent stage proof, not arbitrary
 Mod ID allocation. Other Mods changing the same world ACT conflict by default.
