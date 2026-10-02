@@ -148,10 +148,10 @@ int main(int argc,char** argv) {
             world.UpdateChipAnimation();
             if(world.symbol.layout.calls<1 || world.symbol_mod.layout.calls!=world.symbol.layout.calls || !greenBalloon.visible)
                 throw "green balloon animation delegation";
-            world.SetSymbolVisible(64,800,false,false);
+            world.SetSymbolVisible(64,816,false,false);
             world.UpdateChipAnimation();
             if(greenBalloon.visible || !originalNeighbor.visible)throw "green clear-state synchronization";
-            world.SetSymbolVisible(64,800,true,false);
+            world.SetSymbolVisible(64,816,true,false);
             world.UpdateChipAnimation();
             if(!greenBalloon.visible)throw "green balloon restoration";
         )SQ"));
@@ -161,3 +161,4 @@ int main(int argc,char** argv) {
     std::puts("PASS: original CV4 node mapping, independent save/re-entry, delayed transition, return position and road directions");
     return 0;
 }
+
