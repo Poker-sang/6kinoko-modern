@@ -369,50 +369,15 @@ callback) and background but removes warp placements, hidden areas and original
 enemy arrangements. It makes no player/HUD or startup callback changes. Gameplay,
 goal completion and return-to-world behavior need manual confirmation.
 
-## Independent first-world stage
+## Independent Mod content
 
-The user confirmed the authored replacement and the solid-earth correction improved
-play. The current Mod adds a classic Super Mario Bros. 1-1 inspired route as
-`data/map/w1-c16a.act` with a green balloon above Marisa's house in the existing
-world map. Follow normal title/save/world flow, stand at the house and press up,
-then accept at Stage 16. The new short road is
-available immediately. Original level maps and entrances stay available.
+Concrete classic-course recipes, presentation scripts, their dedicated generator
+and original-script integration fixtures now live in the local independent
+project `C:/WorkSpace/6kinoko-mod-content`. No remote repository has been created
+for that content. It is not included in new engine packages. Historical delivery
+notes describe earlier snapshots, not current content ownership.
 
-```powershell
-python create_new_stage_mod.py --reference-dir . --output new-stage
-python mod_manager.py pack new-stage new-stage.kmod
-python mod_manager.py install-enable --game kinoko_modern_gpu.exe new-stage.kmod
-python mod_manager.py launch --game kinoko_modern_gpu.exe
-```
-
-This Mod overlays the world-map ACT and adds an unused stage file. A presentation
-entrypoint extends the original label selector for c16a and delegates original
-balloon animation to a new green chip in the existing symbol layer. The entrance
-is at (64,832), one grid step above the house; its balloon starts at (32,768)
-inside the first-world page. External Mod world-map MCD data appends chip 1148
-and a dedicated external green texture. The original symbol carries
-clear/unlock visibility; the green symbol mirrors it. Original balloon resources
-and original node labels remain intact. The status ACT adds one Stage 16 texture,
-composed from original label pixels. Original script stage lookup maps event chip
-973 to c16a; world 1 produces w1-c16a.act and its own save key w1-c16a. The original
-16-slot limit remains: this is the first independent stage proof, not arbitrary
-Mod ID allocation. Other Mods changing the same world ACT conflict by default.
-All stats live in the existing isolated Mod save directory. Original CheckResult
-counts the new cleared stage in total clearCount; original ending percentages
-still use original fixed totals. Expanded campaign completion policy is future work.
-
-The world-map editor now preserves 2D keys, timelines and texture resources in
-addition to map layers. Mesh/string layouts and render-target resources remain
-unsupported. The bounded editor can append a map layer and a chip/texture resource
-without rewriting existing objects. The editable classic-1-1 recipe supports
-floor gaps and original terrain/actor placements: numbered red-star blocks
-(1420/1421/1422), mushroom and tea transformation blocks (1083/1086), four early
-green pipes, three pits, intermediate stairs and the final eight-step staircase.
-External terrain MCD data appends three definitions for full solid brown blocks
-and two halves of a green pipe body. Existing chip records remain unchanged.
-All generated ACT/MCD/CV2 files and the presentation script are external Mod
-resources; the original three DAT archives are never rewritten.
-Original Kinoko gameplay/assets
-are reused; Mario's graphics, exact physics and underground warp are not included.
-The goal has 704 pixels of road to its right, matching the original first stage.
-Gameplay and save/reload validation are user-owned.
+The engine repository retains general Mod loading, isolated save/session
+management, package installation and bounded ACT editing APIs. Specific maps,
+artwork and campaign behavior belong to content projects. Original DAT archives
+remain unchanged; content packages are installed externally through mod_manager.
