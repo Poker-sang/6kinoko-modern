@@ -1,15 +1,9 @@
----
-name: reverse-skill
-description: 6kinoko简单的逆向skill
----
+# Project instructions
 
-..\6kinoko\6kinoko.exe是一个将近20年前的老游戏，我想加点新的内容：即用自己编写的exe，读取原版的6kinoko_*.dat。但第一版确实只需要还原windows上的运行效果即可。
-
-逆向6kinoko项目以提供的C反编译源码为基础，使用IDA MCP，并且不要忘记使用 ..\squirrel-2.2.2 源码的反汇编结果作为辅助。但若确定是squirrel相关的函数，你可以选择直接引入源码。生成后必须复制 6kinoko_*.dat 文件到 exe 所在目录，不能直接指定工作目录。在原版目录中还有 marisa[A-C].dat 是存档文件。
-
-运行宿主已迁到 .\src\reconstructed\runtime_host.cpp，具名虚表在 runtime_method_tables.cpp；原始证据仍在 .\src\decompiled\6kinoko.exe.c 里，你尽量做到经过的函数完全相同（可以通过x64dbg MCP保证）。
-
-x32dbg/x64dbg 在 C:\Users\poker\AppData\Local\Microsoft\WinGet\Packages\x64dbg.x64dbg_Microsoft.Winget.Source_8wekyb3d8bbwe\release\x32\x32dbg.exe 里，使若丢失可以手动拉起进程。
+Modern is a source-based project. Diagnose and fix engine/content behavior from
+C++ and Squirrel source and existing resource contracts. Do not invoke native
+reverse-engineering skills, IDA or x32dbg/x64dbg for modern work.
+Keep the three original DAT archives beside the executable.
 
 不要直接读取git更改，内容太多，有必要时截取少量读取或定向读取。
 每次有大量或重要修改告一段落后提交备份；按后续用户更新，所有构建产物和日志均保留。
@@ -80,7 +74,7 @@ EXE。不得把参考目录作为 `WorkingDirectory`，也不得依赖 `-SourceD
 
 - RetDec 生成的 C 函数若出现“未初始化局部变量通过固定偏移访问”（例如
   `v1 + 24`、`v1 + 28`），优先判定为原始 `__thiscall` 的 ECX 接收者丢失；必须从
-  原版汇编和调用点恢复显式 `this`，不能依赖偶然的栈布局。
+  已恢复源码和调用点确认显式 `this`，不能依赖偶然的栈布局。
 - Squirrel 的复合算术指令要按 VM 字节码格式解码操作数。`COMPARITH` 中高 16
   位是左值/接收者索引，`arg2` 是键索引，低 16 位是增量索引；不要按 RetDec
   临时变量名称猜测。
