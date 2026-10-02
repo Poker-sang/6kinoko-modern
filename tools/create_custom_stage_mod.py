@@ -10,7 +10,7 @@ import mod_session
 
 SOURCE = "data/map/w1-c01a.act"
 
-def generate(reference, recipe=None):
+def generate(reference, recipe=None, additional_chips=()):
     if recipe is None:
         recipe = Path(__file__).parent / "mod-authoring/short-course/map.json"
         if not recipe.exists(): recipe = Path(__file__).parents[1] / "examples/mod-authoring/short-course/map.json"
@@ -59,6 +59,7 @@ def generate(reference, recipe=None):
     mcd=read_resource(reference,'data/map/marisala2.mcd')
     offset=struct.unpack_from('<I',mcd,8)[0];count,size=struct.unpack_from('<II',mcd,12+offset)
     available={struct.unpack_from('<I',mcd,20+offset+i*(size+4))[0] for i in range(count)}
+    available.update(additional_chips)
     for name,cells in (("terrain",terrain),("event",events),("enemy",enemies)):
         if any(c[0] not in available for c in cells): raise ValueError("Chip is not present in original layer: "+name)
     layers = dict(terrain=terrain,enemy=enemies,event=events,hidden=[],bg1=[],front=[],rail1=[],rail2=[])

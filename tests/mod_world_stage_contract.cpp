@@ -162,7 +162,7 @@ int main(int argc,char** argv) {
             if(!greenBalloon.visible)throw "green balloon restoration";
         )SQ"));
         std::puts("PASS: presentation entrypoint with actual original PlayerStatus.SetWorld and original-node restoration");
-        CHECK(source(vm,"::t_enemy <- {};"));
+        CHECK(source(vm,"::t_enemy <- {SetInitFunctionByID=function(...){}};"));
         CHECK(load(vm,argv[7],"t_enemy"));
         CHECK(source(vm,R"SQ(
             ::PR_BLOCK <- 0; ::GP_PLAYER <- 1; ::GP_BLOCK <- 2; ::GP_TERRAIN <- 4;

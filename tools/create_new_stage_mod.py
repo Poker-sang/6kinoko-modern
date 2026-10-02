@@ -18,6 +18,31 @@ ENTRY = "data/custom/new-stage/main.nut"
 BALLOON_MCD = "data/worldmap/worldmap.mcd"
 BALLOON_IMAGE = "data/custom/new-stage/green-balloon.cv2"
 GREEN_CHIP = 1148
+MAP_CHIPS = 'data/map/marisala2.mcd'
+STAIR_CHIP = 3749
+PIPE_RIGHT = 3750
+
+def course_chips(reference):
+    data=read_resource(reference,MAP_CHIPS)
+    skip=struct.unpack_from('<I',data,8)[0];n,size=struct.unpack_from('<II',data,12+skip)
+    start=20+skip;end=start+n*(size+4)
+    rows={struct.unpack_from('<I',data,start+i*(size+4))[0]:data[start+i*(size+4):start+i*(size+4)+size] for i in range(n)}
+    if STAIR_CHIP in rows or PIPE_RIGHT in rows:raise ValueError('Custom course chip ID already used')
+    p=end;count=struct.unpack_from('<I',data,p)[0];p+=4;textures=[]
+    for _ in range(count):
+        tid,length=struct.unpack_from('<II',data,p);p+=8+length;textures.append(tid)
+    if p!=len(data):raise ValueError('Unexpected course chip texture table')
+    tid=max(textures)+1
+    brick=bytearray(rows[1030]);struct.pack_into('<IIhhhh',brick,0,STAIR_CHIP,tid,0,0,32,32)
+    right=bytearray(rows[2368]);struct.pack_into('<I',right,0,PIPE_RIGHT);struct.pack_into('<h',right,8,160)
+    result=bytearray(data[:end]);struct.pack_into('<I',result,12+skip,n+2)
+    result+=brick+struct.pack('<I',end+size+4)+right+struct.pack('<I',end+2*(size+4))+data[end:]
+    struct.pack_into('<I',result,end+2*(size+4),count+1)
+    name=b'data/actor/item/break-block_0000'
+    # Reference the original 32x32 brick image directly; never use Tool markers as art.
+    image=read_resource(reference,name.decode()+'.cv2')
+    if struct.unpack_from('<II',image,1)!=(32,32):raise ValueError('Unexpected original brick image')
+    return bytes(result)+struct.pack('<II',tid,len(name))+name
 
 def green_balloon(reference):
     data=read_resource(reference,'data/worldmap/worldmap.mcd')
@@ -106,7 +131,8 @@ def create(reference, output, recipe=None):
     if recipe is None:
         recipe=Path(__file__).parent/'mod-authoring/classic-1-1/map.json'
         if not recipe.exists(): recipe=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/map.json'
-    edited, spec, original = generate(reference, recipe)
+    map_chips=course_chips(reference)
+    edited, spec, original = generate(reference, recipe,additional_chips=(STAIR_CHIP,PIPE_RIGHT))
     stage = MapDocument(edited).edit({}, name="w1-c16a")
     world_source = read_resource(reference, WORLD)
     world = extend_world(MapDocument(world_source))
@@ -119,9 +145,9 @@ def create(reference, output, recipe=None):
     status_data=status.add_texture(label_resource)
     entry=Path(__file__).parent/'mod-authoring/classic-1-1/main.nut'
     if not entry.exists():entry=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/main.nut'
-    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image)):
+    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image),(MAP_CHIPS,map_chips)):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.2.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE],entrypoint=ENTRY)
+    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.2.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE,MAP_CHIPS],entrypoint=ENTRY)
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),
