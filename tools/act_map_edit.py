@@ -52,6 +52,7 @@ class MapDocument:
         r.script(); self.layers = {}
         for _ in range(r.count()):
             r.expect(0x2618cf18)
+            layer_start = r.pos
             props, _ = r.properties("layer"); name = props["stName"]
             if name in self.layers: raise ValueError("Duplicate layer name")
             keys = []
@@ -73,7 +74,7 @@ class MapDocument:
                 keys.append(dict(type=typ, start=start, end=r.pos, cells=cells, properties=layout, positions=positions))
             for _ in range(r.count()):
                 r.expect(0x9902f2c0); r.properties("timeline"); r.take(r.count()*8)
-            r.script(); self.layers[name] = dict(properties=props, keys=keys)
+            r.script(); self.layers[name] = dict(properties=props, keys=keys, span=(layer_start,r.pos))
         self.resources = []
         for _ in range(r.count()):
             typ = r.number()

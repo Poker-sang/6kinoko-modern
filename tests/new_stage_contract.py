@@ -14,7 +14,9 @@ original=MapDocument(read_resource(reference,creator.WORLD))
 world=MapDocument((project/creator.WORLD).read_bytes())
 assert original.edit({})==original.data
 for name,l in original.layers.items():
- if name not in ["rail","symbol","event","point"]: assert world.layers[name]==l,name
+ if name not in ["rail","symbol","event","point"]:
+  start,end=l["span"];new_start,new_end=world.layers[name]["span"]
+  assert original.data[start:end]==world.data[new_start:new_end],name
  else:
   old=l["keys"][0]["cells"];new=world.layers[name]["keys"][0]["cells"]
   expected=[[202,x,y] if name=="rail" and (x,y)==(64,864) else [chip,x,y] for chip,x,y in old]
