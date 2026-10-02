@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import struct
+import colorsys
 from pathlib import Path
 from act_map_edit import MapDocument
 from create_custom_stage_mod import generate
@@ -14,6 +15,29 @@ STAGE = "data/map/w1-c16a.act"
 STATUS = "data/system/stage/playerstatus.act"
 LABEL = "data/custom/new-stage/stage16.cv2"
 ENTRY = "data/custom/new-stage/main.nut"
+BALLOON_MCD = "data/custom/new-stage/world-symbol.mcd"
+BALLOON_IMAGE = "data/custom/new-stage/green-balloon.cv2"
+
+def green_balloon(reference):
+    data=read_resource(reference,'data/worldmap/worldmap.mcd')
+    skip=struct.unpack_from('<I',data,8)[0];count,size=struct.unpack_from('<II',data,12+skip)
+    p=20+skip+count*(size+4);textures=struct.unpack_from('<I',data,p)[0];p+=4
+    for _ in range(textures):
+        tid,n=struct.unpack_from('<II',data,p);p+=8;start=p;name=data[p:p+n].decode('cp932');p+=n
+        if tid==18:
+            image=read_resource(reference,name+'.cv2')
+            bits,w,h,stride,reserved=struct.unpack('<BIIII',image[:17])
+            if bits!=32 or len(image)!=17+stride*h*4:raise ValueError('Unexpected balloon texture format')
+            pixels=bytearray(image[17:])
+            for i in range(0,len(pixels),4):
+                b,g,r,a=pixels[i:i+4]
+                hue,sat,val=colorsys.rgb_to_hsv(r/255,g/255,b/255)
+                if a and sat>.25 and (hue<.12 or hue>.93):
+                    r,g,b=colorsys.hsv_to_rgb(.36,sat,val);pixels[i:i+3]=bytes((round(b*255),round(g*255),round(r*255)))
+            new=BALLOON_IMAGE[:-4].encode('ascii')
+            mcd=data[:start-4]+struct.pack('<I',len(new))+new+data[p:]
+            return mcd,image[:17]+pixels
+    raise ValueError('Original balloon texture missing')
 
 def stage_label(reference):
     # Preserve original word and digit pixels, and the native CV2 BGRA wire format.
@@ -76,6 +100,10 @@ def create(reference, output, recipe=None):
     stage = MapDocument(edited).edit({}, name="w1-c16a")
     world_source = read_resource(reference, WORLD)
     world = extend_world(MapDocument(world_source))
+    world_doc=MapDocument(world)
+    chip=dict(world_doc.resources[0]['properties'],resourceID=2,stName='mod_mapchip',stChipFile=BALLOON_MCD)
+    world=MapDocument(world_doc.add_chip_resource(chip)).add_map_layer('symbol','symbol_mod',2,[[1023,32,736]])
+    balloon_mcd,balloon_image=green_balloon(reference)
     output.mkdir(parents=True, exist_ok=False)
     status_source=read_resource(reference,STATUS);status=MapDocument(status_source)
     template=next(r['properties'] for r in status.resources if r['properties']['stName']=='wmap_stage01')
@@ -84,9 +112,9 @@ def create(reference, output, recipe=None):
     status_data=status.add_texture(label_resource)
     entry=Path(__file__).parent/'mod-authoring/classic-1-1/main.nut'
     if not entry.exists():entry=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/main.nut'
-    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes())):
+    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image)):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.1.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY],entrypoint=ENTRY)
+    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.1.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE],entrypoint=ENTRY)
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),

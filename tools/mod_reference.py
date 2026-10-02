@@ -47,7 +47,7 @@ def read_resource(directory, requested):
                 if cursor+name_length>size: raise ValueError('Truncated DAT path')
                 name = bytes(data[cursor:cursor+name_length]).replace(b'\\',b'/').lower()
                 cursor += name_length
-                if name != requested.encode('ascii'): continue
+                if name != requested.encode('cp932'): continue
                 if length>64*1024*1024 or offset+length>path.stat().st_size:
                     raise ValueError('Invalid resource bounds')
                 stream.seek(offset); payload = stream.read(length)

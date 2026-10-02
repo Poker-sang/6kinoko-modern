@@ -49,11 +49,11 @@ class MapDocument:
         if r.take(8) != b"ACT1\x01\0\0\0": raise ValueError("Expected ACT1 version 1")
         r.take(r.count(16777216))
         self.properties, self.positions = r.properties("document")
-        r.script(); self.layers = {}
+        r.script(); self.layers = {}; self.layer_count_position=r.pos
         for _ in range(r.count()):
             r.expect(0x2618cf18)
             layer_start = r.pos
-            props, _ = r.properties("layer"); name = props["stName"]
+            props, layer_positions = r.properties("layer"); name = props["stName"]
             if name in self.layers: raise ValueError("Duplicate layer name")
             keys = []
             for _ in range(r.count()):
@@ -74,7 +74,7 @@ class MapDocument:
                 keys.append(dict(type=typ, start=start, end=r.pos, cells=cells, properties=layout, positions=positions))
             for _ in range(r.count()):
                 r.expect(0x9902f2c0); r.properties("timeline"); r.take(r.count()*8)
-            r.script(); self.layers[name] = dict(properties=props, keys=keys, span=(layer_start,r.pos))
+            r.script(); self.layers[name] = dict(properties=props, positions=layer_positions, keys=keys, span=(layer_start,r.pos))
         self.resource_count_position = r.pos
         self.resources = []
         for _ in range(r.count()):
@@ -83,24 +83,47 @@ class MapDocument:
             if kind is None: raise ValueError("Unsupported ACT resource type")
             props, _ = r.properties(kind); self.resources.append(dict(type=typ, properties=props))
         self.texture_schema = r.schemas.get("texture")
+        self.chip_schema = r.schemas.get('chip')
         if r.pos != len(data): raise ValueError("Trailing ACT bytes")
 
     def add_texture(self, properties):
         """Append an explicit native texture schema without rewriting old objects."""
-        schema = self.texture_schema
+        return self.add_resource(properties,0xc6fdb98a,self.texture_schema)
+
+    def add_chip_resource(self, properties):
+        return self.add_resource(properties,0xfbaaf527,self.chip_schema)
+
+    def add_resource(self, properties, kind, schema):
         if not schema or set(properties) != set(schema): raise ValueError("Texture schema mismatch")
         if any(r['properties']['resourceID']==properties['resourceID'] or
                r['properties']['stName']==properties['stName'] for r in self.resources):
             raise ValueError("Duplicate resource")
         def string(value):
             b=value.encode('cp932'); return struct.pack('<I',len(b))+b
-        payload=struct.pack('<I',0xc6fdb98a)+b'\x01'+struct.pack('<I',len(schema))
+        payload=struct.pack('<I',kind)+b'\x01'+struct.pack('<I',len(schema))
         for name,typ in schema.items(): payload+=string(name)+struct.pack('<I',typ)
         for name,typ in sorted(schema.items()):
             value=properties[name]
             payload+=string(value) if typ==3 else struct.pack('<B' if typ==2 else '<f' if typ==1 else '<i',value)
         p=self.resource_count_position
         output=self.data[:p]+struct.pack('<I',len(self.resources)+1)+self.data[p+4:]+payload
+        MapDocument(output)
+        return output
+
+    def add_map_layer(self, template, name, resource_id, cells):
+        if name in self.layers: raise ValueError('Duplicate layer')
+        changed=MapDocument(self.edit({template:cells}));layer=changed.layers[template]
+        start,end=layer['span'];payload=changed.data[start:end];changes=[]
+        for key,value in dict(stName=name,resourceID=resource_id,layerID=max(l['properties']['layerID'] for l in self.layers.values())+1).items():
+            p,t=layer['positions'][key];p-=start
+            if t==3:
+                n=struct.unpack_from('<I',payload,p)[0];b=value.encode('ascii');changes.append((p,p+4+n,struct.pack('<I',len(b))+b))
+            elif t==0:changes.append((p,p+4,struct.pack('<i',value)))
+            else:raise ValueError('Unexpected layer property type')
+        for a,b,value in sorted(changes,reverse=True):payload=payload[:a]+value+payload[b:]
+        p=self.resource_count_position
+        output=self.data[:p]+struct.pack('<I',0x2618cf18)+payload+self.data[p:]
+        p=self.layer_count_position;output=output[:p]+struct.pack('<I',len(self.layers)+1)+output[p+4:]
         MapDocument(output)
         return output
 
