@@ -15,15 +15,21 @@ STAGE = "data/map/w1-c16a.act"
 STATUS = "data/system/stage/playerstatus.act"
 LABEL = "data/custom/new-stage/stage16.cv2"
 ENTRY = "data/custom/new-stage/main.nut"
-BALLOON_MCD = "data/custom/new-stage/world-symbol.mcd"
+BALLOON_MCD = "data/worldmap/worldmap.mcd"
 BALLOON_IMAGE = "data/custom/new-stage/green-balloon.cv2"
+GREEN_CHIP = 1148
 
 def green_balloon(reference):
     data=read_resource(reference,'data/worldmap/worldmap.mcd')
     skip=struct.unpack_from('<I',data,8)[0];count,size=struct.unpack_from('<II',data,12+skip)
-    p=20+skip+count*(size+4);textures=struct.unpack_from('<I',data,p)[0];p+=4
+    chip_start=20+skip;texture_start=chip_start+count*(size+4)
+    ids=[struct.unpack_from('<I',data,chip_start+i*(size+4))[0] for i in range(count)]
+    if GREEN_CHIP in ids:raise ValueError('Green balloon chip ID already used')
+    source=next(data[chip_start+i*(size+4):chip_start+i*(size+4)+size] for i,chip in enumerate(ids) if chip==1023)
+    p=texture_start;textures=struct.unpack_from('<I',data,p)[0];p+=4;records=[];image=None
     for _ in range(textures):
         tid,n=struct.unpack_from('<II',data,p);p+=8;start=p;name=data[p:p+n].decode('cp932');p+=n
+        records.append((tid,data[start:p]))
         if tid==18:
             image=read_resource(reference,name+'.cv2')
             bits,w,h,stride,reserved=struct.unpack('<BIIII',image[:17])
@@ -34,10 +40,14 @@ def green_balloon(reference):
                 hue,sat,val=colorsys.rgb_to_hsv(r/255,g/255,b/255)
                 if a and sat>.25 and (hue<.12 or hue>.93):
                     r,g,b=colorsys.hsv_to_rgb(.36,sat,val);pixels[i:i+3]=bytes((round(b*255),round(g*255),round(r*255)))
-            new=BALLOON_IMAGE[:-4].encode('ascii')
-            mcd=data[:start-4]+struct.pack('<I',len(new))+new+data[p:]
-            return mcd,image[:17]+pixels
-    raise ValueError('Original balloon texture missing')
+            image=image[:17]+pixels
+    if image is None or p!=len(data):raise ValueError('Unexpected original balloon texture table')
+    texture_id=max(t for t,_ in records)+1;new=BALLOON_IMAGE[:-4].encode('ascii')
+    chip=struct.pack('<II',GREEN_CHIP,texture_id)+source[8:]+struct.pack('<I',texture_start+size+4)
+    mcd=bytearray(data[:texture_start]);struct.pack_into('<I',mcd,12+skip,count+1)
+    mcd+=chip+data[texture_start:];struct.pack_into('<I',mcd,texture_start+size+4,textures+1)
+    mcd+=struct.pack('<II',texture_id,len(new))+new
+    return bytes(mcd),image
 
 def stage_label(reference):
     # Preserve original word and digit pixels, and the native CV2 BGRA wire format.
@@ -64,8 +74,8 @@ def extend_world(document):
         keys = document.layers[name]["keys"]
         if len(keys) != 1 or "cells" not in keys[0]: raise ValueError("Expected one map key: " + name)
         return [list(c) for c in keys[0]["cells"]]
-    additions = {"event": [[973,64,800]], "point": [[1014,64,800]],
-                 "symbol": [[1023,32,736]], "rail": [[206,64,800],[198,64,832]]}
+    additions = {"event": [[973,64,832]], "point": [[1014,64,832]],
+                 "symbol": [[1023,32,768],[GREEN_CHIP,32,768]], "rail": [[206,64,832]]}
     updates = {}
     if [194,64,864] not in cells("rail") or [1006,64,864] not in cells("event"):
         raise ValueError("Original house/rail anchor does not match")
@@ -82,7 +92,7 @@ def extend_world(document):
     # Do not insert the branch under an original road mask/block.
     for name in document.layers:
         if name.startswith(("hidden_mask", "hidden_block")):
-            if any((x,y) in {(64,800),(64,832)} for _,x,y in cells(name)):
+            if any((x,y) in {(64,832)} for _,x,y in cells(name)):
                 raise ValueError("New branch intersects original unlock layer")
     return document.edit(updates)
 
@@ -100,10 +110,6 @@ def create(reference, output, recipe=None):
     stage = MapDocument(edited).edit({}, name="w1-c16a")
     world_source = read_resource(reference, WORLD)
     world = extend_world(MapDocument(world_source))
-    world_doc=MapDocument(world)
-    resource_id=max(r['properties']['resourceID'] for r in world_doc.resources)+1
-    chip=dict(world_doc.resources[0]['properties'],resourceID=resource_id,stName='mod_mapchip',stChipFile=BALLOON_MCD)
-    world=MapDocument(world_doc.add_chip_resource(chip)).add_map_layer('symbol','symbol_mod',resource_id,[[1023,32,736]])
     balloon_mcd,balloon_image=green_balloon(reference)
     output.mkdir(parents=True, exist_ok=False)
     status_source=read_resource(reference,STATUS);status=MapDocument(status_source)
@@ -115,13 +121,13 @@ def create(reference, output, recipe=None):
     if not entry.exists():entry=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/main.nut'
     for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image)):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.1.1",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE],entrypoint=ENTRY)
+    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.2.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE],entrypoint=ENTRY)
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),
         stage_template="data/map/w1-c01a.act",stage_template_sha256=hashlib.sha256(original).hexdigest(),
         files={WORLD:hashlib.sha256(world).hexdigest(),STAGE:hashlib.sha256(stage).hexdigest()},
-        entrance=[64,800],save_key="w1-c16a",unlock="available from start",original_scripts_modified=False,
+        entrance=[64,832],save_key="w1-c16a",unlock="available from start",original_scripts_modified=False,
         presentation_entrypoint=ENTRY,course_description=spec.get('description','authored course'))
     (output/"LOCAL-SOURCE.json").write_text(json.dumps(provenance,indent=2)+"\n",encoding="utf-8")
     mod_session.read_mod(output)

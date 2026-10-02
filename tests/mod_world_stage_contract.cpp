@@ -43,7 +43,7 @@ bool load(SQVM* vm,const char* path,const char* scope=nullptr) {
 }
 #define CHECK(x) do{if(!(x)){std::fprintf(stderr,"world-stage contract line %d\n",__LINE__);sq_close(vm);return 1;}}while(0)
 int main(int argc,char** argv) {
-    if(argc!=4 && argc!=7){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4 [playerstatus.cv4 presentation.nut effect.cv4]\n");return 2;}
+    if(argc!=4 && argc!=8){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4 [playerstatus.cv4 presentation.nut effect.cv4 block.cv4]\n");return 2;}
     auto* vm=sq_open(2048);
     sq_setprintfunc(vm,diagnostic);sqstd_seterrorhandlers(vm);
     CHECK(source(vm,R"SQ(
@@ -105,7 +105,7 @@ int main(int argc,char** argv) {
         roadFlag=32;
         if(!world.SetNextMove(0,1,false) || world.funcUpdate!=world.Update_MoveDown)throw "node downward exit";
     )SQ"));
-    if(argc==7) {
+    if(argc==8) {
         CHECK(source(vm,"::PlayerStatus = {};"));
         CHECK(load(vm,argv[4],"PlayerStatus"));
         CHECK(load(vm,argv[6],"world"));
@@ -117,14 +117,14 @@ int main(int argc,char** argv) {
                 PlayerStatus.resource[name] <- name;
             PlayerStatus.wmap_stage <- {AssociateResource=function(r){selectedLabel=r;}};
             PlayerStatus.wmap_name <- {AssociateResource=function(r){selectedWorldLabel=r;}};
-            ::originalBalloon <- {chipID=1023,left=32,top=736,alpha=1.0,visible=true};
+            ::originalBalloon <- {chipID=1023,left=32,top=768,alpha=1.0,visible=true};
             ::originalNeighbor <- {chipID=1023,left=128,top=800,alpha=1.0,visible=true};
-            ::greenBalloon <- {chipID=1023,left=32,top=736,alpha=1.0,visible=true};
+            ::greenBalloon <- {chipID=1148,left=32,top=768,alpha=1.0,visible=true};
             world.frameCount <- 0;
-            world.symbol <- {layout={chipCount=2,calls=0,
+            world.symbol <- {layout={chipCount=3,calls=0,greenCalls=0,
                 GetChipByPosition=function(x,y){return 0;},
-                GetChipLayout=function(i){return i==0 ? originalBalloon : originalNeighbor;},
-                SetChipRect=function(id,x,y,w,h){this.calls++;}
+                GetChipLayout=function(i){return i==0 ? originalBalloon : i==1 ? originalNeighbor : greenBalloon;},
+                SetChipRect=function(id,x,y,w,h){this.calls++;if(id==1148)this.greenCalls++;}
             }};
             world.symbol_mod <- {layout={calls=0,GetChipLayout=function(i){return greenBalloon;},
                 SetChipRect=function(id,x,y,w,h){this.calls++;}}};
@@ -150,7 +150,7 @@ int main(int argc,char** argv) {
             world.InitSymbol();
             if(originalBalloon.alpha!=0.0 || originalNeighbor.alpha!=1.0)throw "original balloon affected";
             world.UpdateChipAnimation();
-            if(world.symbol.layout.calls<1 || world.symbol_mod.layout.calls!=world.symbol.layout.calls || !greenBalloon.visible)
+            if(world.symbol.layout.calls<2 || world.symbol.layout.greenCalls!=1 || !greenBalloon.visible)
                 throw "green balloon animation delegation";
             // Visibility state is supplied by world clear/unlock processing.
             originalBalloon.visible=false;
@@ -162,6 +162,24 @@ int main(int argc,char** argv) {
             if(!greenBalloon.visible)throw "green balloon restoration";
         )SQ"));
         std::puts("PASS: presentation entrypoint with actual original PlayerStatus.SetWorld and original-node restoration");
+        CHECK(source(vm,"::t_enemy <- {};"));
+        CHECK(load(vm,argv[7],"t_enemy"));
+        CHECK(source(vm,R"SQ(
+            ::PR_BLOCK <- 0; ::GP_PLAYER <- 1; ::GP_BLOCK <- 2; ::GP_TERRAIN <- 4;
+            ::t_item <- {};
+            foreach(n in ["Init4Head","InitTeaSelect","InitTea","InitRedStar"])
+                t_item[n] <- function(...){};
+            local make=function(){return {user=null,priority=0,callbackMask=0,callbackGroup=0,collisionGroup=0,
+                t_item=t_item,t_enemy=t_enemy,SetTake=function(...){},SetDamage=function(...){},
+                SetCollisionCallbackFunction=function(...){}};};
+            local mushroom=make();t_enemy.InitBlock.call(mushroom,1083);
+            if(mushroom.user.func!=t_item.Init4Head)throw "mushroom block encoding";
+            local tea=make();t_enemy.InitBlock.call(tea,1086);
+            if(tea.user.func!=t_item.InitTeaSelect)throw "transform block encoding";
+            for(local i=0;i<3;++i){local star=make();t_enemy.InitBlockRedStar.call(star,1420+i);
+                if(star.user.arg!=i || star.user.func!=t_item.InitRedStar)throw "red star numbering";}
+        )SQ"));
+        std::puts("PASS: original block bytecode selects transformation items and red-star indices 0/1/2");
     }
     sq_close(vm);
     std::puts("PASS: original CV4 node mapping, independent save/re-entry, delayed transition, return position and road directions");

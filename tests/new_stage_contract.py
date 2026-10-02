@@ -22,23 +22,26 @@ for name,l in original.layers.items():
   old=l["keys"][0]["cells"];new=world.layers[name]["keys"][0]["cells"]
   expected=[[202,x,y] if name=="rail" and (x,y)==(64,864) else [chip,x,y] for chip,x,y in old]
   assert all(c in new for c in expected)
-  assert len(new)==len(old)+(2 if name=="rail" else 1)
-assert [973,64,800] in world.layers["event"]["keys"][0]["cells"]
-assert world.resources[:-1]==original.resources
-assert world.layers['symbol_mod']['keys'][0]['cells']==[[1023,32,736]]
-assert world.resources[-1]['properties']['stChipFile']==creator.BALLOON_MCD
+  assert len(new)==len(old)+(2 if name=="symbol" else 1)
+assert [973,64,832] in world.layers["event"]["keys"][0]["cells"]
+assert world.resources==original.resources
+assert 'symbol_mod' not in world.layers
 balloon_mcd,balloon_image=creator.green_balloon(reference)
 assert (project/creator.BALLOON_MCD).read_bytes()==balloon_mcd
 assert (project/creator.BALLOON_IMAGE).read_bytes()==balloon_image
 stage=MapDocument((project/creator.STAGE).read_bytes())
 assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==7040
-assert [1023,32,736] in world.layers['symbol']['keys'][0]['cells']
+assert [1023,32,768] in world.layers['symbol']['keys'][0]['cells']
+assert [creator.GREEN_CHIP,32,768] in world.layers['symbol']['keys'][0]['cells']
 classic={(x,y):chip for chip,x,y in stage.layers['terrain']['keys'][0]['cells']}
 for start,end in ((2208,2272),(2752,2848),(4896,4960)):
  assert not any(start<=x<end and y>=896 for x,y in classic)
  assert classic[start-32,896]==1032 and classic[end,896]==1030
-assert classic[896,832]==1477 and classic[1472,768]==1477
-assert classic[5792,864]==1545 and classic[6016,640]==1545
+assert classic[896,832]==1995 and classic[1472,768]==1995
+assert classic[5792,864]==1171 and classic[6016,640]==1171
+actors=stage.layers['enemy']['keys'][0]['cells']
+assert sorted(c[0] for c in actors if 1420<=c[0]<=1422)==[1420,1421,1422]
+assert [1083,672,768] in actors and [1086,2496,768] in actors
 goal=next(c for c in stage.layers['event']['keys'][0]['cells'] if c[0]==3)
 assert goal[1]==6336 and 7040-goal[1]==704
 status=MapDocument((project/creator.STATUS).read_bytes())

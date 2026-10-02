@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import struct
 from pathlib import Path
 from act_map_edit import MapDocument
 from mod_reference import read_resource
@@ -54,9 +55,11 @@ def generate(reference, recipe=None):
         if any(type(v) is not int for v in (chip,x,y)) or not 0<=x<width or not 0<=y<1088:
             raise ValueError("Terrain placement outside course")
     original = read_resource(reference,SOURCE); document = MapDocument(original)
-    # Reuse only verified original chip definitions, scripts and resources.
+    # A new course may use definitions absent from the original first map.
+    mcd=read_resource(reference,'data/map/marisala2.mcd')
+    offset=struct.unpack_from('<I',mcd,8)[0];count,size=struct.unpack_from('<II',mcd,12+offset)
+    available={struct.unpack_from('<I',mcd,20+offset+i*(size+4))[0] for i in range(count)}
     for name,cells in (("terrain",terrain),("event",events),("enemy",enemies)):
-        available = {c[0] for c in document.layers[name]["keys"][0]["cells"]}
         if any(c[0] not in available for c in cells): raise ValueError("Chip is not present in original layer: "+name)
     layers = dict(terrain=terrain,enemy=enemies,event=events,hidden=[],bg1=[],front=[],rail1=[],rail2=[])
     edited = document.edit(layers,width=width)
