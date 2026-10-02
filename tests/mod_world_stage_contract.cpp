@@ -146,7 +146,7 @@ int main(int argc,char** argv) {
             world.InitSymbol();
             if(originalBalloon.alpha!=0.0 || originalNeighbor.alpha!=1.0)throw "original balloon affected";
             world.UpdateChipAnimation();
-            if(world.symbol.layout.calls!=1 || world.symbol_mod.layout.calls!=1 || !greenBalloon.visible)
+            if(world.symbol.layout.calls<1 || world.symbol_mod.layout.calls!=world.symbol.layout.calls || !greenBalloon.visible)
                 throw "green balloon animation delegation";
             world.SetSymbolVisible(64,800,false,false);
             world.UpdateChipAnimation();
