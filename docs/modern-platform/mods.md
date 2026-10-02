@@ -387,7 +387,10 @@ python mod_manager.py launch --game kinoko_modern_gpu.exe
 
 This Mod overlays the world-map ACT and adds an unused stage file. A presentation
 entrypoint extends the original label selector for c16a and delegates original
-balloon animation to a separate green resource layer. The original symbol carries
+balloon animation to a new green chip in the existing symbol layer. The entrance
+is at (64,832), one grid step above the house; its balloon starts at (32,768)
+inside the first-world page. External Mod world-map MCD data appends chip 1148
+and a dedicated external green texture. The original symbol carries
 clear/unlock visibility; the green symbol mirrors it. Original balloon resources
 and original node labels remain intact. The status ACT adds one Stage 16 texture,
 composed from original label pixels. Original script stage lookup maps event chip
@@ -402,8 +405,14 @@ The world-map editor now preserves 2D keys, timelines and texture resources in
 addition to map layers. Mesh/string layouts and render-target resources remain
 unsupported. The bounded editor can append a map layer and a chip/texture resource
 without rewriting existing objects. The editable classic-1-1 recipe supports
-floor gaps and original terrain/actor placements: blocks, pipe-like obstacles,
-three pits, intermediate stairs and final stairs. Original Kinoko gameplay/assets
+floor gaps and original terrain/actor placements: numbered red-star blocks
+(1420/1421/1422), mushroom and tea transformation blocks (1083/1086), four early
+green pipes, three pits, intermediate stairs and the final eight-step staircase.
+External terrain MCD data appends three definitions for full solid brown blocks
+and two halves of a green pipe body. Existing chip records remain unchanged.
+All generated ACT/MCD/CV2 files and the presentation script are external Mod
+resources; the original three DAT archives are never rewritten.
+Original Kinoko gameplay/assets
 are reused; Mario's graphics, exact physics and underground warp are not included.
 The goal has 704 pixels of road to its right, matching the original first stage.
 Gameplay and save/reload validation are user-owned.
