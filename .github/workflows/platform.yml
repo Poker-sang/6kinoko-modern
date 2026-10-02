@@ -63,8 +63,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tests/mod_author_contract.py build-runs/bridge/mod-author-fixtures
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tests/practice_mod_contract.py build-runs/bridge/practice-mod-fixtures
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run focused compatibility contracts (no gameplay)
         run: ctest --test-dir build-runs/bridge -C Release --output-on-failure -R "^(savedata_file|bytecode_wire|file_archive|script_random|runtime_services|directory_search|input_actions|input_script|replay|replay_runtime|replay_session|mod_resources|mod_scripts)_contract$"
       - name: Package Windows game (without original DAT)

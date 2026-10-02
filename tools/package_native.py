@@ -41,18 +41,12 @@ shutil.copy2(repo / "tools/mod_session.py", root / "mod_session.py")
 shutil.copy2(repo / "tools/mod_manager.py", root / "mod_manager.py")
 shutil.copy2(repo / "tools/mod_author.py", root / "mod_author.py")
 shutil.copy2(repo / "tools/mod_reference.py", root / "mod_reference.py")
-shutil.copy2(repo / "tools/create_practice_mod.py", root / "create_practice_mod.py")
-shutil.copy2(repo / "tools/create_stage_swap_mod.py", root / "create_stage_swap_mod.py")
-shutil.copy2(repo / "tools/create_custom_stage_mod.py", root / "create_custom_stage_mod.py")
 shutil.copy2(repo / "tools/act_map_edit.py", root / "act_map_edit.py")
-shutil.copytree(repo / "examples/mod-authoring", root / "mod-authoring")
 shutil.copy2(repo / "docs/modern-platform/mods.md", root / "MODS.md")
-shutil.copytree(repo / "examples/mods", root / "mods")
 if windows:
     (root / "Choose-Mod-Stage.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_manager.py" launch --game "%~dp0kinoko_modern_gpu.exe" --choose-stage\npause\n', encoding="ascii", newline="\r\n")
     (root / "Launch-Mods.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_manager.py" launch --game "%~dp0kinoko_modern_gpu.exe"\npause\n', encoding="ascii", newline="\r\n")
     (root / "Install-Mod.cmd").write_text('@echo off\ncd /d "%~dp0"\nif "%~1"=="" (echo Drag a .kmod file onto this script. & pause & exit /b 1)\npython "%~dp0mod_manager.py" install-enable --game "%~dp0kinoko_modern_gpu.exe" "%~1"\npause\n', encoding="ascii", newline="\r\n")
-    (root / "Launch-Cursor-Mod.cmd").write_text('@echo off\ncd /d "%~dp0"\npython "%~dp0mod_session.py" --game "%~dp0kinoko_modern_gpu.exe" --mod "%~dp0mods/cyan-title-cursor"\npause\n', encoding="ascii", newline="\r\n")
 
 shutil.copy2(repo / "docs/modern-platform/input-actions.md", root / "INPUT-ACTIONS.md")
 if windows:
