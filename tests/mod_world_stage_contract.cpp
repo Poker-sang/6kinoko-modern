@@ -57,13 +57,13 @@ int main(int argc,char** argv) {
     CHECK(source(vm,R"SQ(
         InitSaveDataTable(savedata[0]);
         ::currentSavedata = savedata[0].weakref();
-        local first=InitStageSaveData("w1-c01a.act");
+        local first=InitStageSaveData("w1-c01a.act").ref();
         first.clear=7; first.score=1234;
-        local added=InitStageSaveData("w1-c16a.act");
+        local added=InitStageSaveData("w1-c16a.act").ref();
         if(added==first || added.stageName!="w1-c16a" || added.clear!=0 || added.isBoss)
             throw "new-stage save identity";
         added.clear=1;
-        if(InitStageSaveData("w1-c16a.act").clear!=1 || first.clear!=7 || first.score!=1234)
+        if(InitStageSaveData("w1-c16a.act").ref().clear!=1 || first.clear!=7 || first.score!=1234)
             throw "save re-entry or original progress";
         ::selectedChip <- 973;
         world.event <- {layout={
