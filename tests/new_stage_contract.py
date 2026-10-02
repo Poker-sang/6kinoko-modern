@@ -10,7 +10,7 @@ import mod_session,mod_manager
 root=Path(sys.argv[1]);reference=Path(sys.argv[2]);root.mkdir(parents=True,exist_ok=False)
 project=creator.create(reference,root/"project")
 info,files=mod_session.read_mod(project)
-assert set(files)=={creator.WORLD,creator.STAGE,creator.STATUS,creator.LABEL,creator.ENTRY,creator.BALLOON_MCD,creator.BALLOON_IMAGE,creator.MAP_CHIPS} and info['entrypoint']==creator.ENTRY
+assert set(files)=={creator.WORLD,creator.STAGE,creator.STATUS,creator.LABEL,creator.ENTRY,creator.BALLOON_MCD,creator.BALLOON_IMAGE,creator.MAP_CHIPS,creator.PIPE_IMAGE} and info['entrypoint']==creator.ENTRY
 original=MapDocument(read_resource(reference,creator.WORLD))
 world=MapDocument((project/creator.WORLD).read_bytes())
 assert original.edit({})==original.data
@@ -40,7 +40,8 @@ for start,end in ((2208,2272),(2752,2848),(4896,4960)):
 assert classic[896,832]==1995 and classic[1472,768]==1995
 assert classic[5792,864]==creator.STAIR_CHIP and classic[6016,640]==creator.STAIR_CHIP
 assert (project/creator.MAP_CHIPS).read_bytes()==creator.course_chips(reference)
-assert classic[896,864]==2368 and classic[928,864]==creator.PIPE_RIGHT
+assert classic[896,864]==creator.PIPE_LEFT and classic[928,864]==creator.PIPE_RIGHT
+assert (project/creator.PIPE_IMAGE).read_bytes()==creator.pipe_body(reference)
 actors=stage.layers['enemy']['keys'][0]['cells']
 assert sorted(c[0] for c in actors if 1420<=c[0]<=1422)==[1420,1421,1422]
 assert [1083,672,768] in actors and [1086,2496,768] in actors

@@ -21,28 +21,42 @@ GREEN_CHIP = 1148
 MAP_CHIPS = 'data/map/marisala2.mcd'
 STAIR_CHIP = 3749
 PIPE_RIGHT = 3750
+PIPE_LEFT = 3751
+PIPE_IMAGE = 'data/custom/new-stage/pipe-body.cv2'
+
+def pipe_body(reference):
+    image=read_resource(reference,'data/map/map0000.cv2')
+    bits,w,h,stride,encoded=struct.unpack('<BIIII',image[:17])
+    if bits!=16 or encoded or stride!=512:raise ValueError('Unexpected original pipe atlas')
+    pixels=bytearray()
+    for y in range(416,448):
+        for x in range(128,160):
+            pixel=image[17+(y*stride+x)*2:17+(y*stride+x+1)*2];pixels+=pixel*2
+    return struct.pack('<BIIII',16,64,32,64,0)+pixels
 
 def course_chips(reference):
     data=read_resource(reference,MAP_CHIPS)
     skip=struct.unpack_from('<I',data,8)[0];n,size=struct.unpack_from('<II',data,12+skip)
     start=20+skip;end=start+n*(size+4)
     rows={struct.unpack_from('<I',data,start+i*(size+4))[0]:data[start+i*(size+4):start+i*(size+4)+size] for i in range(n)}
-    if STAIR_CHIP in rows or PIPE_RIGHT in rows:raise ValueError('Custom course chip ID already used')
+    if any(i in rows for i in (STAIR_CHIP,PIPE_RIGHT,PIPE_LEFT)):raise ValueError('Custom course chip ID already used')
     p=end;count=struct.unpack_from('<I',data,p)[0];p+=4;textures=[]
     for _ in range(count):
         tid,length=struct.unpack_from('<II',data,p);p+=8+length;textures.append(tid)
     if p!=len(data):raise ValueError('Unexpected course chip texture table')
     tid=max(textures)+1
     brick=bytearray(rows[1030]);struct.pack_into('<IIhhhh',brick,0,STAIR_CHIP,tid,0,0,32,32)
-    right=bytearray(rows[2368]);struct.pack_into('<I',right,0,PIPE_RIGHT);struct.pack_into('<h',right,8,160)
-    result=bytearray(data[:end]);struct.pack_into('<I',result,12+skip,n+2)
-    result+=brick+struct.pack('<I',end+size+4)+right+struct.pack('<I',end+2*(size+4))+data[end:]
-    struct.pack_into('<I',result,end+2*(size+4),count+1)
-    name=b'data/actor/item/break-block_0000'
+    right=bytearray(rows[2368]);struct.pack_into('<IIhhhh',right,0,PIPE_RIGHT,tid+1,32,0,32,32)
+    left=bytearray(rows[2368]);struct.pack_into('<IIhhhh',left,0,PIPE_LEFT,tid+1,0,0,32,32)
+    result=bytearray(data[:end]);struct.pack_into('<I',result,12+skip,n+3)
+    for i,row in enumerate((brick,right,left)):result+=row+struct.pack('<I',end+(i+1)*(size+4))
+    result+=data[end:];struct.pack_into('<I',result,end+3*(size+4),count+2)
+    name=b'data/actor/item/nomal-block_0000'
     # Reference the original 32x32 brick image directly; never use Tool markers as art.
     image=read_resource(reference,name.decode()+'.cv2')
     if struct.unpack_from('<II',image,1)!=(32,32):raise ValueError('Unexpected original brick image')
-    return bytes(result)+struct.pack('<II',tid,len(name))+name
+    pipe=PIPE_IMAGE[:-4].encode('ascii')
+    return bytes(result)+struct.pack('<II',tid,len(name))+name+struct.pack('<II',tid+1,len(pipe))+pipe
 
 def green_balloon(reference):
     data=read_resource(reference,'data/worldmap/worldmap.mcd')
@@ -132,7 +146,7 @@ def create(reference, output, recipe=None):
         recipe=Path(__file__).parent/'mod-authoring/classic-1-1/map.json'
         if not recipe.exists(): recipe=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/map.json'
     map_chips=course_chips(reference)
-    edited, spec, original = generate(reference, recipe,additional_chips=(STAIR_CHIP,PIPE_RIGHT))
+    edited, spec, original = generate(reference, recipe,additional_chips=(STAIR_CHIP,PIPE_RIGHT,PIPE_LEFT))
     stage = MapDocument(edited).edit({}, name="w1-c16a")
     world_source = read_resource(reference, WORLD)
     world = extend_world(MapDocument(world_source))
@@ -145,9 +159,9 @@ def create(reference, output, recipe=None):
     status_data=status.add_texture(label_resource)
     entry=Path(__file__).parent/'mod-authoring/classic-1-1/main.nut'
     if not entry.exists():entry=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/main.nut'
-    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image),(MAP_CHIPS,map_chips)):
+    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image),(MAP_CHIPS,map_chips),(PIPE_IMAGE,pipe_body(reference))):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.2.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE,MAP_CHIPS],entrypoint=ENTRY)
+    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.2.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE,MAP_CHIPS,PIPE_IMAGE],entrypoint=ENTRY)
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),
