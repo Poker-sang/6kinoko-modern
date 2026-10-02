@@ -6,7 +6,7 @@ PlayerStatus.SetWorld = function(worldNo, subNo, stageId) : (originalSetWorld) {
         this.stage = stageId;
         this.wmap_stage.AssociateResource(this.resource.mod_stage16);
     }
-};
+}.bindenv(PlayerStatus.global);
 
 // Original symbol remains as the clear/unlock state carrier. Only its alpha
 // is suppressed; a separate resource-backed layer renders the green balloon.

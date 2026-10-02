@@ -129,20 +129,24 @@ int main(int argc,char** argv) {
             world.symbol_mod <- {layout={calls=0,GetChipLayout=function(i){return greenBalloon;},
                 SetChipRect=function(id,x,y,w,h){this.calls++;}}};
             ::fabs <- function(v){return v<0 ? -v : v;};
+            // Original OnCreate publishes a closure bound to the internal global
+            // table on a distinct public ACT object. The public object has no stage slot.
+            local statusGlobal=PlayerStatus;
+            ::PlayerStatus={global=statusGlobal,SetWorld=statusGlobal.SetWorld.bindenv(statusGlobal)};
         )SQ"));
         std::ifstream entry(argv[5],std::ios::binary);
         const std::string text{std::istreambuf_iterator<char>(entry),{}};
         CHECK(!text.empty() && source(vm,text.c_str()));
         CHECK(source(vm,R"SQ(
             PlayerStatus.SetWorld(1,0,"c16a");
-            if(selectedLabel!="mod_stage16" || selectedWorldLabel!="wmap_name01" || PlayerStatus.stage!="c16a")
+            if(selectedLabel!="mod_stage16" || selectedWorldLabel!="wmap_name01" || PlayerStatus.global.stage!="c16a" || ("stage" in PlayerStatus))
                 throw "new stage presentation/identity";
             PlayerStatus.SetWorld(1,0,"c02a");
-            if(selectedLabel!="wmap_stage02" || PlayerStatus.stage!="c02a")throw "original label changed";
+            if(selectedLabel!="wmap_stage02" || PlayerStatus.global.stage!="c02a")throw "original label changed";
             PlayerStatus.SetWorld(1,0,"marisahouse");
             if(selectedLabel!="wmap_stage0b")throw "house label changed";
             PlayerStatus.SetWorld(1,0,"");
-            if(selectedLabel!="blank" || PlayerStatus.stage!="")throw "blank label not restored";
+            if(selectedLabel!="blank" || PlayerStatus.global.stage!="")throw "blank label not restored";
             world.InitSymbol();
             if(originalBalloon.alpha!=0.0 || originalNeighbor.alpha!=1.0)throw "original balloon affected";
             world.UpdateChipAnimation();

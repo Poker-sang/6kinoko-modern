@@ -115,7 +115,7 @@ def create(reference, output, recipe=None):
     if not entry.exists():entry=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/main.nut'
     for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes()),(BALLOON_MCD,balloon_mcd),(BALLOON_IMAGE,balloon_image)):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.1.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE],entrypoint=ENTRY)
+    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.1.1",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY,BALLOON_MCD,BALLOON_IMAGE],entrypoint=ENTRY)
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),
