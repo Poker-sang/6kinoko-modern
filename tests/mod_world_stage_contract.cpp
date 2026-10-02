@@ -43,7 +43,7 @@ bool load(SQVM* vm,const char* path,const char* scope=nullptr) {
 }
 #define CHECK(x) do{if(!(x)){std::fprintf(stderr,"world-stage contract line %d\n",__LINE__);sq_close(vm);return 1;}}while(0)
 int main(int argc,char** argv) {
-    if(argc!=4 && argc!=6){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4 [playerstatus.cv4 presentation.nut]\n");return 2;}
+    if(argc!=4 && argc!=7){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4 [playerstatus.cv4 presentation.nut effect.cv4]\n");return 2;}
     auto* vm=sq_open(2048);
     sq_setprintfunc(vm,diagnostic);sqstd_seterrorhandlers(vm);
     CHECK(source(vm,R"SQ(
@@ -105,9 +105,10 @@ int main(int argc,char** argv) {
         roadFlag=32;
         if(!world.SetNextMove(0,1,false) || world.funcUpdate!=world.Update_MoveDown)throw "node downward exit";
     )SQ"));
-    if(argc==6) {
+    if(argc==7) {
         CHECK(source(vm,"::PlayerStatus = {};"));
         CHECK(load(vm,argv[4],"PlayerStatus"));
+        CHECK(load(vm,argv[6],"world"));
         CHECK(source(vm,R"SQ(
             ::selectedLabel <- null; ::selectedWorldLabel <- null;
             PlayerStatus.resource <- {};
@@ -115,6 +116,18 @@ int main(int argc,char** argv) {
                 PlayerStatus.resource[name] <- name;
             PlayerStatus.wmap_stage <- {AssociateResource=function(r){selectedLabel=r;}};
             PlayerStatus.wmap_name <- {AssociateResource=function(r){selectedWorldLabel=r;}};
+            ::originalBalloon <- {chipID=1023,left=32,top=736,alpha=1.0,visible=true};
+            ::originalNeighbor <- {chipID=1023,left=128,top=800,alpha=1.0,visible=true};
+            ::greenBalloon <- {chipID=1023,left=32,top=736,alpha=1.0,visible=true};
+            world.frameCount <- 0;
+            world.symbol <- {layout={chipCount=2,calls=0,
+                GetChipByPosition=function(x,y){return 0;},
+                GetChipLayout=function(i){return i==0 ? originalBalloon : originalNeighbor;},
+                SetChipRect=function(id,x,y,w,h){this.calls++;}
+            }};
+            world.symbol_mod <- {layout={calls=0,GetChipLayout=function(i){return greenBalloon;},
+                SetChipRect=function(id,x,y,w,h){this.calls++;}}};
+            ::fabs <- function(v){return v<0 ? -v : v;};
         )SQ"));
         std::ifstream entry(argv[5],std::ios::binary);
         const std::string text{std::istreambuf_iterator<char>(entry),{}};
@@ -129,6 +142,17 @@ int main(int argc,char** argv) {
             if(selectedLabel!="wmap_stage0b")throw "house label changed";
             PlayerStatus.SetWorld(1,0,"");
             if(selectedLabel!="blank" || PlayerStatus.stage!="")throw "blank label not restored";
+            world.InitSymbol();
+            if(originalBalloon.alpha!=0.0 || originalNeighbor.alpha!=1.0)throw "original balloon affected";
+            world.UpdateChipAnimation();
+            if(world.symbol.layout.calls!=1 || world.symbol_mod.layout.calls!=1 || !greenBalloon.visible)
+                throw "green balloon animation delegation";
+            world.SetSymbolVisible(64,800,false,false);
+            world.UpdateChipAnimation();
+            if(greenBalloon.visible || !originalNeighbor.visible)throw "green clear-state synchronization";
+            world.SetSymbolVisible(64,800,true,false);
+            world.UpdateChipAnimation();
+            if(!greenBalloon.visible)throw "green balloon restoration";
         )SQ"));
         std::puts("PASS: presentation entrypoint with actual original PlayerStatus.SetWorld and original-node restoration");
     }
