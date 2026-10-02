@@ -163,6 +163,11 @@ int main(int argc,char** argv) {
         )SQ"));
         std::puts("PASS: presentation entrypoint with actual original PlayerStatus.SetWorld and original-node restoration");
         CHECK(source(vm,"::t_enemy <- {SetInitFunctionByID=function(...){}};"));
+        CHECK(source(vm,R"SQ(
+            foreach(n in ["Init054d","Init053c","Init053d","Init053e","Init053f","Init0443",
+                "Init0c8a","Init0c9a","Init0caa","Init0c88","Init0c89","Init0cfa","Init0e4c","Init0554","Init0ea2"])
+                t_enemy[n] <- function(...){};
+        )SQ"));
         CHECK(load(vm,argv[7],"t_enemy"));
         CHECK(source(vm,R"SQ(
             ::PR_BLOCK <- 0; ::GP_PLAYER <- 1; ::GP_BLOCK <- 2; ::GP_TERRAIN <- 4;
