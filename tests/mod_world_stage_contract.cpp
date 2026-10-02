@@ -101,9 +101,9 @@ int main(int argc,char** argv) {
         world.rail <- {layout={GetChipByPosition=function(x,y){return 0;},GetChipLayout=function(i){return {chipID=202};}}};
         world.mapChip <- {GetChipInfo=function(id){return {flag0=roadFlag};}};
         world.funcUpdate <- null;world.moveCount <- 0;world.walkDirection <- 0;
-        if(!world.SetNextMove(0,-1) || world.funcUpdate!=world.Update_MoveUp)throw "house upward exit";
+        if(!world.SetNextMove(0,-1,false) || world.funcUpdate!=world.Update_MoveUp)throw "house upward exit";
         roadFlag=32;
-        if(!world.SetNextMove(0,1) || world.funcUpdate!=world.Update_MoveDown)throw "node downward exit";
+        if(!world.SetNextMove(0,1,false) || world.funcUpdate!=world.Update_MoveDown)throw "node downward exit";
     )SQ"));
     sq_close(vm);
     std::puts("PASS: original CV4 node mapping, independent save/re-entry, delayed transition, return position and road directions");
