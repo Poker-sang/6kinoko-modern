@@ -9,9 +9,7 @@ import mod_session
 
 SOURCE = "data/map/w1-c01a.act"
 
-def create(reference, output, recipe=None):
-    output = Path(output)
-    if output.exists(): raise ValueError("Choose a new output directory")
+def generate(reference, recipe=None):
     if recipe is None:
         recipe = Path(__file__).parent / "mod-authoring/short-course/map.json"
         if not recipe.exists(): recipe = Path(__file__).parents[1] / "examples/mod-authoring/short-course/map.json"
@@ -40,6 +38,12 @@ def create(reference, output, recipe=None):
         if any(c[0] not in available for c in cells): raise ValueError("Chip is not present in original layer: "+name)
     layers = dict(terrain=terrain,enemy=enemies,event=events,hidden=[],bg1=[],front=[],rail1=[],rail2=[])
     edited = document.edit(layers,width=width)
+    return edited, spec, original
+
+def create(reference, output, recipe=None):
+    output = Path(output)
+    if output.exists(): raise ValueError("Choose a new output directory")
+    edited, spec, original = generate(reference, recipe)
     output.mkdir(parents=True,exist_ok=False)
     target = output/SOURCE; target.parent.mkdir(parents=True); target.write_bytes(edited)
     manifest = dict(format=1,id="short-course",name="Short course: three steps",version="1.0.0",requires=[],files=[SOURCE])

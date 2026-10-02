@@ -359,11 +359,42 @@ original layer. The generated project also retains its map.json recipe.
 act_map_edit.py supplies the first limited authoring API: bounded ACT1 parsing,
 lossless no-op roundtrip, map placement replacement and map-width changes.
 It preserves scripts/resources/unmodified data, rebuilds placement counts and
-bounds and sorts cells by x/y. It accepts self-described map-only documents with
-12-byte cells, chip resources and no timelines; other variants fail explicitly.
+bounds and sorts cells by x/y. It initially accepted self-described map-only documents with
+12-byte cells; the independent-stage milestone extends preservation to 2D keys,
+timelines and texture resources. Other variants fail explicitly.
 It is not a general ACT editor or GUI. Original map bytes remain local.
 
 The course retains the original first-stage script (music/time and dormant warp
 callback) and background but removes warp placements, hidden areas and original
 enemy arrangements. It makes no player/HUD or startup callback changes. Gameplay,
 goal completion and return-to-world behavior need manual confirmation.
+
+## Independent first-world stage
+
+The user confirmed the authored replacement is playable. The next milestone adds
+that course as a new resource `data/map/w1-c16a.act` and adds a small 16 marker
+above Marisa's house in the existing world map. Follow normal title/save/world
+flow, stand at the house and press up, then accept on 16. The new short road is
+available immediately. Original level maps and entrances stay available.
+
+```powershell
+python create_new_stage_mod.py --reference-dir . --output new-stage
+python mod_manager.py pack new-stage new-stage.kmod
+python mod_manager.py install-enable --game kinoko_modern_gpu.exe new-stage.kmod
+python mod_manager.py launch --game kinoko_modern_gpu.exe
+```
+
+This resource-only Mod overlays the world-map ACT and adds an unused stage file.
+It has no script entrypoint or scene hooks. Native stage lookup maps event chip
+973 to c16a; world 1 produces w1-c16a.act and its own save key w1-c16a. The original
+16-slot limit remains: this is the first independent stage proof, not arbitrary
+Mod ID allocation. Other Mods changing the same world ACT conflict by default.
+All stats live in the existing isolated Mod save directory. Original CheckResult
+counts the new cleared stage in total clearCount; original ending percentages
+still use original fixed totals. Expanded campaign completion policy is future work.
+
+The world-map editor now preserves 2D keys, timelines and texture resources in
+addition to map layers. Mesh/string layouts and render-target resources remain
+unsupported. Only map placements are editable; unedited bytes remain intact.
+The new stage uses the last confirmed course layout; this batch targets integration,
+not level-design polish. Gameplay and save/reload validation are user-owned.

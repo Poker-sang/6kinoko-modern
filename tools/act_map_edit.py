@@ -1,6 +1,6 @@
 """Bounded, lossless placement editor for self-described ACT1 map documents.
 
-Supports map-only layers, no timelines, and chip resources. Other ACT variants
+Supports map and 2D layers, timelines, chip/texture resources. Other ACT variants
 are rejected, never guessed. Unknown properties and scripts remain byte-exact.
 """
 import struct
@@ -57,20 +57,32 @@ class MapDocument:
             keys = []
             for _ in range(r.count()):
                 r.expect(0xd933304d); r.properties("key")
-                if r.take(1) != b"\1": raise ValueError("Expected map key layout")
-                r.expect(0xc9ca5c20)
+                present = r.take(1)[0]
+                if present == 0:
+                    keys.append(dict(type=None)); continue
+                if present != 1: raise ValueError("Invalid layout flag")
+                typ = r.number()
+                if typ == 0x655cd5b0:
+                    layout, positions = r.properties("layout2d")
+                    keys.append(dict(type=typ, properties=layout, positions=positions)); continue
+                if typ != 0xc9ca5c20: raise ValueError("Unsupported ACT layout type")
                 layout, positions = r.properties("map")
                 start = r.pos; count = r.count(); size = r.number()
                 if size != 12: raise ValueError("Only 12-byte placement records are editable")
                 cells = [list(struct.unpack("<Iii", r.take(12))) for _ in range(count)]
-                keys.append(dict(start=start, end=r.pos, cells=cells, properties=layout, positions=positions))
-            if r.number() != 0: raise ValueError("Timelines are not supported")
+                keys.append(dict(type=typ, start=start, end=r.pos, cells=cells, properties=layout, positions=positions))
+            for _ in range(r.count()):
+                r.expect(0x9902f2c0); r.properties("timeline"); r.take(r.count()*8)
             r.script(); self.layers[name] = dict(properties=props, keys=keys)
+        self.resources = []
         for _ in range(r.count()):
-            r.expect(0xfbaaf527); r.properties("chip")
+            typ = r.number()
+            kind = {0xfbaaf527: "chip", 0xc6fdb98a: "texture"}.get(typ)
+            if kind is None: raise ValueError("Unsupported ACT resource type")
+            props, _ = r.properties(kind); self.resources.append(dict(type=typ, properties=props))
         if r.pos != len(data): raise ValueError("Trailing ACT bytes")
 
-    def edit(self, layers, width=None):
+    def edit(self, layers, width=None, name=None):
         changes = []
         def integer(positions, name, value):
             offset, typ = positions[name]
@@ -78,10 +90,18 @@ class MapDocument:
                 raise ValueError("Invalid integer property: " + name)
             changes.append((offset, offset+4, struct.pack("<i", value)))
         if width is not None: integer(self.positions, "screenWidth", width)
+        if name is not None:
+            if not isinstance(name, str) or not name or len(name) > 127 or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789._-" for c in name):
+                raise ValueError("Invalid map name")
+            offset, typ = self.positions["stName"]
+            if typ != 3: raise ValueError("Expected string map name")
+            old_size = struct.unpack_from("<I", self.data, offset)[0]
+            value = name.encode("ascii")
+            changes.append((offset, offset+4+old_size, struct.pack("<I", len(value))+value))
         for name, cells in layers.items():
             if name not in self.layers: raise ValueError("Unknown layer: " + name)
             keys = self.layers[name]["keys"]
-            if len(keys) != 1: raise ValueError("Exactly one key is required for editing")
+            if len(keys) != 1 or "cells" not in keys[0]: raise ValueError("Exactly one map key is required for editing")
             if len(cells) > 65536: raise ValueError("Too many placements")
             for cell in cells:
                 if len(cell) != 3 or any(type(v) is not int for v in cell): raise ValueError("Expected [chip, x, y]")

@@ -45,6 +45,7 @@ shutil.copy2(repo / "tools/create_practice_mod.py", root / "create_practice_mod.
 shutil.copy2(repo / "tools/create_stage_swap_mod.py", root / "create_stage_swap_mod.py")
 shutil.copy2(repo / "tools/create_custom_stage_mod.py", root / "create_custom_stage_mod.py")
 shutil.copy2(repo / "tools/act_map_edit.py", root / "act_map_edit.py")
+shutil.copy2(repo / "tools/create_new_stage_mod.py", root / "create_new_stage_mod.py")
 shutil.copytree(repo / "examples/mod-authoring", root / "mod-authoring")
 shutil.copy2(repo / "docs/modern-platform/mods.md", root / "MODS.md")
 shutil.copytree(repo / "examples/mods", root / "mods")

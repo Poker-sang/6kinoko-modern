@@ -14,3 +14,8 @@ target_include_directories(kinoko_mod_scripts_contract PRIVATE "${KINOKO_SQUIRRE
 target_compile_definitions(kinoko_mod_scripts_contract PRIVATE KINOKO_PRACTICE_SCRIPT="${CMAKE_CURRENT_SOURCE_DIR}/examples/mod-authoring/practice-stage/main.nut")
 target_link_libraries(kinoko_mod_scripts_contract PRIVATE kinoko_squirrel_cpp_vm)
 add_test(NAME mod_scripts_contract COMMAND kinoko_mod_scripts_contract)
+
+# Optional evidence check with local original CV4 arguments; no proprietary fixtures in CI.
+add_executable(kinoko_mod_world_stage_contract tests/mod_world_stage_contract.cpp)
+target_include_directories(kinoko_mod_world_stage_contract PRIVATE "${KINOKO_SQUIRREL2_ROOT}/include")
+target_link_libraries(kinoko_mod_world_stage_contract PRIVATE kinoko_squirrel_cpp_vm)
