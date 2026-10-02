@@ -25,17 +25,27 @@ for name,l in original.layers.items():
 assert [973,64,800] in world.layers["event"]["keys"][0]["cells"]
 assert world.resources==original.resources
 stage=MapDocument((project/creator.STAGE).read_bytes())
-assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==2560
+assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==3008
 # Exercise both exposed sides, walls, buried base grass and interior earth.
 terrain={(x,y):chip for chip,x,y in stage.layers["terrain"]["keys"][0]["cells"]}
-assert terrain[512,864]==1025 and terrain[608,864]==1027
-assert terrain[960,864]==1025 and terrain[1056,864]==1026
-assert terrain[1088,832]==1025 and terrain[1184,832]==1027
-assert terrain[1088,864]==1034 and terrain[1184,864]==1029
-assert terrain[0,928]==1028 and terrain[2528,928]==1029
+assert terrain[512,864]==1030 and terrain[608,864]==1032
+assert terrain[960,864]==1030 and terrain[1056,864]==1026
+assert terrain[1088,832]==1030 and terrain[1184,832]==1032
+assert terrain[1088,864]==1034 and terrain[1184,864]==1035
+assert terrain[0,928]==1033 and terrain[2976,928]==1035
 assert terrain[1120,864]==1034
-assert all(terrain[x,896] in (1025,1026,1027) for x in range(0,2560,32))
+assert all(terrain[x,896] in (1030,1026,1032) for x in range(0,3008,32))
 assert len(terrain)==len(stage.layers["terrain"]["keys"][0]["cells"])
+# The original solid cliffs, unlike 0x20 platform caps / 0xf0 filler,
+# participate in native side contacts. Check actual MCD definitions.
+b=read_resource(reference,"data/map/marisala2.mcd");skip=struct.unpack_from("<I",b,8)[0];n,size=struct.unpack_from("<II",b,12+skip);p=20+skip;earth={}
+for _ in range(n):
+ row=b[p:p+size];p+=size+4;chip=struct.unpack_from("<I",row)[0];earth[chip]=struct.unpack_from("<I",row,16)[0]
+assert all(earth[chip]==0 for chip in (1030,1032,1033,1035))
+assert earth[1025]==0x20 and earth[1028]==0xf0
+goal=next(c for c in stage.layers["event"]["keys"][0]["cells"] if c[0]==3)
+assert stage.properties["screenWidth"]-goal[1]==704
+assert all(terrain[x,896]==1026 for x in range(goal[1],2976,32))
 # Verify directions against actual MCD, rather than trusting hardcoded chip labels.
 b=read_resource(reference,"data/worldmap/worldmap.mcd");skip=struct.unpack_from("<I",b,8)[0];n,size=struct.unpack_from("<II",b,12+skip);p=20+skip;flags={}
 for _ in range(n):

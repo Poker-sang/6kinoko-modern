@@ -25,7 +25,8 @@ def generate(reference, recipe=None):
         edge = end
     if edge != width: raise ValueError("Incomplete floor")
     # Original w1-c01a keeps the continuous base grass beneath raised earth.
-    # Exposed sides use the original cap/wall chips, not interior soil artwork.
+    # 1025/1027 and 1028/1029 belong to the pass-through platform family.
+    # Use the original solid cliff caps/walls for exposed earth boundaries.
     base = max(heights)
     for column, top in enumerate(heights):
         x = column * 32
@@ -33,12 +34,12 @@ def generate(reference, recipe=None):
         right = heights[column+1] if column+1 < len(heights) else 1088
         if left > top and right > top:
             raise ValueError("Raised earth needs at least two columns for original left/right caps")
-        terrain.append([1025 if left > top else 1027 if right > top else 1026,x,top])
+        terrain.append([1030 if left > top else 1032 if right > top else 1026,x,top])
         for y in range(top+32,1088,32):
             if y == base and top < base:
                 chip = 1026
             else:
-                chip = 1028 if y < left else 1029 if y < right else 1034
+                chip = 1033 if y < left else 1035 if y < right else 1034
             terrain.append([chip,x,y])
     events = spec["events"]; enemies = spec["enemies"]
     if sorted(c[0] for c in events) != [1,3]: raise ValueError("Exactly one original spawn and goal required")
@@ -60,7 +61,7 @@ def create(reference, output, recipe=None):
     edited, spec, original = generate(reference, recipe)
     output.mkdir(parents=True,exist_ok=False)
     target = output/SOURCE; target.parent.mkdir(parents=True); target.write_bytes(edited)
-    manifest = dict(format=1,id="short-course",name="Short course: three steps",version="1.0.1",requires=[],files=[SOURCE])
+    manifest = dict(format=1,id="short-course",name="Short course: three steps",version="1.0.2",requires=[],files=[SOURCE])
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(source=SOURCE,source_sha256=hashlib.sha256(original).hexdigest(),sha256=hashlib.sha256(edited).hexdigest(),terrain_modified=True,script_modified=False)
