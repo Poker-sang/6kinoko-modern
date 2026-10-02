@@ -148,11 +148,12 @@ int main(int argc,char** argv) {
             world.UpdateChipAnimation();
             if(world.symbol.layout.calls<1 || world.symbol_mod.layout.calls!=world.symbol.layout.calls || !greenBalloon.visible)
                 throw "green balloon animation delegation";
-            world.SetSymbolVisible(64,816,false,false);
+            // Visibility state is supplied by world clear/unlock processing.
+            originalBalloon.visible=false;
             world.UpdateChipAnimation();
             print("visibility: original="+originalBalloon.visible+" green="+greenBalloon.visible+" neighbor="+originalNeighbor.visible+"\n");
             if(greenBalloon.visible || !originalNeighbor.visible)throw "green clear-state synchronization";
-            world.SetSymbolVisible(64,816,true,false);
+            originalBalloon.visible=true;
             world.UpdateChipAnimation();
             if(!greenBalloon.visible)throw "green balloon restoration";
         )SQ"));
