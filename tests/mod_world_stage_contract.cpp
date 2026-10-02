@@ -1,11 +1,16 @@
 // Optional original-script contract: supply locally extracted worldmap/savedata/move CV4.
 // Executes original bytecode in Squirrel with narrow non-rendering API fixtures.
 #include <squirrel.h>
+#include <sqstdaux.h>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <string>
 #include <iterator>
+void diagnostic(HSQUIRRELVM,const SQChar* format,...) {
+    va_list arguments;va_start(arguments,format);std::vfprintf(stderr,format,arguments);va_end(arguments);
+}
 struct Input { std::string bytes; size_t pos=0; };
 SQInteger read_bytes(SQUserPointer opaque,SQUserPointer target,SQInteger count) {
     auto& input=*static_cast<Input*>(opaque);
@@ -22,7 +27,7 @@ bool source(SQVM* vm,const char* text) {
     const auto top=sq_gettop(vm);
     if(SQ_FAILED(sq_compilebuffer(vm,text,std::strlen(text),"world contract",SQFalse)))return error(vm);
     sq_pushroottable(vm);
-    if(SQ_FAILED(sq_call(vm,1,SQFalse,SQFalse)))return error(vm);
+    if(SQ_FAILED(sq_call(vm,1,SQFalse,SQTrue)))return error(vm);
     sq_settop(vm,top);return true;
 }
 bool load(SQVM* vm,const char* path,const char* scope=nullptr) {
@@ -33,13 +38,14 @@ bool load(SQVM* vm,const char* path,const char* scope=nullptr) {
     if(SQ_FAILED(sq_readclosure(vm,read_bytes,&input)))return error(vm);
     sq_pushroottable(vm);
     if(scope){sq_pushstring(vm,scope,-1);if(SQ_FAILED(sq_get(vm,-2)))return error(vm);sq_remove(vm,-2);}
-    if(SQ_FAILED(sq_call(vm,1,SQFalse,SQFalse)))return error(vm);
+    if(SQ_FAILED(sq_call(vm,1,SQFalse,SQTrue)))return error(vm);
     sq_settop(vm,top);return true;
 }
 #define CHECK(x) do{if(!(x)){std::fprintf(stderr,"world-stage contract line %d\n",__LINE__);sq_close(vm);return 1;}}while(0)
 int main(int argc,char** argv) {
     if(argc!=4){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4\n");return 2;}
     auto* vm=sq_open(2048);
+    sq_setprintfunc(vm,diagnostic);sqstd_seterrorhandlers(vm);
     CHECK(source(vm,R"SQ(
         ::CompileFile <- function(path,env) {};
         ::world <- {};
