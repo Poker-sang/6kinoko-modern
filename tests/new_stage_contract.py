@@ -31,7 +31,8 @@ terrain={(x,y):chip for chip,x,y in stage.layers["terrain"]["keys"][0]["cells"]}
 assert terrain[512,864]==1025 and terrain[608,864]==1027
 assert terrain[960,864]==1025 and terrain[1056,864]==1026
 assert terrain[1088,832]==1025 and terrain[1184,832]==1027
-assert terrain[1088,864]==1028 and terrain[1184,864]==1029
+assert terrain[1088,864]==1034 and terrain[1184,864]==1029
+assert terrain[0,928]==1028 and terrain[2528,928]==1029
 assert terrain[1120,864]==1034
 assert all(terrain[x,896] in (1025,1026,1027) for x in range(0,2560,32))
 assert len(terrain)==len(stage.layers["terrain"]["keys"][0]["cells"])
