@@ -1,5 +1,15 @@
 # Separate engine and authored Mod content
 
+## Current SDK boundary
+
+Generic Python authoring, ACT editing, resource reading, package installation
+and session preparation have also moved out of the engine to the independent
+`C:/WorkSpace/6kinoko-mod-sdk` project. Their four Python contract suites moved
+with them. Engine packages and engine CI no longer bundle or require these tools.
+The engine retains its C++ Mod resource loader, script registry and their native
+contracts. The content bootstrap imports the external SDK. The sections below
+record the earlier content-only separation and its historical ownership.
+
 The user requested that concrete Mod content stay outside the engine repository,
 and selected a local independent project without a remote repository.
 
