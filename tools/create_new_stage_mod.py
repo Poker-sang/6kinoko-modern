@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import struct
 from pathlib import Path
 from act_map_edit import MapDocument
 from create_custom_stage_mod import generate
@@ -10,6 +11,29 @@ import mod_session
 
 WORLD = "data/worldmap/worldmap.act"
 STAGE = "data/map/w1-c16a.act"
+STATUS = "data/system/stage/playerstatus.act"
+LABEL = "data/custom/new-stage/stage16.cv2"
+ENTRY = "data/custom/new-stage/main.nut"
+
+def stage_label(reference):
+    # Preserve original word and digit pixels, and the native CV2 BGRA wire format.
+    one=read_resource(reference,"data/system/world/wmap_stage01.cv2")
+    six=read_resource(reference,"data/system/world/wmap_stage06.cv2")
+    if one[:17]!=six[:17] or struct.unpack('<BIIII',one[:17])!=(32,160,64,160,0):
+        raise ValueError("Unexpected original stage-label format")
+    pixels=bytearray(one[17:])
+    for y in range(64): pixels[(y*160+108)*4:(y*160+160)*4]=bytes(52*4)
+    digits=[]
+    for data in (one,six):
+        xs=[x for x in range(108,160) if any(data[17+(y*160+x)*4+3] for y in range(64))]
+        digits.append((data,min(xs),max(xs)+1))
+    total=sum(end-start for _,start,end in digits)+3
+    cursor=108+(52-total)//2
+    for data,start,end in digits:
+        for y in range(64):
+            pixels[(y*160+cursor)*4:(y*160+cursor+end-start)*4]=data[17+(y*160+start)*4:17+(y*160+end)*4]
+        cursor+=end-start+3
+    return one[:17]+pixels
 
 def extend_world(document):
     def cells(name):
@@ -17,7 +41,7 @@ def extend_world(document):
         if len(keys) != 1 or "cells" not in keys[0]: raise ValueError("Expected one map key: " + name)
         return [list(c) for c in keys[0]["cells"]]
     additions = {"event": [[973,64,800]], "point": [[1014,64,800]],
-                 "symbol": [[973,64,800]], "rail": [[206,64,800],[198,64,832]]}
+                 "symbol": [[1023,32,736]], "rail": [[206,64,800],[198,64,832]]}
     updates = {}
     if [194,64,864] not in cells("rail") or [1006,64,864] not in cells("event"):
         raise ValueError("Original house/rail anchor does not match")
@@ -45,20 +69,31 @@ def create(reference, output, recipe=None):
     except ValueError as error:
         if str(error) != "Original resource not found: " + STAGE: raise
     else: raise ValueError("New stage path already exists in original archives")
+    if recipe is None:
+        recipe=Path(__file__).parent/'mod-authoring/classic-1-1/map.json'
+        if not recipe.exists(): recipe=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/map.json'
     edited, spec, original = generate(reference, recipe)
     stage = MapDocument(edited).edit({}, name="w1-c16a")
     world_source = read_resource(reference, WORLD)
     world = extend_world(MapDocument(world_source))
     output.mkdir(parents=True, exist_ok=False)
-    for name, data in ((WORLD,world),(STAGE,stage)):
+    status_source=read_resource(reference,STATUS);status=MapDocument(status_source)
+    template=next(r['properties'] for r in status.resources if r['properties']['stName']=='wmap_stage01')
+    label_resource=dict(template,resourceID=max(r['properties']['resourceID'] for r in status.resources)+1,
+        stName='mod_stage16',stTextureName=LABEL[:-4])
+    status_data=status.add_texture(label_resource)
+    entry=Path(__file__).parent/'mod-authoring/classic-1-1/main.nut'
+    if not entry.exists():entry=Path(__file__).parents[1]/'examples/mod-authoring/classic-1-1/main.nut'
+    for name, data in ((WORLD,world),(STAGE,stage),(STATUS,status_data),(LABEL,stage_label(reference)),(ENTRY,entry.read_bytes())):
         target = output/name; target.parent.mkdir(parents=True,exist_ok=True); target.write_bytes(data)
-    manifest = dict(format=1,id="new-stage",name="New first-world stage 16",version="1.0.2",requires=[],files=[WORLD,STAGE])
+    manifest = dict(format=1,id="new-stage",name="Classic 1-1 inspired stage",version="1.1.0",requires=[],files=[WORLD,STAGE,STATUS,LABEL,ENTRY],entrypoint=ENTRY)
     (output/"mod.json").write_text(json.dumps(manifest,indent=2)+"\n",encoding="utf-8")
     (output/"map.json").write_text(json.dumps(spec,indent=2)+"\n",encoding="utf-8")
     provenance = dict(world_source=WORLD,world_source_sha256=hashlib.sha256(world_source).hexdigest(),
         stage_template="data/map/w1-c01a.act",stage_template_sha256=hashlib.sha256(original).hexdigest(),
         files={WORLD:hashlib.sha256(world).hexdigest(),STAGE:hashlib.sha256(stage).hexdigest()},
-        entrance=[64,800],save_key="w1-c16a",unlock="available from start",scripts_modified=False)
+        entrance=[64,800],save_key="w1-c16a",unlock="available from start",original_scripts_modified=False,
+        presentation_entrypoint=ENTRY,course_description=spec.get('description','authored course'))
     (output/"LOCAL-SOURCE.json").write_text(json.dumps(provenance,indent=2)+"\n",encoding="utf-8")
     mod_session.read_mod(output)
     return output

@@ -75,13 +75,34 @@ class MapDocument:
             for _ in range(r.count()):
                 r.expect(0x9902f2c0); r.properties("timeline"); r.take(r.count()*8)
             r.script(); self.layers[name] = dict(properties=props, keys=keys, span=(layer_start,r.pos))
+        self.resource_count_position = r.pos
         self.resources = []
         for _ in range(r.count()):
             typ = r.number()
             kind = {0xfbaaf527: "chip", 0xc6fdb98a: "texture"}.get(typ)
             if kind is None: raise ValueError("Unsupported ACT resource type")
             props, _ = r.properties(kind); self.resources.append(dict(type=typ, properties=props))
+        self.texture_schema = r.schemas.get("texture")
         if r.pos != len(data): raise ValueError("Trailing ACT bytes")
+
+    def add_texture(self, properties):
+        """Append an explicit native texture schema without rewriting old objects."""
+        schema = self.texture_schema
+        if not schema or set(properties) != set(schema): raise ValueError("Texture schema mismatch")
+        if any(r['properties']['resourceID']==properties['resourceID'] or
+               r['properties']['stName']==properties['stName'] for r in self.resources):
+            raise ValueError("Duplicate resource")
+        def string(value):
+            b=value.encode('cp932'); return struct.pack('<I',len(b))+b
+        payload=struct.pack('<I',0xc6fdb98a)+b'\x01'+struct.pack('<I',len(schema))
+        for name,typ in schema.items(): payload+=string(name)+struct.pack('<I',typ)
+        for name,typ in sorted(schema.items()):
+            value=properties[name]
+            payload+=string(value) if typ==3 else struct.pack('<B' if typ==2 else '<f' if typ==1 else '<i',value)
+        p=self.resource_count_position
+        output=self.data[:p]+struct.pack('<I',len(self.resources)+1)+self.data[p+4:]+payload
+        MapDocument(output)
+        return output
 
     def edit(self, layers, width=None, name=None):
         changes = []

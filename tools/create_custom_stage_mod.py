@@ -19,7 +19,7 @@ def generate(reference, recipe=None):
     if type(width) is not int or not 640 <= width <= 16384 or width % 32: raise ValueError("Invalid map width")
     terrain = []; edge = 0; heights = []
     for start, end, top in spec["floor"]:
-        if any(type(v) is not int or v % 32 for v in (start,end,top)) or start != edge or not start < end <= width or not 640 <= top <= 960:
+        if any(type(v) is not int or v % 32 for v in (start,end)) or start != edge or not start < end <= width or (top is not None and (type(top) is not int or top % 32 or not 640 <= top <= 960)):
             raise ValueError("Floor must continuously cover width on the 32-pixel grid")
         heights.extend([top] * ((end-start)//32))
         edge = end
@@ -27,11 +27,14 @@ def generate(reference, recipe=None):
     # Original w1-c01a keeps the continuous base grass beneath raised earth.
     # 1025/1027 and 1028/1029 belong to the pass-through platform family.
     # Use the original solid cliff caps/walls for exposed earth boundaries.
-    base = max(heights)
+    base = max(v for v in heights if v is not None)
     for column, top in enumerate(heights):
+        if top is None: continue
         x = column * 32
         left = heights[column-1] if column else 1088
         right = heights[column+1] if column+1 < len(heights) else 1088
+        left = 1088 if left is None else left
+        right = 1088 if right is None else right
         if left > top and right > top:
             raise ValueError("Raised earth needs at least two columns for original left/right caps")
         terrain.append([1030 if left > top else 1032 if right > top else 1026,x,top])
@@ -41,9 +44,10 @@ def generate(reference, recipe=None):
             else:
                 chip = 1033 if y < left else 1035 if y < right else 1034
             terrain.append([chip,x,y])
+    terrain.extend(spec.get("terrain",[]))
     events = spec["events"]; enemies = spec["enemies"]
     if sorted(c[0] for c in events) != [1,3]: raise ValueError("Exactly one original spawn and goal required")
-    for chip,x,y in events+enemies:
+    for chip,x,y in events+enemies+terrain:
         if any(type(v) is not int for v in (chip,x,y)) or not 0 <= x < width-64 or not 0 <= y < 1088:
             raise ValueError("Actor placement outside course")
     original = read_resource(reference,SOURCE); document = MapDocument(original)

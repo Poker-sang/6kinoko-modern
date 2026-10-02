@@ -5,11 +5,12 @@ sys.path.insert(0,str(Path(__file__).parents[1]/"tools"))
 from act_map_edit import MapDocument
 from mod_reference import read_resource
 import create_new_stage_mod as creator
+from create_custom_stage_mod import generate
 import mod_session,mod_manager
 root=Path(sys.argv[1]);reference=Path(sys.argv[2]);root.mkdir(parents=True,exist_ok=False)
 project=creator.create(reference,root/"project")
 info,files=mod_session.read_mod(project)
-assert set(files)=={creator.WORLD,creator.STAGE} and "entrypoint" not in info
+assert set(files)=={creator.WORLD,creator.STAGE,creator.STATUS,creator.LABEL,creator.ENTRY} and info['entrypoint']==creator.ENTRY
 original=MapDocument(read_resource(reference,creator.WORLD))
 world=MapDocument((project/creator.WORLD).read_bytes())
 assert original.edit({})==original.data
@@ -25,7 +26,25 @@ for name,l in original.layers.items():
 assert [973,64,800] in world.layers["event"]["keys"][0]["cells"]
 assert world.resources==original.resources
 stage=MapDocument((project/creator.STAGE).read_bytes())
-assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==3008
+assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==7040
+assert [1023,32,736] in world.layers['symbol']['keys'][0]['cells']
+classic={(x,y):chip for chip,x,y in stage.layers['terrain']['keys'][0]['cells']}
+for start,end in ((2208,2272),(2752,2848),(4896,4960)):
+ assert not any(start<=x<end and y>=896 for x,y in classic)
+ assert classic[start-32,896]==1032 and classic[end,896]==1030
+assert classic[896,832]==1477 and classic[1472,768]==1477
+assert classic[5792,864]==1545 and classic[6016,640]==1545
+goal=next(c for c in stage.layers['event']['keys'][0]['cells'] if c[0]==3)
+assert goal[1]==6336 and 7040-goal[1]==704
+status=MapDocument((project/creator.STATUS).read_bytes())
+old_status=MapDocument(read_resource(reference,creator.STATUS))
+assert status.resources[:-1]==old_status.resources
+assert status.resources[-1]['properties']['stName']=='mod_stage16'
+for name,l in old_status.layers.items():
+ a,b=l['span'];c,d=status.layers[name]['span'];assert old_status.data[a:b]==status.data[c:d]
+assert (project/creator.LABEL).read_bytes()==creator.stage_label(reference)
+# Keep the already user-validated short-course edge regression as well.
+stage=MapDocument(generate(reference)[0])
 # Exercise both exposed sides, walls, buried base grass and interior earth.
 terrain={(x,y):chip for chip,x,y in stage.layers["terrain"]["keys"][0]["cells"]}
 assert terrain[512,864]==1030 and terrain[608,864]==1032

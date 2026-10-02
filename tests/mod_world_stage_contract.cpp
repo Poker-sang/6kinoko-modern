@@ -43,7 +43,7 @@ bool load(SQVM* vm,const char* path,const char* scope=nullptr) {
 }
 #define CHECK(x) do{if(!(x)){std::fprintf(stderr,"world-stage contract line %d\n",__LINE__);sq_close(vm);return 1;}}while(0)
 int main(int argc,char** argv) {
-    if(argc!=4){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4\n");return 2;}
+    if(argc!=4 && argc!=6){std::fprintf(stderr,"Supply worldmap.cv4 savedata.cv4 move.cv4 [playerstatus.cv4 presentation.nut]\n");return 2;}
     auto* vm=sq_open(2048);
     sq_setprintfunc(vm,diagnostic);sqstd_seterrorhandlers(vm);
     CHECK(source(vm,R"SQ(
@@ -105,6 +105,33 @@ int main(int argc,char** argv) {
         roadFlag=32;
         if(!world.SetNextMove(0,1,false) || world.funcUpdate!=world.Update_MoveDown)throw "node downward exit";
     )SQ"));
+    if(argc==6) {
+        CHECK(source(vm,"::PlayerStatus = {};"));
+        CHECK(load(vm,argv[4],"PlayerStatus"));
+        CHECK(source(vm,R"SQ(
+            ::selectedLabel <- null; ::selectedWorldLabel <- null;
+            PlayerStatus.resource <- {};
+            foreach(name in ["blank","wmap_stage01","wmap_stage02","wmap_name01","wmap_stage0b","mod_stage16"])
+                PlayerStatus.resource[name] <- name;
+            PlayerStatus.wmap_stage <- {AssociateResource=function(r){selectedLabel=r;}};
+            PlayerStatus.wmap_name <- {AssociateResource=function(r){selectedWorldLabel=r;}};
+        )SQ"));
+        std::ifstream entry(argv[5],std::ios::binary);
+        const std::string text{std::istreambuf_iterator<char>(entry),{}};
+        CHECK(!text.empty() && source(vm,text.c_str()));
+        CHECK(source(vm,R"SQ(
+            PlayerStatus.SetWorld(1,0,"c16a");
+            if(selectedLabel!="mod_stage16" || selectedWorldLabel!="wmap_name01" || PlayerStatus.stage!="c16a")
+                throw "new stage presentation/identity";
+            PlayerStatus.SetWorld(1,0,"c02a");
+            if(selectedLabel!="wmap_stage02" || PlayerStatus.stage!="c02a")throw "original label changed";
+            PlayerStatus.SetWorld(1,0,"marisahouse");
+            if(selectedLabel!="wmap_stage0b")throw "house label changed";
+            PlayerStatus.SetWorld(1,0,"");
+            if(selectedLabel!="blank" || PlayerStatus.stage!="")throw "blank label not restored";
+        )SQ"));
+        std::puts("PASS: presentation entrypoint with actual original PlayerStatus.SetWorld and original-node restoration");
+    }
     sq_close(vm);
     std::puts("PASS: original CV4 node mapping, independent save/re-entry, delayed transition, return position and road directions");
     return 0;
