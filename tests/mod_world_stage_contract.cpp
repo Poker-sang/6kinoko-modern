@@ -112,6 +112,7 @@ int main(int argc,char** argv) {
         CHECK(source(vm,R"SQ(
             ::selectedLabel <- null; ::selectedWorldLabel <- null;
             PlayerStatus.resource <- {};
+            PlayerStatus.RedStar <- 0; PlayerStatus.clearMark <- false;
             foreach(name in ["blank","wmap_stage01","wmap_stage02","wmap_name01","wmap_stage0b","mod_stage16"])
                 PlayerStatus.resource[name] <- name;
             PlayerStatus.wmap_stage <- {AssociateResource=function(r){selectedLabel=r;}};
