@@ -10,7 +10,7 @@ import mod_session,mod_manager
 root=Path(sys.argv[1]);reference=Path(sys.argv[2]);root.mkdir(parents=True,exist_ok=False)
 project=creator.create(reference,root/"project")
 info,files=mod_session.read_mod(project)
-assert set(files)=={creator.WORLD,creator.STAGE,creator.STATUS,creator.LABEL,creator.ENTRY} and info['entrypoint']==creator.ENTRY
+assert set(files)=={creator.WORLD,creator.STAGE,creator.STATUS,creator.LABEL,creator.ENTRY,creator.BALLOON_MCD,creator.BALLOON_IMAGE} and info['entrypoint']==creator.ENTRY
 original=MapDocument(read_resource(reference,creator.WORLD))
 world=MapDocument((project/creator.WORLD).read_bytes())
 assert original.edit({})==original.data
@@ -24,7 +24,12 @@ for name,l in original.layers.items():
   assert all(c in new for c in expected)
   assert len(new)==len(old)+(2 if name=="rail" else 1)
 assert [973,64,800] in world.layers["event"]["keys"][0]["cells"]
-assert world.resources==original.resources
+assert world.resources[:-1]==original.resources
+assert world.layers['symbol_mod']['keys'][0]['cells']==[[1023,32,736]]
+assert world.resources[-1]['properties']['stChipFile']==creator.BALLOON_MCD
+balloon_mcd,balloon_image=creator.green_balloon(reference)
+assert (project/creator.BALLOON_MCD).read_bytes()==balloon_mcd
+assert (project/creator.BALLOON_IMAGE).read_bytes()==balloon_image
 stage=MapDocument((project/creator.STAGE).read_bytes())
 assert stage.properties["stName"]=="w1-c16a" and stage.properties["screenWidth"]==7040
 assert [1023,32,736] in world.layers['symbol']['keys'][0]['cells']

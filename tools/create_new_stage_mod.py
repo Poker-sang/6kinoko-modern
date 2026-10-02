@@ -101,8 +101,9 @@ def create(reference, output, recipe=None):
     world_source = read_resource(reference, WORLD)
     world = extend_world(MapDocument(world_source))
     world_doc=MapDocument(world)
-    chip=dict(world_doc.resources[0]['properties'],resourceID=2,stName='mod_mapchip',stChipFile=BALLOON_MCD)
-    world=MapDocument(world_doc.add_chip_resource(chip)).add_map_layer('symbol','symbol_mod',2,[[1023,32,736]])
+    resource_id=max(r['properties']['resourceID'] for r in world_doc.resources)+1
+    chip=dict(world_doc.resources[0]['properties'],resourceID=resource_id,stName='mod_mapchip',stChipFile=BALLOON_MCD)
+    world=MapDocument(world_doc.add_chip_resource(chip)).add_map_layer('symbol','symbol_mod',resource_id,[[1023,32,736]])
     balloon_mcd,balloon_image=green_balloon(reference)
     output.mkdir(parents=True, exist_ok=False)
     status_source=read_resource(reference,STATUS);status=MapDocument(status_source)
