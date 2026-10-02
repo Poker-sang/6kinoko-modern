@@ -371,10 +371,11 @@ goal completion and return-to-world behavior need manual confirmation.
 
 ## Independent first-world stage
 
-The user confirmed the authored replacement is playable. The next milestone adds
-that course as a new resource `data/map/w1-c16a.act` and adds a small 16 marker
-above Marisa's house in the existing world map. Follow normal title/save/world
-flow, stand at the house and press up, then accept on 16. The new short road is
+The user confirmed the authored replacement and the solid-earth correction improved
+play. The current Mod adds a classic Super Mario Bros. 1-1 inspired route as
+`data/map/w1-c16a.act` with a green balloon above Marisa's house in the existing
+world map. Follow normal title/save/world flow, stand at the house and press up,
+then accept at Stage 16. The new short road is
 available immediately. Original level maps and entrances stay available.
 
 ```powershell
@@ -384,8 +385,12 @@ python mod_manager.py install-enable --game kinoko_modern_gpu.exe new-stage.kmod
 python mod_manager.py launch --game kinoko_modern_gpu.exe
 ```
 
-This resource-only Mod overlays the world-map ACT and adds an unused stage file.
-It has no script entrypoint or scene hooks. Original script stage lookup maps event chip
+This Mod overlays the world-map ACT and adds an unused stage file. A presentation
+entrypoint extends the original label selector for c16a and delegates original
+balloon animation to a separate green resource layer. The original symbol carries
+clear/unlock visibility; the green symbol mirrors it. Original balloon resources
+and original node labels remain intact. The status ACT adds one Stage 16 texture,
+composed from original label pixels. Original script stage lookup maps event chip
 973 to c16a; world 1 produces w1-c16a.act and its own save key w1-c16a. The original
 16-slot limit remains: this is the first independent stage proof, not arbitrary
 Mod ID allocation. Other Mods changing the same world ACT conflict by default.
@@ -395,6 +400,10 @@ still use original fixed totals. Expanded campaign completion policy is future w
 
 The world-map editor now preserves 2D keys, timelines and texture resources in
 addition to map layers. Mesh/string layouts and render-target resources remain
-unsupported. Only map placements are editable; unedited bytes remain intact.
-The new stage uses the last confirmed course layout; this batch targets integration,
-not level-design polish. Gameplay and save/reload validation are user-owned.
+unsupported. The bounded editor can append a map layer and a chip/texture resource
+without rewriting existing objects. The editable classic-1-1 recipe supports
+floor gaps and original terrain/actor placements: blocks, pipe-like obstacles,
+three pits, intermediate stairs and final stairs. Original Kinoko gameplay/assets
+are reused; Mario's graphics, exact physics and underground warp are not included.
+The goal has 704 pixels of road to its right, matching the original first stage.
+Gameplay and save/reload validation are user-owned.
