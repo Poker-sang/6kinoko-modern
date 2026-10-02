@@ -47,9 +47,12 @@ def generate(reference, recipe=None):
     terrain.extend(spec.get("terrain",[]))
     events = spec["events"]; enemies = spec["enemies"]
     if sorted(c[0] for c in events) != [1,3]: raise ValueError("Exactly one original spawn and goal required")
-    for chip,x,y in events+enemies+terrain:
+    for chip,x,y in events+enemies:
         if any(type(v) is not int for v in (chip,x,y)) or not 0 <= x < width-64 or not 0 <= y < 1088:
             raise ValueError("Actor placement outside course")
+    for chip,x,y in terrain:
+        if any(type(v) is not int for v in (chip,x,y)) or not 0<=x<width or not 0<=y<1088:
+            raise ValueError("Terrain placement outside course")
     original = read_resource(reference,SOURCE); document = MapDocument(original)
     # Reuse only verified original chip definitions, scripts and resources.
     for name,cells in (("terrain",terrain),("event",events),("enemy",enemies)):
