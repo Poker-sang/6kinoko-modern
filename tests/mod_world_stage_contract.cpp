@@ -82,7 +82,8 @@ int main(int argc,char** argv) {
         ::PlaySE <- function(id){};
         ::Fader1 <- {FadeOut=function(a,b,c,d){}};
         ::clearCount <- 0;
-        world.isShop <- false; world.suspend <- false;
+        // Fields normally published by WorldMap.Init before entering a stage.
+        world.isShop <- false; world.suspend <- false; world.lastEnterStage <- "";
         ::WorldMap <- {global=world,Suspend=function(){}};
         world.InitStage("c16a");
         if(world.lastEnterStage!="w1-c16a" || !world.suspend || queued==null)
