@@ -84,7 +84,10 @@ int main(int argc,char** argv) {
         ::clearCount <- 0;
         // Fields normally published by WorldMap.Init before entering a stage.
         world.isShop <- false; world.suspend <- false; world.lastEnterStage <- "";
-        ::WorldMap <- {global=world,Suspend=function(){}};
+        world.useOldMenu <- false;
+        world.player <- {visible=true,Suspend=function(){}};
+        ::PlayerStatus <- {useMap=true,useStage=false};
+        ::WorldMap <- {global=world,Suspend=function(){world.Suspend();}};
         world.InitStage("c16a");
         if(world.lastEnterStage!="w1-c16a" || !world.suspend || queued==null)
             throw "original transition setup";
