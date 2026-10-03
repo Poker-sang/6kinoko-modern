@@ -1,0 +1,118 @@
+{
+  "source_commit": "6dd6d66406a209c938dbb4db214187f4c36794fa",
+  "date": "2026-10-03",
+  "builds": [
+    {
+      "name": "modern-bug-audit-x64-02",
+      "architecture": "x64",
+      "configuration": "Release",
+      "trace_disabled": true,
+      "generator": "Visual Studio 18 2026",
+      "build_directory": "C:\\WorkSpace\\6kinoko-modern\\build-runs\\modern-bug-audit-x64-02",
+      "runtime_directory": "C:\\WorkSpace\\6kinoko-modern\\runtime-builds\\modern-bug-audit-x64-02",
+      "game_built": true,
+      "dat_staging_verified": true,
+      "contracts_compiled": 1,
+      "game_run": false,
+      "tests_run": false,
+      "files": [
+        {
+          "name": "kinoko_modern_gpu.exe",
+          "bytes": 4179968,
+          "sha256": "5499bc9d4bd64853302f419fa36711a223e6eae00c5fcf818cc4020e4faf87f8"
+        },
+        {
+          "name": "6kinoko_a.dat",
+          "bytes": 163424746,
+          "sha256": "dd3aff7e3e6bf0816c3073d113c3ccb12242a67e578d012c3b87190e7e24fc64"
+        },
+        {
+          "name": "6kinoko_b.dat",
+          "bytes": 44681244,
+          "sha256": "4d47b8e241886be4300025324ddd7d1e3c5729232ff67e011f14163db60130d2"
+        },
+        {
+          "name": "6kinoko_c.dat",
+          "bytes": 11796163,
+          "sha256": "80327f6f680d53aaa5539f45e11d33c1c6ba6b862648760725f44a380121852e"
+        },
+        {
+          "name": "fonts/NotoSansCJKjp-Regular.otf",
+          "bytes": 16467736,
+          "sha256": "68a3fc98800b2a27b371f2fb79991daf3633bd89309d4ffaa6946fd587f375b5"
+        },
+        {
+          "name": "fonts/LICENSE",
+          "bytes": 4393,
+          "sha256": "88f117575237307bdd86a17ef15e21790fc9a662fe4dfb103ca1ca077f0d9982"
+        },
+        {
+          "name": "shaders/sprite.vert.dxbc",
+          "bytes": 1360,
+          "sha256": "6492adead9a1e49fa1f60dc6019e8bfcb15f096ece87382f745fb2309f3c4379"
+        },
+        {
+          "name": "shaders/sprite.frag.dxbc",
+          "bytes": 1876,
+          "sha256": "d3a014d9e2498438e20cf28ed653cbf517a0602c5c088ea1777493b891c92d7c"
+        }
+      ]
+    },
+    {
+      "name": "modern-bug-audit-x86-02",
+      "architecture": "x86",
+      "configuration": "Release",
+      "trace_disabled": true,
+      "generator": "Visual Studio 18 2026",
+      "build_directory": "C:\\WorkSpace\\6kinoko-modern\\build-runs\\modern-bug-audit-x86-02",
+      "runtime_directory": "C:\\WorkSpace\\6kinoko-modern\\runtime-builds\\modern-bug-audit-x86-02",
+      "game_built": true,
+      "dat_staging_verified": true,
+      "contracts_compiled": 37,
+      "game_run": false,
+      "tests_run": false,
+      "files": [
+        {
+          "name": "kinoko_modern_gpu.exe",
+          "bytes": 3543552,
+          "sha256": "6e83c14cf6da2be274ee4c258094e3a9a45245e55b85138cb7b44fa68a2f6f14"
+        },
+        {
+          "name": "6kinoko_a.dat",
+          "bytes": 163424746,
+          "sha256": "dd3aff7e3e6bf0816c3073d113c3ccb12242a67e578d012c3b87190e7e24fc64"
+        },
+        {
+          "name": "6kinoko_b.dat",
+          "bytes": 44681244,
+          "sha256": "4d47b8e241886be4300025324ddd7d1e3c5729232ff67e011f14163db60130d2"
+        },
+        {
+          "name": "6kinoko_c.dat",
+          "bytes": 11796163,
+          "sha256": "80327f6f680d53aaa5539f45e11d33c1c6ba6b862648760725f44a380121852e"
+        },
+        {
+          "name": "fonts/NotoSansCJKjp-Regular.otf",
+          "bytes": 16467736,
+          "sha256": "68a3fc98800b2a27b371f2fb79991daf3633bd89309d4ffaa6946fd587f375b5"
+        },
+        {
+          "name": "fonts/LICENSE",
+          "bytes": 4393,
+          "sha256": "88f117575237307bdd86a17ef15e21790fc9a662fe4dfb103ca1ca077f0d9982"
+        },
+        {
+          "name": "shaders/sprite.vert.dxbc",
+          "bytes": 1360,
+          "sha256": "6492adead9a1e49fa1f60dc6019e8bfcb15f096ece87382f745fb2309f3c4379"
+        },
+        {
+          "name": "shaders/sprite.frag.dxbc",
+          "bytes": 1876,
+          "sha256": "d3a014d9e2498438e20cf28ed653cbf517a0602c5c088ea1777493b891c92d7c"
+        }
+      ]
+    }
+  ]
+}
