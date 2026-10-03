@@ -92,6 +92,43 @@ int main() {
         kinoko_replay_end_frame();
     }
     kinoko_replay_finish();CHECK(errors==0 && status().find("COMPLETED 4 frames")!=std::string::npos);
+    // Reject path aliases before the status stream can truncate a recording.
+    {
+        const auto recording=root/"record/session.krec",aliases=root/"path-aliases";
+        fs::create_directory(aliases);
+        auto bytes=[](const fs::path& path){std::ifstream in(path,std::ios::binary);return std::string(std::istreambuf_iterator<char>(in),{});};
+        const auto original_recording=bytes(recording);CHECK(!original_recording.empty());
+        auto parse=[&](std::vector<std::string> arguments){
+            std::vector<char*> argv;for(auto& argument:arguments)argv.push_back(argument.data());std::string error;
+            return kinoko::runtime::parse_options(int(argv.size()),argv.data(),error);
+        };
+        auto arguments=[&](const char* mode,const fs::path& file,const fs::path& log){
+            return std::vector<std::string>{"contract","--save-dir",(aliases/"save").u8string(),mode,file.u8string(),
+                "--replay-status",log.u8string(),"--replay-identity",std::string(64,'a')};
+        };
+        for(const char* mode:{"--record","--replay"}) {
+            CHECK(!parse(arguments(mode,recording,recording)));
+            CHECK(!parse(arguments(mode,recording,recording.parent_path()/"unused/../session.krec")));
+        }
+        const auto linked=aliases/"linked.krec";
+        std::error_code link_error;fs::create_hard_link(recording,linked,link_error);
+        if(!link_error) {
+            CHECK(!parse(arguments("--replay",recording,linked)));
+            CHECK(!parse(arguments("--record",linked,recording)));
+        }else std::fprintf(stderr,"Hard-link replay alias check unavailable: %s\n",link_error.message().c_str());
+        const auto log=aliases/"status.txt";
+        for(const auto& branch:{recording,log}) {
+            auto args=arguments("--replay",recording,log);
+            args.insert(args.end(),{"--tas-dir",aliases.u8string(),"--tas-output",branch.u8string()});
+            CHECK(!parse(args));
+        }
+        CHECK(bytes(recording)==original_recording && !fs::exists(log));
+        // A record session ignores tas_output and may name its recording there.
+        const auto fresh=aliases/"fresh.krec";
+        auto args=arguments("--record",fresh,log);
+        args.insert(args.end(),{"--tas-dir",aliases.u8string(),"--tas-output",fresh.u8string()});
+        CHECK(parse(args));CHECK(parse({"contract"}));
+    }
     for(int scenario=0;scenario<3;++scenario) {
         const auto run=root/("play-"+std::to_string(scenario));fs::create_directory(run);
         // Replay reads the original recording in place, independent of cwd.

@@ -4,7 +4,17 @@
 #include <filesystem>
 #include <stdexcept>
 namespace kinoko::runtime {
-namespace { Options settings; }
+namespace {
+Options settings;
+bool same_file(const std::filesystem::path& first,const std::filesystem::path& second) {
+    if(first.empty() || second.empty())return false;
+    if(first==second)return true;
+    std::error_code error;
+    if(std::filesystem::equivalent(first,second,error))return true;
+    // Resolve existing parent links even when an output file does not exist yet.
+    return std::filesystem::weakly_canonical(first)==std::filesystem::weakly_canonical(second);
+}
+}
 const Options& options() { return settings; }
 bool parse_options(int argc,char** argv,std::string& error) {
     settings={};
@@ -31,11 +41,17 @@ bool parse_options(int argc,char** argv,std::string& error) {
         if(!parsed.recording.empty() || !parsed.playback.empty()) {
             if(parsed.save_dir.empty() || parsed.status.empty() || parsed.identity.size()!=64 || parsed.identity.find_first_not_of("0123456789abcdefABCDEF")!=std::string::npos)
                 throw std::runtime_error("Replay requires --save-dir, --replay-status and a 64-digit --replay-identity; use the session launcher");
+            // The status stream is truncated before the replay is opened.
+            if(same_file(parsed.status,parsed.recording) || same_file(parsed.status,parsed.playback))
+                throw std::runtime_error("--replay-status must differ from the recording/replay file");
         }
         if(parsed.tas_window && parsed.tas_dir.empty())throw std::runtime_error("--tas-window requires --tas-dir");
         if(!parsed.tas_dir.empty()) {
             if(parsed.save_dir.empty() || (parsed.recording.empty() && parsed.playback.empty()) || parsed.tas_output.empty())throw std::runtime_error("TAS requires isolated save and replay paths");
             if(!std::filesystem::is_directory(parsed.tas_dir))throw std::runtime_error("TAS directory does not exist");
+            // --record writes its recording path; tas_output is only used for playback branches.
+            if(!parsed.playback.empty() && (same_file(parsed.tas_output,parsed.playback) || same_file(parsed.tas_output,parsed.status)))
+                throw std::runtime_error("--tas-output must differ from the replay input and status files");
         }
         if(!parsed.save_dir.empty())std::filesystem::create_directories(parsed.save_dir);
         settings=std::move(parsed);return true;

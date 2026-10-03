@@ -115,10 +115,121 @@ void check_saved_wire(const std::string& path,const Bytes& expected) {
     require(status==Z_STREAM_END && consumed_all,"saved complete zlib stream");
     plain.resize(size); require(plain==expected,"saved tags/key/scalar/container terminator bytes");
 }
+Bytes nested_table_wire(unsigned depth) {
+    Bytes raw;
+    for(unsigned level=1;level<depth;++level) field(raw,OT_TABLE,"child");
+    field(raw,OT_INTEGER,"value"); word(raw,uint32_t(-2468));
+    for(unsigned level=0;level<depth;++level) word(raw,OT_NULL);
+    return raw;
+}
+void check_serialization_guards(HSQUIRRELVM vm,Files& files) {
+    const auto deep=files.path("nesting-limit.dat"), saved=files.path("guarded-save.dat");
+    const auto too_deep=files.path("excessive-nesting-wire.dat");
+    const auto shared=files.path("shared-child.dat");
+    evaluate(vm,R"sq(
+        depth_limit <- {}; depth_loaded <- {};
+        {
+            local node=depth_limit;
+            for(local depth=1;depth<256;++depth) {
+                local child={}; node.child <- child; node=child;
+            }
+            node.value <- -2468;
+        }
+    )sq");
+    // This must be the fresh 128-slot VM's first save: shallow saves would
+    // already reserve enough stack space and hide the deep-iteration overflow.
+    // Keep a caller-owned value below every native call as well as checking top.
+    const auto top=sq_gettop(vm);
+    sq_pushinteger(vm,0x1234567);
+    require(file_call(vm,deep,"depth_limit",true),"save 256 nested tables with small initial VM stack");
+    check_saved_wire(deep,nested_table_wire(256));
+    require(file_call(vm,deep,"depth_loaded",false),"load 256 nested tables");
+    evaluate(vm,R"sq(
+        local node=depth_loaded;
+        for(local depth=1;depth<256;++depth) {
+            assert(typeof node=="table" && node.len()==1 && "child" in node);
+            node=node.child;
+        }
+        assert(typeof node=="table" && node.len()==1 && node.value==-2468);
+    )sq");
+
+    evaluate(vm,R"sq(
+        cycle_table <- {}; cycle_table.self <- cycle_table;
+        cycle_array <- []; cycle_array.append(cycle_array);
+        cycle_indirect <- {}; cycle_indirect.children <- [cycle_indirect];
+        excess_depth <- {};
+        {
+            local node=excess_depth;
+            for(local depth=1;depth<257;++depth) {
+                local child={}; node.child <- child; node=child;
+            }
+            node.value <- -2468;
+        }
+        scalar_integer <- 17; scalar_float <- 1.25; scalar_bool <- true;
+        scalar_string <- "unsupported root"; scalar_null <- null;
+        recovery_source <- { value=73 }; recovery_loaded <- {};
+    )sq");
+    require(file_call(vm,saved,"recovery_source",true),"establish prior save for failure guards");
+    const auto recover=[&]() {
+        // Change the payload so a stale prior file cannot pass recovery checks.
+        evaluate(vm,"recovery_source.value+=1; recovery_loaded={};");
+        require(file_call(vm,saved,"recovery_source",true),"normal save succeeds after serialization failure");
+        require(file_call(vm,saved,"recovery_loaded",false),"normal load succeeds after serialization failure");
+        evaluate(vm,"assert(recovery_loaded.len()==1 && recovery_loaded.value==recovery_source.value);");
+    };
+    const auto rejected_save=[&](const char* source,const char* message) {
+        const auto previous=read_bytes(saved);
+        require(!file_call(vm,saved,source,true),message);
+        require(read_bytes(saved)==previous,"rejected save preserves every prior file byte");
+        recover();
+    };
+    rejected_save("cycle_table","self-referential table save fails");
+    rejected_save("cycle_array","self-referential array save fails");
+    rejected_save("cycle_indirect","indirect table-array cycle save fails");
+    rejected_save("excess_depth","257 nested tables exceed save depth limit");
+    rejected_save("scalar_integer","integer root save fails");
+    rejected_save("scalar_float","float root save fails");
+    rejected_save("scalar_bool","boolean root save fails");
+    rejected_save("scalar_string","string root save fails");
+    rejected_save("scalar_null","null root save fails");
+
+    // A valid compressed tree built independently of the writer reaches the
+    // reader's own depth guard, well below the file buffer's byte limit.
+    encoded_fixture(too_deep,nested_table_wire(257));
+    evaluate(vm,"excess_loaded <- {};");
+    require(!file_call(vm,too_deep,"excess_loaded",false),"257 nested wire tables exceed load depth limit");
+    recover();
+
+    evaluate(vm,R"sq(
+        shared_table <- { value=19 }; shared_array <- [shared_table,7];
+        shared_source <- { first=shared_table, second=shared_table,
+                           arrays=[shared_array,shared_array] };
+        shared_loaded <- {};
+    )sq");
+    require(file_call(vm,shared,"shared_source",true),"shared acyclic tables and arrays save successfully");
+    require(file_call(vm,shared,"shared_loaded",false),"shared acyclic children load successfully");
+    evaluate(vm,R"sq(
+        assert(shared_loaded.first.value==19 && shared_loaded.second.value==19);
+        assert(shared_loaded.arrays.len()==2);
+        foreach(child in shared_loaded.arrays)
+            assert(child.len()==2 && child[0].value==19 && child[1]==7);
+        // The original wire is a tree: aliases become independent value copies.
+        shared_loaded.first.value=99;
+        shared_loaded.arrays[0][1]=8;
+        assert(shared_loaded.second.value==19 && shared_loaded.arrays[0][0].value==19);
+        assert(shared_loaded.arrays[1][0].value==19 && shared_loaded.arrays[1][1]==7);
+        cycle_table.self=null; cycle_array[0]=null; cycle_indirect.children[0]=null;
+    )sq");
+    SQInteger sentinel=0;
+    require(sq_gettop(vm)==top+1 && SQ_SUCCEEDED(sq_getinteger(vm,-1,&sentinel)) &&
+        sentinel==0x1234567,"serialization guards preserve caller stack contents");
+    sq_pop(vm,1);
+}
 }
 int main() {
     try {
         Machine machine; auto* vm=machine.vm; Files files;
+        check_serialization_guards(vm,files);
         const auto saved=files.path("roundtrip.dat"), golden=files.path("golden.dat");
         const auto bad=files.path("bad.dat"), missing=files.path("missing.dat");
         evaluate(vm,"source <- { integer=-1234567, real=1.25, yes=true, no=false, text=\"hello\", empty=\"\", nested={value=9}, array=[2,null,\"three\"], omitted=null }\n destination <- {}\n golden <- {}\n simple <- { value=-7 }\n blank <- {}; ");
@@ -173,7 +284,7 @@ int main() {
         require(!file_call(vm,saved,"source",true),"reject absolute path bypass");
         require(kinoko::runtime::parse_options(1,args,error),"reset ordinary paths");
         require(sq_gettop(vm)==0,"final stack balance");
-        std::puts("PASS: savedata file roundtrip, independent wire fixtures, scalar widths and file failures");
+        std::puts("PASS: savedata roundtrip, wire compatibility, cycle/depth guards, stack recovery and file failures");
     } catch(const std::exception& error) {
         std::fprintf(stderr,"savedata: %s\n",error.what()); return 1;
     }

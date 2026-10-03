@@ -50,10 +50,10 @@ jobs:
           if ('${{ matrix.arch }}' -eq 'Win32') {
             cmake --build build-runs/bridge --config Release --parallel 4
           } else {
-            cmake --build build-runs/bridge --config Release --target kinoko_modern_gpu kinoko_gpu_transfer_contract kinoko_savedata_file_contract kinoko_bytecode_wire_contract kinoko_file_archive_contract kinoko_script_random_contract kinoko_runtime_services_contract kinoko_directory_search_contract kinoko_input_actions_contract kinoko_input_script_contract kinoko_replay_contract kinoko_replay_runtime_contract kinoko_mod_resources_contract kinoko_mod_scripts_contract --parallel 4
+            cmake --build build-runs/bridge --config Release --target kinoko_modern_gpu kinoko_gpu_transfer_contract kinoko_bitmap_contract kinoko_savedata_file_contract kinoko_bytecode_wire_contract kinoko_file_archive_contract kinoko_script_random_contract kinoko_runtime_services_contract kinoko_directory_search_contract kinoko_input_actions_contract kinoko_input_script_contract kinoko_replay_contract kinoko_replay_runtime_contract kinoko_mod_resources_contract kinoko_mod_scripts_contract --parallel 4
           }
       - name: Run focused compatibility contracts (no gameplay)
-        run: ctest --test-dir build-runs/bridge -C Release --output-on-failure -R "^(savedata_file|bytecode_wire|file_archive|script_random|runtime_services|directory_search|input_actions|input_script|replay|replay_runtime|replay_session|mod_resources|mod_scripts)_contract$"
+        run: ctest --test-dir build-runs/bridge -C Release --output-on-failure -R "^(bitmap|savedata_file|bytecode_wire|file_archive|script_random|runtime_services|directory_search|input_actions|input_script|replay|replay_runtime|replay_session|mod_resources|mod_scripts)_contract$"
       - name: Package Windows game (without original DAT)
         shell: pwsh
         run: |
@@ -102,7 +102,7 @@ jobs:
         run: |
           set -o pipefail
           git rev-parse HEAD > build-runs/native/source-commit.txt
-          cmake --build build-runs/native --target kinoko_modern_gpu kinoko_gpu_transfer_contract kinoko_savedata_file_contract kinoko_bytecode_wire_contract kinoko_file_archive_contract kinoko_script_random_contract kinoko_runtime_services_contract kinoko_directory_search_contract kinoko_input_actions_contract kinoko_input_script_contract kinoko_replay_contract kinoko_replay_runtime_contract kinoko_mod_resources_contract kinoko_mod_scripts_contract --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
+          cmake --build build-runs/native --target kinoko_modern_gpu kinoko_gpu_transfer_contract kinoko_bitmap_contract kinoko_savedata_file_contract kinoko_bytecode_wire_contract kinoko_file_archive_contract kinoko_script_random_contract kinoko_runtime_services_contract kinoko_directory_search_contract kinoko_input_actions_contract kinoko_input_script_contract kinoko_replay_contract kinoko_replay_runtime_contract kinoko_mod_resources_contract kinoko_mod_scripts_contract --parallel 4 -- -k 2>&1 | tee build-runs/native/build.log
       - name: Package native game (without original DAT)
         shell: bash
         run: |
