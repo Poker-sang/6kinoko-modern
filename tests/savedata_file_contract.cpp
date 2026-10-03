@@ -36,7 +36,14 @@ void require(bool ok, const char* message) {
 class Machine {
 public:
     HSQUIRRELVM vm = sq_open(128);
-    Machine() { require(vm != nullptr, "open VM"); kinoko_primary_vm = reinterpret_cast<SQVM*>(vm); }
+    Machine() {
+        require(vm != nullptr, "open VM"); kinoko_primary_vm = reinterpret_cast<SQVM*>(vm);
+        sq_setcompilererrorhandler(vm, [](HSQUIRRELVM, const SQChar* error,
+            const SQChar* source, SQInteger line, SQInteger column) {
+            std::fprintf(stderr,"%s:%lld:%lld: %s\n",source,
+                static_cast<long long>(line),static_cast<long long>(column),error);
+        });
+    }
     ~Machine() { sq_close(vm); kinoko_primary_vm = nullptr; }
 };
 // Never touch the original game's marisa[A-C].dat. Each run gets its own directory.
@@ -127,7 +134,8 @@ void check_serialization_guards(HSQUIRRELVM vm,Files& files) {
     const auto too_deep=files.path("excessive-nesting-wire.dat");
     const auto shared=files.path("shared-child.dat");
     evaluate(vm,R"sq(
-        depth_limit <- {}; depth_loaded <- {};
+        depth_limit <- {};
+        depth_loaded <- {};
         {
             local node=depth_limit;
             for(local depth=1;depth<256;++depth) {
@@ -154,9 +162,11 @@ void check_serialization_guards(HSQUIRRELVM vm,Files& files) {
     )sq");
 
     evaluate(vm,R"sq(
-        cycle_table <- {}; cycle_table.self <- cycle_table;
+        cycle_table <- {};
+        cycle_table.self <- cycle_table;
         cycle_array <- []; cycle_array.append(cycle_array);
-        cycle_indirect <- {}; cycle_indirect.children <- [cycle_indirect];
+        cycle_indirect <- {};
+        cycle_indirect.children <- [cycle_indirect];
         excess_depth <- {};
         {
             local node=excess_depth;
@@ -167,7 +177,8 @@ void check_serialization_guards(HSQUIRRELVM vm,Files& files) {
         }
         scalar_integer <- 17; scalar_float <- 1.25; scalar_bool <- true;
         scalar_string <- "unsupported root"; scalar_null <- null;
-        recovery_source <- { value=73 }; recovery_loaded <- {};
+        recovery_source <- { value=73 };
+        recovery_loaded <- {};
     )sq");
     require(file_call(vm,saved,"recovery_source",true),"establish prior save for failure guards");
     const auto recover=[&]() {
@@ -201,7 +212,8 @@ void check_serialization_guards(HSQUIRRELVM vm,Files& files) {
     recover();
 
     evaluate(vm,R"sq(
-        shared_table <- { value=19 }; shared_array <- [shared_table,7];
+        shared_table <- { value=19 };
+        shared_array <- [shared_table,7];
         shared_source <- { first=shared_table, second=shared_table,
                            arrays=[shared_array,shared_array] };
         shared_loaded <- {};

@@ -471,6 +471,10 @@ target_link_libraries(kinoko_file_archive_contract PRIVATE kinoko_zlib kinoko_fi
 add_test(NAME file_archive_contract COMMAND kinoko_file_archive_contract)
 include(cmake/Mods.cmake)
 
+add_executable(kinoko_bitmap_contract tests/bitmap_contract.cpp src/reconstructed/bitmap.cpp)
+target_include_directories(kinoko_bitmap_contract PRIVATE include)
+add_test(NAME bitmap_contract COMMAND kinoko_bitmap_contract)
+
 if(NOT WIN32)
     # Static reconstructed modules have bidirectional references. Repeat the group
     # on Apple (no GNU start-group); use CMake RESCAN on ELF platforms.
@@ -566,10 +570,6 @@ add_test(NAME legacy_abi_contract COMMAND kinoko_legacy_abi_contract)
 add_executable(kinoko_sprite_rect_contract tests/sprite_rect_contract.cpp src/reconstructed/sprite_rect.cpp)
 target_include_directories(kinoko_sprite_rect_contract PRIVATE include)
 add_test(NAME sprite_rect_contract COMMAND kinoko_sprite_rect_contract)
-
-add_executable(kinoko_bitmap_contract tests/bitmap_contract.cpp src/reconstructed/bitmap.cpp)
-target_include_directories(kinoko_bitmap_contract PRIVATE include)
-add_test(NAME bitmap_contract COMMAND kinoko_bitmap_contract)
 
 add_executable(kinoko_diagnostics_capture tests/diagnostics_capture.cpp)
 target_link_libraries(kinoko_diagnostics_capture PRIVATE kinoko_diagnostics dbghelp)
