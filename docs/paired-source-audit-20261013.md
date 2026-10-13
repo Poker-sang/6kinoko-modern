@@ -75,3 +75,26 @@ execution must be recorded separately from local compilation and user gameplay.
 Build results, exact source commits, executable paths and hashes are recorded
 after compilation in `paired-source-audit-20261013-artifacts.json`.
 
+## Modern delivery
+
+Source `28057997967b43467a974e67ecd8546068832f1e` completed both Windows builds:
+
+| Architecture | Build and runtime directory name | Compilation scope |
+| --- | --- | --- |
+| x86 | `paired-audit-modern-x86-01` | All targets, including 98 contract executables |
+| x64 | `paired-audit-modern-x64-02` | Game plus map_layer_binding, act_layer_span, bitmap, savedata_file, file_archive and audio_runtime contracts |
+
+Each runtime directory contains `kinoko_modern_gpu.exe`, the three original DAT
+files verified by size and SHA256, `fonts/` and `shaders/`. Build trees retain
+configure/build/DAT logs, source revisions and manifests. Neither local tests
+nor gameplay were executed. The rebuild counterpart is tracked in
+[rebuild PR #14](https://github.com/Poker-sang/6kinoko-rebuild/pull/14).
+
+The first x64 attempt compiled successfully but used a literal `$runtimePath`
+due to an unquoted CMake command argument, so DAT staging failed. After all
+build processes finished, its output was moved intact to
+`runtime-builds/paired-audit-modern-x64-01/`; the original configure/build/staging
+logs and relocation record remain in `build-runs/paired-audit-modern-x64-01/`.
+The corrected `-02` build uses a fresh build tree and runtime directory. This
+was a command configuration correction, not a source-code failure.
+
