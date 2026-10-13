@@ -311,6 +311,7 @@ add_library(kinoko_squirrel_cpp_vm STATIC
     src/reconstructed/act_document_association.cpp
     src/reconstructed/act_script_io.cpp
     src/reconstructed/act_texture_io.cpp
+    src/reconstructed/map_layer_binding.cpp
     src/reconstructed/act_map.cpp
     src/reconstructed/act_layout.cpp
     src/squirrel/act_binding.cpp
@@ -474,6 +475,10 @@ include(cmake/Mods.cmake)
 add_executable(kinoko_bitmap_contract tests/bitmap_contract.cpp src/reconstructed/bitmap.cpp)
 target_include_directories(kinoko_bitmap_contract PRIVATE include)
 add_test(NAME bitmap_contract COMMAND kinoko_bitmap_contract)
+
+add_executable(kinoko_act_layer_span_contract tests/act_layer_span_contract.cpp)
+target_include_directories(kinoko_act_layer_span_contract PRIVATE include)
+add_test(NAME act_layer_span_contract COMMAND kinoko_act_layer_span_contract)
 
 if(NOT WIN32)
     # Static reconstructed modules have bidirectional references. Repeat the group

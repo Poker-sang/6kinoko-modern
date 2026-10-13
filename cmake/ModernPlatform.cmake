@@ -69,6 +69,11 @@ add_executable(kinoko_act_chip_runtime_contract tests/act_chip_runtime_contract.
 target_include_directories(kinoko_act_chip_runtime_contract PRIVATE include)
 target_compile_features(kinoko_act_chip_runtime_contract PRIVATE cxx_std_17)
 add_test(NAME act_chip_runtime_contract COMMAND kinoko_act_chip_runtime_contract)
+add_executable(kinoko_map_layer_binding_contract tests/map_layer_binding_contract.cpp
+    src/reconstructed/map_layer_binding.cpp src/reconstructed/native_buffer.cpp)
+target_include_directories(kinoko_map_layer_binding_contract PRIVATE include)
+target_compile_features(kinoko_map_layer_binding_contract PRIVATE cxx_std_17)
+add_test(NAME map_layer_binding_contract COMMAND kinoko_map_layer_binding_contract)
 add_executable(kinoko_act_method_dispatch_contract tests/act_method_dispatch_contract.cpp)
 target_include_directories(kinoko_act_method_dispatch_contract PRIVATE include)
 target_compile_features(kinoko_act_method_dispatch_contract PRIVATE cxx_std_17)
@@ -208,6 +213,7 @@ endif()
 if(WIN32)
     add_library(kinoko_act_map_width_compile OBJECT
         src/reconstructed/act_document.cpp src/reconstructed/act_texture_io.cpp
+        src/reconstructed/map_layer_binding.cpp
         src/reconstructed/map_activation.cpp src/reconstructed/map_chip_cache.cpp
         src/reconstructed/map_collision.cpp src/reconstructed/map_containers.cpp
         src/reconstructed/map_copy.cpp src/reconstructed/map_layers.cpp

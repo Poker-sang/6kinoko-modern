@@ -57,6 +57,11 @@ extern "C" int32_t kinoko_archive_mount(const char *path) {
     if (!file.read(count_bytes,sizeof(count_bytes)) || !file.read(size_bytes,sizeof(size_bytes))) return 0;
     const auto count=kinoko::compat::read_le16(count_bytes);
     const auto size=kinoko::compat::read_le32(size_bytes);
+    // Reject a truncated index before allocating its untrusted declared size.
+    // Keep the early archive registration above and allow index padding.
+    const auto file_size=kinoko_file_size(file.get());
+    if (file_size<kinoko::compat::dat_header_bytes ||
+        uint64_t{size}>static_cast<uint64_t>(file_size)-kinoko::compat::dat_header_bytes) return 0;
     std::vector<uint8_t> bytes(size);
     if(size && !file.read(bytes.data(),size)) return 0;
     file.close();
