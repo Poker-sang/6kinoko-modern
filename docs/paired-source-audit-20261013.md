@@ -98,3 +98,13 @@ logs and relocation record remain in `build-runs/paired-audit-modern-x64-01/`.
 The corrected `-02` build uses a fresh build tree and runtime directory. This
 was a command configuration correction, not a source-code failure.
 
+PR CI run [38349495433](https://github.com/Poker-sang/6kinoko-modern/actions/runs/38349495433)
+passed all seven jobs. Windows x86 and x64 each executed and passed all 16
+focused contracts, including the new native layer-span and real map-binding
+regressions. Full Linux x86_64 and universal macOS compilation/packaging, all
+three portable compilation jobs and existing package/dependency checks passed.
+Those native jobs do not execute gameplay. These are remote CI results, not
+local executable or user gameplay validation. The complete log and result JSON
+are retained as `ci.log` and `ci-result.json` in
+`build-runs/paired-audit-modern-x64-02/`.
+
